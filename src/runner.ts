@@ -144,8 +144,9 @@ const fmt = (p: Pick) =>
   Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3)
     .map(([k, v]) => `${k}=${v.toFixed(2)}`).join(" ");
 
-export async function runStep(step: string, rt: Runtime, decider: Decider, log = console.log): Promise<StepResult> {
-  log(`\nStep: ${step}`);
+/** Action or Attempt step. An Attempt is done once its actions are performed, even if the app rejects them. */
+export async function runStep(step: string, rt: Runtime, decider: Decider, log = console.log, attempt = false): Promise<StepResult> {
+  log(`\n${attempt ? "Attempt" : "Step"}: ${step}`);
   const end = finish(log);
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
@@ -155,7 +156,7 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     log(`\n  Observation #${turn}:`);
     for (const e of obs.elements) log(`    [${e.ref}] ${e.line}`);
 
-    const t = await decider.turn(step, obs, recent);
+    const t = await decider.turn(step, obs, recent, attempt);
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (!gate(t.target)) return end("AMBIGUOUS", `target unclear (${fmt(t.target)})`);

@@ -33,7 +33,7 @@ async function main(): Promise<number> {
   let steps: ParsedStep[];
   let url = values.url;
 
-  if (cmd === "step" && arg) steps = parseTestFile(arg).steps; // "Then ..." makes it an Assertion step
+  if (cmd === "step" && arg) steps = parseTestFile(arg).steps; // "Then ..." / "Attempt ..." set the Step kind
   else if (cmd === "run" && arg) {
     if (!existsSync(arg)) { console.error(`File not found: ${arg}`); return 2; }
     const file = parseTestFile(readFileSync(arg, "utf8"));
@@ -53,9 +53,9 @@ async function main(): Promise<number> {
   const decider = new JevDecider();
   try {
     for (const step of steps) {
-      const r = step.assertion
+      const r = step.kind === "assertion"
         ? await runAssertion(step.text, browser, decider, console.log, values.judged)
-        : await runStep(step.text, browser, decider);
+        : await runStep(step.text, browser, decider, console.log, step.kind === "attempt");
       if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) { console.log(`\nFAILED at: ${step.text}`); return 1; }
     }
     console.log("\nPASSED");

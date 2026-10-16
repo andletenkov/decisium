@@ -68,10 +68,12 @@ test("gate needs a confident top answer with margin", () => {
   assert.ok(!gate(p({ a: 0.5, b: 0.45 })));
 });
 
-test("parseTestFile classifies Then/And as assertions", () => {
+test("parseTestFile classifies Then/And as assertions and Attempt lines as attempts", () => {
   const f = parseTestFile(`Test: T\nURL: http://x\n# c\nWhen I do a\nAnd b\nThen c is "X"\nAnd d`);
   assert.equal(f.url, "http://x");
-  assert.deepEqual(f.steps.map(s => [s.text, s.assertion]), [["I do a", false], ["b", false], ["c is \"X\"", true], ["d", true]]);
+  assert.deepEqual(f.steps.map(s => [s.text, s.kind]), [["I do a", "action"], ["b", "action"], ["c is \"X\"", "assertion"], ["d", "assertion"]]);
+  const g = parseTestFile(`Then x is "1"\nAttempt to schedule it\nAnd open it\nThen y is "2"`);
+  assert.deepEqual(g.steps.map(s => [s.text, s.kind]), [["x is \"1\"", "assertion"], ["Attempt to schedule it", "attempt"], ["open it", "action"], ["y is \"2\"", "assertion"]]);
 });
 
 // Scripted stand-in for Jev: exercises the browser runtime and loop without the API.

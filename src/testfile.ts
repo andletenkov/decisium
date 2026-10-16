@@ -1,6 +1,8 @@
+export type StepKind = "action" | "attempt" | "assertion";
+
 export interface ParsedStep {
   text: string;
-  assertion: boolean;
+  kind: StepKind;
 }
 
 export interface TestFile {
@@ -11,7 +13,10 @@ export interface TestFile {
 
 const KEYWORD = /^(Given|When|Then|And|But)\s+/i;
 
-/** `Test:`/`URL:` headers, one Step per line, `#` comments. `Then` (and `And`/`But` after it) marks an Assertion step. */
+/**
+ * `Test:`/`URL:` headers, one Step per line, `#` comments. `Then` (and `And`/`But` after it) marks an Assertion step;
+ * a line starting with `Attempt` is an Attempt step (kept verbatim so Jev reads the word too).
+ */
 export function parseTestFile(src: string): TestFile {
   const file: TestFile = { steps: [] };
   let inThen = false;
@@ -24,10 +29,15 @@ export function parseTestFile(src: string): TestFile {
       else file.url = header[2];
       continue;
     }
+    if (/^Attempt\b/i.test(line)) {
+      inThen = false;
+      file.steps.push({ text: line, kind: "attempt" });
+      continue;
+    }
     const kw = KEYWORD.exec(line)?.[1].toLowerCase();
     if (kw === "then") inThen = true;
     else if (kw !== "and" && kw !== "but") inThen = false;
-    file.steps.push({ text: line.replace(KEYWORD, ""), assertion: inThen });
+    file.steps.push({ text: line.replace(KEYWORD, ""), kind: inThen ? "assertion" : "action" });
   }
   return file;
 }

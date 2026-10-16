@@ -2,6 +2,6 @@ Test: Scheduling needs an activation date
 URL: http://127.0.0.1:5173/?reset=1
 
 When I open the "Spring Sale" campaign
-And I click Schedule
+Attempt to schedule the campaign
 Then the error should say "Set an activation date before scheduling"
 And the campaign status should be "Draft"

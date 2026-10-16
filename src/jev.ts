@@ -47,7 +47,8 @@ export interface Assessment {
 /** The decision layer. Jev implements it; tests use a scripted fake. */
 export interface Decider {
   /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
-  turn(step: string, obs: Observation, recent: string[]): Promise<TurnAnswer>;
+  /** `attempt`: done means the user performed the actions, whether or not the app accepted them. */
+  turn(step: string, obs: Observation, recent: string[], attempt?: boolean): Promise<TurnAnswer>;
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
   /** `mentioned`: elements containing the Step's quoted text (code-filtered), for presence/absence. */
@@ -60,12 +61,14 @@ const refs = (els: Element[], none: string): Record<string, string> =>
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
 
-  async turn(step: string, obs: Observation, recent: string[]): Promise<TurnAnswer> {
+  async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
     const targets = { ...refs(obs.elements, "No element on screen helps accomplish `step`."), ...PAGE_ACTIONS };
     const res = await this.#client.systemOne({
       state: { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" },
       questions: {
-        done: noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
+        done: attempt
+          ? noul("Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?")
+          : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
         target: choice("Which element in `ui` should be interacted with next to accomplish `step`?", targets),
       },
     });
