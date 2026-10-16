@@ -9,8 +9,9 @@ export interface Action {
 }
 
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
-// shortcut: long-lived requests (SSE, long polling) and endless animations never go quiet, so every action
-// waits the full cap; ignore such requests by URL/type when a real app needs it.
+// shortcut: long-lived requests (SSE, long polling), intervals and endless animations never go quiet, so every
+// action waits the full cap and failing checks wait WAIT_CAP_MS; ignore such work by URL/type when a real app needs it.
+// Not tracked: Web Workers, and timers inside cross-origin iframes.
 const SETTLE_CAP_MS = 5000; // pages that never go quiet continue after this
 const WAIT_CAP_MS = 5000; // WAIT and assertion retries give up after this
 
@@ -29,12 +30,43 @@ export class Browser {
   static async open(url: string, headed = false): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed });
     const page = await browser.newPage();
-    // Record the time of the last DOM mutation, in every document the page loads.
+    // In every document: the time of the last DOM mutation, and a count of work that can still change the page
+    // on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
     await page.addInitScript(() => {
-      const w = window as unknown as { __lastMutation: number };
+      const w = window as unknown as Window & { __lastMutation: number; __pending: () => number };
       w.__lastMutation = performance.now();
       new MutationObserver(() => { w.__lastMutation = performance.now(); })
         .observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+
+      const timers = new Set<unknown>(), frames = new Set<number>();
+      let sockets = 0;
+      const { setTimeout: st, clearTimeout: ct, setInterval: si, clearInterval: ci, requestAnimationFrame: raf, cancelAnimationFrame: caf } = w;
+      w.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => {
+        const id = st((...a: unknown[]) => { timers.delete(id); if (typeof fn === "function") fn(...a); }, ms, ...args);
+        timers.add(id);
+        return id;
+      }) as typeof setTimeout;
+      w.setInterval = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => {
+        const id = si(fn, ms, ...args);
+        timers.add(id);
+        return id;
+      }) as typeof setInterval;
+      // Browsers let either clear function cancel either kind of timer.
+      w.clearTimeout = w.clearInterval = (id?: number) => { timers.delete(id); ct(id); ci(id); };
+      w.requestAnimationFrame = cb => { const id = raf(t => { frames.delete(id); cb(t); }); frames.add(id); return id; };
+      w.cancelAnimationFrame = id => { frames.delete(id); caf(id); };
+      // any: constructor args are forwarded untouched
+      type Socket = new (...a: any[]) => EventTarget & { readyState: number; close(): void };
+      const g = w as unknown as { WebSocket: Socket; EventSource: Socket };
+      const Ws = g.WebSocket, Es = g.EventSource;
+      g.WebSocket = class extends Ws {
+        constructor(...a: unknown[]) { super(...a); sockets++; this.addEventListener("close", () => sockets--); }
+      };
+      g.EventSource = class extends Es {
+        constructor(...a: unknown[]) { super(...a); sockets++; }
+        close() { if (this.readyState !== 2 /* CLOSED */) sockets--; super.close(); }
+      };
+      w.__pending = () => timers.size + frames.size + sockets;
     });
     const b = new Browser(browser, page);
     await page.goto(url);
@@ -90,17 +122,34 @@ export class Browser {
     await this.settle();
   }
 
-  /** Waits until the Observation differs from `since` (true) or the timeout passes (false). */
+  /**
+   * Waits until the Observation differs from `since` (true), the timeout passes, or the page cannot change on its
+   * own any more (false): no request, timer, animation frame or socket pending on two polls in a row.
+   */
   async waitForChange(since: string, timeoutMs = WAIT_CAP_MS): Promise<boolean> {
     const deadline = Date.now() + timeoutMs;
+    let idleBefore = false;
     while (Date.now() < deadline) {
       await this.page.waitForTimeout(100);
       if ((await this.observe()).text !== since) {
         await this.settle();
         return true;
       }
+      // Two idle polls 100 ms apart: promise chains (e.g. reading a fetch body) finish in between.
+      const idle = await this.idle();
+      if (idle && idleBefore) return false;
+      idleBefore = idle;
     }
     return false;
+  }
+
+  /** True when nothing pending in the page can change it without user input. */
+  private async idle(): Promise<boolean> {
+    if (this.inflight > 0) return false;
+    const pending = await this.page
+      .evaluate(() => (window as unknown as { __pending?: () => number }).__pending?.() ?? 1)
+      .catch(() => 1); // mid-navigation: not idle
+    return pending === 0;
   }
 
   close(): Promise<void> {

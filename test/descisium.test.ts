@@ -180,6 +180,21 @@ test("slow UI: WAIT returns on change, assertions retry until the UI shows the e
   }
 });
 
+test("idle page: a failing check and WAIT give up at once instead of waiting the full cap", async () => {
+  const b = await Browser.open(APP);
+  try {
+    let t = Date.now();
+    const r = await runAssertion(`the status should be "Scheduled"`, b, assessing("value"), () => {});
+    assert.equal(r.outcome, "ASSERTION_FAILED");
+    assert.ok(Date.now() - t < 1500, `failing check took ${Date.now() - t} ms`);
+    t = Date.now();
+    assert.equal(await b.waitForChange((await b.observe()).text), false);
+    assert.ok(Date.now() - t < 1500, `waitForChange on an idle page took ${Date.now() - t} ms`);
+  } finally {
+    await b.close();
+  }
+});
+
 test("runStep refuses low-confidence targets and stops when actions change nothing", async () => {
   const b = await Browser.open(APP);
   const ref = async (name: string) => (await b.observe()).elements.find(e => e.name === name)!.ref;
