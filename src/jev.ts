@@ -1,0 +1,122 @@
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+import type { Element, Observation } from "./observation.ts";
+
+export const MODEL = "jev-1.14.0";
+
+export interface Pick {
+  choice: string;
+  probabilities: Record<string, number>;
+}
+
+export interface TurnAnswer {
+  done: number; // P(step already accomplished)
+  target: Pick; // element ref, a PAGE_ACTIONS key, or "none"
+}
+
+/** Non-element moves offered next to the element refs. */
+export const PAGE_ACTIONS = {
+  scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+  wait: "Wait: `ui` is still loading the needed element.",
+} as const;
+
+export const ASSERTION_KINDS = {
+  value: "Checks that some element shows a specific text or value.",
+  presence: "Checks that something is shown or exists on the page.",
+  absence: "Checks that something is not shown or does not exist on the page.",
+  state: "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+  fuzzy: "A subjective or holistic check that none of the other kinds can express.",
+} as const;
+
+/** State labels Jev can pick; code reads the matching snapshot flag. */
+export const STATES = {
+  disabled: "disabled", enabled: "enabled (not disabled)",
+  checked: "checked", unchecked: "not checked",
+  expanded: "expanded / open", collapsed: "collapsed / closed",
+  selected: "selected", unselected: "not selected",
+  pressed: "pressed / toggled on", unpressed: "not pressed / toggled off",
+} as const;
+
+export interface Assessment {
+  kind: Pick;
+  subject: Pick; // element ref the check is about, or "none"
+  holder?: Pick; // presence/absence: which element containing the quoted text is the thing itself, or "none"
+  state: Pick; // required control state, used by `state` checks
+  judged?: number; // P(step holds), only when asked
+}
+
+/** The decision layer. Jev implements it; tests use a scripted fake. */
+export interface Decider {
+  /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
+  turn(step: string, obs: Observation, recent: string[]): Promise<TurnAnswer>;
+  value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
+  /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
+  /** `mentioned`: elements containing the Step's quoted text (code-filtered), for presence/absence. */
+  assess(step: string, obs: Observation, judged: boolean, mentioned: Element[]): Promise<Assessment>;
+}
+
+const refs = (els: Element[], none: string): Record<string, string> =>
+  ({ ...Object.fromEntries(els.map(e => [e.ref, e.line])), none });
+
+export class JevDecider implements Decider {
+  #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
+
+  async turn(step: string, obs: Observation, recent: string[]): Promise<TurnAnswer> {
+    const targets = { ...refs(obs.elements, "No element on screen helps accomplish `step`."), ...PAGE_ACTIONS };
+    const res = await this.#client.systemOne({
+      state: { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" },
+      questions: {
+        done: noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
+        target: choice("Which element in `ui` should be interacted with next to accomplish `step`?", targets),
+      },
+    });
+    if (res.model !== MODEL) console.warn(`warning: requested ${MODEL}, Jev answered with ${res.model}`);
+    return { done: res.answers.done.noul, target: res.answers.target };
+  }
+
+  async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
+    const criteria: Record<string, string> = Object.fromEntries(candidates.map((c, i) => [`v${i}`, c]));
+    criteria.none = "None of these values is what `step` asks for.";
+    const res = await this.#client.systemOne({
+      state: { step, ui: obs.text, element: el.line },
+      questions: { value: choice("Which value should be entered into `element` to accomplish `step`?", criteria) },
+    });
+    const a = res.answers.value;
+    // Map label keys back to the values so traces and execution use real text.
+    const name = (k: string) => criteria[k] && k !== "none" ? criteria[k] : k;
+    return {
+      choice: name(a.choice),
+      probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
+    };
+  }
+
+  async assess(step: string, obs: Observation, judged: boolean, mentioned: Element[]): Promise<Assessment> {
+    const res = await this.#client.systemOne({
+      state: { check: step, ui: obs.text },
+      questions: {
+        kind: choice("What kind of check is `check`?", ASSERTION_KINDS),
+        subject: choice(
+          "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+          refs(obs.readable, "No element in `ui` is the one `check` is about."),
+        ),
+        state: choice("Which control state does `check` require?", STATES),
+        ...(mentioned.length ? {
+          holder: choice(
+            "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            refs(mentioned, "None of them is that thing itself; they only mention it."),
+          ),
+        } : {}),
+        ...(judged ? { judged: noul("Does `ui` satisfy `check`?") } : {}),
+      },
+    });
+    const a = res.answers as typeof res.answers & { judged?: { noul: number }; holder?: Pick };
+    return { kind: a.kind, subject: a.subject, holder: a.holder, state: a.state, judged: a.judged?.noul };
+  }
+
+}
+
+/** Confidence gate: act only on a clear, confident top answer. */
+export const GATE_TOP = 0.8;
+export function gate(pick: Pick, minTop = GATE_TOP, minMargin = 0.3): boolean {
+  const [top = 0, second = 0] = Object.values(pick.probabilities).sort((a, b) => b - a);
+  return top >= minTop && top - second >= minMargin;
+}

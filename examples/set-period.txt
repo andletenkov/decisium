@@ -1,0 +1,5 @@
+Test: Set activation period
+URL: examples/campaign-app/index.html
+
+When I set the activation period to 2 weeks
+Then the activation period should be "2 weeks"

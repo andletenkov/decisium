@@ -1,0 +1,6 @@
+Test: Status assertion ignores a decoy (expected to FAIL)
+URL: examples/campaign-app/index.html?decoy=1
+
+# The status stays "Draft"; a filter elsewhere says "Scheduled".
+# Correct result: ASSERTION_FAILED. A pass means the subject was picked by text, not meaning.
+Then the campaign status should be "Scheduled"

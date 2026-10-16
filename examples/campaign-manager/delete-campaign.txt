@@ -1,0 +1,6 @@
+Test: Delete a campaign from its actions menu
+URL: http://127.0.0.1:5173/?reset=1
+
+When I open the "Spring Sale" campaign
+And I delete the campaign
+Then "Spring Sale" should not appear in the campaign list

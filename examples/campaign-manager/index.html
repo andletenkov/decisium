@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Campaign manager</title>
+<style>
+  body { font-family: sans-serif; max-width: 48rem; margin: 1rem auto; }
+  nav a { margin-right: 1rem; }
+  label, .field { display: block; margin: .75rem 0; }
+  [hidden] { display: none !important; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border-bottom: 1px solid #ddd; padding: .4rem; text-align: left; }
+  [role=listbox], [role=menu] { border: 1px solid #888; list-style: none; padding: 0; margin: 0; background: #fff; }
+  [role=option], [role=menuitem] { padding: .25rem .5rem; cursor: pointer; }
+  [role=alert] { color: #b00; }
+</style>
+</head>
+<body>
+<!-- Variants (query string, kept across screens): ?dropdown=custom swaps the native period select for an ARIA listbox. -->
+<nav aria-label="Main"><a href="#/campaigns">Campaigns</a><a href="#/calendar">Calendar</a></nav>
+<main id="main"></main>
+<div role="status" id="toast"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const CUSTOM = params.get("dropdown") === "custom";
+const PERIODS = ["1 week", "2 weeks", "3 weeks"];
+const main = document.getElementById("main");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const api = async (path, opts = {}) => {
+  const res = await fetch("/api" + path, { headers: { "content-type": "application/json" }, ...opts });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error);
+  return body;
+};
+const toast = msg => { document.getElementById("toast").textContent = msg; };
+const go = hash => { location.hash = hash; };
+
+const screens = {
+  async campaigns() {
+    main.innerHTML = `<h1>Campaigns</h1><p>Loading campaigns…</p>`;
+    const list = await api("/campaigns");
+    main.innerHTML = `<h1>Campaigns</h1>
+      <button id="new">New campaign</button>
+      <table><thead><tr><th>Name</th><th>Status</th><th>Activation date</th></tr></thead><tbody>
+      ${list.map(c => `<tr><td><a href="#/campaigns/${c.id}">${esc(c.name)}</a></td><td>${c.status}</td><td>${c.date || "—"}</td></tr>`).join("")}
+      </tbody></table>`;
+    document.getElementById("new").onclick = () => go("#/campaigns/new");
+  },
+
+  newCampaign() {
+    main.innerHTML = `<h1>New campaign</h1>
+      <label>Campaign name <input id="name"></label>
+      <label>Activation date <input id="date" type="date"></label>
+      <div class="field" id="period-field"></div>
+      <p role="alert" id="error"></p>
+      <button id="save">Save draft</button> <a href="#/campaigns">Cancel</a>`;
+    const getPeriod = periodControl(document.getElementById("period-field"));
+    document.getElementById("save").onclick = async () => {
+      try {
+        const c = await api("/campaigns", { method: "POST", body: JSON.stringify({
+          name: document.getElementById("name").value, date: document.getElementById("date").value, period: getPeriod(),
+        }) });
+        toast(`Campaign "${c.name}" saved`);
+        go(`#/campaigns/${c.id}`);
+      } catch (e) { document.getElementById("error").textContent = e.message; }
+    };
+  },
+
+  async detail(id) {
+    main.innerHTML = `<p>Loading campaign…</p>`;
+    const c = await api(`/campaigns/${id}`);
+    main.innerHTML = `<h1>${esc(c.name)}</h1>
+      <dl><dt>Status</dt><dd id="status">${c.status}</dd>
+      <dt>Activation date</dt><dd>${c.date || "Not set"}</dd>
+      <dt>Activation period</dt><dd>${c.period}</dd></dl>
+      <p role="alert" id="error"></p>
+      <button id="schedule" ${c.status === "Scheduled" ? "disabled" : ""}>Schedule</button>
+      <button id="more" aria-haspopup="menu" aria-expanded="false">More actions</button>
+      <ul role="menu" id="menu" hidden><li role="menuitem" id="delete">Delete campaign</li></ul>`;
+    const schedule = document.getElementById("schedule");
+    schedule.onclick = async () => {
+      schedule.disabled = true;
+      schedule.textContent = "Scheduling…";
+      try {
+        const updated = await api(`/campaigns/${id}/schedule`, { method: "POST" });
+        document.getElementById("status").textContent = updated.status;
+        schedule.textContent = "Schedule";
+        toast("Campaign scheduled");
+      } catch (e) {
+        document.getElementById("error").textContent = e.message;
+        schedule.disabled = false;
+        schedule.textContent = "Schedule";
+      }
+    };
+    const more = document.getElementById("more"), menu = document.getElementById("menu");
+    more.onclick = () => { menu.hidden = !menu.hidden; more.setAttribute("aria-expanded", String(!menu.hidden)); };
+    document.getElementById("delete").onclick = async () => {
+      await api(`/campaigns/${id}`, { method: "DELETE" });
+      toast(`Campaign "${c.name}" deleted`);
+      go("#/campaigns");
+    };
+  },
+
+  async calendar() {
+    main.innerHTML = `<h1>Calendar</h1><p>Loading calendar…</p>`;
+    const scheduled = (await api("/campaigns")).filter(c => c.status === "Scheduled").sort((a, b) => a.date.localeCompare(b.date));
+    main.innerHTML = `<h1>Calendar</h1>` + (scheduled.length
+      ? `<ul aria-label="Scheduled campaigns">${scheduled.map(c => `<li>${c.date}: ${esc(c.name)} (${c.period})</li>`).join("")}</ul>`
+      : `<p>No scheduled campaigns</p>`);
+  },
+};
+
+function periodControl(field) {
+  if (!CUSTOM) {
+    field.innerHTML = `<label>Activation period <select id="period">${PERIODS.map(p => `<option>${p}</option>`).join("")}</select></label>`;
+    return () => document.getElementById("period").value;
+  }
+  field.innerHTML = `<span id="period-label">Activation period</span>
+    <div id="period" role="combobox" tabindex="0" aria-labelledby="period-label" aria-expanded="false" aria-controls="period-list">${PERIODS[0]}</div>
+    <ul id="period-list" role="listbox" aria-labelledby="period-label" hidden>
+      ${PERIODS.map(p => `<li role="option" aria-selected="${p === PERIODS[0]}">${p}</li>`).join("")}</ul>`;
+  const box = field.querySelector("#period"), list = field.querySelector("#period-list");
+  const toggle = open => { list.hidden = !open; box.setAttribute("aria-expanded", String(open)); };
+  box.onclick = () => toggle(list.hidden);
+  list.onclick = e => {
+    const opt = e.target.closest("[role=option]");
+    if (!opt) return;
+    list.querySelectorAll("[role=option]").forEach(o => o.setAttribute("aria-selected", String(o === opt)));
+    box.textContent = opt.textContent;
+    toggle(false);
+  };
+  return () => box.textContent;
+}
+
+function route() {
+  const hash = location.hash || "#/campaigns";
+  const m = /^#\/campaigns\/(\d+)$/.exec(hash);
+  const render = hash === "#/campaigns/new" ? screens.newCampaign()
+    : m ? screens.detail(m[1])
+    : hash === "#/calendar" ? screens.calendar()
+    : screens.campaigns();
+  Promise.resolve(render).catch(e => { main.innerHTML = `<p role="alert">${esc(e.message)}</p>`; });
+}
+
+window.addEventListener("hashchange", route);
+(params.get("reset") ? api("/reset", { method: "POST" }) : Promise.resolve()).then(route);
+</script>
+</body>
+</html>
