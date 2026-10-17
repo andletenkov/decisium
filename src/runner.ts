@@ -37,6 +37,13 @@ const STATE_FLAG: Record<keyof typeof STATES, [flag: string, on: boolean]> = {
   selected: ["selected", true], unselected: ["selected", false],
   pressed: ["pressed", true], unpressed: ["pressed", false],
 };
+// Roles that can carry each ARIA state (WAI-ARIA 1.2). `disabled` applies to any control, so it has no entry.
+const STATE_ROLES: Record<string, string[]> = {
+  checked: ["checkbox", "radio", "switch", "menuitemcheckbox", "menuitemradio", "option", "treeitem"],
+  selected: ["option", "tab", "row", "gridcell", "columnheader", "rowheader", "treeitem"],
+  expanded: ["button", "combobox", "link", "menuitem", "tab", "treeitem", "row", "gridcell", "rowheader", "checkbox", "listbox", "application"],
+  pressed: ["button"],
+};
 const JUDGED_THRESHOLD = 0.8;
 
 /**
@@ -75,14 +82,17 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
       plausible.push(kind);
       covered += p;
     }
-    const results = plausible.map(kind => ({ kind, ...evaluate(kind, a, obs, values, mentioned, log) }));
+    // A reading that does not apply to the element Jev picked (e.g. "selected" on a combobox) carries no evidence.
+    const all = plausible.map(kind => ({ kind, ...evaluate(kind, a, obs, values, mentioned, log) }));
+    const results = all.filter(r => !r.inapplicable);
+    if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map(r => r.reason).join("; ") };
     const first = results[0];
     if (results.every(r => r.outcome === first.outcome)) return first;
     return { outcome: "AMBIGUOUS", reason: `plausible kinds disagree: ${results.map(r => `${r.kind}->${r.outcome}`).join(", ")}` };
   }
 }
 
-type Verdict = { outcome: StepOutcome; reason?: string };
+type Verdict = { outcome: StepOutcome; reason?: string; inapplicable?: true };
 
 /** Pass/fail for one kind of check, decided by code from the elements Jev identified. */
 function evaluate(kind: string, a: Assessment, obs: Observation, values: string[], mentioned: Element[], log: typeof console.log): Verdict {
@@ -115,6 +125,9 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     const el = obs.readable.find(e => e.ref === a.subject.choice);
     if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `ref ${a.subject.choice} not in observation` };
     const [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
+    if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role)) {
+      return { outcome: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
+    }
     const has = el.state.split(/\s+/).includes(`[${flag}]`);
     log(`  Compare: ${flag}=${has}, expected ${on}`);
     return has === on ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `expected ${a.state.choice}, ${el.line}` };

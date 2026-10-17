@@ -181,6 +181,21 @@ test("runAssertion: presence, absence, state and judged checks", async () => {
   }
 });
 
+test("runAssertion: a state reading that cannot apply to the element drops out (native select)", async () => {
+  const b = await Browser.open(APP); // native select, "1 week" selected
+  try {
+    const period = (obs: Observation) => obs.readable.find(e => e.role === "combobox")!.ref;
+    // Live Jev splits "should be "<value>"" on a native select between value and "selected" (its options show [selected]).
+    const split = (probabilities: Record<string, number>) =>
+      assessing("value", obs => ({ kind: { choice: "value", probabilities }, subject: sure(period(obs)), state: sure("selected") }));
+    const run = (d: Decider) => runAssertion(`the activation period should be "1 week"`, b, d, () => {}).then(r => r.outcome);
+    assert.equal(await run(split({ value: 0.66, state: 0.34 })), "PASSED"); // was AMBIGUOUS: value->PASSED vs state->ASSERTION_FAILED
+    assert.equal(await run(split({ state: 0.9, value: 0.1 })), "UNVERIFIABLE"); // only the inapplicable reading: no evidence
+  } finally {
+    await b.close();
+  }
+});
+
 test("slow UI: WAIT returns on change, assertions retry until the UI shows the expected state", async () => {
   const b = await Browser.open(APP + "?slow=1");
   try {
