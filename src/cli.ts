@@ -4,17 +4,18 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { Browser } from "./browser.ts";
+import { parseFeature, parseStep, type Scenario } from "./feature.ts";
 import { JevDecider, MODEL } from "./jev.ts";
 import { runAssertion, runStep } from "./runner.ts";
-import { parseTestFile, type ParsedStep } from "./testfile.ts";
 
 const USAGE = `Usage:
-  descisium step "<step text>" --url <url|file> [--headed] [--judged]
-  descisium run <test-file> [--url <url|file>] [--headed] [--judged]
+  descisium step "<step>" --url <url|file> [--headed] [--judged]
+  descisium run <file.feature> [--url <url|file>] [--headed] [--judged]
 
+The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags).
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 
-Exit codes: 0 passed, 1 test failed, 2 configuration/infrastructure error.`;
+Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`;
 
 // Local paths keep their ?query (e.g. index.html?decoy=1) instead of having it encoded into the file name.
 const toUrl = (u: string) => {
@@ -30,39 +31,48 @@ async function main(): Promise<number> {
     options: { url: { type: "string" }, headed: { type: "boolean", default: false }, judged: { type: "boolean", default: false } },
   });
   const [cmd, arg] = positionals;
-  let steps: ParsedStep[];
-  let url = values.url;
-
-  if (cmd === "step" && arg) steps = parseTestFile(arg).steps; // "Then ..." / "Attempt ..." set the Step kind
-  else if (cmd === "run" && arg) {
-    if (!existsSync(arg)) { console.error(`File not found: ${arg}`); return 2; }
-    const file = parseTestFile(readFileSync(arg, "utf8"));
-    if (file.name) console.log(`Test: ${file.name}`);
-    steps = file.steps;
-    url ??= file.url;
-  } else {
-    console.error(USAGE);
+  let scenarios: Scenario[];
+  try {
+    if (cmd === "step" && arg) scenarios = [{ name: "step", steps: [parseStep(arg)] }];
+    else if (cmd === "run" && arg) {
+      if (!existsSync(arg)) { console.error(`File not found: ${arg}`); return 2; }
+      scenarios = parseFeature(readFileSync(arg, "utf8"), arg);
+    } else {
+      console.error(USAGE);
+      return 2;
+    }
+  } catch (err) {
+    console.error((err as Error).message);
     return 2;
   }
-  if (!steps.length) { console.error("No steps found."); return 2; }
-  if (!url) { console.error("No start URL: pass --url or add a `URL:` line.\n\n" + USAGE); return 2; }
+  const missingUrl = scenarios.find(s => !(values.url ?? s.url));
+  if (missingUrl) { console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${USAGE}`); return 2; }
   if (!process.env.TYPESAFE_API_KEY) { console.error("TYPESAFE_API_KEY is not set."); return 2; }
 
-  console.log(`Model: ${MODEL}  URL: ${url}`);
-  const browser = await Browser.open(toUrl(url), values.headed);
+  console.log(`Model: ${MODEL}`);
   const decider = new JevDecider();
-  try {
-    for (const step of steps) {
-      const r = step.kind === "assertion"
-        ? await runAssertion(step.text, browser, decider, console.log, values.judged)
-        : await runStep(step.text, browser, decider, console.log, step.kind === "attempt");
-      if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) { console.log(`\nFAILED at: ${step.text}`); return 1; }
+  const failed: string[] = [];
+  for (const scenario of scenarios) {
+    const url = values.url ?? scenario.url!;
+    console.log(`\n=== Scenario: ${scenario.name}  (${url})`);
+    const browser = await Browser.open(toUrl(url), values.headed); // fresh browser per scenario: no shared state
+    try {
+      for (const step of scenario.steps) {
+        const r = step.kind === "assertion"
+          ? await runAssertion(step.text, browser, decider, console.log, values.judged)
+          : await runStep(step.text, browser, decider, console.log, step.kind === "attempt");
+        if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
+          console.log(`\nFAILED at: ${step.text}`);
+          failed.push(scenario.name);
+          break;
+        }
+      }
+    } finally {
+      await browser.close();
     }
-    console.log("\nPASSED");
-    return 0;
-  } finally {
-    await browser.close();
   }
+  console.log(`\n${scenarios.length - failed.length}/${scenarios.length} scenarios passed${failed.length ? `; failed: ${failed.join(", ")}` : ""}`);
+  return failed.length ? 1 : 0;
 }
 
 main().then(code => process.exit(code), err => { console.error(err); process.exit(2); });

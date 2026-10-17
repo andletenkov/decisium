@@ -5,7 +5,7 @@ import { Browser } from "../src/browser.ts";
 import { gate, JevDecider, type Assessment, type Decider, type Pick } from "../src/jev.ts";
 import { MASK, parseSnapshot, stepValues, type Observation } from "../src/observation.ts";
 import { containsValue, runAssertion, runStep } from "../src/runner.ts";
-import { parseTestFile } from "../src/testfile.ts";
+import { parseFeature, parseStep } from "../src/feature.ts";
 
 const APP = pathToFileURL("examples/campaign-app/index.html").href;
 
@@ -68,12 +68,40 @@ test("gate needs a confident top answer with margin", () => {
   assert.ok(!gate(p({ a: 0.5, b: 0.45 })));
 });
 
-test("parseTestFile classifies Then/And as assertions and Attempt lines as attempts", () => {
-  const f = parseTestFile(`Test: T\nURL: http://x\n# c\nWhen I do a\nAnd b\nThen c is "X"\nAnd d`);
-  assert.equal(f.url, "http://x");
-  assert.deepEqual(f.steps.map(s => [s.text, s.kind]), [["I do a", "action"], ["b", "action"], ["c is \"X\"", "assertion"], ["d", "assertion"]]);
-  const g = parseTestFile(`Then x is "1"\nAttempt to schedule it\nAnd open it\nThen y is "2"`);
-  assert.deepEqual(g.steps.map(s => [s.text, s.kind]), [["x is \"1\"", "assertion"], ["Attempt to schedule it", "attempt"], ["open it", "action"], ["y is \"2\"", "assertion"]]);
+test("parseFeature: Then/And are assertions, try/attempt are attempts, Background and Outline rows expand", () => {
+  const scenarios = parseFeature(`@url:http://feature
+Feature: F
+  Background:
+    Given I am on the list
+  Scenario: one
+    When I open it
+    And I try to schedule it
+    Then the status is "Draft"
+    And the button is disabled
+    When I go back
+  @url:http://scenario
+  Scenario Outline: two <n>
+    When I attempt <n>
+    Examples:
+      | n |
+      | a |
+      | b |
+`);
+  assert.deepEqual(scenarios.map(s => [s.name, s.url]), [["one", "http://feature"], ["two a", "http://scenario"], ["two b", "http://scenario"]]);
+  assert.deepEqual(scenarios[0].steps.map(s => [s.text, s.kind]), [
+    ["I am on the list", "action"], ["I open it", "action"], ["I try to schedule it", "attempt"],
+    ["the status is \"Draft\"", "assertion"], ["the button is disabled", "assertion"], ["I go back", "action"],
+  ]);
+  assert.deepEqual(scenarios[2].steps.map(s => s.kind), ["action", "attempt"]);
+  assert.deepEqual(parseStep(`Then the status should be "Draft"`), { text: `the status should be "Draft"`, kind: "assertion" });
+  assert.deepEqual(parseStep(`set the period to 2 weeks`), { text: "set the period to 2 weeks", kind: "action" });
+});
+
+test("parseFeature rejects what it cannot run faithfully", () => {
+  assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    When I create:\n      | a |\n`), /data table or doc string/);
+  // A keyword-less line is Gherkin "description": without the guard the scenario would pass with no steps.
+  assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    Attempt to schedule\n`), /has no steps/);
+  assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    When x\n  Scenario s2\n`), /Parser errors|expected/i);
 });
 
 // Scripted stand-in for Jev: exercises the browser runtime and loop without the API.
