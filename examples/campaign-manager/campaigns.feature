@@ -20,9 +20,7 @@ Feature: Campaign manager (multi-screen; start with `npm run example:server`)
     Then the error should say "Set an activation date before scheduling"
     And the campaign status should be "Draft"
 
-  # Known limit: the last check ends AMBIGUOUS (a toast mentions "Spring Sale"; Jev is ~75/25 unsure whether it
-  # counts). Kept as a regression marker; see docs/tasks/0003-scoped-presence-checks.md. A PASS without a
-  # deliberate design change means something changed unexpectedly.
+  # The toast still mentions "Spring Sale"; the check is scoped to the list (task 0003).
   Scenario: Delete a campaign from its actions menu
     When I open the "Spring Sale" campaign
     And I delete the campaign

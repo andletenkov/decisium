@@ -19,7 +19,11 @@ Feature: Scoped presence probes (every check here should FAIL)
     And I open the calendar
     Then "Summer Sale" should be listed among the scheduled campaigns
 
-  # False pass today (task 0003): Jev accepts the detail heading as the campaign list.
+  # Was a false pass before task 0003: Jev accepted the detail heading as the campaign list.
   Scenario: List check on the detail screen
     When I open the "Spring Sale" campaign
     Then the campaign list should contain "Spring Sale"
+
+  Scenario: "I should see" wording on the detail screen
+    When I open the "Spring Sale" campaign
+    Then I should see "Spring Sale" in the list of campaigns

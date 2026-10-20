@@ -1,5 +1,5 @@
 import type { Action } from "./browser.ts";
-import { gate, GATE_TOP, PAGE_ACTIONS, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
+import { AREA_MISSING, AREA_PAGE, gate, GATE_TOP, PAGE_ACTIONS, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
 import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -70,20 +70,12 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   }
 
   async function check(obs: Observation): Promise<Verdict> {
-    const mentioned = values.length ? obs.readable.filter(e => values.every(v => containsValue(`${e.name} ${e.value}`, v))) : [];
-    const a = await decider.assess(step, obs, judged, mentioned);
+    const a = await decider.assess(step, obs, judged);
     log(`  Kind: ${fmt(a.kind)}`);
     // Gate on the result, not the label: evaluate every plausible kind (most likely first, until they
     // cover the gate's confidence) and accept only if they all reach the same outcome.
-    const plausible: string[] = [];
-    let covered = 0;
-    for (const [kind, p] of Object.entries(a.kind.probabilities).sort((x, y) => y[1] - x[1])) {
-      if (covered >= GATE_TOP) break;
-      plausible.push(kind);
-      covered += p;
-    }
     // A reading that does not apply to the element Jev picked (e.g. "selected" on a combobox) carries no evidence.
-    const all = plausible.map(kind => ({ kind, ...evaluate(kind, a, obs, values, mentioned, log) }));
+    const all = plausible(a.kind).map(kind => ({ kind, ...evaluate(kind, a, obs, values, log) }));
     const results = all.filter(r => !r.inapplicable);
     if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map(r => r.reason).join("; ") };
     const first = results[0];
@@ -92,10 +84,22 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   }
 }
 
+/** Most likely answers first, until together they cover the gate's confidence. */
+function plausible(pick: Pick): string[] {
+  const out: string[] = [];
+  let covered = 0;
+  for (const [k, p] of Object.entries(pick.probabilities).sort((x, y) => y[1] - x[1])) {
+    if (covered >= GATE_TOP) break;
+    out.push(k);
+    covered += p;
+  }
+  return out;
+}
+
 type Verdict = { outcome: StepOutcome; reason?: string; inapplicable?: true };
 
 /** Pass/fail for one kind of check, decided by code from the elements Jev identified. */
-function evaluate(kind: string, a: Assessment, obs: Observation, values: string[], mentioned: Element[], log: typeof console.log): Verdict {
+function evaluate(kind: string, a: Assessment, obs: Observation, values: string[], log: typeof console.log): Verdict {
   if (kind === "fuzzy") {
     if (a.judged === undefined) return { outcome: "UNVERIFIABLE", reason: "fuzzy check; rerun with --judged to let Jev judge it" };
     log(`  Judged: p=${a.judged.toFixed(2)}`);
@@ -106,16 +110,28 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
 
   if (kind === "presence" || kind === "absence") {
     if (!values.length) return { outcome: "UNVERIFIABLE", reason: "a presence check needs a quoted value" };
-    // No element even contains the quoted text: decided by code alone. Otherwise Jev says whether one of
-    // those elements is the thing itself (not, say, a message that mentions it).
-    let found = false;
-    if (mentioned.length && a.holder) {
-      log(`  Holder: ${fmt(a.holder)}`);
-      if (!gate(a.holder)) return { outcome: "AMBIGUOUS", reason: `holder unclear (${fmt(a.holder)})` };
-      found = a.holder.choice !== "none";
+    // Jev names the area the check is scoped to; code looks for the quoted text inside it. As with kinds, every
+    // plausible area is checked and they must agree. A text that is nowhere on the page is decided by code alone.
+    const has = (text: string) => values.every(v => containsValue(text, v));
+    let where = "the page";
+    let found = has(obs.pageText);
+    if (found) {
+      log(`  Area: ${fmt(a.area)}`);
+      const seen = new Map<boolean, string>();
+      for (const ref of plausible(a.area)) {
+        if (ref === AREA_PAGE) seen.set(true, "the page");
+        else if (ref === AREA_MISSING) seen.set(false, "the named area (not on screen)");
+        else {
+          const el = obs.areas.find(e => e.ref === ref);
+          if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `ref ${ref} not in observation` };
+          seen.set(has(el.text), el.line);
+        }
+      }
+      if (seen.size > 1) return { outcome: "AMBIGUOUS", reason: `plausible areas disagree (${fmt(a.area)})` };
+      [[found, where]] = seen;
     }
     const pass = found === (kind === "presence");
-    return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: found ? `found ${a.holder!.choice}, expected none` : "no matching element" };
+    return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `${found ? "found" : "not found"} in ${where}` };
   }
 
   if (kind === "state") {

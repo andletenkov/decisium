@@ -12,12 +12,15 @@ export interface Element {
   line: string; // compact one-line description shown to Jev
   verb: Verb;
   options: string[]; // native <select> options (they carry no refs)
+  text: string; // own name/value plus every descendant's, for scoped presence checks
 }
 
 export interface Observation {
   text: string; // filtered snapshot, the state Jev reads
   elements: Element[]; // actionable candidates only
   readable: Element[]; // every ref'd node with text, for Assertion steps
+  areas: Element[]; // ref'd nodes with children (lists, tables, regions): where a presence check can look
+  pageText: string; // all visible names and values
 }
 
 const ACTIONABLE = new Set([
@@ -35,6 +38,9 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
   const elements: Element[] = [];
   const readable: Element[] = [];
   const kept: string[] = [];
+  const areas = new Set<Element>();
+  const open: { el: Element; indent: number }[] = []; // ancestors of the current line, by indentation
+  let pageText = "";
   let lastCombobox: { el: Element; indent: number } | undefined;
 
   for (const raw of snapshot.split("\n")) {
@@ -54,9 +60,13 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     }
     // Drop nameless structural wrappers; keep their children.
     if (role === "generic" && !name && !value) continue;
+    while (open.length && open.at(-1)!.indent >= indent.length) open.pop();
+    const words = [name, value].filter(Boolean).join(" ");
+    pageText += words + "\n";
+    for (const o of open) { o.el.text += " " + words; areas.add(o.el); }
     kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : raw);
 
-    if (!ref || !(ACTIONABLE.has(role) || name || value)) continue;
+    if (!ref) continue;
     const state = attrs.replace(/\s*\[ref=\w+\]/, "").trim();
     const el: Element = {
       ref, role, name, value, state, secret,
@@ -64,16 +74,19 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       // shortcut: editable (autocomplete) comboboxes get CLICK, not TYPE; detect via DOM when a real app needs it.
       verb: TYPEABLE.has(role) ? "TYPE" : "CLICK",
       options: [],
+      text: words,
     };
+    open.push({ el, indent: indent.length });
+    if (!(ACTIONABLE.has(role) || name || value)) continue;
     readable.push(el);
     if (ACTIONABLE.has(role) && !/\[disabled\]/.test(attrs)) elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
-  for (const el of readable) {
+  for (const el of [...readable, ...areas]) {
     if (el.options.length) el.verb = "SELECT";
     el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${el.value ? ` value="${el.value}"` : ""}${el.state ? " " + el.state : ""}`;
   }
-  return { text: kept.join("\n"), elements, readable };
+  return { text: kept.join("\n"), elements, readable, areas: [...areas], pageText };
 }
 
 /** Double-quoted strings in a Step. Single quotes are left alone so apostrophes ("campaign's") don't open a quote. */

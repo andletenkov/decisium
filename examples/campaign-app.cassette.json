@@ -119,18 +119,18 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.98
+            "noul": 0.97
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.84,
+            "confidence": 0.76,
             "probabilities": {
-              "e5": 0.06,
+              "e5": 0.13,
               "e8": 0,
               "e9": 0.03,
               "e10": 0.05,
-              "none": 0.86,
+              "none": 0.79,
               "scroll": 0,
               "wait": 0
             }
@@ -265,13 +265,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.63,
+            "confidence": 0.66,
             "probabilities": {
               "e5": 0,
-              "e8": 0.24,
-              "e9": 0.07,
+              "e8": 0.19,
+              "e9": 0.09,
               "e10": 0.01,
-              "none": 0.68,
+              "none": 0.71,
               "scroll": 0,
               "wait": 0
             }
@@ -364,18 +364,18 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.95
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.79,
+            "confidence": 0.77,
             "probabilities": {
               "e5": 0,
               "e8": 0,
-              "e9": 0.18,
+              "e9": 0.2,
               "e10": 0,
-              "none": 0.82,
+              "none": 0.8,
               "scroll": 0,
               "wait": 0
             }
@@ -383,7 +383,7 @@
         }
       }
     },
-    "03ccf39fa953eb19ba88894bc24c93fb2dc158b850c43fee5df6ef35844ea4a1": {
+    "78066edc8f1bebd9cd58fa840ef711cfef9a6ca34b1206004008f6106518a633": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Scheduled\"",
@@ -430,12 +430,13 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e11": "paragraph value=\"Status: Scheduled\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "heading \"New campaign\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -446,12 +447,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.97,
+            "confidence": 0.99,
             "probabilities": {
-              "value": 0.98,
+              "value": 0.99,
               "presence": 0,
               "absence": 0,
-              "state": 0.02,
+              "state": 0.01,
               "fuzzy": 0
             }
           },
@@ -472,27 +473,28 @@
           "state": {
             "type": "choice",
             "choice": "enabled",
-            "confidence": 0.34,
+            "confidence": 0.39,
             "probabilities": {
-              "disabled": 0.03,
-              "enabled": 0.41,
-              "checked": 0.12,
-              "unchecked": 0.01,
+              "disabled": 0.02,
+              "enabled": 0.45,
+              "checked": 0.08,
+              "unchecked": 0,
               "expanded": 0.01,
               "collapsed": 0.01,
-              "selected": 0.38,
-              "unselected": 0.01,
+              "selected": 0.41,
+              "unselected": 0,
               "pressed": 0.01,
               "unpressed": 0.01
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e11",
-            "confidence": 0.94,
+            "choice": "page",
+            "confidence": 0.89,
             "probabilities": {
-              "e11": 0.97,
-              "none": 0.03
+              "e2": 0.04,
+              "page": 0.9299999999999999,
+              "missing": 0.03
             }
           }
         }
@@ -625,13 +627,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.64,
+            "confidence": 0.7,
             "probabilities": {
               "e5": 0,
-              "e8": 0.19,
-              "e9": 0.11,
+              "e8": 0.16,
+              "e9": 0.09,
               "e10": 0.01,
-              "none": 0.69,
+              "none": 0.74,
               "scroll": 0,
               "wait": 0
             }
@@ -639,7 +641,7 @@
         }
       }
     },
-    "5df77e8cfc8d51dc9d41b8256de92ed545847acaae4eb6dcbd14b5859a3fb438": {
+    "7300754885e88601ebbbd6aba997dada81e0333f77241f151aaab43a68afb57e": {
       "request": {
         "state": {
           "check": "the activation period should be \"2 weeks\"",
@@ -686,12 +688,13 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "heading \"New campaign\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -702,12 +705,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.52,
+            "confidence": 0.54,
             "probabilities": {
-              "value": 0.62,
+              "value": 0.63,
               "presence": 0,
               "absence": 0,
-              "state": 0.38,
+              "state": 0.37,
               "fuzzy": 0
             }
           },
@@ -742,19 +745,20 @@
               "unpressed": 0
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e8",
-            "confidence": 0.88,
+            "choice": "page",
+            "confidence": 0.73,
             "probabilities": {
-              "e8": 0.94,
-              "none": 0.06
+              "e2": 0.11,
+              "page": 0.82,
+              "missing": 0.07
             }
           }
         }
       }
     },
-    "f4f18f5fdf8d8258eea35698bb309a4bd90d063f7bcaa30fdbf7d9d6eef04c76": {
+    "38890b908bbc196fdb7c044d3cd95a034244daa65038d91bf0f900cba1e1188e": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Scheduled\"",
@@ -802,12 +806,14 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e13": "combobox \"Show campaigns\" value=\"Scheduled\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "heading \"New campaign\" [level=1]",
+              "e11": "paragraph value=\"Status: Draft\"",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -849,23 +855,25 @@
             "probabilities": {
               "disabled": 0,
               "enabled": 0.02,
-              "checked": 0.03,
+              "checked": 0.04,
               "unchecked": 0.01,
               "expanded": 0,
               "collapsed": 0,
               "selected": 0.86,
-              "unselected": 0.08,
+              "unselected": 0.07,
               "pressed": 0,
               "unpressed": 0
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "none",
-            "confidence": 0.52,
+            "choice": "e11",
+            "confidence": 0.55,
             "probabilities": {
-              "e13": 0.24,
-              "none": 0.76
+              "e2": 0.01,
+              "e11": 0.66,
+              "page": 0.33,
+              "missing": 0
             }
           }
         }

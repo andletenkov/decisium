@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { Browser } from "../src/browser.ts";
 import { gate, JevDecider, type Assessment, type Decider, type Pick } from "../src/jev.ts";
 import { MASK, parseSnapshot, stepValues, type Observation } from "../src/observation.ts";
-import { containsValue, runAssertion, runStep } from "../src/runner.ts";
+import { containsValue, runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
 
 const APP = pathToFileURL("examples/campaign-app/index.html").href;
@@ -127,10 +127,9 @@ const oracle: Decider = {
 // Scripted assessment: answers what a correct model would.
 const assessing = (kind: string, pick: (obs: Observation) => Partial<Assessment> = () => ({}), judged?: number): Decider => ({
   ...oracle,
-  async assess(_step, obs, wantJudged, mentioned) {
-    const status = obs.readable.find(e => e.role === "paragraph")!.ref;
-    const holder = sure(mentioned[0]?.ref ?? "none");
-    return { kind: sure(kind), subject: sure(status), holder, state: sure("disabled"), judged: wantJudged ? judged : undefined, ...pick(obs) };
+  async assess(_step, obs, wantJudged) {
+    const status = obs.readable.find(e => e.role === "paragraph")?.ref ?? "none";
+    return { kind: sure(kind), subject: sure(status), area: sure("page"), state: sure("disabled"), judged: wantJudged ? judged : undefined, ...pick(obs) };
   },
 });
 const byName = (name: string) => (obs: Observation) => ({ subject: sure(obs.readable.find(e => e.name === name)?.ref ?? "none") });
@@ -299,4 +298,27 @@ test("cassette replays identical requests, fails UI_CHANGED with the difference,
 
   const other = new Cassette(path, "m2", "none");
   await assert.rejects(other.call(req("a\nb"), live), UiChanged);
+});
+
+test("scoped presence: code looks for the quoted text inside the area Jev names", async () => {
+  const obs = parseSnapshot([
+    `- heading "Spring Sale" [level=1] [ref=e1]`,
+    `- list "Scheduled campaigns" [ref=e2]:`,
+    `  - listitem [ref=e3]: "2026-12-01: Winter Sale"`,
+    `- status [ref=e4]: Campaign "Summer Sale" saved`,
+  ].join("\n"));
+  assert.deepEqual(obs.areas.map(e => e.ref), ["e2"]);
+  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const run = (s: string, kind: string, area: string) =>
+    runAssertion(s, rt, assessing(kind, () => ({ area: sure(area) })), () => {}).then(r => r.outcome);
+  assert.equal(await run(`"Winter Sale" should appear in the calendar`, "presence", "e2"), "PASSED");
+  assert.equal(await run(`"Summer Sale" should appear in the calendar`, "presence", "e2"), "ASSERTION_FAILED"); // only the toast mentions it
+  assert.equal(await run(`the campaign list should contain "Spring Sale"`, "presence", "missing"), "ASSERTION_FAILED"); // heading, no list
+  assert.equal(await run(`"Spring Sale" should not appear in the campaign list`, "absence", "missing"), "PASSED");
+  assert.equal(await run(`"Summer Sale" is shown`, "presence", "page"), "PASSED");
+  // Unsure which area: fine when the plausible areas agree, AMBIGUOUS when they don't.
+  const split = (probabilities: Record<string, number>) => assessing("presence", () => ({ area: { choice: "", probabilities } }));
+  const go = (s: string, d: Decider) => runAssertion(s, rt, d, () => {}).then(r => r.outcome);
+  assert.equal(await go(`"Winter Sale" should appear in the calendar`, split({ e2: 0.6, page: 0.4 })), "PASSED");
+  assert.equal(await go(`the campaign list should contain "Spring Sale"`, split({ missing: 0.6, page: 0.4 })), "AMBIGUOUS");
 });

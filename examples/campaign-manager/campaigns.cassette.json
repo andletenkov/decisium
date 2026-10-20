@@ -96,15 +96,15 @@
           "target": {
             "type": "choice",
             "choice": "e27",
-            "confidence": 0.69,
+            "confidence": 0.71,
             "probabilities": {
               "e3": 0.01,
               "e4": 0,
-              "e27": 0.72,
+              "e27": 0.74,
               "e29": 0.01,
               "e32": 0,
-              "e33": 0.06,
-              "e34": 0.01,
+              "e33": 0.05,
+              "e34": 0,
               "none": 0.17,
               "scroll": 0,
               "wait": 0.02
@@ -148,7 +148,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.02
+            "noul": 0.01
           },
           "target": {
             "type": "choice",
@@ -245,18 +245,18 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.64,
+            "confidence": 0.69,
             "probabilities": {
-              "e3": 0.01,
+              "e3": 0,
               "e4": 0,
-              "e27": 0.04,
-              "e29": 0.05,
+              "e27": 0.07,
+              "e29": 0.03,
               "e32": 0,
-              "e33": 0.21,
+              "e33": 0.18,
               "e34": 0,
-              "none": 0.68,
+              "none": 0.72,
               "scroll": 0,
-              "wait": 0.01
+              "wait": 0
             }
           }
         }
@@ -395,21 +395,21 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.93
+            "noul": 0.95
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.53,
+            "confidence": 0.51,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
-              "e29": 0.1,
+              "e29": 0.09,
               "e32": 0.01,
-              "e33": 0.31,
+              "e33": 0.33,
               "e34": 0,
-              "none": 0.58,
+              "none": 0.56,
               "scroll": 0,
               "wait": 0
             }
@@ -548,21 +548,21 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.94
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.59,
+            "confidence": 0.56,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
               "e29": 0,
               "e32": 0.28,
-              "e33": 0.09,
+              "e33": 0.12,
               "e34": 0,
-              "none": 0.63,
+              "none": 0.6,
               "scroll": 0,
               "wait": 0
             }
@@ -661,26 +661,26 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.95
+            "noul": 0.97
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.91,
+            "confidence": 0.92,
             "probabilities": {
-              "e3": 0.01,
+              "e3": 0,
               "e4": 0,
-              "e43": 0.02,
-              "e44": 0.03,
-              "none": 0.92,
+              "e43": 0.01,
+              "e44": 0.04,
+              "none": 0.93,
               "scroll": 0.01,
-              "wait": 0.01
+              "wait": 0
             }
           }
         }
       }
     },
-    "42cba42002bff5915bc0140f5f548c40fd732791f9f8648ca9b0dd60f0e787ef": {
+    "f3ad1022c3018bd4de05f3f12cf8fb520311bedace98d553606229162e246956": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Draft\"",
@@ -734,12 +734,15 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e38": "definition value=\"Draft\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e35": "heading \"Winter Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -783,27 +786,30 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.42,
+            "confidence": 0.38,
             "probabilities": {
-              "disabled": 0.01,
-              "enabled": 0.18,
-              "checked": 0.48,
+              "disabled": 0.03,
+              "enabled": 0.23,
+              "checked": 0.44,
               "unchecked": 0.03,
-              "expanded": 0.04,
+              "expanded": 0.03,
               "collapsed": 0.01,
-              "selected": 0.22,
-              "unselected": 0.01,
-              "pressed": 0.01,
+              "selected": 0.2,
+              "unselected": 0.02,
+              "pressed": 0,
               "unpressed": 0.01
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e38",
-            "confidence": 0.96,
+            "choice": "e5",
+            "confidence": 0.5,
             "probabilities": {
-              "e38": 0.98,
-              "none": 0.02
+              "e2": 0,
+              "e5": 0.6,
+              "e35": 0.06,
+              "page": 0.33,
+              "missing": 0.01
             }
           }
         }
@@ -841,7 +847,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.12
+            "noul": 0.09
           },
           "target": {
             "type": "choice",
@@ -893,7 +899,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
@@ -911,7 +917,7 @@
         }
       }
     },
-    "21e8382744f9fde39affb3c9ba0720755ca00ee1431371fda3fe37ab61528678": {
+    "ad336ca089566dee2ba0e6c33ecfe33aaa311e14a7f6e26a580f52d48f10477d": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Scheduled\"",
@@ -965,13 +971,15 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e38": "definition value=\"Scheduled\"",
-              "e45": "status value=\"Campaign scheduled\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e35": "heading \"Winter Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -1015,34 +1023,36 @@
           "state": {
             "type": "choice",
             "choice": "disabled",
-            "confidence": 0.41,
+            "confidence": 0.4,
             "probabilities": {
-              "disabled": 0.47,
-              "enabled": 0.12,
-              "checked": 0.25,
+              "disabled": 0.46,
+              "enabled": 0.13,
+              "checked": 0.26,
               "unchecked": 0.01,
               "expanded": 0.01,
-              "collapsed": 0,
-              "selected": 0.11,
+              "collapsed": 0.01,
+              "selected": 0.09,
               "unselected": 0.01,
               "pressed": 0.01,
               "unpressed": 0.01
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e38",
-            "confidence": 0.92,
+            "choice": "e5",
+            "confidence": 0.39,
             "probabilities": {
-              "e38": 0.95,
-              "e45": 0.02,
-              "none": 0.03
+              "e2": 0,
+              "e5": 0.51,
+              "e35": 0.06,
+              "page": 0.42,
+              "missing": 0.01
             }
           }
         }
       }
     },
-    "4d3b191e9af736b775bdf72207538eb59a8f7a522c22709570ac8be4fdd472ad": {
+    "2f13a34427242e120e3616e2f02424b53589b1919c7066e64e06380fa19e0d37": {
       "request": {
         "state": {
           "check": "the \"Schedule\" button should be disabled",
@@ -1096,12 +1106,15 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e43": "button \"Schedule\" [disabled]",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e35": "heading \"Winter Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -1159,13 +1172,16 @@
               "unpressed": 0
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e43",
-            "confidence": 0.98,
+            "choice": "page",
+            "confidence": 0.46,
             "probabilities": {
-              "e43": 0.99,
-              "none": 0.01
+              "e2": 0,
+              "e5": 0.42,
+              "e35": 0,
+              "page": 0.57,
+              "missing": 0.01
             }
           }
         }
@@ -1202,17 +1218,17 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.26
+            "noul": 0.21
           },
           "target": {
             "type": "choice",
             "choice": "e4",
-            "confidence": 0.89,
+            "confidence": 0.87,
             "probabilities": {
               "e3": 0,
-              "e4": 0.91,
+              "e4": 0.89,
               "e44": 0,
-              "none": 0.09,
+              "none": 0.11,
               "scroll": 0,
               "wait": 0
             }
@@ -1252,16 +1268,16 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.96
+            "noul": 0.95
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.54,
+            "confidence": 0.6,
             "probabilities": {
               "e3": 0,
-              "e4": 0.37,
-              "none": 0.63,
+              "e4": 0.32,
+              "none": 0.68,
               "scroll": 0,
               "wait": 0
             }
@@ -1269,7 +1285,7 @@
         }
       }
     },
-    "14a813d569d57e2efe4bb8486502885ea693f867c540faa68eba5907a34fabc4": {
+    "d7b1161ad30c016adfecdae7e90f9cb4484ff6502d25f4ef88aa2933c51aec49": {
       "request": {
         "state": {
           "check": "\"Winter Sale\" should appear in the calendar",
@@ -1318,12 +1334,15 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e49": "listitem value=\"2026-12-01: Winter Sale (2 weeks)\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e47": "list \"Scheduled campaigns\"",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -1334,10 +1353,10 @@
           "kind": {
             "type": "choice",
             "choice": "presence",
-            "confidence": 0.51,
+            "confidence": 0.66,
             "probabilities": {
-              "value": 0.39,
-              "presence": 0.61,
+              "value": 0.27,
+              "presence": 0.73,
               "absence": 0,
               "state": 0,
               "fuzzy": 0
@@ -1362,27 +1381,30 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.71,
+            "confidence": 0.59,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.11,
-              "checked": 0.74,
+              "enabled": 0.18,
+              "checked": 0.63,
               "unchecked": 0.01,
-              "expanded": 0.03,
+              "expanded": 0.04,
               "collapsed": 0,
-              "selected": 0.1,
-              "unselected": 0,
+              "selected": 0.12,
+              "unselected": 0.01,
               "pressed": 0.01,
               "unpressed": 0
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e49",
-            "confidence": 0.98,
+            "choice": "e47",
+            "confidence": 0.73,
             "probabilities": {
-              "e49": 0.99,
-              "none": 0.01
+              "e2": 0,
+              "e5": 0.03,
+              "e47": 0.78,
+              "page": 0.19,
+              "missing": 0
             }
           }
         }
@@ -1480,15 +1502,15 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.76,
+            "confidence": 0.82,
             "probabilities": {
               "e3": 0.02,
               "e4": 0,
-              "e33": 0.15,
-              "e34": 0.03,
-              "none": 0.79,
+              "e33": 0.11,
+              "e34": 0.02,
+              "none": 0.85,
               "scroll": 0,
-              "wait": 0.01
+              "wait": 0
             }
           }
         }
@@ -1534,12 +1556,12 @@
             "confidence": 0.98,
             "probabilities": {
               "e3": 0,
-              "e4": 0.01,
+              "e4": 0,
               "e33": 0.98,
               "e34": 0.01,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0.01
             }
           }
         }
@@ -1579,26 +1601,26 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.4,
+            "confidence": 0.46,
             "probabilities": {
               "e3": 0.01,
-              "e4": 0.31,
+              "e4": 0.21,
               "e33": 0.04,
-              "e34": 0.03,
-              "none": 0.49,
-              "scroll": 0.12,
+              "e34": 0.04,
+              "none": 0.54,
+              "scroll": 0.16,
               "wait": 0
             }
           }
         }
       }
     },
-    "488befa710f9ece1f5aa560f718014555bd40870cb42d8d78e97268fb0a37afa": {
+    "54cac19aa688c5fd75627ccc4108b31b9555eade59eb757e270164380bca4c58": {
       "request": {
         "state": {
           "check": "the error should say \"Set an activation date before scheduling\"",
@@ -1652,12 +1674,15 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e35": "alert value=\"Set an activation date before scheduling\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e25": "heading \"Spring Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -1701,33 +1726,36 @@
           "state": {
             "type": "choice",
             "choice": "disabled",
-            "confidence": 0.39,
+            "confidence": 0.44,
             "probabilities": {
-              "disabled": 0.45,
+              "disabled": 0.5,
               "enabled": 0.31,
-              "checked": 0.18,
-              "unchecked": 0.02,
+              "checked": 0.15,
+              "unchecked": 0.01,
               "expanded": 0.01,
               "collapsed": 0.01,
               "selected": 0.01,
               "unselected": 0,
               "pressed": 0,
-              "unpressed": 0.01
+              "unpressed": 0
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e35",
-            "confidence": 0.98,
+            "choice": "page",
+            "confidence": 0.6,
             "probabilities": {
-              "e35": 0.99,
-              "none": 0.01
+              "e2": 0,
+              "e5": 0.31,
+              "e25": 0,
+              "page": 0.68,
+              "missing": 0.01
             }
           }
         }
       }
     },
-    "8a0b320bdfa43e36a46d2641a8d1efb98124fd94524aff0ee357eb3b23479ee6": {
+    "30508fb46818da39ba1d9847e7e26a68d46ec8eab769a399d62a1e9ce93dd415": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Draft\"",
@@ -1781,12 +1809,15 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e28": "definition value=\"Draft\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e25": "heading \"Spring Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -1830,27 +1861,30 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.31,
+            "confidence": 0.3,
             "probabilities": {
-              "disabled": 0.15,
-              "enabled": 0.21,
-              "checked": 0.38,
+              "disabled": 0.12,
+              "enabled": 0.17,
+              "checked": 0.37,
               "unchecked": 0.03,
               "expanded": 0.01,
               "collapsed": 0.01,
-              "selected": 0.18,
-              "unselected": 0.01,
+              "selected": 0.24,
+              "unselected": 0.02,
               "pressed": 0.01,
-              "unpressed": 0.01
+              "unpressed": 0.02
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "e28",
-            "confidence": 0.92,
+            "choice": "e5",
+            "confidence": 0.34,
             "probabilities": {
-              "e28": 0.96,
-              "none": 0.04
+              "e2": 0,
+              "e5": 0.47,
+              "e25": 0.06,
+              "page": 0.46,
+              "missing": 0.01
             }
           }
         }
@@ -1888,7 +1922,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.01
+            "noul": 0.02
           },
           "target": {
             "type": "choice",
@@ -1943,7 +1977,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.01
+            "noul": 0.02
           },
           "target": {
             "type": "choice",
@@ -1998,26 +2032,26 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.92
+            "noul": 0.9
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.81,
+            "confidence": 0.82,
             "probabilities": {
-              "e3": 0.05,
+              "e3": 0.04,
               "e4": 0,
               "e38": 0.02,
-              "e48": 0.05,
-              "none": 0.84,
+              "e48": 0.04,
+              "none": 0.85,
               "scroll": 0.03,
-              "wait": 0.01
+              "wait": 0.02
             }
           }
         }
       }
     },
-    "5ec51e920f9e7dd955ad33964c3c5357742dde8aa0bf1beba6428f0da54c772d": {
+    "17bc95940c19036fece1af01ea17f814beb6c7cf7508bc0c6ebdcb95800fe1b3": {
       "request": {
         "state": {
           "check": "\"Spring Sale\" should not appear in the campaign list",
@@ -2070,12 +2104,20 @@
               "unpressed": "not pressed / toggled off"
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "instructions": "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e51": "status value=\"Campaign \"Spring Sale\" deleted\"",
-              "none": "None of them is that thing itself; they only mention it."
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e39": "table",
+              "e40": "rowgroup",
+              "e41": "row",
+              "e45": "rowgroup",
+              "e46": "row",
+              "e47": "cell",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
           }
         }
@@ -2098,21 +2140,21 @@
           "subject": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.31,
+            "confidence": 0.33,
             "probabilities": {
               "e2": 0,
               "e3": 0.01,
               "e4": 0,
               "e37": 0.01,
               "e38": 0,
-              "e42": 0.03,
+              "e42": 0.05,
               "e43": 0,
               "e44": 0,
-              "e48": 0.27,
+              "e48": 0.22,
               "e49": 0,
               "e50": 0,
-              "e51": 0.32,
-              "none": 0.36
+              "e51": 0.33,
+              "none": 0.38
             }
           },
           "state": {
@@ -2125,20 +2167,28 @@
               "checked": 0.07,
               "unchecked": 0.32,
               "expanded": 0.01,
-              "collapsed": 0.03,
-              "selected": 0,
+              "collapsed": 0.02,
+              "selected": 0.01,
               "unselected": 0.51,
               "pressed": 0,
               "unpressed": 0.03
             }
           },
-          "holder": {
+          "area": {
             "type": "choice",
-            "choice": "none",
-            "confidence": 0.46,
+            "choice": "e39",
+            "confidence": 0.87,
             "probabilities": {
-              "e51": 0.27,
-              "none": 0.73
+              "e2": 0,
+              "e5": 0.01,
+              "e39": 0.88,
+              "e40": 0.01,
+              "e41": 0,
+              "e45": 0.06,
+              "e46": 0.01,
+              "e47": 0,
+              "page": 0.03,
+              "missing": 0
             }
           }
         }

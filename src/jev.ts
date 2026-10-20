@@ -40,10 +40,13 @@ export const STATES = {
 export interface Assessment {
   kind: Pick;
   subject: Pick; // element ref the check is about, or "none"
-  holder?: Pick; // presence/absence: which element containing the quoted text is the thing itself, or "none"
+  area: Pick; // presence/absence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
   state: Pick; // required control state, used by `state` checks
   judged?: number; // P(step holds), only when asked
 }
+
+export const AREA_PAGE = "page";
+export const AREA_MISSING = "missing";
 
 /** The decision layer. Jev implements it; tests use a scripted fake. */
 export interface Decider {
@@ -52,8 +55,7 @@ export interface Decider {
   turn(step: string, obs: Observation, recent: string[], attempt?: boolean): Promise<TurnAnswer>;
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
-  /** `mentioned`: elements containing the Step's quoted text (code-filtered), for presence/absence. */
-  assess(step: string, obs: Observation, judged: boolean, mentioned: Element[]): Promise<Assessment>;
+  assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
 }
 
 const refs = (els: Element[], none: string): Record<string, string> =>
@@ -102,7 +104,7 @@ export class JevDecider implements Decider {
     };
   }
 
-  async assess(step: string, obs: Observation, judged: boolean, mentioned: Element[]): Promise<Assessment> {
+  async assess(step: string, obs: Observation, judged: boolean): Promise<Assessment> {
     const res = await this.#ask({
       state: { check: step, ui: obs.text },
       questions: {
@@ -112,17 +114,19 @@ export class JevDecider implements Decider {
           refs(obs.readable, "No element in `ui` is the one `check` is about."),
         ),
         state: choice("Which control state does `check` require?", STATES),
-        ...(mentioned.length ? {
-          holder: choice(
-            "These elements contain the text `check` names. Which one is the thing `check` says should or should not be present?",
-            refs(mentioned, "None of them is that thing itself; they only mention it."),
-          ),
-        } : {}),
+        area: choice(
+          "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+          {
+            ...Object.fromEntries(obs.areas.map(e => [e.ref, e.line])),
+            [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
+            [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
+          },
+        ),
         ...(judged ? { judged: noul("Does `ui` satisfy `check`?") } : {}),
       },
     });
-    const a = res.answers as typeof res.answers & { judged?: { noul: number }; holder?: Pick };
-    return { kind: a.kind, subject: a.subject, holder: a.holder, state: a.state, judged: a.judged?.noul };
+    const a = res.answers as typeof res.answers & { judged?: { noul: number } };
+    return { kind: a.kind, subject: a.subject, area: a.area, state: a.state, judged: a.judged?.noul };
   }
 
 }

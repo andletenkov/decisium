@@ -1,0 +1,1094 @@
+{
+  "model": "jev-1.14.0",
+  "entries": {
+    "18edeec6f149156ae179dcdc440f5e043875ff19986d9207c56494efa79452c4": {
+      "request": {
+        "state": {
+          "step": "I start a new campaign",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e6]\n    - button \"New campaign\" [ref=e7]\n    - table [ref=e8]:\n      - rowgroup [ref=e9]:\n        - row [ref=e10]:\n          - columnheader \"Name\" [ref=e11]\n          - columnheader \"Status\" [ref=e12]\n          - columnheader \"Activation date\" [ref=e13]\n      - rowgroup [ref=e14]:\n        - row [ref=e15]:\n          - cell [ref=e16]:\n            - link \"Autumn Sale\" [ref=e17] [cursor=pointer]:\n              - /url: \"#/campaigns/1\"\n          - cell \"Scheduled\" [ref=e18]\n          - cell \"2026-10-20\" [ref=e19]\n        - row [ref=e20]:\n          - cell [ref=e21]:\n            - link \"Spring Sale\" [ref=e22] [cursor=pointer]:\n              - /url: \"#/campaigns/2\"\n          - cell \"Draft\" [ref=e23]\n          - cell \"—\" [ref=e24]\n  - status",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e7": "button \"New campaign\"",
+              "e17": "link \"Autumn Sale\" [cursor=pointer]",
+              "e22": "link \"Spring Sale\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e7",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e7": 1,
+              "e17": 0,
+              "e22": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "7b0a74a7a31ff51efbaed5892e7870626e878ec3a01aa3b140abe7ffee09dc4b": {
+      "request": {
+        "state": {
+          "step": "I start a new campaign",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "actions_taken_for_step": [
+            "CLICK button \"New campaign\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e27": "textbox \"Campaign name\"",
+              "e29": "textbox \"Activation date\"",
+              "e32": "combobox \"Activation period\" value=\"1 week\"",
+              "e33": "button \"Save draft\"",
+              "e34": "link \"Cancel\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.83
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e27",
+            "confidence": 0.73,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e27": 0.76,
+              "e29": 0.01,
+              "e32": 0,
+              "e33": 0.07,
+              "e34": 0,
+              "none": 0.14,
+              "scroll": 0,
+              "wait": 0.01
+            }
+          }
+        }
+      }
+    },
+    "c819b3f083b3309b4fa481bdd35e490fbbcc53f06a5617a8db28435ab2fcb9c9": {
+      "request": {
+        "state": {
+          "step": "I enter \"Summer Sale\" as the campaign name",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e27": "textbox \"Campaign name\"",
+              "e29": "textbox \"Activation date\"",
+              "e32": "combobox \"Activation period\" value=\"1 week\"",
+              "e33": "button \"Save draft\"",
+              "e34": "link \"Cancel\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e27",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e27": 1,
+              "e29": 0,
+              "e32": 0,
+              "e33": 0,
+              "e34": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "31006f10517630e742dc42543bd914e45d4d8cda3faf57ac99dbe886e9aa5a1e": {
+      "request": {
+        "state": {
+          "step": "I enter \"Summer Sale\" as the campaign name",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "element": "textbox \"Campaign name\""
+        },
+        "questions": {
+          "value": {
+            "type": "choice",
+            "instructions": "Which value should be entered into `element` to accomplish `step`?",
+            "criteria": {
+              "v0": "Summer Sale",
+              "none": "None of these values is what `step` asks for."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "value": {
+            "type": "choice",
+            "choice": "v0",
+            "confidence": 1,
+            "probabilities": {
+              "v0": 1,
+              "none": 0
+            }
+          }
+        }
+      }
+    },
+    "5a7b7b9598730207977f93271dd7e24f074df00d44d5b055136f277ef8ff0747": {
+      "request": {
+        "state": {
+          "step": "I enter \"Summer Sale\" as the campaign name",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Summer Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Campaign name\" <- \"Summer Sale\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e27": "textbox \"Campaign name\" value=\"Summer Sale\" [active]",
+              "e29": "textbox \"Activation date\"",
+              "e32": "combobox \"Activation period\" value=\"1 week\"",
+              "e33": "button \"Save draft\"",
+              "e34": "link \"Cancel\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.97
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.7,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e27": 0.06,
+              "e29": 0.04,
+              "e32": 0,
+              "e33": 0.16,
+              "e34": 0,
+              "none": 0.73,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "08c28d35856a6420c312595b7d028f3b3c176598f7bbd8be8b2847a72199f1f8": {
+      "request": {
+        "state": {
+          "step": "I save the draft",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Summer Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e27": "textbox \"Campaign name\" value=\"Summer Sale\" [active]",
+              "e29": "textbox \"Activation date\"",
+              "e32": "combobox \"Activation period\" value=\"1 week\"",
+              "e33": "button \"Save draft\"",
+              "e34": "link \"Cancel\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.02
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e33",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e27": 0,
+              "e29": 0,
+              "e32": 0,
+              "e33": 1,
+              "e34": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "cfa892dd760c421353f28f7456649c993989b853e73b98617b97127c69fd8e45": {
+      "request": {
+        "state": {
+          "step": "I save the draft",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Summer Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: Not set\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Summer Sale\" saved",
+          "actions_taken_for_step": [
+            "CLICK button \"Save draft\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e43": "button \"Schedule\"",
+              "e44": "button \"More actions\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.97
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.95,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e43": 0.01,
+              "e44": 0.02,
+              "none": 0.96,
+              "scroll": 0.01,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "3040e19b66db7cf4d7c492369f0907834dca2953181be4732f4b9400cd71a7d3": {
+      "request": {
+        "state": {
+          "step": "I open the calendar",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Summer Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: Not set\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Summer Sale\" saved",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e43": "button \"Schedule\"",
+              "e44": "button \"More actions\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.14
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e4",
+            "confidence": 0.98,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0.98,
+              "e43": 0.01,
+              "e44": 0,
+              "none": 0.01,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "942661b44ff48861a35dac3156c11c759e1dd3e31c76d97554e3d07a9afd2e27": {
+      "request": {
+        "state": {
+          "step": "I open the calendar",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e45]: Campaign \"Summer Sale\" saved",
+          "actions_taken_for_step": [
+            "CLICK link \"Calendar\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [active] [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.89
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.55,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0.35,
+              "none": 0.64,
+              "scroll": 0,
+              "wait": 0.01
+            }
+          }
+        }
+      }
+    },
+    "ce48b29460da8b1b693990f3d8b1f9534f8f44f23b9b5c1c87729227c74a765c": {
+      "request": {
+        "state": {
+          "check": "\"Summer Sale\" should appear in the calendar",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e45]: Campaign \"Summer Sale\" saved"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [active] [cursor=pointer]",
+              "e46": "heading \"Calendar\" [level=1]",
+              "e47": "list \"Scheduled campaigns\"",
+              "e48": "listitem value=\"2026-10-20: Autumn Sale (1 week)\"",
+              "e45": "status value=\"Campaign \"Summer Sale\" saved\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e47": "list \"Scheduled campaigns\"",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "presence",
+            "confidence": 0.5,
+            "probabilities": {
+              "value": 0.4,
+              "presence": 0.6,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e47",
+            "confidence": 0.84,
+            "probabilities": {
+              "e2": 0,
+              "e3": 0,
+              "e4": 0.01,
+              "e46": 0,
+              "e47": 0.86,
+              "e48": 0.1,
+              "e45": 0.01,
+              "none": 0.02
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.63,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.1,
+              "checked": 0.67,
+              "unchecked": 0.07,
+              "expanded": 0.06,
+              "collapsed": 0,
+              "selected": 0.08,
+              "unselected": 0.01,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "e47",
+            "confidence": 0.86,
+            "probabilities": {
+              "e2": 0,
+              "e5": 0.01,
+              "e47": 0.89,
+              "page": 0.1,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "fcf7dfc1f162abff843fc39c77cf0476597f4fe768a8d4f2642b5563d8413d5c": {
+      "request": {
+        "state": {
+          "step": "I open the \"Spring Sale\" campaign",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e6]\n    - button \"New campaign\" [ref=e7]\n    - table [ref=e8]:\n      - rowgroup [ref=e9]:\n        - row [ref=e10]:\n          - columnheader \"Name\" [ref=e11]\n          - columnheader \"Status\" [ref=e12]\n          - columnheader \"Activation date\" [ref=e13]\n      - rowgroup [ref=e14]:\n        - row [ref=e15]:\n          - cell [ref=e16]:\n            - link \"Autumn Sale\" [ref=e17] [cursor=pointer]:\n              - /url: \"#/campaigns/1\"\n          - cell \"Scheduled\" [ref=e18]\n          - cell \"2026-10-20\" [ref=e19]\n        - row [ref=e20]:\n          - cell [ref=e21]:\n            - link \"Spring Sale\" [ref=e22] [cursor=pointer]:\n              - /url: \"#/campaigns/2\"\n          - cell \"Draft\" [ref=e23]\n          - cell \"—\" [ref=e24]\n  - status",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e7": "button \"New campaign\"",
+              "e17": "link \"Autumn Sale\" [cursor=pointer]",
+              "e22": "link \"Spring Sale\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.02
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e22",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e7": 0,
+              "e17": 0,
+              "e22": 1,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "005de5803e2e210dc1c47fe57e92c9cbaaff8048e9e834580c3ff1e44c3f9a78": {
+      "request": {
+        "state": {
+          "step": "I open the \"Spring Sale\" campaign",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
+          "actions_taken_for_step": [
+            "CLICK link \"Spring Sale\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e33": "button \"Schedule\"",
+              "e34": "button \"More actions\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.96
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.81,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e33": 0.12,
+              "e34": 0.02,
+              "none": 0.84,
+              "scroll": 0,
+              "wait": 0.01
+            }
+          }
+        }
+      }
+    },
+    "05751d9b84b963354404fe45d9373fcdc51c484c933d45f09971a24a88c8dcb6": {
+      "request": {
+        "state": {
+          "check": "\"Spring Sale\" should appear in the campaign list",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e25": "heading \"Spring Sale\" [level=1]",
+              "e27": "term value=\"Status\"",
+              "e28": "definition value=\"Draft\"",
+              "e29": "term value=\"Activation date\"",
+              "e30": "definition value=\"Not set\"",
+              "e31": "term value=\"Activation period\"",
+              "e32": "definition value=\"1 week\"",
+              "e33": "button \"Schedule\"",
+              "e34": "button \"More actions\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e25": "heading \"Spring Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "presence",
+            "confidence": 0.66,
+            "probabilities": {
+              "value": 0.26,
+              "presence": 0.73,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0.01
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e25",
+            "confidence": 0.75,
+            "probabilities": {
+              "e2": 0,
+              "e3": 0.09,
+              "e4": 0,
+              "e25": 0.77,
+              "e27": 0,
+              "e28": 0,
+              "e29": 0,
+              "e30": 0,
+              "e31": 0,
+              "e32": 0,
+              "e33": 0,
+              "e34": 0,
+              "none": 0.14
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.24,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.32,
+              "checked": 0.32,
+              "unchecked": 0.02,
+              "expanded": 0.05,
+              "collapsed": 0.01,
+              "selected": 0.25,
+              "unselected": 0.03,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.54,
+            "probabilities": {
+              "e2": 0.03,
+              "e5": 0.09,
+              "e25": 0.02,
+              "page": 0.23,
+              "missing": 0.63
+            }
+          }
+        }
+      }
+    },
+    "0b14be9fb83e57aea8ff5a16775b188c489cbeffda150c60b949f1bb4bc18737": {
+      "request": {
+        "state": {
+          "check": "\"Summer Sale\" should be listed among the scheduled campaigns",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e45]: Campaign \"Summer Sale\" saved"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [active] [cursor=pointer]",
+              "e46": "heading \"Calendar\" [level=1]",
+              "e47": "list \"Scheduled campaigns\"",
+              "e48": "listitem value=\"2026-10-20: Autumn Sale (1 week)\"",
+              "e45": "status value=\"Campaign \"Summer Sale\" saved\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e47": "list \"Scheduled campaigns\"",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "presence",
+            "confidence": 0.85,
+            "probabilities": {
+              "value": 0.11,
+              "presence": 0.88,
+              "absence": 0.01,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e47",
+            "confidence": 0.95,
+            "probabilities": {
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e46": 0,
+              "e47": 0.96,
+              "e48": 0.04,
+              "e45": 0,
+              "none": 0
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.61,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.05,
+              "checked": 0.65,
+              "unchecked": 0.15,
+              "expanded": 0.04,
+              "collapsed": 0,
+              "selected": 0.09,
+              "unselected": 0.02,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "e47",
+            "confidence": 1,
+            "probabilities": {
+              "e2": 0,
+              "e5": 0,
+              "e47": 1,
+              "page": 0,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "e5c7e0c29f045f05faa33da6c6ea92790e0f9841df10006dd6e98b6fa29d9fba": {
+      "request": {
+        "state": {
+          "check": "the campaign list should contain \"Spring Sale\"",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e25": "heading \"Spring Sale\" [level=1]",
+              "e27": "term value=\"Status\"",
+              "e28": "definition value=\"Draft\"",
+              "e29": "term value=\"Activation date\"",
+              "e30": "definition value=\"Not set\"",
+              "e31": "term value=\"Activation period\"",
+              "e32": "definition value=\"1 week\"",
+              "e33": "button \"Schedule\"",
+              "e34": "button \"More actions\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e25": "heading \"Spring Sale\" [level=1]",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "presence",
+            "confidence": 0.37,
+            "probabilities": {
+              "value": 0.49,
+              "presence": 0.5,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0.01
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e25",
+            "confidence": 0.84,
+            "probabilities": {
+              "e2": 0,
+              "e3": 0.06,
+              "e4": 0,
+              "e25": 0.85,
+              "e27": 0,
+              "e28": 0,
+              "e29": 0,
+              "e30": 0,
+              "e31": 0,
+              "e32": 0,
+              "e33": 0,
+              "e34": 0,
+              "none": 0.09
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.36,
+            "probabilities": {
+              "disabled": 0.01,
+              "enabled": 0.11,
+              "checked": 0.42,
+              "unchecked": 0.03,
+              "expanded": 0.06,
+              "collapsed": 0.01,
+              "selected": 0.33,
+              "unselected": 0.03,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "missing",
+            "confidence": 0.3,
+            "probabilities": {
+              "e2": 0,
+              "e5": 0.27,
+              "e25": 0.04,
+              "page": 0.25,
+              "missing": 0.44
+            }
+          }
+        }
+      }
+    }
+  }
+}
