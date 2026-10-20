@@ -28,7 +28,7 @@ export class Browser {
   }
 
   static async open(url: string, headed = false): Promise<Browser> {
-    const browser = await chromium.launch({ headless: !headed });
+    const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
     const page = await browser.newPage();
     // In every document: the time of the last DOM mutation, and a count of work that can still change the page
     // on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
