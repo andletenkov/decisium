@@ -8,6 +8,7 @@ import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.t
 import { parseFeature, parseStep, type Scenario } from "./feature.ts";
 import { JevDecider, MODEL } from "./jev.ts";
 import { quoted } from "./observation.ts";
+import { RunDir } from "./trace.ts";
 import { runAssertion, runStep } from "./runner.ts";
 
 const USAGE = `Usage:
@@ -19,6 +20,9 @@ The start URL comes from --url or an @url:<url> tag (scenario tags override feat
   once (default): record if no cassette exists, else replay only; none: replay only, a miss fails as UI_CHANGED;
   new: replay, record misses live; all: always call Jev and rewrite the cassette.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
+
+Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes) and per scenario a
+screenshot per Turn; failed scenarios also get playwright-trace.zip and console-errors.txt.
 
 Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`;
 
@@ -58,25 +62,31 @@ async function main(): Promise<number> {
   if (!process.env.TYPESAFE_API_KEY && values.record !== "none") { console.error("TYPESAFE_API_KEY is not set."); return 2; }
 
   console.log(`Model: ${MODEL}`);
-  const decider = new JevDecider(cassette);
+  const run = new RunDir();
+  console.log(`Run directory: ${run.path}`);
+  const decider = run.decider(new JevDecider(cassette));
   const failed: string[] = [];
-  for (const scenario of scenarios) {
+  for (const [i, scenario] of scenarios.entries()) {
     const url = values.url ?? scenario.url!;
     console.log(`\n=== Scenario: ${scenario.name}  (${url})`);
-    const browser = await Browser.open(toUrl(url), values.headed); // fresh browser per scenario: no shared state
+    const dir = run.scenario(i, scenario.name);
+    const browser = await Browser.open(toUrl(url), values.headed, true); // fresh browser per scenario: no shared state
+    const rt = run.runtime(browser);
+    let ok = false;
     try {
       const earlier: Record<string, string> = {}; // memory: quoted value -> the Step that named it
       for (const step of scenario.steps) {
         let r;
         try {
           r = step.kind === "assertion"
-            ? await runAssertion(step.text, browser, decider, console.log, values.judged, { ...earlier })
-            : await runStep(step.text, browser, decider, console.log, step.kind === "attempt");
+            ? await runAssertion(step.text, rt, decider, console.log, values.judged, { ...earlier })
+            : await runStep(step.text, rt, decider, console.log, step.kind === "attempt");
         } catch (err) {
           if (!(err instanceof UiChanged)) throw err;
           console.log(`  => ${err.message}`);
           r = { outcome: "UI_CHANGED" };
         }
+        run.event("step", { kind: step.kind, step: step.text, ...r });
         for (const v of quoted(step.text)) earlier[v] = step.text;
         if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
           console.log(`\nFAILED at: ${step.text}`);
@@ -84,8 +94,11 @@ async function main(): Promise<number> {
           break;
         }
       }
+      ok = !failed.includes(scenario.name);
     } finally {
-      await browser.close();
+      if (!ok) run.failure(browser.consoleErrors);
+      await browser.close(ok ? undefined : `${dir}/playwright-trace.zip`);
+      run.event("result", { passed: ok });
       cassette?.save(); // per scenario, so a crash keeps what was recorded
     }
   }

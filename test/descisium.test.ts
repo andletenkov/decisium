@@ -335,3 +335,19 @@ test("memory: a check that quotes nothing uses the value an earlier Step named",
   assert.equal(await run({ "Winter Sale": `I enter "Winter Sale" as the campaign name` }), "PASSED");
   assert.equal(await run({ "Summer Sale": `I enter "Summer Sale" as the campaign name` }), "ASSERTION_FAILED");
 });
+
+test("run directory: trace.jsonl events, per-scenario folder, secret values masked", async () => {
+  const { mkdtempSync, readFileSync, existsSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { RunDir } = await import("../src/trace.ts");
+  const run = new RunDir(mkdtempSync(`${tmpdir()}/runs-`));
+  const dir = run.scenario(0, "Log in!");
+  assert.match(dir, /01-log-in$/);
+  const obs = parseSnapshot(`- textbox "Password" [ref=e1]: hunter2`, new Set(["e1"]));
+  await run.decider({ ...oracle, value: async () => sure("hunter2") }).value("s", obs, obs.readable[0], ["hunter2"]);
+  run.failure(["boom"]);
+  const lines = readFileSync(`${run.path}/trace.jsonl`, "utf8");
+  assert.doesNotMatch(lines, /hunter2/);
+  assert.deepEqual(lines.trim().split("\n").map(l => JSON.parse(l).type), ["scenario", "value"]);
+  assert.ok(existsSync(`${dir}/console-errors.txt`));
+});

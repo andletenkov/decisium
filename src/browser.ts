@@ -19,17 +19,22 @@ export class Browser {
   private browser: PwBrowser;
   private page: Page;
   private inflight = 0;
+  readonly consoleErrors: string[] = [];
   private constructor(browser: PwBrowser, page: Page) {
     this.browser = browser;
     this.page = page;
+    page.on("console", m => { if (m.type() === "error") this.consoleErrors.push(m.text()); });
+    page.on("pageerror", e => this.consoleErrors.push(`uncaught: ${e.message}`));
     page.on("request", () => this.inflight++);
     page.on("requestfinished", () => this.inflight--);
     page.on("requestfailed", () => this.inflight--);
   }
 
-  static async open(url: string, headed = false): Promise<Browser> {
+  /** `trace`: record a Playwright trace, saved by close(tracePath). */
+  static async open(url: string, headed = false, trace = false): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
     const page = await browser.newPage();
+    if (trace) await page.context().tracing.start({ screenshots: true, snapshots: true });
     // In every document: the time of the last DOM mutation, and a count of work that can still change the page
     // on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
     await page.addInitScript(() => {
@@ -152,7 +157,13 @@ export class Browser {
     return pending === 0;
   }
 
-  close(): Promise<void> {
-    return this.browser.close();
+  screenshot(path: string): Promise<unknown> {
+    return this.page.screenshot({ path }).catch(() => undefined); // a missing screenshot must not fail the test
+  }
+
+  /** `tracePath`: where to save the Playwright trace started by open(..., trace); omitted = discard it. */
+  async close(tracePath?: string): Promise<void> {
+    if (tracePath) await this.page.context().tracing.stop({ path: tracePath }).catch(() => undefined);
+    await this.browser.close();
   }
 }
