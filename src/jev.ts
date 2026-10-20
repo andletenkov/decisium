@@ -1,4 +1,5 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+import type { Cassette } from "./cassette.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
@@ -60,10 +61,20 @@ const refs = (els: Element[], none: string): Record<string, string> =>
 
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
+  #cassette?: Cassette;
+  constructor(cassette?: Cassette) { this.#cassette = cassette; }
+
+  async #ask<Q extends Parameters<TypeSafeClient["systemOne"]>[0]>(request: Q) {
+    const live = async () => {
+      const res = await this.#client.systemOne(request);
+        return { model: res.model, answers: res.answers as Record<string, any> };
+    };
+    return this.#cassette ? this.#cassette.call(request, live) : live();
+  }
 
   async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
     const targets = { ...refs(obs.elements, "No element on screen helps accomplish `step`."), ...PAGE_ACTIONS };
-    const res = await this.#client.systemOne({
+    const res = await this.#ask({
       state: { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" },
       questions: {
         done: attempt
@@ -72,18 +83,17 @@ export class JevDecider implements Decider {
         target: choice("Which element in `ui` should be interacted with next to accomplish `step`?", targets),
       },
     });
-    if (res.model !== MODEL) console.warn(`warning: requested ${MODEL}, Jev answered with ${res.model}`);
     return { done: res.answers.done.noul, target: res.answers.target };
   }
 
   async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
     const criteria: Record<string, string> = Object.fromEntries(candidates.map((c, i) => [`v${i}`, c]));
     criteria.none = "None of these values is what `step` asks for.";
-    const res = await this.#client.systemOne({
+    const res = await this.#ask({
       state: { step, ui: obs.text, element: el.line },
       questions: { value: choice("Which value should be entered into `element` to accomplish `step`?", criteria) },
     });
-    const a = res.answers.value;
+    const a: Pick = res.answers.value;
     // Map label keys back to the values so traces and execution use real text.
     const name = (k: string) => criteria[k] && k !== "none" ? criteria[k] : k;
     return {
@@ -93,7 +103,7 @@ export class JevDecider implements Decider {
   }
 
   async assess(step: string, obs: Observation, judged: boolean, mentioned: Element[]): Promise<Assessment> {
-    const res = await this.#client.systemOne({
+    const res = await this.#ask({
       state: { check: step, ui: obs.text },
       questions: {
         kind: choice("What kind of check is `check`?", ASSERTION_KINDS),

@@ -273,3 +273,30 @@ for (const variant of ["", "?dropdown=custom"]) {
     }
   });
 }
+
+test("cassette replays identical requests, fails UI_CHANGED with the difference, discards on model change", async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { Cassette, UiChanged } = await import("../src/cassette.ts");
+  const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
+  const req = (ui: string) => ({ state: { step: "s", ui }, questions: {} });
+  let calls = 0;
+  const live = async () => ({ n: ++calls });
+
+  const rec = new Cassette(path, "m1", "once");
+  assert.deepEqual(await rec.call(req("a\nb"), live), { n: 1 });
+  rec.save();
+
+  const replay = new Cassette(path, "m1", "once"); // file exists: replay only
+  assert.deepEqual(await replay.call(req("a\nb"), live), { n: 1 });
+  assert.equal(calls, 1);
+  await assert.rejects(replay.call(req("a\nc"), live), (e: Error) =>
+    e instanceof UiChanged && e.diff === "  - b\n  + c");
+
+  const drift = new Cassette(path, "m1", "new");
+  assert.deepEqual(await drift.call(req("a\nc"), live), { n: 2 });
+  assert.equal(drift.recorded, 1);
+
+  const other = new Cassette(path, "m2", "none");
+  await assert.rejects(other.call(req("a\nb"), live), UiChanged);
+});
