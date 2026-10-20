@@ -1,6 +1,7 @@
 @url:http://127.0.0.1:5173/?reset=1
 Feature: Campaign manager (multi-screen; start with `npm run example:server`)
 
+  @QaseID=76
   Scenario: Create, schedule and find a campaign in the calendar
     When I start a new campaign
     And I enter "Winter Sale" as the campaign name
@@ -14,6 +15,7 @@ Feature: Campaign manager (multi-screen; start with `npm run example:server`)
     When I open the calendar
     Then "Winter Sale" should appear in the calendar
 
+  @QaseID=77
   Scenario: Scheduling needs an activation date
     When I open the "Spring Sale" campaign
     And I try to schedule the campaign
@@ -21,6 +23,7 @@ Feature: Campaign manager (multi-screen; start with `npm run example:server`)
     And the campaign status should be "Draft"
 
   # The toast still mentions "Spring Sale"; the check is scoped to the list (task 0003).
+  @QaseID=78
   Scenario: Delete a campaign from its actions menu
     When I open the "Spring Sale" campaign
     And I delete the campaign
