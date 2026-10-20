@@ -11,7 +11,7 @@ export interface Pick {
 
 export interface TurnAnswer {
   done: number; // P(step already accomplished)
-  target: Pick; // element ref, a PAGE_ACTIONS key, or "none"
+  target: Pick; // element ref, a pageActions() key, or "none"
 }
 
 /** Non-element moves offered next to the element refs. */
@@ -19,6 +19,11 @@ export const PAGE_ACTIONS = {
   scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
   wait: "Wait: `ui` is still loading the needed element.",
 } as const;
+const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. run a search).";
+
+/** Page actions for this Observation: Enter only while a text field has focus, so it is not offered on every Turn. */
+export const pageActions = (obs: Observation): Record<string, string> =>
+  obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : PAGE_ACTIONS;
 
 export const ASSERTION_KINDS = {
   value: "Checks that some element shows a specific text or value.",
@@ -110,7 +115,7 @@ export class JevDecider implements Decider {
   async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
     const state = { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
-    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...PAGE_ACTIONS },
+    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs) },
       this.#choose(state, question));
     const res = await this.#ask({
       state,

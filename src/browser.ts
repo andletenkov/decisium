@@ -3,7 +3,7 @@ import { chromium, type Browser as PwBrowser, type Page } from "playwright";
 import { parseSnapshot, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
-  verb: Verb | "SCROLL" | "WAIT";
+  verb: Verb | "SCROLL" | "WAIT" | "ENTER";
   ref?: string; // element actions only
   value?: string;
 }
@@ -15,6 +15,14 @@ const QUIET_MS = 100; // no requests in flight and no DOM mutations for this lon
 // Not tracked: Web Workers, and timers inside cross-origin iframes.
 const SETTLE_CAP_MS = 5000; // pages that never go quiet continue after this
 const WAIT_CAP_MS = 5000; // WAIT and assertion retries give up after this
+
+/** Snapshot links with their `/url` line: [ref, url]. */
+const links = (snapshot: string): [string, string][] =>
+  [...snapshot.matchAll(/- link\b[^\n]*\[ref=(\w+)\][^\n]*\n\s*- \/url: "?(.*?)"?$/gm)].map(m => [m[1], m[2]]);
+
+/** Adds `[current]` to the given refs' lines (Playwright's snapshot drops aria-current). */
+export const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
+  refs.size ? snapshot.replace(/ \[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? ` [current]${m}` : m)) : snapshot;
 
 export class Browser {
   private browser: PwBrowser;
@@ -127,13 +135,31 @@ export class Browser {
       if (kind === "secret") secret.add(ref);
       else if (kind === "editable" && role === "combobox") editable.add(ref);
     }
-    return parseSnapshot(snapshot, secret, editable);
+    return parseSnapshot(markCurrent(snapshot, await this.currentLinks(snapshot)), secret, editable);
+  }
+
+  /**
+   * Refs of links marked aria-current (the current page or tab in a navigation). The hrefs of aria-current links pick
+   * the candidates; each candidate is then read by ref, since links that share an href ("#") can differ.
+   */
+  private async currentLinks(snapshot: string): Promise<Set<string>> {
+    const hrefs = await this.page.locator('a[aria-current]:not([aria-current="false"])')
+      .evaluateAll(els => els.map(e => e.getAttribute("href") ?? ""))
+      .catch(() => [] as string[]);
+    const current = new Set<string>();
+    for (const [ref, url] of links(snapshot)) {
+      if (!hrefs.includes(url)) continue;
+      const value = await this.page.locator(`aria-ref=${ref}`).getAttribute("aria-current", { timeout: 1000 }).catch(() => null);
+      if (value !== null && value !== "false") current.add(ref);
+    }
+    return current;
   }
 
   /** Executes one action and checks its effect where the effect is deterministic (TYPE/SELECT). */
   async execute({ verb, ref, value = "" }: Action): Promise<void> {
     const opts = { timeout: 5000 };
     if (verb === "SCROLL") await this.page.mouse.wheel(0, 600);
+    else if (verb === "ENTER") await this.page.keyboard.press("Enter");
     else if (verb === "WAIT") await this.waitForChange((await this.observe()).text, WAIT_CAP_MS);
     else {
       const target = this.page.locator(`aria-ref=${ref}`);

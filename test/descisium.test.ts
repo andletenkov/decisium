@@ -463,3 +463,51 @@ test("narrow: more candidates than Jev accepts are cut down in rounds, keeping t
   assert.deepEqual(await narrow({ e1: "a" }, fixed, ask, 255), { e1: "a", ...fixed });
   assert.equal(sizes.length, 0);
 });
+
+test("Enter: offered only while a text field has focus; submits what was typed", async () => {
+  const { pageActions } = await import("../src/jev.ts");
+  const page = `data:text/html,<form onsubmit="event.preventDefault();o.textContent='Results for '+q.value">`
+    + `<input id=q aria-label="Search"></form><p id=o></p>`;
+  const b = await Browser.open(page);
+  try {
+    assert.ok(!("enter" in pageActions(await b.observe())), "no field has focus yet");
+    // Scripted Jev: type into the search box, press Enter, then done once results show.
+    const decider: Decider = {
+      ...oracle,
+      async turn(_s, obs) {
+        if (/Results for/.test(obs.text)) return { done: 1, target: sure("none") };
+        const box = obs.elements.find(e => e.name === "Search")!;
+        if (!box.value) return { done: 0, target: sure(box.ref) };
+        assert.ok("enter" in pageActions(obs), "field focused after typing");
+        return { done: 0, target: sure("enter") };
+      },
+      async value() { return sure("playwright"); },
+    };
+    const r = await runStep(`search for "playwright"`, b, decider, () => {});
+    assert.equal(r.outcome, "DONE");
+    assert.match((await b.observe()).text, /Results for playwright/);
+  } finally {
+    await b.close();
+  }
+});
+
+test("current link: aria-current marks the link [current]; a 'selected' check on a link reads it", async () => {
+  // "Open" and "Closed" share href="#" (as on GitHub's issue list); only "Open" is current.
+  const b = await Browser.open(`data:text/html,<nav aria-label=Repository><a href="/code">Code</a><a href="/issues" aria-current=page>Issues</a></nav>`
+    + `<a href="%23" aria-current=true>Open</a><a href="%23">Closed</a>`);
+  try {
+    const obs = await b.observe();
+    const line = (name: string) => obs.readable.find(e => e.name === name)!.line;
+    assert.match(line("Issues"), /\[current\]/);
+    assert.doesNotMatch(line("Code"), /\[current\]/);
+    assert.match(line("Open"), /\[current\]/);
+    assert.doesNotMatch(line("Closed"), /\[current\]/);
+    const check = async (name: string, state: string) => (await runAssertion(`the "${name}" tab should be ${state}`, b,
+      assessing("state", o => ({ subject: sure(o.readable.find(e => e.name === name)!.ref), state: sure(state) })), () => {})).outcome;
+    assert.equal(await check("Issues", "selected"), "PASSED");
+    assert.equal(await check("Code", "selected"), "ASSERTION_FAILED");
+    assert.equal(await check("Code", "unselected"), "PASSED");
+  } finally {
+    await b.close();
+  }
+});

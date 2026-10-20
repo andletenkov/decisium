@@ -1,5 +1,5 @@
 import type { Action } from "./browser.ts";
-import { AREA_MISSING, AREA_PAGE, gate, GATE_TOP, PAGE_ACTIONS, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
+import { AREA_MISSING, AREA_PAGE, gate, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
 import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -20,6 +20,7 @@ export interface StepResult {
 }
 
 const MAX_TURNS = 8;
+const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
 
@@ -150,7 +151,8 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page matches what the check describes" };
     const el = obs.readable.find(e => e.ref === a.subject.choice);
     if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${a.subject.choice})` };
-    const [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
+    let [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
+    if (flag === "selected" && el.role === "link") flag = "current"; // a navigation link is "selected" via aria-current
     if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role)) {
       return { outcome: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
     }
@@ -181,7 +183,7 @@ const finish = (log: typeof console.log) => (outcome: StepOutcome, reason?: stri
 
 const SPECIAL: Record<string, string> = {
   none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
-  scroll: "scroll down", wait: "wait for loading",
+  scroll: "scroll down", wait: "wait for loading", enter: "press Enter",
 };
 /** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
 export const named = (p: Pick, obs?: Observation) =>
@@ -214,8 +216,8 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
 
     let action: Action;
     let described: string;
-    if (t.target.choice in PAGE_ACTIONS) {
-      action = { verb: t.target.choice === "scroll" ? "SCROLL" : "WAIT" };
+    if (t.target.choice in pageActions(obs)) {
+      action = { verb: PAGE_VERBS[t.target.choice] };
       described = action.verb;
     } else {
       const el = obs.elements.find(e => e.ref === t.target.choice);

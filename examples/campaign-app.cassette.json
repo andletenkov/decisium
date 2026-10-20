@@ -878,6 +878,222 @@
           }
         }
       }
+    },
+    "a01c89c0bf2f6204ed13644e94e3a10e3cf2029ffc94aec0bb40dcf27b22ca9c": {
+      "request": {
+        "state": {
+          "step": "I enter \"Autumn Sale\" as the campaign name",
+          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Campaign name\" <- \"Autumn Sale\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
+              "e8": "combobox \"Activation period\" value=\"1 week\"",
+              "e9": "button \"Schedule\"",
+              "e10": "button \"Save draft\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.98
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.65,
+            "probabilities": {
+              "e5": 0.07,
+              "e8": 0.01,
+              "e9": 0.09,
+              "e10": 0.12,
+              "none": 0.6900000000000001,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0.01
+            }
+          }
+        }
+      }
+    },
+    "66f69b6da8071574e3185e9ed92af20f2873f2c01265e1a063a403aba5592a8c": {
+      "request": {
+        "state": {
+          "step": "I set the activation period to 2 weeks",
+          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
+              "e8": "combobox \"Activation period\" value=\"1 week\"",
+              "e9": "button \"Schedule\"",
+              "e10": "button \"Save draft\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e8",
+            "confidence": 1,
+            "probabilities": {
+              "e5": 0,
+              "e8": 1,
+              "e9": 0,
+              "e10": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0
+            }
+          }
+        }
+      }
+    },
+    "6fbda24416ca84c0efbbd0cec470b5f0816b86b3752baf0bac06adec8cb34f24": {
+      "request": {
+        "state": {
+          "step": "I set the activation period to 2 weeks",
+          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
+          "actions_taken_for_step": [
+            "SELECT combobox \"Activation period\" <- \"2 weeks\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
+              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
+              "e9": "button \"Schedule\"",
+              "e10": "button \"Save draft\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.99
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.54,
+            "probabilities": {
+              "e5": 0,
+              "e8": 0.27,
+              "e9": 0.11,
+              "e10": 0.02,
+              "none": 0.6,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0
+            }
+          }
+        }
+      }
+    },
+    "e4f16a515f2a8bed2e4007adb1d6c74079686081a924fe81307a8cb289eabec7": {
+      "request": {
+        "state": {
+          "step": "I schedule the campaign",
+          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
+              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
+              "e9": "button \"Schedule\"",
+              "e10": "button \"Save draft\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e9",
+            "confidence": 1,
+            "probabilities": {
+              "e5": 0,
+              "e8": 0,
+              "e9": 1,
+              "e10": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0
+            }
+          }
+        }
+      }
     }
   }
 }
