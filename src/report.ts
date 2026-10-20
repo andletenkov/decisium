@@ -14,7 +14,7 @@ export const HINTS: Record<string, string> = {
   ELEMENT_NOT_FOUND: "The page changed while deciding. Rerun; if it repeats, the page may be re-rendering constantly.",
   ACTION_FAILED: "The browser could not perform the action (hidden, disabled or covered element). See the Playwright trace and console errors.",
   STEP_TIMEOUT: "The step needed more than 8 actions. Split it into smaller steps.",
-  UI_CHANGED: "The page differs from the recorded cassette. If the change is intended, rerun with --record new (or --record all to re-record).",
+  UI_CHANGED: "The run replays recorded Jev answers (cassette) and this step has none that fits. If the change is intended, rerun with --record new to record just the changed steps (calls Jev), or --record all to re-record everything.",
   JUDGED_FAILED: "Jev judged that the page does not satisfy the check.",
 };
 export const KIND: Record<StepKind, string> = { action: "Step", attempt: "Attempt", assertion: "Check" };
@@ -24,15 +24,21 @@ const ASSERTION_WORDS = /expect|assert|matcher|objectcontaining|actual|to (?:be|
 const JOINER = "\u2060";
 const TAG = / \(test failed\)(?=:|$)/;
 
-/** The error message a failing Step throws: starts with the outcome; `failed` outcomes carry "test failed". */
+const HINT = /\n\nWhat to do: [\s\S]*$/;
+
+/**
+ * The error message a failing Step throws: starts with the outcome, ends with what to do (Qase shows only this message).
+ * `failed` outcomes carry "test failed".
+ */
 export function outcomeMessage({ outcome, reason }: { outcome: string; reason?: string }): string {
-  if (FAILED.includes(outcome)) return `${outcome} (test failed)${reason ? `: ${reason}` : ""}`;
-  return `${outcome}${reason ? `: ${reason.replace(ASSERTION_WORDS, w => w[0] + JOINER + w.slice(1))}` : ""}`;
+  const body = `${reason ? `: ${reason}` : ""}${HINTS[outcome] ? `\n\nWhat to do: ${HINTS[outcome]}` : ""}`;
+  if (FAILED.includes(outcome)) return `${outcome} (test failed)${body}`;
+  return outcome + body.replace(ASSERTION_WORDS, w => w[0] + JOINER + w.slice(1));
 }
 
 /** Inverse of outcomeMessage; undefined for other errors (infrastructure, bugs). */
 export function parseOutcome(message: string): { outcome: string; reason: string } | undefined {
-  const m = /^([A-Z_]+)(?::\s([\s\S]*))?$/.exec(message.replace(TAG, ""));
+  const m = /^([A-Z_]+)(?::\s([\s\S]*))?$/.exec(message.replace(HINT, "").replace(TAG, ""));
   if (!m || !(FAILED.includes(m[1]) || m[1] in HINTS)) return undefined;
   return { outcome: m[1], reason: (m[2] ?? "").replaceAll(JOINER, "") };
 }

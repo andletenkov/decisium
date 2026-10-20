@@ -10,8 +10,8 @@ interface File { model: string; entries: Record<string, Entry> }
 
 /** No recorded answer for this exact request in replay-only mode: the UI (or the Step) differs from the recording. */
 export class UiChanged extends Error {
-  diff: string;
-  constructor(diff: string) { super(`UI_CHANGED: no recorded Jev answer for this Observation\n${diff}`); this.diff = diff; }
+  reason: string; // for people: why no recorded answer fits
+  constructor(reason: string) { super(`UI_CHANGED: ${reason}`); this.reason = reason; }
 }
 
 /** Recorded Jev request/response pairs, keyed by SHA-256 of the full request (ADR 0002). */
@@ -56,7 +56,7 @@ export class Cassette {
     if (this.#dirty) writeFileSync(this.path, JSON.stringify(this.#file, null, 2) + "\n");
   }
 
-  /** Observation difference against the closest recorded request for the same Step. */
+  /** Why no recording fits: the Step is new, or how the page differs from the closest recording of the same Step. */
   #diff(request: unknown): string {
     const ui = (r: unknown) => String((r as { state?: { ui?: string } }).state?.ui ?? "");
     const step = (r: unknown) => JSON.stringify({ ...(r as { state?: object }).state, ui: undefined, actions_taken_for_step: undefined });
@@ -69,8 +69,9 @@ export class Cassette {
       const removed = [...was].filter(l => !now.has(l)), added = [...now].filter(l => !was.has(l));
       if (!best || removed.length + added.length < best.removed.length + best.added.length) best = { removed, added };
     }
-    if (!best) return "  this step was never recorded (new or reworded step)";
-    if (!best.removed.length && !best.added.length) return "  Observation unchanged; the questions or recent actions differ";
-    return [...best.removed.map(l => `  - ${l.trim()}`), ...best.added.map(l => `  + ${l.trim()}`)].join("\n");
+    if (!best) return "this step has no recorded Jev answer: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev";
+    if (!best.removed.length && !best.added.length) return "the page looks as recorded, but the step's earlier actions in this run differ from the recording, so the recorded Jev answer cannot be reused";
+    return "the page is not the one this step was recorded on, so the recorded Jev answer cannot be reused. Differences (- recorded, + now):\n"
+      + [...best.removed.map(l => `  - ${l.trim()}`), ...best.added.map(l => `  + ${l.trim()}`)].join("\n");
   }
 }

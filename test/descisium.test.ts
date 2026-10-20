@@ -292,8 +292,10 @@ test("cassette replays identical requests, fails UI_CHANGED with the difference,
   const replay = new Cassette(path, "m1", "once"); // file exists: replay only
   assert.deepEqual(await replay.call(req("a\nb"), live), { n: 1 });
   assert.equal(calls, 1);
-  await assert.rejects(replay.call(req("a\nc"), live), (e: Error) =>
-    e instanceof UiChanged && e.diff === "  - b\n  + c");
+  await assert.rejects(replay.call(req("a\nc"), live), (e: Error) => e instanceof UiChanged && e.reason ===
+    "the page is not the one this step was recorded on, so the recorded Jev answer cannot be reused. Differences (- recorded, + now):\n  - b\n  + c");
+  await assert.rejects(replay.call({ state: { step: "reworded", ui: "a\nb" }, questions: {} }, live), (e: Error) => e instanceof UiChanged && e.reason ===
+    "this step has no recorded Jev answer: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev");
 
   const drift = new Cassette(path, "m1", "new");
   assert.deepEqual(await drift.call(req("a\nc"), live), { n: 2 });
@@ -354,7 +356,7 @@ test("run directory: trace.jsonl events, per-scenario folder, secret values mask
 
 test("Qase status: every outcome message starts with its outcome and the reporter classifies it as decided", async () => {
   const { determineTestStatus } = await import("qase-javascript-commons");
-  const { outcomeMessage, parseOutcome } = await import("../src/report.ts");
+  const { HINTS, outcomeMessage, parseOutcome } = await import("../src/report.ts");
   // Reasons as the runner writes them, including words the reporter treats as assertion or infrastructure hints.
   const reasons = [
     "",
@@ -375,6 +377,7 @@ test("Qase status: every outcome message starts with its outcome and the reporte
       err.stack = msg; // what the step throws: no frames for the reporter to read keywords from
       assert.equal(determineTestStatus(err, "failed"), status, `${outcome}: ${reason}`);
       assert.deepEqual(parseOutcome(msg), { outcome, reason }); // the console shows the reason as written
+      if (HINTS[outcome]) assert.ok(msg.replaceAll("\u2060", "").endsWith(`\nWhat to do: ${HINTS[outcome]}`), msg); // Qase readers get the hint too
     }
   }
   assert.equal(parseOutcome("Cannot open http://x: refused"), undefined);

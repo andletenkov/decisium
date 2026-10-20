@@ -86,15 +86,15 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
   } catch (err) {
     if (!(err instanceof UiChanged)) throw infra(err);
     log(`  => UI_CHANGED`);
-    r = { outcome: "UI_CHANGED", reason: `no recorded Jev answer for this page; what changed since the recording:\n${err.diff}` };
+    r = { outcome: "UI_CHANGED", reason: err.reason };
   }
   run.event("step", { kind: this.kind, step: text, ...r });
   for (const v of quoted(text)) this.earlier[v] = text;
-  // The Step's last Turn screenshot; fileName carries its run-directory path to the console formatter.
-  const shot = run.lastScreenshot;
-  if (shot && existsSync(shot)) this.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
+    // Failed Step only (passed ones keep theirs in the run directory); fileName carries the path to the console formatter.
+    const shot = run.lastScreenshot;
+    if (shot && existsSync(shot)) this.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
     const err = new Error(outcomeMessage(r));
     err.stack = err.message; // no stack frames: the Qase reporter reads keywords in them
     throw err;
