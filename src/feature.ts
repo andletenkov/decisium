@@ -8,6 +8,7 @@ export type StepKind = "action" | "attempt" | "assertion";
 export interface ParsedStep {
   text: string;
   kind: StepKind;
+  line?: number; // line in the .feature file, for error reports
 }
 
 export interface Scenario {
@@ -28,6 +29,15 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   const empty = pickles.find(p => !p.steps.length);
   if (empty) throw new Error(`Scenario "${empty.name}" has no steps (lines without Given/When/Then/And/But are read as description)`);
   if (!pickles.length) throw new Error("No scenarios found");
+  // Step AST id -> line. Steps live in Background/Scenario, possibly nested in a Rule.
+  const lines = new Map<string, number>();
+  const walk = (node: unknown): void => {
+    if (!node || typeof node !== "object") return;
+    const n = node as { id?: string; keyword?: string; text?: string; location?: { line: number } };
+    if (n.id && n.text !== undefined && n.location) lines.set(n.id, n.location.line);
+    for (const v of Object.values(node)) walk(v);
+  };
+  walk(doc.feature);
   return pickles.map(pickle => ({
     name: pickle.name,
     url: pickle.tags.map(t => /^@url:(.+)$/.exec(t.name)?.[1]).filter(Boolean).at(-1),
@@ -35,7 +45,7 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
       // Ignoring an attached table/doc string would silently run a different test than the one written.
       if (step.argument) throw new Error(`Step "${step.text}" has a data table or doc string; not supported yet`);
       const kind: StepKind = step.type === PickleStepType.OUTCOME ? "assertion" : ATTEMPT.test(step.text) ? "attempt" : "action";
-      return { text: step.text, kind };
+      return { text: step.text, kind, line: lines.get(step.astNodeIds[0]) };
     }),
   }));
 }

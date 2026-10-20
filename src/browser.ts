@@ -74,7 +74,13 @@ export class Browser {
       w.__pending = () => timers.size + frames.size + sockets;
     });
     const b = new Browser(browser, page);
-    await page.goto(url);
+    try {
+      await page.goto(url);
+    } catch (err) {
+      await browser.close();
+      const why = (err as Error).message.split("\n")[0].replace(/^page\.goto:\s*/, "");
+      throw new Error(`Cannot open ${url}: ${why}. Is the app running and the URL right?`);
+    }
     await b.settle();
     return b;
   }

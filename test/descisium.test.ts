@@ -93,8 +93,8 @@ Feature: F
     ["the status is \"Draft\"", "assertion"], ["the button is disabled", "assertion"], ["I go back", "action"],
   ]);
   assert.deepEqual(scenarios[2].steps.map(s => s.kind), ["action", "attempt"]);
-  assert.deepEqual(parseStep(`Then the status should be "Draft"`), { text: `the status should be "Draft"`, kind: "assertion" });
-  assert.deepEqual(parseStep(`set the period to 2 weeks`), { text: "set the period to 2 weeks", kind: "action" });
+  assert.deepEqual(parseStep(`Then the status should be "Draft"`), { text: `the status should be "Draft"`, kind: "assertion", line: 3 });
+  assert.deepEqual(parseStep(`set the period to 2 weeks`), { text: "set the period to 2 weeks", kind: "action", line: 3 });
 });
 
 test("parseFeature rejects what it cannot run faithfully", () => {

@@ -17,6 +17,16 @@ export class RunDir {
     mkdirSync(this.path, { recursive: true });
   }
 
+  /** Full verbose log of the run (what -v prints). */
+  log(line: string) {
+    appendFileSync(join(this.path, "log.txt"), line + "\n");
+  }
+
+  /** Last screenshot of the current scenario, for failure reports. */
+  get lastScreenshot(): string | undefined {
+    return this.#shot ? join(this.#dir, `${String(this.#shot).padStart(3, "0")}.png`) : undefined;
+  }
+
   event(type: string, data: Record<string, unknown> = {}) {
     appendFileSync(join(this.path, "trace.jsonl"), JSON.stringify({ t: new Date().toISOString(), scenario: this.#scenario, type, ...data }) + "\n");
   }

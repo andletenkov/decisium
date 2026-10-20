@@ -69,8 +69,8 @@ export class Cassette {
       const removed = [...was].filter(l => !now.has(l)), added = [...now].filter(l => !was.has(l));
       if (!best || removed.length + added.length < best.removed.length + best.added.length) best = { removed, added };
     }
-    if (!best) return "  no recording for this Step";
+    if (!best) return "  this step was never recorded (new or reworded step)";
     if (!best.removed.length && !best.added.length) return "  Observation unchanged; the questions or recent actions differ";
-    return [...best.removed.map(l => `  - ${l}`), ...best.added.map(l => `  + ${l}`)].join("\n");
+    return [...best.removed.map(l => `  - ${l.trim()}`), ...best.added.map(l => `  + ${l.trim()}`)].join("\n");
   }
 }

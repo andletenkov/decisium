@@ -55,10 +55,12 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   log(`\nAssert: ${step}`);
   const end = finish(log);
   const values = quoted(step);
+  let recallNote = "";
   if (!values.length && Object.keys(earlier).length) {
     const r = await decider.recall(step, earlier);
     log(`  Recall: ${fmt(r)}`);
     if (gate(r) && r.choice !== "none") values.push(r.choice);
+    else recallNote = `; Jev could not tell which earlier value it refers to (${named(r)})`;
   }
 
   // Like Playwright's expect: a check that does not pass is re-evaluated whenever the UI changes, until
@@ -69,6 +71,7 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
     const verdict = await check(obs);
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
+    if (verdict.outcome === "UNVERIFIABLE") verdict.reason += recallNote;
     if (final || left <= 0) return end(verdict.outcome, verdict.reason);
     log("  (not passed yet; waiting for the UI to change)");
     if (!(await rt.waitForChange(obs.text, left))) return end(verdict.outcome, verdict.reason);
@@ -86,7 +89,7 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
     if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map(r => r.reason).join("; ") };
     const first = results[0];
     if (results.every(r => r.outcome === first.outcome)) return first;
-    return { outcome: "AMBIGUOUS", reason: `plausible kinds disagree: ${results.map(r => `${r.kind}->${r.outcome}`).join(", ")}` };
+    return { outcome: "AMBIGUOUS", reason: `Jev could not tell what kind of check this is, and the readings disagree: ${results.map(r => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}` };
   }
 }
 
@@ -107,15 +110,15 @@ type Verdict = { outcome: StepOutcome; reason?: string; inapplicable?: true };
 /** Pass/fail for one kind of check, decided by code from the elements Jev identified. */
 function evaluate(kind: string, a: Assessment, obs: Observation, values: string[], log: typeof console.log): Verdict {
   if (kind === "fuzzy") {
-    if (a.judged === undefined) return { outcome: "UNVERIFIABLE", reason: "fuzzy check; rerun with --judged to let Jev judge it" };
+    if (a.judged === undefined) return { outcome: "UNVERIFIABLE", reason: "this is a subjective check that code cannot compare; rerun with --judged to let Jev judge it" };
     log(`  Judged: p=${a.judged.toFixed(2)}`);
     if (a.judged >= JUDGED_THRESHOLD) return { outcome: "JUDGED_PASSED", reason: `p=${a.judged.toFixed(2)}` };
     if (a.judged <= 1 - JUDGED_THRESHOLD) return { outcome: "JUDGED_FAILED", reason: `p=${a.judged.toFixed(2)}` };
-    return { outcome: "AMBIGUOUS", reason: `judgement unclear (p=${a.judged.toFixed(2)})` };
+    return { outcome: "AMBIGUOUS", reason: `Jev is unsure whether the page satisfies the check (${Math.round(a.judged * 100)}% yes)` };
   }
 
   if (kind === "presence" || kind === "absence") {
-    if (!values.length) return { outcome: "UNVERIFIABLE", reason: "a presence check needs a quoted value" };
+    if (!values.length) return { outcome: "UNVERIFIABLE", reason: "the check quotes no text to look for (e.g. \"Winter Sale\" should appear)" };
     // Jev names the area the check is scoped to; code looks for the quoted text inside it. As with kinds, every
     // plausible area is checked and they must agree. A text that is nowhere on the page is decided by code alone.
     const has = (text: string) => values.every(v => containsValue(text, v));
@@ -126,54 +129,66 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
       const seen = new Map<boolean, string>();
       for (const ref of plausible(a.area)) {
         if (ref === AREA_PAGE) seen.set(true, "the page");
-        else if (ref === AREA_MISSING) seen.set(false, "the named area (not on screen)");
+        else if (ref === AREA_MISSING) seen.set(false, "the area the check names (that area is not on this screen)");
         else {
           const el = obs.areas.find(e => e.ref === ref);
-          if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `ref ${ref} not in observation` };
+          if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an area that is no longer on the page (${ref})` };
           seen.set(has(el.text), el.line);
         }
       }
-      if (seen.size > 1) return { outcome: "AMBIGUOUS", reason: `plausible areas disagree (${fmt(a.area)})` };
+      if (seen.size > 1) return { outcome: "AMBIGUOUS", reason: `Jev is unsure where the check says to look, and the candidates give different answers: ${named(a.area, obs)}` };
       [[found, where]] = seen;
     }
     const pass = found === (kind === "presence");
-    return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `${found ? "found" : "not found"} in ${where}` };
+    const text = values.map(v => `"${v}"`).join(" and ");
+    return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `${text} ${found ? "is shown" : "is not shown"} in ${where}${found ? ", expected it to be absent" : ""}` };
   }
 
   if (kind === "state") {
     log(`  Subject: ${fmt(a.subject)}  State: ${fmt(a.state)}`);
-    if (!gate(a.subject) || !gate(a.state)) return { outcome: "AMBIGUOUS", reason: `subject or state unclear (${fmt(a.subject)} | ${fmt(a.state)})` };
-    if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no matching element" };
+    if (!gate(a.subject) || !gate(a.state)) return { outcome: "AMBIGUOUS", reason: `Jev is unsure which control or which state the check means: control ${named(a.subject, obs)}; state ${named(a.state)}` };
+    if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page matches what the check describes" };
     const el = obs.readable.find(e => e.ref === a.subject.choice);
-    if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `ref ${a.subject.choice} not in observation` };
+    if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${a.subject.choice})` };
     const [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
     if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role)) {
       return { outcome: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
     }
     const has = el.state.split(/\s+/).includes(`[${flag}]`);
     log(`  Compare: ${flag}=${has}, expected ${on}`);
-    return has === on ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `expected ${a.state.choice}, ${el.line}` };
+    return has === on ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `expected ${el.line} to be ${a.state.choice}, but it is not` };
   }
 
   // kind === "value"
-  if (values.length !== 1) return { outcome: "UNVERIFIABLE", reason: "a value check needs exactly one quoted expected value" };
+  if (values.length !== 1) return { outcome: "UNVERIFIABLE", reason: "a value check needs exactly one quoted expected value (e.g. the status should be \"Draft\")" };
   log(`  Subject: ${fmt(a.subject)}`);
-  if (!gate(a.subject)) return { outcome: "AMBIGUOUS", reason: `subject unclear (${fmt(a.subject)})` };
-  if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no element shows the checked state" };
+  if (!gate(a.subject)) return { outcome: "AMBIGUOUS", reason: `Jev is unsure which element the check is about: ${named(a.subject, obs)}` };
+  if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page shows what the check describes" };
   const el = obs.readable.find(e => e.ref === a.subject.choice);
-  if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `ref ${a.subject.choice} not in observation` };
+  if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${a.subject.choice})` };
   const actual = assertableText(el);
-  if (actual === undefined) return { outcome: "UNVERIFIABLE", reason: `${el.line} has no text to compare` };
+  if (actual === undefined) return { outcome: "UNVERIFIABLE", reason: `${el.line} has no text to compare (only a label)` };
   log(`  Compare: "${values[0]}" in "${actual}"`);
   return containsValue(actual, values[0])
     ? { outcome: "PASSED" }
-    : { outcome: "ASSERTION_FAILED", reason: `expected "${values[0]}", found "${actual}" in ${el.line}` };
+    : { outcome: "ASSERTION_FAILED", reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${actual}"` };
 }
 
 const finish = (log: typeof console.log) => (outcome: StepOutcome, reason?: string): StepResult => {
   log(`  => ${outcome}${reason ? `: ${reason}` : ""}`);
   return { outcome, reason };
 };
+
+const SPECIAL: Record<string, string> = {
+  none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
+  scroll: "scroll down", wait: "wait for loading",
+};
+/** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
+export const named = (p: Pick, obs?: Observation) =>
+  Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => {
+    const el = obs && [...obs.readable, ...obs.areas, ...obs.elements].find(e => e.ref === k);
+    return `${el ? el.line : SPECIAL[k] ?? k} ${Math.round(v * 100)}%`;
+  }).join(", ");
 
 const fmt = (p: Pick) =>
   Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3)
@@ -194,8 +209,8 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     const t = await decider.turn(step, obs, recent, attempt);
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
-    if (!gate(t.target)) return end("AMBIGUOUS", `target unclear (${fmt(t.target)})`);
-    if (t.target.choice === "none") return end("BLOCKED", "no element helps accomplish the step");
+    if (!gate(t.target)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
+    if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
     let action: Action;
     let described: string;
@@ -204,14 +219,14 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
       described = action.verb;
     } else {
       const el = obs.elements.find(e => e.ref === t.target.choice);
-      if (!el) return end("ELEMENT_NOT_FOUND", `ref ${t.target.choice} not in observation`);
+      if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       action = { verb: el.verb, ref: el.ref };
       if (el.verb !== "CLICK") {
         const candidates = el.verb === "SELECT" ? el.options : stepValues(step);
-        if (!candidates.length) return end("AMBIGUOUS", `no candidate value for ${el.line}`);
+        if (!candidates.length) return end("AMBIGUOUS", `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`);
         const v = await decider.value(step, obs, el, candidates);
         log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);
-        if (!gate(v) || v.choice === "none") return end("AMBIGUOUS", "value unclear");
+        if (!gate(v) || v.choice === "none") return end("AMBIGUOUS", `Jev is unsure which value to enter into ${el.line}${el.secret ? "" : `: ${named(v)}`}`);
         action.value = v.choice;
       }
       const shown = action.value === undefined ? "" : ` <- "${el.secret ? MASK : action.value}"`;
@@ -221,14 +236,14 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     try {
       await rt.execute(action);
     } catch (err) {
-      return end("ACTION_FAILED", (err as Error).message.split("\n")[0]);
+      return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
     }
     recent.push(described);
 
     const next = await rt.observe();
     unchanged = next.text === obs.text ? unchanged + 1 : 0;
-    if (unchanged >= 2) return end("BLOCKED", "UI did not change after two actions");
+    if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;
   }
-  return end("STEP_TIMEOUT", `not done after ${MAX_TURNS} turns`);
+  return end("STEP_TIMEOUT", `not done after ${MAX_TURNS} actions (${recent.join(", ")})`);
 }
