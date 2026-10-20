@@ -33,8 +33,11 @@ const LINE = /^(\s*)- (\w+)(?: "((?:[^"\\]|\\.)*)")?((?: \[[^\]]+\])*)(?::\s*(.*
 
 export const MASK = "\u2022\u2022\u2022\u2022";
 
-/** `secretRefs`: refs of password fields (the snapshot itself shows them as plain textboxes with their value). */
-export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set()): Observation {
+/**
+ * `secretRefs`: refs of password fields (the snapshot itself shows them as plain textboxes with their value).
+ * `editableRefs`: comboboxes you type into (search boxes with suggestions); other comboboxes are clicked open.
+ */
+export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set(), editableRefs: ReadonlySet<string> = new Set()): Observation {
   const elements: Element[] = [];
   const readable: Element[] = [];
   const kept: string[] = [];
@@ -71,8 +74,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     const el: Element = {
       ref, role, name, value, state, secret,
       line: "", // set below, once native select options have filled in the value
-      // shortcut: editable (autocomplete) comboboxes get CLICK, not TYPE; detect via DOM when a real app needs it.
-      verb: TYPEABLE.has(role) ? "TYPE" : "CLICK",
+      verb: TYPEABLE.has(role) || editableRefs.has(ref) ? "TYPE" : "CLICK",
       options: [],
       text: words,
     };
@@ -84,7 +86,9 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
   }
   for (const el of [...readable, ...areas]) {
     if (el.options.length) el.verb = "SELECT";
-    el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${el.value ? ` value="${el.value}"` : ""}${el.state ? " " + el.state : ""}`;
+    // A long value (a whole file in a code view) would bury the description; the full value stays in `value` and `ui`.
+    const value = el.value.length > 60 ? el.value.slice(0, 60) + "…" : el.value;
+    el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.state ? " " + el.state : ""}`;
   }
   return { text: kept.join("\n"), elements, readable, areas: [...areas], pageText };
 }

@@ -9,8 +9,9 @@ export interface Action {
 }
 
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
-// shortcut: long-lived requests (SSE, long polling), intervals and endless animations never go quiet, so every
-// action waits the full cap and failing checks wait WAIT_CAP_MS; ignore such work by URL/type when a real app needs it.
+// shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
+// quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
+// WAIT_CAP_MS; ignore such work by URL/type when the waiting costs too much.
 // Not tracked: Web Workers, and timers inside cross-origin iframes.
 const SETTLE_CAP_MS = 5000; // pages that never go quiet continue after this
 const WAIT_CAP_MS = 5000; // WAIT and assertion retries give up after this
@@ -38,28 +39,32 @@ export class Browser {
     // In every document: the time of the last DOM mutation, and a count of work that can still change the page
     // on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
     await page.addInitScript(() => {
-      const w = window as unknown as Window & { __lastMutation: number; __pending: () => number };
+      const w = window as unknown as Window & { __lastMutation: number; __pending: () => number; __soon: () => number };
       w.__lastMutation = performance.now();
       new MutationObserver(() => { w.__lastMutation = performance.now(); })
         .observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
 
-      const timers = new Set<unknown>(), frames = new Set<number>();
+      // Pending work, by id -> due time (ms since page start; Infinity for intervals, which never finish).
+      const timers = new Map<unknown, number>(), frames = new Set<number>(), idles = new Set<number>();
       let sockets = 0;
-      const { setTimeout: st, clearTimeout: ct, setInterval: si, clearInterval: ci, requestAnimationFrame: raf, cancelAnimationFrame: caf } = w;
+      const { setTimeout: st, clearTimeout: ct, setInterval: si, clearInterval: ci, requestAnimationFrame: raf, cancelAnimationFrame: caf,
+        requestIdleCallback: ric, cancelIdleCallback: cic } = w;
       w.setTimeout = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => {
         const id = st((...a: unknown[]) => { timers.delete(id); if (typeof fn === "function") fn(...a); }, ms, ...args);
-        timers.add(id);
+        timers.set(id, performance.now() + (ms ?? 0));
         return id;
       }) as typeof setTimeout;
       w.setInterval = ((fn: TimerHandler, ms?: number, ...args: unknown[]) => {
         const id = si(fn, ms, ...args);
-        timers.add(id);
+        timers.set(id, Infinity);
         return id;
       }) as typeof setInterval;
       // Browsers let either clear function cancel either kind of timer.
       w.clearTimeout = w.clearInterval = (id?: number) => { timers.delete(id); ct(id); ci(id); };
       w.requestAnimationFrame = cb => { const id = raf(t => { frames.delete(id); cb(t); }); frames.add(id); return id; };
       w.cancelAnimationFrame = id => { frames.delete(id); caf(id); };
+      w.requestIdleCallback = (cb, opts) => { const id = ric(d => { idles.delete(id); cb(d); }, opts); idles.add(id); return id; };
+      w.cancelIdleCallback = id => { idles.delete(id); cic(id); };
       // any: constructor args are forwarded untouched
       type Socket = new (...a: any[]) => EventTarget & { readyState: number; close(): void };
       const g = w as unknown as { WebSocket: Socket; EventSource: Socket };
@@ -71,7 +76,10 @@ export class Browser {
         constructor(...a: unknown[]) { super(...a); sockets++; }
         close() { if (this.readyState !== 2 /* CLOSED */) sockets--; super.close(); }
       };
-      w.__pending = () => timers.size + frames.size + sockets;
+      w.__pending = () => timers.size + frames.size + idles.size + sockets;
+      // Work about to change the page: timeouts due within 1 s and idle callbacks. Not intervals, long timers (polling,
+      // session refresh) or animation frames (endless animations), which would make every action wait the full cap.
+      w.__soon = () => idles.size + [...timers.values()].filter(due => due - performance.now() <= 1000).length;
     });
     const b = new Browser(browser, page);
     try {
@@ -85,31 +93,41 @@ export class Browser {
     return b;
   }
 
-  /** Waits until no request is in flight and the DOM has not changed for QUIET_MS (capped). */
+  /**
+   * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
+   * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
+   */
   private async settle(): Promise<void> {
     const start = Date.now();
     while (Date.now() < start + SETTLE_CAP_MS) {
-      const sinceMutation = await this.page
-        .evaluate(() => performance.now() - (window as unknown as { __lastMutation: number }).__lastMutation)
-        .catch(() => 0); // mid-navigation: not settled yet
+      const [sinceMutation, soon] = await this.page
+        .evaluate(() => {
+          const w = window as unknown as { __lastMutation: number; __soon?: () => number };
+          return [performance.now() - w.__lastMutation, w.__soon?.() ?? 0];
+        })
+        .catch(() => [0, 1]); // mid-navigation: not settled yet
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
-      if (this.inflight === 0 && quiet >= QUIET_MS) return;
+      if (this.inflight === 0 && soon === 0 && quiet >= QUIET_MS) return;
       await this.page.waitForTimeout(25);
     }
   }
 
   async observe(): Promise<Observation> {
     const snapshot = await this.page.ariaSnapshot({ mode: "ai" });
-    // Password inputs look like plain textboxes in the snapshot; ask the DOM which ones are secret.
-    const secret = new Set<string>();
-    for (const [, ref] of snapshot.matchAll(/- textbox\b[^\n]*\[ref=(\w+)\]/g)) {
-      const isPassword = await this.page.locator(`aria-ref=${ref}`)
-        .evaluate(el => (el as HTMLInputElement).type === "password", undefined, { timeout: 1000 })
-        .catch(() => false);
-      if (isPassword) secret.add(ref);
+    // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
+    // from a button-like one; ask the DOM.
+    const secret = new Set<string>(), editable = new Set<string>();
+    for (const [, role, ref] of snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)) {
+      const kind = await this.page.locator(`aria-ref=${ref}`)
+        .evaluate(el => (el as HTMLInputElement).type === "password" ? "secret"
+          : el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement).isContentEditable ? "editable" : "",
+        undefined, { timeout: 1000 })
+        .catch(() => "");
+      if (kind === "secret") secret.add(ref);
+      else if (kind === "editable" && role === "combobox") editable.add(ref);
     }
-    return parseSnapshot(snapshot, secret);
+    return parseSnapshot(snapshot, secret, editable);
   }
 
   /** Executes one action and checks its effect where the effect is deterministic (TYPE/SELECT). */

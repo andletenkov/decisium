@@ -59,10 +59,14 @@
   }
 
   // ?slow=1: the status updates 1.2 s after the click, with no request (timer), so only retrying sees it.
+  // ?lazy=1: like lazily loaded code (GitHub's search): an idle callback, then a short timer, then the DOM changes;
+  // nothing changes for longer than the settle quiet window in between, so settling must wait for that work.
   const delay = params.get("slow") ? 1200 : 0;
   document.getElementById("schedule").addEventListener("click", () => {
     const name = document.getElementById("name").value.trim();
-    setTimeout(() => { document.getElementById("status").textContent = name ? "Scheduled" : "Name required"; }, delay);
+    const update = () => { document.getElementById("status").textContent = name ? "Scheduled" : "Name required"; };
+    if (params.get("lazy")) requestIdleCallback(() => setTimeout(update, 300));
+    else setTimeout(update, delay);
   });
 </script>
 </body>

@@ -30,6 +30,25 @@ test("parseSnapshot keeps actionable refs, attaches native options, drops wrappe
   assert.ok(obs.text.includes("Status: Draft"));
 });
 
+test("Browser: editable comboboxes (search with suggestions) are typed into; button-like ones are clicked", async () => {
+  const b = await Browser.open(`data:text/html,<input role=combobox aria-label="Search or jump to" aria-expanded=false>`
+    + `<div role=combobox aria-label="Activation period" tabindex=0>1 week</div>`);
+  try {
+    const verbs = Object.fromEntries((await b.observe()).elements.map(e => [e.name, e.verb]));
+    assert.deepEqual(verbs, { "Search or jump to": "TYPE", "Activation period": "CLICK" });
+  } finally {
+    await b.close();
+  }
+});
+
+test("element descriptions shorten long values; checks still compare the full value", () => {
+  const long = `name playwright-internal ${"version 1 ".repeat(500)}`.trim();
+  const [el] = parseSnapshot(`- textbox "file content" [ref=e1]: ${long}`).readable;
+  assert.ok(el.line.length < 120, el.line);
+  assert.match(el.line, /^textbox "file content" value="name playwright-internal .*…"$/);
+  assert.equal(el.value, long);
+});
+
 test("parseSnapshot masks password values in elements and in the text sent to Jev", () => {
   const obs = parseSnapshot(`- textbox "Password" [ref=e3]: hunter2\n- textbox "User" [ref=e4]: ale`, new Set(["e3"]));
   assert.equal(obs.elements[0].value, MASK);
@@ -225,6 +244,18 @@ test("slow UI: WAIT returns on change, assertions retry until the UI shows the e
   }
 });
 
+test("lazy UI: actions settle only after work due soon (idle callbacks, short timers) has run", async () => {
+  const b = await Browser.open(APP + "?lazy=1");
+  try {
+    const name = (await b.observe()).elements.find(e => e.name === "Campaign name")!;
+    await b.execute({ verb: "TYPE", ref: name.ref, value: "Autumn Sale" });
+    await b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find(e => e.name === "Schedule")!.ref });
+    assert.match((await b.observe()).text, /Status: Scheduled/); // a single read right after the action
+  } finally {
+    await b.close();
+  }
+});
+
 test("idle page: a failing check and WAIT give up at once instead of waiting the full cap", async () => {
   const b = await Browser.open(APP);
   try {
@@ -407,4 +438,28 @@ test("Qase preflight (testops mode): missing token or unknown case id is one lin
   } finally {
     server.close();
   }
+});
+
+test("narrow: more candidates than Jev accepts are cut down in rounds, keeping the right one and the fixed answers", async () => {
+  const { narrow } = await import("../src/jev.ts");
+  const candidates = Object.fromEntries(Array.from({ length: 700 }, (_, i) => [`e${i}`, `link "item ${i}"`]));
+  const fixed = { none: "nothing", scroll: "scroll down" };
+  const sizes: number[] = [];
+  // Fake Jev: likes e450 most, then e3; everything else shares the rest.
+  const ask = async (criteria: Record<string, string>) => {
+    sizes.push(Object.keys(criteria).length);
+    const keys = Object.keys(criteria);
+    const w = (k: string) => (k === "e450" ? 50 : k === "e3" ? 10 : 1);
+    const total = keys.reduce((s, k) => s + w(k), 0);
+    return { choice: "", probabilities: Object.fromEntries(keys.map(k => [k, w(k) / total])) };
+  };
+  const out = await narrow(candidates, fixed, ask, 255);
+  assert.ok(sizes.every(n => n <= 255), `asked with ${sizes}`);
+  assert.ok(Object.keys(out).length <= 255);
+  assert.ok("e450" in out && "e3" in out && "none" in out && "scroll" in out);
+  assert.equal(out.e450, `link "item 450"`);
+  // Small enough already: no extra questions.
+  sizes.length = 0;
+  assert.deepEqual(await narrow({ e1: "a" }, fixed, ask, 255), { e1: "a", ...fixed });
+  assert.equal(sizes.length, 0);
 });

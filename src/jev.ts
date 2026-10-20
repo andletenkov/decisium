@@ -60,8 +60,33 @@ export interface Decider {
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;
 }
 
-const refs = (els: Element[], none: string): Record<string, string> =>
-  ({ ...Object.fromEntries(els.map(e => [e.ref, e.line])), none });
+const refs = (els: Element[]): Record<string, string> => Object.fromEntries(els.map(e => [e.ref, e.line]));
+
+/** Jev API limit: options per choice question. */
+export const MAX_CHOICES = 255;
+const FINALISTS = 3; // kept from each batch
+
+/**
+ * Pages can offer more candidates than one question accepts (GitHub: 336 links and buttons). Ask in batches, keep each
+ * batch's most likely candidates, repeat until they fit; the caller asks the real question over what is left, so the
+ * confidence gate still reads one comparable distribution. `fixed` answers (none, scroll, ...) are in every batch.
+ */
+export async function narrow(candidates: Record<string, string>, fixed: Record<string, string>,
+  ask: (criteria: Record<string, string>) => Promise<Pick>, max = MAX_CHOICES): Promise<Record<string, string>> {
+  let left = Object.entries(candidates);
+  const size = max - Object.keys(fixed).length;
+  while (left.length > size) {
+    const kept: [string, string][] = [];
+    for (let i = 0; i < left.length; i += size) {
+      const batch = left.slice(i, i + size);
+      const { probabilities } = await ask({ ...Object.fromEntries(batch), ...fixed });
+      const best = batch.map(([k]) => k).sort((a, b) => (probabilities[b] ?? 0) - (probabilities[a] ?? 0)).slice(0, FINALISTS);
+      kept.push(...batch.filter(([k]) => best.includes(k)));
+    }
+    left = kept;
+  }
+  return { ...Object.fromEntries(left), ...fixed };
+}
 
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
@@ -76,15 +101,24 @@ export class JevDecider implements Decider {
     return this.#cassette ? this.#cassette.call(request, live) : live();
   }
 
+  /** One choice question over `criteria`, for narrow(). */
+  #choose(state: Record<string, string | string[]>, question: string) {
+    return async (criteria: Record<string, string>): Promise<Pick> =>
+      (await this.#ask({ state, questions: { pick: choice(question, criteria) } })).answers.pick;
+  }
+
   async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
-    const targets = { ...refs(obs.elements, "No element on screen helps accomplish `step`."), ...PAGE_ACTIONS };
+    const state = { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" };
+    const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
+    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...PAGE_ACTIONS },
+      this.#choose(state, question));
     const res = await this.#ask({
-      state: { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" },
+      state,
       questions: {
         done: attempt
           ? noul("Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?")
           : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
-        target: choice("Which element in `ui` should be interacted with next to accomplish `step`?", targets),
+        target: choice(question, targets),
       },
     });
     return { done: res.answers.done.noul, target: res.answers.target };
@@ -104,12 +138,11 @@ export class JevDecider implements Decider {
   }
 
   async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
-    const criteria: Record<string, string> = Object.fromEntries(candidates.map((c, i) => [`v${i}`, c]));
-    criteria.none = "None of these values is what `step` asks for.";
-    const res = await this.#ask({
-      state: { step, ui: obs.text, element: el.line },
-      questions: { value: choice("Which value should be entered into `element` to accomplish `step`?", criteria) },
-    });
+    const state = { step, ui: obs.text, element: el.line };
+    const question = "Which value should be entered into `element` to accomplish `step`?";
+    const criteria = await narrow(Object.fromEntries(candidates.map((c, i) => [`v${i}`, c])),
+      { none: "None of these values is what `step` asks for." }, this.#choose(state, question));
+    const res = await this.#ask({ state, questions: { value: choice(question, criteria) } });
     const a: Pick = res.answers.value;
     // Map label keys back to the values so traces and execution use real text.
     const name = (k: string) => criteria[k] && k !== "none" ? criteria[k] : k;
@@ -120,23 +153,21 @@ export class JevDecider implements Decider {
   }
 
   async assess(step: string, obs: Observation, judged: boolean): Promise<Assessment> {
+    const state = { check: step, ui: obs.text };
+    const subjectQ = "Which element in `ui` is the one `check` is about, regardless of whether the check passes?";
+    const areaQ = "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.";
+    const subjects = await narrow(refs(obs.readable), { none: "No element in `ui` is the one `check` is about." }, this.#choose(state, subjectQ));
+    const areas = await narrow(refs(obs.areas), {
+      [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
+      [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
+    }, this.#choose(state, areaQ));
     const res = await this.#ask({
-      state: { check: step, ui: obs.text },
+      state,
       questions: {
         kind: choice("What kind of check is `check`?", ASSERTION_KINDS),
-        subject: choice(
-          "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
-          refs(obs.readable, "No element in `ui` is the one `check` is about."),
-        ),
+        subject: choice(subjectQ, subjects),
         state: choice("Which control state does `check` require?", STATES),
-        area: choice(
-          "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
-          {
-            ...Object.fromEntries(obs.areas.map(e => [e.ref, e.line])),
-            [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
-            [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
-          },
-        ),
+        area: choice(areaQ, areas),
         ...(judged ? { judged: noul("Does `ui` satisfy `check`?") } : {}),
       },
     });
