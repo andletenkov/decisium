@@ -13,12 +13,20 @@ export interface ParsedStep {
 
 export interface Scenario {
   name: string;
+  tags: string[];
   url?: string; // from the last `@url:<url>` tag (scenario tags override feature tags)
   steps: ParsedStep[];
 }
 
 /** "try"/"attempt" right after the keyword marks an Attempt step: done once performed, even if the app rejects it. */
 const ATTEMPT = /^(I\s+)?(try|tries|attempt|attempts)\b/i;
+
+export const stepKind = (step: { text: string; type?: PickleStepType }): StepKind =>
+  step.type === PickleStepType.OUTCOME ? "assertion" : ATTEMPT.test(step.text) ? "attempt" : "action";
+
+/** Start URL from the last `@url:<url>` tag (pickle tags list feature tags first). */
+export const urlFromTags = (tags: readonly { name: string }[]) =>
+  tags.map(t => /^@url:(.+)$/.exec(t.name)?.[1]).filter(Boolean).at(-1);
 
 /** Parses a `.feature` source. Throws on Gherkin syntax errors and on step arguments we cannot honour yet. */
 export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
@@ -40,19 +48,23 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   walk(doc.feature);
   return pickles.map(pickle => ({
     name: pickle.name,
-    url: pickle.tags.map(t => /^@url:(.+)$/.exec(t.name)?.[1]).filter(Boolean).at(-1),
+    tags: pickle.tags.map(t => t.name),
+    url: urlFromTags(pickle.tags),
     steps: pickle.steps.map(step => {
       // Ignoring an attached table/doc string would silently run a different test than the one written.
       if (step.argument) throw new Error(`Step "${step.text}" has a data table or doc string; not supported yet`);
-      const kind: StepKind = step.type === PickleStepType.OUTCOME ? "assertion" : ATTEMPT.test(step.text) ? "attempt" : "action";
-      return { text: step.text, kind, line: lines.get(step.astNodeIds[0]) };
+      return { text: step.text, kind: stepKind(step), line: lines.get(step.astNodeIds[0]) };
     }),
   }));
 }
 
 /** One Step given on the command line, e.g. `Then the status should be "Draft"`; no keyword means `When`. */
 export function parseStep(line: string): ParsedStep {
+  return parseFeature(stepFeature(line))[0].steps[0];
+}
+
+/** A one-Step `.feature` source, so `descisium step` runs through the same runner as files. */
+export function stepFeature(line: string): string {
   const text = /^(Given|When|Then|And|But|\*)\s/i.test(line) ? line : `When ${line}`;
-  const [scenario] = parseFeature(`Feature: f\n  Scenario: s\n    ${text}\n`);
-  return scenario.steps[0];
+  return `Feature: step\n  Scenario: step\n    ${text}\n`;
 }

@@ -351,3 +351,57 @@ test("run directory: trace.jsonl events, per-scenario folder, secret values mask
   assert.deepEqual(lines.trim().split("\n").map(l => JSON.parse(l).type), ["scenario", "value"]);
   assert.ok(existsSync(`${dir}/console-errors.txt`));
 });
+
+test("Qase status: every outcome message starts with its outcome and the reporter classifies it as decided", async () => {
+  const { determineTestStatus } = await import("qase-javascript-commons");
+  const { outcomeMessage, parseOutcome } = await import("../src/report.ts");
+  // Reasons as the runner writes them, including words the reporter treats as assertion or infrastructure hints.
+  const reasons = [
+    "",
+    `expected "Scheduled", but paragraph shows "Draft"`,
+    `as a value check it is ASSERTION_FAILED (expected "x"); as a presence check it is PASSED`,
+    "a value check needs exactly one quoted expected value; actual element not found",
+    "  - button \"Expected to be called\"\n  + network timeout",
+  ];
+  const expected = {
+    ASSERTION_FAILED: "failed", JUDGED_FAILED: "failed", BLOCKED: "failed", ACTION_FAILED: "failed",
+    AMBIGUOUS: "invalid", UNVERIFIABLE: "invalid", UI_CHANGED: "invalid", ELEMENT_NOT_FOUND: "invalid", STEP_TIMEOUT: "invalid",
+  };
+  for (const [outcome, status] of Object.entries(expected)) {
+    for (const reason of reasons) {
+      const msg = outcomeMessage({ outcome, reason });
+      assert.ok(msg.startsWith(outcome), msg);
+      const err = new Error(msg);
+      err.stack = msg; // what the step throws: no frames for the reporter to read keywords from
+      assert.equal(determineTestStatus(err, "failed"), status, `${outcome}: ${reason}`);
+      assert.deepEqual(parseOutcome(msg), { outcome, reason }); // the console shows the reason as written
+    }
+  }
+  assert.equal(parseOutcome("Cannot open http://x: refused"), undefined);
+});
+
+test("Qase preflight (testops mode): missing token or unknown case id is one line before anything runs", async () => {
+  const { createServer } = await import("node:http");
+  const { qasePreflight, qaseIds } = await import("../src/qase.ts");
+  assert.deepEqual(qaseIds(["@url:x", "@QaseID=3,4", "@Q-7", "@qaseid=8"]), [3, 4, 7, 8]);
+  const seen: string[] = [];
+  const server = createServer((req, res) => {
+    seen.push(`${req.url} ${req.headers.token}`);
+    res.statusCode = req.headers.token !== "good" ? 401 : req.url === "/v1/case/DEMO/1" ? 200 : 404;
+    res.end("{}");
+  });
+  await new Promise<void>(r => server.listen(0, r));
+  const host = `http://localhost:${(server.address() as { port: number }).port}`;
+  const env = (token?: string) => ({ QASE_MODE: "testops", QASE_TESTOPS_PROJECT: "DEMO", QASE_TESTOPS_API_HOST: host, QASE_TESTOPS_API_TOKEN: token });
+  const scenarios = [{ name: "a", tags: ["@QaseID=1"] }, { name: "b", tags: ["@QaseID=99"] }, { name: "c", tags: [] }];
+  try {
+    assert.equal(await qasePreflight(scenarios, {}), undefined); // reporter off: nothing to check
+    assert.match((await qasePreflight(scenarios, env()))!, /^QASE_TESTOPS_API_TOKEN is not set/);
+    assert.match((await qasePreflight(scenarios, env("bad")))!, /^Qase rejected QASE_TESTOPS_API_TOKEN/);
+    assert.equal(await qasePreflight(scenarios, env("good")), `Qase case DEMO-99 not found (scenario "b", @QaseID=99).`);
+    assert.equal(await qasePreflight(scenarios.slice(0, 1), env("good")), undefined);
+    assert.ok(seen.includes("/v1/case/DEMO/1 good"));
+  } finally {
+    server.close();
+  }
+});
