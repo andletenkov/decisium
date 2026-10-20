@@ -511,3 +511,29 @@ test("current link: aria-current marks the link [current]; a 'selected' check on
     await b.close();
   }
 });
+
+test("subject: when Jev is unsure which element a check is about, every plausible one is checked and they must agree", async () => {
+  const obs = parseSnapshot([
+    `- navigation "Breadcrumbs" [ref=e1]:`,
+    `  - link "playwright" [ref=e2]`,
+    `- heading "playwright" [level=1] [ref=e3]`,
+    `- paragraph [ref=e4]: "Status: Draft"`,
+    `- button "Save" [disabled] [ref=e5]`,
+    `- button "Delete" [ref=e6]`,
+  ].join("\n"));
+  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const split = (kind: string, probabilities: Record<string, number>, state = "disabled") =>
+    runAssertion(kind === "value" ? `the repository name should be "playwright"` : `the button should be ${state}`, rt,
+      assessing(kind, () => ({ subject: { choice: "", probabilities }, state: sure(state) })), () => {}).then(r => r.outcome);
+  // Breadcrumb link and title heading both show the name (a link's text is what it shows, like a heading's).
+  assert.equal(await split("value", { e2: 0.55, e3: 0.4, e4: 0.05 }), "PASSED");
+  assert.equal(await split("value", { e2: 0.99 }), "PASSED");
+  assert.equal(await split("value", { e3: 0.5, e4: 0.45 }), "AMBIGUOUS"); // the heading shows it, the status does not
+  assert.equal(await split("value", { e3: 0.5, none: 0.45 }), "AMBIGUOUS"); // "nothing matches" is a reading too
+  // A button's text is its label, not a value it shows: no evidence, so the other reading decides.
+  assert.equal(await split("value", { e6: 0.55, e4: 0.4 }), "ASSERTION_FAILED");
+  assert.equal(await split("value", { e6: 0.99 }), "UNVERIFIABLE");
+  assert.equal(await split("state", { e5: 0.6, e6: 0.35 }), "AMBIGUOUS");
+  assert.equal(await split("state", { e5: 0.6, e6: 0.35 }, "enabled"), "AMBIGUOUS");
+  assert.equal(await split("state", { e5: 0.99, e6: 0.01 }), "PASSED");
+});

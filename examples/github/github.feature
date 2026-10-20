@@ -15,7 +15,7 @@ Feature: GitHub, a real site (public pages, no login)
 
   Scenario: Read a file from the repository
     When I open the "package.json" file
-    Then the file view should show "playwright-internal"
+    Then the file content should contain "playwright-internal"
     And the "Raw" button should be shown
 
   @url:https://github.com/

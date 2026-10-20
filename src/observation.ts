@@ -106,9 +106,10 @@ export function stepValues(step: string): string[] {
  * Text an Assertion step compares against, or undefined when the element's text is only its label.
  * Value-bearing controls compare their value (empty counts); other controls (buttons, checkboxes) only
  * have a name, so "the 'Schedule' button should be disabled" must not pass just because the name matches.
+ * Links are the exception: their text is content (a breadcrumb or title showing a name), like a heading's.
  */
 export function assertableText(el: Element): string | undefined {
   if (TYPEABLE.has(el.role) || el.role === "combobox") return el.value;
-  if (ACTIONABLE.has(el.role)) return el.value || undefined;
+  if (ACTIONABLE.has(el.role) && el.role !== "link") return el.value || undefined; // a link's text is what it shows
   return el.value || el.name;
 }

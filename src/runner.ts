@@ -145,31 +145,45 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `${text} ${found ? "is shown" : "is not shown"} in ${where}${found ? ", expected it to be absent" : ""}` };
   }
 
+  // State and value checks read one element. Jev may be unsure which, e.g. a repository name shown in the breadcrumb
+  // and the title: as with kinds and areas, every plausible element is checked and they must agree.
   if (kind === "state") {
     log(`  Subject: ${fmt(a.subject)}  State: ${fmt(a.state)}`);
-    if (!gate(a.subject) || !gate(a.state)) return { outcome: "AMBIGUOUS", reason: `Jev is unsure which control or which state the check means: control ${named(a.subject, obs)}; state ${named(a.state)}` };
-    if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page matches what the check describes" };
-    const el = obs.readable.find(e => e.ref === a.subject.choice);
-    if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${a.subject.choice})` };
-    let [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
-    if (flag === "selected" && el.role === "link") flag = "current"; // a navigation link is "selected" via aria-current
-    if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role)) {
-      return { outcome: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
-    }
-    const has = el.state.split(/\s+/).includes(`[${flag}]`);
-    log(`  Compare: ${flag}=${has}, expected ${on}`);
-    return has === on ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `expected ${el.line} to be ${a.state.choice}, but it is not` };
+    if (!gate(a.state)) return { outcome: "AMBIGUOUS", reason: `Jev is unsure which state the check means: ${named(a.state)}` };
+  } else {
+    if (values.length !== 1) return { outcome: "UNVERIFIABLE", reason: "a value check needs exactly one quoted expected value (e.g. the status should be \"Draft\")" };
+    log(`  Subject: ${fmt(a.subject)}`);
   }
+  // A reading that cannot apply (a link's text is its label, a link cannot be checked) carries no evidence.
+  const all = plausible(a.subject).map(ref => (kind === "state" ? stateOf : valueOf)(ref, a, obs, values, log));
+  const readings = all.filter(r => !r.inapplicable);
+  // No subject applies: unchanged from a single reading. A value check on a label stays a final UNVERIFIABLE, so a
+  // plausible presence reading of the same check cannot pass on the label's text.
+  if (!readings.length) return kind === "value" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0];
+  if (readings.every(r => r.outcome === readings[0].outcome)) return readings[0];
+  const what = kind === "state" ? "control" : "element";
+  return { outcome: "AMBIGUOUS", reason: `Jev is unsure which ${what} the check is about, and they give different answers: ${named(a.subject, obs)}` };
+}
 
-  // kind === "value"
-  if (values.length !== 1) return { outcome: "UNVERIFIABLE", reason: "a value check needs exactly one quoted expected value (e.g. the status should be \"Draft\")" };
-  log(`  Subject: ${fmt(a.subject)}`);
-  if (!gate(a.subject)) return { outcome: "AMBIGUOUS", reason: `Jev is unsure which element the check is about: ${named(a.subject, obs)}` };
-  if (a.subject.choice === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page shows what the check describes" };
-  const el = obs.readable.find(e => e.ref === a.subject.choice);
-  if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${a.subject.choice})` };
+function stateOf(ref: string, a: Assessment, obs: Observation): Verdict {
+  if (ref === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page matches what the check describes" };
+  const el = obs.readable.find(e => e.ref === ref);
+  if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${ref})` };
+  let [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
+  if (flag === "selected" && el.role === "link") flag = "current"; // a navigation link is "selected" via aria-current
+  if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role)) {
+    return { outcome: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
+  }
+  const has = el.state.split(/\s+/).includes(`[${flag}]`);
+  return has === on ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `expected ${el.line} to be ${a.state.choice}, but it is not` };
+}
+
+function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[], log: typeof console.log): Verdict {
+  if (ref === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page shows what the check describes" };
+  const el = obs.readable.find(e => e.ref === ref);
+  if (!el) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an element that is no longer on the page (${ref})` };
   const actual = assertableText(el);
-  if (actual === undefined) return { outcome: "UNVERIFIABLE", reason: `${el.line} has no text to compare (only a label)` };
+  if (actual === undefined) return { outcome: "UNVERIFIABLE", reason: `${el.line} has no text to compare (only a label)`, inapplicable: true };
   log(`  Compare: "${values[0]}" in "${actual}"`);
   return containsValue(actual, values[0])
     ? { outcome: "PASSED" }
