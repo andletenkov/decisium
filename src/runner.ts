@@ -50,10 +50,16 @@ const JUDGED_THRESHOLD = 0.8;
  * Jev classifies the check and picks the element it is about; code decides pass/fail.
  * `judged` opts in to fuzzy checks, which Jev answers directly and are reported as JUDGED_*, never PASSED.
  */
-export async function runAssertion(step: string, rt: Runtime, decider: Decider, log = console.log, judged = false): Promise<StepResult> {
+/** `earlier`: quoted values from this scenario's earlier Steps (value -> Step), for checks that quote none. */
+export async function runAssertion(step: string, rt: Runtime, decider: Decider, log = console.log, judged = false, earlier: Record<string, string> = {}): Promise<StepResult> {
   log(`\nAssert: ${step}`);
   const end = finish(log);
   const values = quoted(step);
+  if (!values.length && Object.keys(earlier).length) {
+    const r = await decider.recall(step, earlier);
+    log(`  Recall: ${fmt(r)}`);
+    if (gate(r) && r.choice !== "none") values.push(r.choice);
+  }
 
   // Like Playwright's expect: a check that does not pass is re-evaluated whenever the UI changes, until
   // the UI stops changing within the wait cap. Jev is asked again only after a change.

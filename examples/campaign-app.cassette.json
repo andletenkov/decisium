@@ -119,18 +119,18 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.98
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.76,
+            "confidence": 0.82,
             "probabilities": {
-              "e5": 0.13,
-              "e8": 0,
+              "e5": 0.06,
+              "e8": 0.01,
               "e9": 0.03,
               "e10": 0.05,
-              "none": 0.79,
+              "none": 0.85,
               "scroll": 0,
               "wait": 0
             }
@@ -265,13 +265,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.66,
+            "confidence": 0.6,
             "probabilities": {
               "e5": 0,
-              "e8": 0.19,
-              "e9": 0.09,
+              "e8": 0.25,
+              "e9": 0.08,
               "e10": 0.01,
-              "none": 0.71,
+              "none": 0.66,
               "scroll": 0,
               "wait": 0
             }
@@ -364,7 +364,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.96
+            "noul": 0.97
           },
           "target": {
             "type": "choice",
@@ -447,12 +447,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.99,
+            "confidence": 0.97,
             "probabilities": {
-              "value": 0.99,
+              "value": 0.98,
               "presence": 0,
               "absence": 0,
-              "state": 0.01,
+              "state": 0.02,
               "fuzzy": 0
             }
           },
@@ -472,17 +472,17 @@
           },
           "state": {
             "type": "choice",
-            "choice": "enabled",
-            "confidence": 0.39,
+            "choice": "selected",
+            "confidence": 0.37,
             "probabilities": {
               "disabled": 0.02,
-              "enabled": 0.45,
-              "checked": 0.08,
-              "unchecked": 0,
+              "enabled": 0.36,
+              "checked": 0.13,
+              "unchecked": 0.01,
               "expanded": 0.01,
               "collapsed": 0.01,
-              "selected": 0.41,
-              "unselected": 0,
+              "selected": 0.43,
+              "unselected": 0.01,
               "pressed": 0.01,
               "unpressed": 0.01
             }
@@ -492,9 +492,9 @@
             "choice": "page",
             "confidence": 0.89,
             "probabilities": {
-              "e2": 0.04,
-              "page": 0.9299999999999999,
-              "missing": 0.03
+              "e2": 0.03,
+              "page": 0.93,
+              "missing": 0.04
             }
           }
         }
@@ -627,13 +627,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.7,
+            "confidence": 0.71,
             "probabilities": {
               "e5": 0,
               "e8": 0.16,
-              "e9": 0.09,
+              "e9": 0.08,
               "e10": 0.01,
-              "none": 0.74,
+              "none": 0.75,
               "scroll": 0,
               "wait": 0
             }
@@ -705,12 +705,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.54,
+            "confidence": 0.6,
             "probabilities": {
-              "value": 0.63,
+              "value": 0.68,
               "presence": 0,
               "absence": 0,
-              "state": 0.37,
+              "state": 0.32,
               "fuzzy": 0
             }
           },
@@ -748,10 +748,10 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.73,
+            "confidence": 0.7,
             "probabilities": {
-              "e2": 0.11,
-              "page": 0.82,
+              "e2": 0.13,
+              "page": 0.8,
               "missing": 0.07
             }
           }
@@ -851,16 +851,16 @@
           "state": {
             "type": "choice",
             "choice": "selected",
-            "confidence": 0.84,
+            "confidence": 0.89,
             "probabilities": {
               "disabled": 0,
               "enabled": 0.02,
-              "checked": 0.04,
+              "checked": 0.02,
               "unchecked": 0.01,
               "expanded": 0,
               "collapsed": 0,
-              "selected": 0.86,
-              "unselected": 0.07,
+              "selected": 0.9,
+              "unselected": 0.05,
               "pressed": 0,
               "unpressed": 0
             }
@@ -868,11 +868,11 @@
           "area": {
             "type": "choice",
             "choice": "e11",
-            "confidence": 0.55,
+            "confidence": 0.6,
             "probabilities": {
               "e2": 0.01,
-              "e11": 0.66,
-              "page": 0.33,
+              "e11": 0.7,
+              "page": 0.29,
               "missing": 0
             }
           }

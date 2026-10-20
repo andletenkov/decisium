@@ -7,6 +7,7 @@ import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.ts";
 import { parseFeature, parseStep, type Scenario } from "./feature.ts";
 import { JevDecider, MODEL } from "./jev.ts";
+import { quoted } from "./observation.ts";
 import { runAssertion, runStep } from "./runner.ts";
 
 const USAGE = `Usage:
@@ -64,17 +65,19 @@ async function main(): Promise<number> {
     console.log(`\n=== Scenario: ${scenario.name}  (${url})`);
     const browser = await Browser.open(toUrl(url), values.headed); // fresh browser per scenario: no shared state
     try {
+      const earlier: Record<string, string> = {}; // memory: quoted value -> the Step that named it
       for (const step of scenario.steps) {
         let r;
         try {
           r = step.kind === "assertion"
-            ? await runAssertion(step.text, browser, decider, console.log, values.judged)
+            ? await runAssertion(step.text, browser, decider, console.log, values.judged, { ...earlier })
             : await runStep(step.text, browser, decider, console.log, step.kind === "attempt");
         } catch (err) {
           if (!(err instanceof UiChanged)) throw err;
           console.log(`  => ${err.message}`);
           r = { outcome: "UI_CHANGED" };
         }
+        for (const v of quoted(step.text)) earlier[v] = step.text;
         if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
           console.log(`\nFAILED at: ${step.text}`);
           failed.push(scenario.name);

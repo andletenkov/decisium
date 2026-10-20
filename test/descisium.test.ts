@@ -122,6 +122,9 @@ const oracle: Decider = {
   async assess() {
     throw new Error("not used");
   },
+  async recall(_s, earlier) {
+    return sure(Object.keys(earlier)[0] ?? "none");
+  },
 };
 
 // Scripted assessment: answers what a correct model would.
@@ -321,4 +324,14 @@ test("scoped presence: code looks for the quoted text inside the area Jev names"
   const go = (s: string, d: Decider) => runAssertion(s, rt, d, () => {}).then(r => r.outcome);
   assert.equal(await go(`"Winter Sale" should appear in the calendar`, split({ e2: 0.6, page: 0.4 })), "PASSED");
   assert.equal(await go(`the campaign list should contain "Spring Sale"`, split({ missing: 0.6, page: 0.4 })), "AMBIGUOUS");
+});
+
+test("memory: a check that quotes nothing uses the value an earlier Step named", async () => {
+  const obs = parseSnapshot(`- list "Scheduled campaigns" [ref=e2]:\n  - listitem [ref=e3]: "2026-12-01: Winter Sale"`);
+  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const d = assessing("presence", () => ({ area: sure("e2") }));
+  const run = (earlier: Record<string, string>) => runAssertion(`the campaign should appear in the calendar`, rt, d, () => {}, false, earlier).then(r => r.outcome);
+  assert.equal(await run({}), "UNVERIFIABLE");
+  assert.equal(await run({ "Winter Sale": `I enter "Winter Sale" as the campaign name` }), "PASSED");
+  assert.equal(await run({ "Summer Sale": `I enter "Summer Sale" as the campaign name` }), "ASSERTION_FAILED");
 });

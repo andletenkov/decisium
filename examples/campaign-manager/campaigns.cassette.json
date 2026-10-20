@@ -91,21 +91,21 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.85
+            "noul": 0.82
           },
           "target": {
             "type": "choice",
             "choice": "e27",
-            "confidence": 0.71,
+            "confidence": 0.78,
             "probabilities": {
               "e3": 0.01,
               "e4": 0,
-              "e27": 0.74,
-              "e29": 0.01,
+              "e27": 0.8,
+              "e29": 0,
               "e32": 0,
-              "e33": 0.05,
+              "e33": 0.06,
               "e34": 0,
-              "none": 0.17,
+              "none": 0.11,
               "scroll": 0,
               "wait": 0.02
             }
@@ -245,16 +245,16 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.69,
+            "confidence": 0.67,
             "probabilities": {
-              "e3": 0,
+              "e3": 0.01,
               "e4": 0,
               "e27": 0.07,
-              "e29": 0.03,
+              "e29": 0.02,
               "e32": 0,
-              "e33": 0.18,
+              "e33": 0.2,
               "e34": 0,
-              "none": 0.72,
+              "none": 0.7,
               "scroll": 0,
               "wait": 0
             }
@@ -395,21 +395,21 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.95
+            "noul": 0.94
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.51,
+            "confidence": 0.56,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
-              "e29": 0.09,
+              "e29": 0.12,
               "e32": 0.01,
-              "e33": 0.33,
+              "e33": 0.27,
               "e34": 0,
-              "none": 0.56,
+              "none": 0.6,
               "scroll": 0,
               "wait": 0
             }
@@ -553,16 +553,16 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.56,
+            "confidence": 0.52,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
               "e29": 0,
-              "e32": 0.28,
-              "e33": 0.12,
+              "e32": 0.35,
+              "e33": 0.08,
               "e34": 0,
-              "none": 0.6,
+              "none": 0.5700000000000001,
               "scroll": 0,
               "wait": 0
             }
@@ -661,19 +661,19 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.92,
+            "confidence": 0.91,
             "probabilities": {
               "e3": 0,
               "e4": 0,
-              "e43": 0.01,
-              "e44": 0.04,
-              "none": 0.93,
-              "scroll": 0.01,
+              "e43": 0.03,
+              "e44": 0.03,
+              "none": 0.92,
+              "scroll": 0.02,
               "wait": 0
             }
           }
@@ -786,30 +786,30 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.38,
+            "confidence": 0.36,
             "probabilities": {
               "disabled": 0.03,
-              "enabled": 0.23,
-              "checked": 0.44,
-              "unchecked": 0.03,
+              "enabled": 0.25,
+              "checked": 0.42,
+              "unchecked": 0.02,
               "expanded": 0.03,
               "collapsed": 0.01,
-              "selected": 0.2,
-              "unselected": 0.02,
-              "pressed": 0,
+              "selected": 0.21,
+              "unselected": 0.01,
+              "pressed": 0.01,
               "unpressed": 0.01
             }
           },
           "area": {
             "type": "choice",
             "choice": "e5",
-            "confidence": 0.5,
+            "confidence": 0.52,
             "probabilities": {
               "e2": 0,
-              "e5": 0.6,
-              "e35": 0.06,
+              "e5": 0.62,
+              "e35": 0.05,
               "page": 0.33,
-              "missing": 0.01
+              "missing": 0
             }
           }
         }
@@ -852,11 +852,11 @@
           "target": {
             "type": "choice",
             "choice": "e43",
-            "confidence": 1,
+            "confidence": 0.99,
             "probabilities": {
               "e3": 0,
-              "e4": 0,
-              "e43": 1,
+              "e4": 0.01,
+              "e43": 0.99,
               "e44": 0,
               "none": 0,
               "scroll": 0,
@@ -1023,15 +1023,15 @@
           "state": {
             "type": "choice",
             "choice": "disabled",
-            "confidence": 0.4,
+            "confidence": 0.34,
             "probabilities": {
-              "disabled": 0.46,
-              "enabled": 0.13,
-              "checked": 0.26,
+              "disabled": 0.41000000000000003,
+              "enabled": 0.11,
+              "checked": 0.31,
               "unchecked": 0.01,
               "expanded": 0.01,
-              "collapsed": 0.01,
-              "selected": 0.09,
+              "collapsed": 0,
+              "selected": 0.12,
               "unselected": 0.01,
               "pressed": 0.01,
               "unpressed": 0.01
@@ -1218,17 +1218,17 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.21
+            "noul": 0.19
           },
           "target": {
             "type": "choice",
             "choice": "e4",
-            "confidence": 0.87,
+            "confidence": 0.92,
             "probabilities": {
               "e3": 0,
-              "e4": 0.89,
+              "e4": 0.93,
               "e44": 0,
-              "none": 0.11,
+              "none": 0.07,
               "scroll": 0,
               "wait": 0
             }
@@ -1273,11 +1273,11 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.6,
+            "confidence": 0.52,
             "probabilities": {
               "e3": 0,
-              "e4": 0.32,
-              "none": 0.68,
+              "e4": 0.38,
+              "none": 0.62,
               "scroll": 0,
               "wait": 0
             }
@@ -1353,10 +1353,10 @@
           "kind": {
             "type": "choice",
             "choice": "presence",
-            "confidence": 0.66,
+            "confidence": 0.46,
             "probabilities": {
-              "value": 0.27,
-              "presence": 0.73,
+              "value": 0.43,
+              "presence": 0.5700000000000001,
               "absence": 0,
               "state": 0,
               "fuzzy": 0
@@ -1381,11 +1381,11 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.59,
+            "confidence": 0.63,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.18,
-              "checked": 0.63,
+              "enabled": 0.14,
+              "checked": 0.67,
               "unchecked": 0.01,
               "expanded": 0.04,
               "collapsed": 0,
@@ -1398,12 +1398,12 @@
           "area": {
             "type": "choice",
             "choice": "e47",
-            "confidence": 0.73,
+            "confidence": 0.7,
             "probabilities": {
               "e2": 0,
-              "e5": 0.03,
-              "e47": 0.78,
-              "page": 0.19,
+              "e5": 0.04,
+              "e47": 0.76,
+              "page": 0.2,
               "missing": 0
             }
           }
@@ -1502,15 +1502,15 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.82,
+            "confidence": 0.79,
             "probabilities": {
               "e3": 0.02,
               "e4": 0,
-              "e33": 0.11,
+              "e33": 0.13,
               "e34": 0.02,
-              "none": 0.85,
+              "none": 0.82,
               "scroll": 0,
-              "wait": 0
+              "wait": 0.01
             }
           }
         }
@@ -1553,15 +1553,15 @@
           "target": {
             "type": "choice",
             "choice": "e33",
-            "confidence": 0.98,
+            "confidence": 1,
             "probabilities": {
               "e3": 0,
               "e4": 0,
-              "e33": 0.98,
-              "e34": 0.01,
+              "e33": 1,
+              "e34": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0.01
+              "wait": 0
             }
           }
         }
@@ -1601,7 +1601,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.96
+            "noul": 0.95
           },
           "target": {
             "type": "choice",
@@ -1609,11 +1609,11 @@
             "confidence": 0.46,
             "probabilities": {
               "e3": 0.01,
-              "e4": 0.21,
-              "e33": 0.04,
+              "e4": 0.23,
+              "e33": 0.05,
               "e34": 0.04,
               "none": 0.54,
-              "scroll": 0.16,
+              "scroll": 0.13,
               "wait": 0
             }
           }
@@ -1726,11 +1726,11 @@
           "state": {
             "type": "choice",
             "choice": "disabled",
-            "confidence": 0.44,
+            "confidence": 0.41,
             "probabilities": {
-              "disabled": 0.5,
-              "enabled": 0.31,
-              "checked": 0.15,
+              "disabled": 0.47000000000000003,
+              "enabled": 0.39,
+              "checked": 0.1,
               "unchecked": 0.01,
               "expanded": 0.01,
               "collapsed": 0.01,
@@ -1861,30 +1861,30 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.3,
+            "confidence": 0.33,
             "probabilities": {
-              "disabled": 0.12,
-              "enabled": 0.17,
-              "checked": 0.37,
+              "disabled": 0.17,
+              "enabled": 0.18,
+              "checked": 0.4,
               "unchecked": 0.03,
               "expanded": 0.01,
               "collapsed": 0.01,
-              "selected": 0.24,
-              "unselected": 0.02,
+              "selected": 0.17,
+              "unselected": 0.01,
               "pressed": 0.01,
-              "unpressed": 0.02
+              "unpressed": 0.01
             }
           },
           "area": {
             "type": "choice",
             "choice": "e5",
-            "confidence": 0.34,
+            "confidence": 0.36,
             "probabilities": {
               "e2": 0,
-              "e5": 0.47,
-              "e25": 0.06,
-              "page": 0.46,
-              "missing": 0.01
+              "e5": 0.49,
+              "e25": 0.04,
+              "page": 0.45,
+              "missing": 0.02
             }
           }
         }
@@ -1922,7 +1922,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.02
+            "noul": 0.01
           },
           "target": {
             "type": "choice",
@@ -1977,7 +1977,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.02
+            "noul": 0.01
           },
           "target": {
             "type": "choice",
@@ -2032,20 +2032,20 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.9
+            "noul": 0.93
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.82,
+            "confidence": 0.87,
             "probabilities": {
               "e3": 0.04,
               "e4": 0,
               "e38": 0.02,
-              "e48": 0.04,
-              "none": 0.85,
-              "scroll": 0.03,
-              "wait": 0.02
+              "e48": 0.03,
+              "none": 0.89,
+              "scroll": 0.01,
+              "wait": 0.01
             }
           }
         }
@@ -2147,48 +2147,48 @@
               "e4": 0,
               "e37": 0.01,
               "e38": 0,
-              "e42": 0.05,
+              "e42": 0.04,
               "e43": 0,
               "e44": 0,
-              "e48": 0.22,
+              "e48": 0.28,
               "e49": 0,
               "e50": 0,
-              "e51": 0.33,
+              "e51": 0.27,
               "none": 0.38
             }
           },
           "state": {
             "type": "choice",
             "choice": "unselected",
-            "confidence": 0.46,
+            "confidence": 0.39,
             "probabilities": {
               "disabled": 0.01,
               "enabled": 0.02,
-              "checked": 0.07,
-              "unchecked": 0.32,
+              "checked": 0.06,
+              "unchecked": 0.41,
               "expanded": 0.01,
               "collapsed": 0.02,
-              "selected": 0.01,
-              "unselected": 0.51,
+              "selected": 0,
+              "unselected": 0.45,
               "pressed": 0,
-              "unpressed": 0.03
+              "unpressed": 0.02
             }
           },
           "area": {
             "type": "choice",
             "choice": "e39",
-            "confidence": 0.87,
+            "confidence": 0.86,
             "probabilities": {
               "e2": 0,
-              "e5": 0.01,
-              "e39": 0.88,
+              "e5": 0.02,
+              "e39": 0.87,
               "e40": 0.01,
               "e41": 0,
-              "e45": 0.06,
+              "e45": 0.05,
               "e46": 0.01,
               "e47": 0,
               "page": 0.03,
-              "missing": 0
+              "missing": 0.01
             }
           }
         }

@@ -56,6 +56,8 @@ export interface Decider {
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
+  /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
+  recall(step: string, earlier: Record<string, string>): Promise<Pick>;
 }
 
 const refs = (els: Element[], none: string): Record<string, string> =>
@@ -86,6 +88,19 @@ export class JevDecider implements Decider {
       },
     });
     return { done: res.answers.done.noul, target: res.answers.target };
+  }
+
+  async recall(step: string, earlier: Record<string, string>): Promise<Pick> {
+    const values = Object.keys(earlier);
+    const criteria: Record<string, string> = Object.fromEntries(values.map((v, i) => [`v${i}`, `"${v}", from the earlier step: ${earlier[v]}`]));
+    criteria.none = "`check` does not refer to any of these values.";
+    const res = await this.#ask({
+      state: { check: step },
+      questions: { value: choice("`check` quotes no value. Which value from an earlier step of the same test does it refer to (e.g. \"the campaign\" meaning the campaign named earlier)?", criteria) },
+    });
+    const a: Pick = res.answers.value;
+    const name = (k: string) => k === "none" ? k : values[Number(k.slice(1))] ?? k;
+    return { choice: name(a.choice), probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])) };
   }
 
   async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
