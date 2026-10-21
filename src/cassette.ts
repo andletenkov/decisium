@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 
 /** once: record if no cassette yet, else replay only. none: replay only. new: replay, record misses. all: always live. */
 export type RecordMode = "once" | "none" | "new" | "all";
@@ -27,21 +27,39 @@ export class Cassette {
   path: string;
   model: string;
 
-  constructor(path: string, model: string, mode: RecordMode) {
+  #mode: RecordMode;
+  #since: number;
+
+  /**
+   * `since`: when the run started. Parallel workers each open the feature's cassette; a file written after `since` is
+   * this run's (another worker's scenario), so it is not "existing" for `once`/`new` and not stale for `all`.
+   */
+  constructor(path: string, model: string, mode: RecordMode, since = Infinity) {
     this.path = path;
     this.model = model;
-    let old: File | undefined;
-    try {
-      old = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : undefined;
-    } catch (err) {
-      throw new Error(`Cannot read cassette ${path}: ${(err as Error).message}. Delete it to record again.`);
-    }
-    const keep = old && old.model === model && mode !== "all"; // other model version: discard whole cassette
-    this.#file = { model, entries: keep && old ? old.entries : {} };
-    if (old && !keep) this.#dirty = true;
-    this.#replayOnly = mode === "none" || (mode === "once" && !!old);
+    this.#mode = mode;
+    this.#since = since;
+    const { file: old, thisRun } = this.#read();
+    const existed = !!old && !thisRun;
+    this.#file = { model, entries: this.#keep(old, thisRun) ?? {} };
+    if (old && !this.#keep(old, thisRun)) this.#dirty = true;
+    this.#replayOnly = mode === "none" || (mode === "once" && existed);
     this.#live = mode === "all";
-    this.#drift = mode === "new" && !!old;
+    this.#drift = mode === "new" && existed;
+  }
+
+  #read(): { file?: File; thisRun: boolean } {
+    try {
+      if (!existsSync(this.path)) return { thisRun: false };
+      return { file: JSON.parse(readFileSync(this.path, "utf8")), thisRun: statSync(this.path).mtimeMs >= this.#since };
+    } catch (err) {
+      throw new Error(`Cannot read cassette ${this.path}: ${(err as Error).message}. Delete it to record again.`);
+    }
+  }
+
+  /** Entries of a file on disk worth keeping: same model, and in `all` mode only those recorded in this run. */
+  #keep(file: File | undefined, thisRun: boolean): Record<string, Entry> | undefined {
+    return file && file.model === this.model && (this.#mode !== "all" || thisRun) ? file.entries : undefined;
   }
 
   async call<T>(request: unknown, live: () => Promise<T>): Promise<T> {
@@ -59,6 +77,8 @@ export class Cassette {
 
   save() {
     if (!this.#dirty) return;
+    const { file, thisRun } = this.#read(); // another worker may have saved scenarios of this feature since
+    this.#file.entries = { ...this.#keep(file, thisRun), ...this.#file.entries };
     writeFileSync(this.path + ".tmp", JSON.stringify(this.#file, null, 2) + "\n");
     renameSync(this.path + ".tmp", this.path); // atomic: a crash mid-save never leaves half a cassette
   }

@@ -449,6 +449,35 @@ test("cassette replays identical requests, fails UI_CHANGED with the difference,
   await assert.rejects(other.call(req("a\nb"), live), UiChanged);
 });
 
+test("cassette: scenarios of one feature on different workers share it; the run start decides what is old", async () => {
+  const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { Cassette } = await import("../src/cassette.ts");
+  const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
+  const req = (ui: string) => ({ state: { step: "s", ui }, questions: {} });
+  const live = async () => ({ n: 1 });
+  const keys = () => Object.keys(JSON.parse(readFileSync(path, "utf8")).entries).length;
+
+  // once, no cassette at run start: a second worker that finds the first one's file still records.
+  let since = Date.now() - 1;
+  const w1 = new Cassette(path, "m1", "once", since);
+  await w1.call(req("a"), live); w1.save();
+  const w2 = new Cassette(path, "m1", "once", since);
+  await w2.call(req("b"), live); w2.save();
+  assert.equal(keys(), 2); // merged, not overwritten
+
+  // all: entries from before the run are dropped, entries from this run's other workers kept.
+  writeFileSync(path, JSON.stringify({ model: "m1", entries: { stale: { request: 1, response: 1 } } }));
+  await new Promise(r => setTimeout(r, 5));
+  since = Date.now();
+  const a1 = new Cassette(path, "m1", "all", since);
+  await a1.call(req("a"), live); a1.save();
+  const a2 = new Cassette(path, "m1", "all", since);
+  await a2.call(req("b"), live); a2.save();
+  assert.deepEqual(Object.keys(JSON.parse(readFileSync(path, "utf8")).entries).includes("stale"), false);
+  assert.equal(keys(), 2);
+});
+
 test("scoped presence: code looks for the quoted text inside the area Jev names", async () => {
   const obs = parseSnapshot([
     `- heading "Spring Sale" [level=1] [ref=e1]`,
@@ -487,7 +516,7 @@ test("run directory: trace.jsonl events, per-scenario folder, secret values mask
   const { tmpdir } = await import("node:os");
   const { RunDir } = await import("../src/trace.ts");
   const run = new RunDir(mkdtempSync(`${tmpdir()}/runs-`));
-  const dir = run.scenario(0, "Log in!");
+  const dir = run.scenario("Log in!");
   assert.match(dir, /01-log-in$/);
   const obs = parseSnapshot(`- textbox "Password" [ref=e1]: hunter2`, new Set(["e1"]));
   await run.decider({ ...oracle, value: async () => sure("hunter2") }).value("s", obs, obs.readable[0], ["hunter2"]);
@@ -705,4 +734,9 @@ test("Browser: the page URL and title are readable subjects, not actionable and 
   } finally {
     await b.close();
   }
+});
+
+test("doctor: Node needs type stripping on by default (22.18+)", async () => {
+  const { nodeOk } = await import("../src/doctor.ts");
+  assert.deepEqual(["22.17.0", "22.18.0", "23.0.0", "23.6.0", "24.1.0", "20.9.0"].map(v => nodeOk(v)), [false, true, false, true, true, false]);
 });

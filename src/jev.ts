@@ -129,6 +129,9 @@ export async function reduceUi(ui: string, ask: (sections: Record<string, string
   return lines.filter((_, i) => keep.has(i)).join("\n");
 }
 
+/** Live Jev requests of this process and their tokens; cassette replays cost nothing and are not counted. */
+export const jevUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
+
 /** Every question sends the Step text as-is, so a value quoted in a Step (a password included) reaches the API. */
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
@@ -154,6 +157,9 @@ export class JevDecider implements Decider {
   async #ask<Q extends Parameters<TypeSafeClient["systemOne"]>[0]>(request: Q) {
     const live = async () => {
       const res = await this.#client.systemOne(request);
+      jevUsage.calls++;
+      jevUsage.inputTokens += res.usage?.input_tokens ?? 0;
+      jevUsage.outputTokens += res.usage?.output_tokens ?? 0;
         return { model: res.model, answers: res.answers as Record<string, any> };
     };
     return this.#cassette ? this.#cassette.call(request, live) : live();

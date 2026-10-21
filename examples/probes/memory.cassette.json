@@ -34,7 +34,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.01
+            "noul": 0.02
           },
           "target": {
             "type": "choice",
@@ -91,21 +91,21 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.9
+            "noul": 0.91
           },
           "target": {
             "type": "choice",
             "choice": "e27",
-            "confidence": 0.5,
+            "confidence": 0.47,
             "probabilities": {
               "e3": 0.01,
               "e4": 0,
-              "e27": 0.55,
+              "e27": 0.52,
               "e29": 0,
               "e32": 0,
-              "e33": 0.04,
-              "e34": 0,
-              "none": 0.38,
+              "e33": 0.03,
+              "e34": 0.01,
+              "none": 0.41,
               "scroll": 0,
               "wait": 0.02
             }
@@ -241,21 +241,21 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.98
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.49,
+            "confidence": 0.53,
             "probabilities": {
-              "e3": 0,
+              "e3": 0.01,
               "e4": 0,
-              "e27": 0.02,
-              "e29": 0.04,
-              "e32": 0.01,
-              "e33": 0.38,
+              "e27": 0.03,
+              "e29": 0.03,
+              "e32": 0,
+              "e33": 0.35,
               "e34": 0,
-              "none": 0.54,
+              "none": 0.5700000000000001,
               "scroll": 0,
               "wait": 0,
               "enter": 0.01
@@ -400,24 +400,24 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.95
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.45,
+            "confidence": 0.53,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
-              "e29": 0.07,
-              "e32": 0.02,
-              "e33": 0.33,
+              "e29": 0.04,
+              "e32": 0.01,
+              "e33": 0.31,
               "e34": 0,
-              "none": 0.5,
+              "none": 0.5700000000000001,
               "scroll": 0,
               "wait": 0,
-              "enter": 0.08
+              "enter": 0.06
             }
           }
         }
@@ -482,11 +482,11 @@
         }
       }
     },
-    "3808cc8f7065a8c77a673507284f4cced831636c64731569ca272258464041a1": {
+    "ab4ee2c975fa43b1af2003267e13ee6c6f4955570a3ae724a3f7a50fea400a42": {
       "request": {
         "state": {
           "step": "I save the draft",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/4\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
           "actions_taken_for_step": [
             "CLICK button \"Save draft\""
           ]
@@ -516,30 +516,30 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.93,
+            "confidence": 0.95,
             "probabilities": {
               "e3": 0,
               "e4": 0,
-              "e43": 0.02,
+              "e43": 0.01,
               "e44": 0.02,
-              "none": 0.94,
+              "none": 0.96,
               "scroll": 0.01,
-              "wait": 0.01
+              "wait": 0
             }
           }
         }
       }
     },
-    "25883899306cb604a0d4b5f2376a9bec79c339c8b49d2c93847b67cd0a69d301": {
+    "d41f36449a54dac50cbe91dd869adca86120512fefe2088ba1208d9bbf2dd76d": {
       "request": {
         "state": {
           "step": "I schedule the campaign",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/4\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -567,17 +567,17 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.05
+            "noul": 0.06
           },
           "target": {
             "type": "choice",
             "choice": "e43",
-            "confidence": 1,
+            "confidence": 0.99,
             "probabilities": {
               "e3": 0,
               "e4": 0,
-              "e43": 1,
-              "e44": 0,
+              "e43": 0.99,
+              "e44": 0.01,
               "none": 0,
               "scroll": 0,
               "wait": 0
@@ -586,11 +586,11 @@
         }
       }
     },
-    "d90a3ee5a9508361757cd2067679237d5340841f2a20735976e42173e8296d2b": {
+    "b17cc26ea9ede08742477398322ca004e024ac2c721e1c290c4c0cf7cefbb689": {
       "request": {
         "state": {
           "step": "I schedule the campaign",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/4\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
           "actions_taken_for_step": [
             "CLICK button \"Schedule\""
           ]
@@ -637,11 +637,11 @@
         }
       }
     },
-    "499df5f7b7b24a901a9fba7d42bf51964eacb1fa68d584fb2ea11a2b5483b9e4": {
+    "de9a48b6f323b1a46ed8b0e37e5627b7a3792921a5dfa78e531dedbff217c840": {
       "request": {
         "state": {
           "step": "I open the calendar",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/4\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -758,11 +758,11 @@
           "value": {
             "type": "choice",
             "choice": "v0",
-            "confidence": 0.8,
+            "confidence": 0.86,
             "probabilities": {
-              "v0": 0.87,
+              "v0": 0.91,
               "v1": 0,
-              "none": 0.13
+              "none": 0.09
             }
           }
         }
@@ -851,33 +851,33 @@
           "subject": {
             "type": "choice",
             "choice": "e47",
-            "confidence": 0.57,
+            "confidence": 0.6,
             "probabilities": {
               "url": 0,
               "title": 0,
               "e2": 0,
               "e3": 0,
-              "e4": 0.02,
-              "e46": 0,
-              "e47": 0.61,
-              "e48": 0.17,
-              "e49": 0.08,
+              "e4": 0.01,
+              "e46": 0.01,
+              "e47": 0.64,
+              "e48": 0.14,
+              "e49": 0.07,
               "e45": 0.02,
-              "none": 0.1
+              "none": 0.11
             }
           },
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.41,
+            "confidence": 0.46,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.16,
-              "checked": 0.47000000000000003,
+              "enabled": 0.18,
+              "checked": 0.51,
               "unchecked": 0.01,
               "expanded": 0.09,
               "collapsed": 0,
-              "selected": 0.25,
+              "selected": 0.19,
               "unselected": 0.01,
               "pressed": 0.01,
               "unpressed": 0
@@ -886,13 +886,13 @@
           "area": {
             "type": "choice",
             "choice": "e47",
-            "confidence": 0.74,
+            "confidence": 0.7,
             "probabilities": {
               "e1": 0,
               "e2": 0,
-              "e5": 0.02,
-              "e47": 0.78,
-              "page": 0.19,
+              "e5": 0.03,
+              "e47": 0.75,
+              "page": 0.21,
               "missing": 0.01
             }
           }
@@ -1032,16 +1032,16 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.63,
+            "confidence": 0.52,
             "probabilities": {
               "e3": 0,
               "e4": 0,
-              "e27": 0.03,
-              "e29": 0.06,
+              "e27": 0.02,
+              "e29": 0.04,
               "e32": 0,
-              "e33": 0.24000000000000002,
+              "e33": 0.37,
               "e34": 0,
-              "none": 0.66,
+              "none": 0.56,
               "scroll": 0,
               "wait": 0,
               "enter": 0.01
@@ -1086,7 +1086,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.04
+            "noul": 0.03
           },
           "target": {
             "type": "choice",
@@ -1109,13 +1109,14 @@
         }
       }
     },
-    "d480e921397b60a0a2c101924d41522c04bfc74c71040bffac0971f94dcf096a": {
+    "2c49eba2331f7bccd26c07718c9a0a7361068fee16b26133ccab55c6683f5112": {
       "request": {
         "state": {
           "step": "I save the draft",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Summer Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: Not set\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Summer Sale\" saved",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - paragraph [ref=e35]: Loading campaign…\n  - status [ref=e36]: Campaign \"Summer Sale\" saved",
           "actions_taken_for_step": [
-            "CLICK button \"Save draft\""
+            "CLICK button \"Save draft\"",
+            "WAIT"
           ]
         },
         "questions": {
@@ -1129,8 +1130,6 @@
             "criteria": {
               "e3": "link \"Campaigns\" [cursor=pointer]",
               "e4": "link \"Calendar\" [cursor=pointer]",
-              "e43": "button \"Schedule\"",
-              "e44": "button \"More actions\"",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
               "wait": "Wait: `ui` is still loading the needed element."
@@ -1143,30 +1142,82 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.96
+            "noul": 0.72
           },
           "target": {
             "type": "choice",
-            "choice": "none",
-            "confidence": 0.96,
+            "choice": "wait",
+            "confidence": 0.75,
             "probabilities": {
-              "e3": 0,
+              "e3": 0.01,
               "e4": 0,
-              "e43": 0.01,
-              "e44": 0.02,
-              "none": 0.97,
+              "none": 0.19,
               "scroll": 0,
-              "wait": 0
+              "wait": 0.8
             }
           }
         }
       }
     },
-    "867bffd16f3de58eaddb3c62b4f0bcda8e638baed73cc7bf5bbfb99c40bf19dd": {
+    "343ddb5894e3d9d55749ea7bc9020d0f8bb08e32d0e92b420f87d31c96a45669": {
+      "request": {
+        "state": {
+          "step": "I save the draft",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Summer Sale\" [level=1] [ref=e37]\n      - term [ref=e39]: Status\n      - definition [ref=e40]: Draft\n      - term [ref=e41]: Activation date\n      - definition [ref=e42]: Not set\n      - term [ref=e43]: Activation period\n      - definition [ref=e44]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e45]\n    - button \"More actions\" [ref=e46]\n  - status [ref=e36]: Campaign \"Summer Sale\" saved",
+          "actions_taken_for_step": [
+            "CLICK button \"Save draft\"",
+            "WAIT"
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Campaigns\" [cursor=pointer]",
+              "e4": "link \"Calendar\" [cursor=pointer]",
+              "e45": "button \"Schedule\"",
+              "e46": "button \"More actions\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.97
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.94,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e45": 0.02,
+              "e46": 0.01,
+              "none": 0.95,
+              "scroll": 0,
+              "wait": 0.01
+            }
+          }
+        }
+      }
+    },
+    "e3cdb3b69e5c19aa4a73970ddd9eeb83301c58dd04cbfe4ccd5e7d91197a5c5d": {
       "request": {
         "state": {
           "step": "I open the calendar",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Summer Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: Not set\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Summer Sale\" saved",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/campaigns/3\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Summer Sale\" [level=1] [ref=e37]\n      - term [ref=e39]: Status\n      - definition [ref=e40]: Draft\n      - term [ref=e41]: Activation date\n      - definition [ref=e42]: Not set\n      - term [ref=e43]: Activation period\n      - definition [ref=e44]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e45]\n    - button \"More actions\" [ref=e46]\n  - status [ref=e36]: Campaign \"Summer Sale\" saved",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -1180,8 +1231,8 @@
             "criteria": {
               "e3": "link \"Campaigns\" [cursor=pointer]",
               "e4": "link \"Calendar\" [cursor=pointer]",
-              "e43": "button \"Schedule\"",
-              "e44": "button \"More actions\"",
+              "e45": "button \"Schedule\"",
+              "e46": "button \"More actions\"",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
               "wait": "Wait: `ui` is still loading the needed element."
@@ -1194,7 +1245,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.02
+            "noul": 0.03
           },
           "target": {
             "type": "choice",
@@ -1203,8 +1254,8 @@
             "probabilities": {
               "e3": 0,
               "e4": 1,
-              "e43": 0,
-              "e44": 0,
+              "e45": 0,
+              "e46": 0,
               "none": 0,
               "scroll": 0,
               "wait": 0
@@ -1213,11 +1264,11 @@
         }
       }
     },
-    "fd14bd65e7b320c4a14b92855db659a757cff89c6db3938adbf373b918e53391": {
+    "589543d2cc14a0f7f2a5924f9b17b272394ed926955b5f2a92dda0a61ec61339": {
       "request": {
         "state": {
           "step": "I open the calendar",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/calendar\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e45]: Campaign \"Summer Sale\" saved",
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/calendar\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e47]\n    - list \"Scheduled campaigns\" [ref=e48]:\n      - listitem [ref=e49]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e36]: Campaign \"Summer Sale\" saved",
           "actions_taken_for_step": [
             "CLICK link \"Calendar\""
           ]
@@ -1245,16 +1296,16 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.88
+            "noul": 0.92
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.66,
+            "confidence": 0.64,
             "probabilities": {
-              "e3": 0.01,
-              "e4": 0.25,
-              "none": 0.73,
+              "e3": 0,
+              "e4": 0.28,
+              "none": 0.71,
               "scroll": 0,
               "wait": 0.01
             }
@@ -1284,20 +1335,20 @@
           "value": {
             "type": "choice",
             "choice": "v0",
-            "confidence": 0.3,
+            "confidence": 0.36,
             "probabilities": {
-              "v0": 0.65,
-              "none": 0.35
+              "v0": 0.68,
+              "none": 0.32
             }
           }
         }
       }
     },
-    "4e84297e10fe85743759f600fbcb9f5bcc979b17fae8659da0b43fbe5d391715": {
+    "ae8cb2b9d478cc6fe9e7943dd0d41aa85da2c2fbc27a01fbf6740e073aad5599": {
       "request": {
         "state": {
           "check": "the campaign should appear in the calendar",
-          "ui": "- url: http://127.0.0.1:5173/?reset=1#/calendar\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e45]: Campaign \"Summer Sale\" saved"
+          "ui": "- url: http://127.0.0.1:5173/?reset=1#/calendar\n- title: Campaign manager\n  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e47]\n    - list \"Scheduled campaigns\" [ref=e48]:\n      - listitem [ref=e49]: \"2026-10-20: Autumn Sale (1 week)\"\n  - status [ref=e36]: Campaign \"Summer Sale\" saved"
         },
         "questions": {
           "kind": {
@@ -1320,10 +1371,10 @@
               "e2": "navigation \"Main\"",
               "e3": "link \"Campaigns\" [cursor=pointer]",
               "e4": "link \"Calendar\" [active] [cursor=pointer]",
-              "e46": "heading \"Calendar\" [level=1]",
-              "e47": "list \"Scheduled campaigns\"",
-              "e48": "listitem value=\"2026-10-20: Autumn Sale (1 week)\"",
-              "e45": "status value=\"Campaign \"Summer Sale\" saved\"",
+              "e47": "heading \"Calendar\" [level=1]",
+              "e48": "list \"Scheduled campaigns\"",
+              "e49": "listitem value=\"2026-10-20: Autumn Sale (1 week)\"",
+              "e36": "status value=\"Campaign \"Summer Sale\" saved\"",
               "none": "No element in `ui` is the one `check` is about."
             }
           },
@@ -1350,7 +1401,7 @@
               "e1": "generic",
               "e2": "navigation \"Main\"",
               "e5": "main",
-              "e47": "list \"Scheduled campaigns\"",
+              "e48": "list \"Scheduled campaigns\"",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -1363,59 +1414,59 @@
           "kind": {
             "type": "choice",
             "choice": "presence",
-            "confidence": 0.94,
+            "confidence": 0.92,
             "probabilities": {
               "value": 0.01,
-              "presence": 0.95,
-              "absence": 0.01,
+              "presence": 0.94,
+              "absence": 0.02,
               "state": 0,
               "fuzzy": 0.03
             }
           },
           "subject": {
             "type": "choice",
-            "choice": "e47",
-            "confidence": 0.82,
+            "choice": "e48",
+            "confidence": 0.83,
             "probabilities": {
               "url": 0,
               "title": 0,
               "e2": 0,
               "e3": 0,
               "e4": 0.01,
-              "e46": 0,
-              "e47": 0.84,
-              "e48": 0.12,
-              "e45": 0.01,
-              "none": 0.02
+              "e47": 0,
+              "e48": 0.85,
+              "e49": 0.1,
+              "e36": 0.01,
+              "none": 0.03
             }
           },
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.26,
+            "confidence": 0.23,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.25,
-              "checked": 0.33,
-              "unchecked": 0.06,
-              "expanded": 0.13,
+              "enabled": 0.27,
+              "checked": 0.31,
+              "unchecked": 0.05,
+              "expanded": 0.14,
               "collapsed": 0.01,
-              "selected": 0.16,
-              "unselected": 0.04,
+              "selected": 0.17,
+              "unselected": 0.03,
               "pressed": 0.01,
               "unpressed": 0.01
             }
           },
           "area": {
             "type": "choice",
-            "choice": "e47",
-            "confidence": 0.86,
+            "choice": "e48",
+            "confidence": 0.87,
             "probabilities": {
               "e1": 0,
               "e2": 0,
               "e5": 0.02,
-              "e47": 0.88,
-              "page": 0.1,
+              "e48": 0.89,
+              "page": 0.09,
               "missing": 0
             }
           }
@@ -1516,9 +1567,9 @@
             "choice": "none",
             "confidence": 0.8,
             "probabilities": {
-              "e3": 0.02,
+              "e3": 0.01,
               "e4": 0,
-              "e33": 0.12,
+              "e33": 0.13,
               "e34": 0.02,
               "none": 0.83,
               "scroll": 0,
@@ -1550,10 +1601,10 @@
           "value": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.86,
+            "confidence": 0.88,
             "probabilities": {
-              "v0": 0.07,
-              "none": 0.93
+              "v0": 0.06,
+              "none": 0.94
             }
           }
         }
@@ -1685,14 +1736,14 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.53,
+            "confidence": 0.52,
             "probabilities": {
-              "e1": 0,
+              "e1": 0.01,
               "e2": 0,
-              "e5": 0.37,
-              "e26": 0.01,
-              "page": 0.61,
-              "missing": 0.01
+              "e5": 0.34,
+              "e26": 0.02,
+              "page": 0.6,
+              "missing": 0.03
             }
           }
         }

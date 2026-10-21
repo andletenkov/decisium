@@ -125,13 +125,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.6,
+            "confidence": 0.65,
             "probabilities": {
-              "e5": 0.05,
+              "e5": 0.03,
               "e8": 0.02,
-              "e9": 0.18,
-              "e10": 0.09,
-              "none": 0.65,
+              "e9": 0.17,
+              "e10": 0.08,
+              "none": 0.69,
               "scroll": 0,
               "wait": 0,
               "enter": 0.01
@@ -265,18 +265,18 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.99
+            "noul": 0.98
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.58,
+            "confidence": 0.53,
             "probabilities": {
               "e5": 0,
-              "e8": 0.15,
-              "e9": 0.21,
+              "e8": 0.17,
+              "e9": 0.23,
               "e10": 0.01,
-              "none": 0.63,
+              "none": 0.59,
               "scroll": 0,
               "wait": 0,
               "enter": 0
@@ -372,20 +372,20 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.96
+            "noul": 0.97
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.78,
+            "confidence": 0.8,
             "probabilities": {
               "e5": 0,
               "e8": 0,
-              "e9": 0.17,
+              "e9": 0.16,
               "e10": 0,
-              "none": 0.81,
+              "none": 0.83,
               "scroll": 0,
-              "wait": 0.02
+              "wait": 0.01
             }
           }
         }
@@ -460,12 +460,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.95,
+            "confidence": 0.97,
             "probabilities": {
-              "value": 0.96,
+              "value": 0.98,
               "presence": 0,
               "absence": 0,
-              "state": 0.04,
+              "state": 0.02,
               "fuzzy": 0
             }
           },
@@ -488,16 +488,16 @@
           "state": {
             "type": "choice",
             "choice": "enabled",
-            "confidence": 0.5,
+            "confidence": 0.42,
             "probabilities": {
               "disabled": 0.01,
-              "enabled": 0.55,
-              "checked": 0.09,
+              "enabled": 0.48,
+              "checked": 0.1,
               "unchecked": 0.01,
               "expanded": 0.01,
-              "collapsed": 0.01,
-              "selected": 0.29,
-              "unselected": 0.01,
+              "collapsed": 0,
+              "selected": 0.37,
+              "unselected": 0,
               "pressed": 0.01,
               "unpressed": 0.01
             }
@@ -505,14 +505,14 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.86,
+            "confidence": 0.81,
             "probabilities": {
-              "e1": 0.02,
-              "e3": 0.02,
-              "e4": 0.01,
+              "e1": 0.03,
+              "e3": 0.03,
+              "e4": 0.02,
               "e7": 0.01,
-              "page": 0.88,
-              "missing": 0.06
+              "page": 0.84,
+              "missing": 0.07
             }
           }
         }
@@ -645,13 +645,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.69,
+            "confidence": 0.56,
             "probabilities": {
-              "e5": 0.01,
-              "e8": 0.12,
-              "e9": 0.13,
-              "e10": 0.01,
-              "none": 0.73,
+              "e5": 0,
+              "e8": 0.28,
+              "e9": 0.1,
+              "e10": 0,
+              "none": 0.62,
               "scroll": 0,
               "wait": 0
             }
@@ -728,12 +728,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.56,
+            "confidence": 0.46,
             "probabilities": {
-              "value": 0.65,
+              "value": 0.57,
               "presence": 0,
               "absence": 0,
-              "state": 0.35,
+              "state": 0.43,
               "fuzzy": 0
             }
           },
@@ -773,14 +773,14 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.42,
+            "confidence": 0.35,
             "probabilities": {
-              "e1": 0.07,
-              "e3": 0.12,
-              "e4": 0.05,
-              "e7": 0.09,
-              "page": 0.52,
-              "missing": 0.15
+              "e1": 0.09,
+              "e3": 0.11,
+              "e4": 0.07,
+              "e7": 0.11,
+              "page": 0.46,
+              "missing": 0.16
             }
           }
         }
@@ -857,12 +857,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.95,
+            "confidence": 0.96,
             "probabilities": {
-              "value": 0.96,
+              "value": 0.97,
               "presence": 0,
               "absence": 0,
-              "state": 0.04,
+              "state": 0.03,
               "fuzzy": 0
             }
           },
@@ -886,31 +886,31 @@
           "state": {
             "type": "choice",
             "choice": "selected",
-            "confidence": 0.86,
+            "confidence": 0.81,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.02,
+              "enabled": 0.06,
               "checked": 0.02,
               "unchecked": 0.01,
-              "expanded": 0,
+              "expanded": 0.01,
               "collapsed": 0,
-              "selected": 0.87,
-              "unselected": 0.08,
-              "pressed": 0,
-              "unpressed": 0
+              "selected": 0.83,
+              "unselected": 0.05,
+              "pressed": 0.01,
+              "unpressed": 0.01
             }
           },
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.72,
+            "confidence": 0.69,
             "probabilities": {
-              "e1": 0.01,
-              "e3": 0.04,
-              "e4": 0.01,
-              "e7": 0.01,
-              "e12": 0.11,
-              "page": 0.76,
+              "e1": 0.02,
+              "e3": 0.05,
+              "e4": 0.02,
+              "e7": 0.02,
+              "e12": 0.1,
+              "page": 0.73,
               "missing": 0.06
             }
           }

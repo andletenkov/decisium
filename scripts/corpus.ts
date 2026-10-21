@@ -9,7 +9,7 @@ const DIR = "examples/real";
 const PARALLEL = 3; // live sites and the Jev API: keep the load modest
 const files = readdirSync(DIR).filter(f => f.endsWith(".feature") && f.includes(process.argv[2] ?? "")).sort();
 
-interface Step { scenario: string; kind: string; step: string; outcome: string; reason?: string }
+interface Step { scenario: string; kind: string; step: string; outcome: string; reason?: string; seconds?: number; jevCalls?: number; inputTokens?: number; outputTokens?: number }
 interface Result { file: string; run?: string; exit: number | null; steps: Step[]; scenarios: { name: string; passed: boolean }[]; error?: string }
 
 function runFeature(file: string): Promise<Result> {
@@ -22,7 +22,7 @@ function runFeature(file: string): Promise<Result> {
       const run = /Run directory: (\S+)/.exec(out)?.[1];
       const events = run ? readFileSync(join(run, "trace.jsonl"), "utf8").trim().split("\n").map(l => JSON.parse(l)) : [];
       const scenarios = events.filter(e => e.type === "result").map(e => ({ name: e.scenario, passed: e.passed }));
-      const steps = events.filter(e => e.type === "step").map(({ scenario, kind, step, outcome, reason }) => ({ scenario, kind, step, outcome, reason }));
+      const steps = events.filter(e => e.type === "step").map(({ scenario, kind, step, outcome, reason, seconds, jevCalls, inputTokens, outputTokens }) => ({ scenario, kind, step, outcome, reason, seconds, jevCalls, inputTokens, outputTokens }));
       // Infrastructure errors (exit 2) leave no step event: keep the console's last lines.
       const error = exit === 2 ? out.trim().split("\n").filter(l => /Error|Cannot|not set/.test(l)).slice(0, 2).join(" / ") : undefined;
       console.log(`${file}: exit ${exit}, ${scenarios.filter(s => s.passed).length}/${scenarios.length} scenarios`);
@@ -42,6 +42,12 @@ const steps = results.flatMap(r => r.steps.map(s => ({ ...s, file: r.file })));
 const count = (xs: string[]) => Object.entries(xs.reduce<Record<string, number>>((m, x) => ({ ...m, [x]: (m[x] ?? 0) + 1 }), {})).sort((a, b) => b[1] - a[1]);
 const passed = results.reduce((n, r) => n + r.scenarios.filter(s => s.passed).length, 0);
 const total = results.reduce((n, r) => n + r.scenarios.length, 0);
+// Cost and time: totals and the median Step (cassette replays cost 0; this script always calls Jev live).
+const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : 0; };
+const metric = (name: string, pick: (s: Step) => number | undefined, digits = 0) => {
+  const xs = steps.map(pick).filter((x): x is number => x !== undefined);
+  return `| ${name} | ${xs.reduce((a, b) => a + b, 0).toFixed(digits)} | ${median(xs).toFixed(digits)} |`;
+};
 const report = [
   `# Real-site corpus, ${new Date().toISOString()}`,
   "",
@@ -50,6 +56,15 @@ const report = [
   "| Feature | Scenarios passed | Run directory |",
   "|---|---|---|",
   ...results.map(r => `| ${r.file} | ${r.scenarios.filter(s => s.passed).length}/${r.scenarios.length}${r.error ? ` (exit 2: ${r.error})` : ""} | ${r.run ?? "-"} |`),
+  "",
+  "## Cost and time",
+  "",
+  "| | Total | Median per step |",
+  "|---|---|---|",
+  metric("Jev calls", s => s.jevCalls),
+  metric("Input tokens", s => s.inputTokens),
+  metric("Output tokens", s => s.outputTokens),
+  metric("Seconds", s => s.seconds, 1),
   "",
   "## Step outcomes",
   "",

@@ -1,14 +1,13 @@
 // cucumber-js support code (ADR 0003): one catch-all step definition runs every Step through Jev; hooks give each
 // scenario a fresh browser, its run-directory folder, the feature's cassette and an empty memory.
 // Options come from DESCISIUM_* env (set by `descisium run`), so raw `npx cucumber-js` works too.
-import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, setDefaultTimeout, setWorldConstructor, Status, World } from "@cucumber/cucumber";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.ts";
-import { stepKind, urlFromTags, type StepKind } from "./feature.ts";
-import { JevDecider, MODEL, type Decider } from "./jev.ts";
+import { stepKind, toUrl, urlFromTags, type StepKind } from "./feature.ts";
+import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
 import { quoted } from "./observation.ts";
 import { outcomeMessage } from "./report.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
@@ -21,18 +20,14 @@ const record = (env.DESCISIUM_RECORD ?? "once") as RecordMode;
 // Jev steps take seconds per Turn; the runner has its own caps (8 Turns, 5 s waits).
 setDefaultTimeout(10 * 60_000);
 
-// Local paths keep their ?query (e.g. index.html?decoy=1) instead of having it encoded into the file name.
-const toUrl = (u: string) => {
-  if (/^[a-z]+:\/\//i.test(u)) return u;
-  const [path, query] = u.split(/(?=\?)/);
-  return pathToFileURL(resolve(path)).href + (query ?? "");
-};
 
-// shortcut: module state assumes one process (no --parallel): each worker would get its own run directory and
-// exit code 2 would not reach `descisium run`; move it into cucumber's worker/coordinator plugins when parallel is needed.
+// Parallel workers (`--parallel`) are separate processes: the CLI creates the run directory (DESCISIUM_RUN_DIR) and an
+// infrastructure error is signalled through a marker file in it, read by the CLI and by the other workers.
 let run: RunDir;
-let scenarios = 0;
-let broken = false; // after an infrastructure error the remaining scenarios are skipped
+const since = Number(env.DESCISIUM_RUN_START) || Date.now(); // run start, for cassettes shared across workers
+const worker = !!env.DESCISIUM_RUN_DIR; // the CLI prints the run directory once, not each worker
+const INFRA = "infrastructure-error";
+const broken = () => !!run && existsSync(join(run.path, INFRA)); // after one, the remaining scenarios are skipped
 const deciders = new Map<string, { cassette?: Cassette; decider: Decider }>(); // per feature file
 
 class Scenario extends World {
@@ -45,21 +40,24 @@ class Scenario extends World {
 }
 setWorldConstructor(Scenario);
 
+// A feature's scenarios run one after another (they share its cassette); different features run side by side.
+setParallelCanAssign((pickle, running) => !running.some(p => p.uri === pickle.uri));
+
 BeforeAll(function () {
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
   if (!RECORD_MODES.includes(record)) throw new Error(`DESCISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP"))) throw new Error("TYPESAFE_API_KEY is not set.");
-  run = new RunDir();
-  console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
+  run = new RunDir("runs", env.DESCISIUM_RUN_DIR || undefined);
+  if (!worker) console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
 
 Before(async function (this: Scenario, { pickle }) {
-  if (broken) return "skipped";
+  if (broken()) return "skipped";
   const url = env.DESCISIUM_URL || urlFromTags(pickle.tags);
   if (!url) throw infra(new Error(`No start URL for "${pickle.name}": pass --url or add an @url:<url> tag.`));
   try {
     if (!deciders.has(pickle.uri)) { // a corrupt cassette is a setup error, not a failed scenario
-      const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record);
+      const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record, since);
       deciders.set(pickle.uri, { cassette, decider: run.decider(new JevDecider(cassette)) });
     }
   } catch (err) {
@@ -67,7 +65,7 @@ Before(async function (this: Scenario, { pickle }) {
   }
   this.decider = deciders.get(pickle.uri)!.decider;
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
-  this.dir = run.scenario(scenarios++, pickle.name);
+  this.dir = run.scenario(pickle.name);
   try {
     this.browser = await Browser.open(toUrl(url), opt("HEADED"), true); // fresh browser per scenario: no shared state
   } catch (err) {
@@ -83,6 +81,7 @@ BeforeStep(function (this: Scenario, { pickleStep }) {
 defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
   const log = (line: string) => { run.log(line); if (opt("VERBOSE")) console.log(line); };
   let r: StepResult | { outcome: "UI_CHANGED" | "PAGE_TOO_LARGE"; reason: string };
+  const start = Date.now(), before = { ...jevUsage };
   try {
     r = this.kind === "assertion"
       ? await runAssertion(text, this.rt, this.decider, log, opt("JUDGED"), { ...this.earlier })
@@ -97,7 +96,10 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
       r = { outcome: "UI_CHANGED", reason: err.reason };
     } else throw infra(err);
   }
-  run.event("step", { kind: this.kind, step: text, ...r });
+  // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
+  const cost = { seconds: (Date.now() - start) / 1000, jevCalls: jevUsage.calls - before.calls,
+    inputTokens: jevUsage.inputTokens - before.inputTokens, outputTokens: jevUsage.outputTokens - before.outputTokens };
+  run.event("step", { kind: this.kind, step: text, ...r, ...cost });
   for (const v of quoted(text)) this.earlier[v] = text;
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
@@ -121,14 +123,14 @@ After(async function (this: Scenario, { result }) {
 
 AfterAll(function () {
   if (!run) return;
-  console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
+  if (!worker) console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
   for (const { cassette: c } of deciders.values()) if (c) console.log(`Cassette ${c.path}: ${c.hits} replayed, ${c.recorded} recorded live`);
 });
 
 /** Infrastructure error (app not running, bad API key, network): one clear line, `--debug` for the stack. Exit code 2. */
 function infra(err: unknown): Error {
-  broken = true;
-  process.exitCode = 2; // read by `descisium run`
+  process.exitCode = 2;
+  if (run) writeFileSync(join(run.path, INFRA), String((err as Error)?.message ?? err)); // read by `descisium run`
   if (opt("DEBUG")) return err as Error;
   const e = err as Error & { status?: number };
   const out = new Error(`${e.message.split("\n")[0]}${e.status === 401 ? " (check TYPESAFE_API_KEY in .env)" : ""}\nRerun with --debug for details.`);

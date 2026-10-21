@@ -12,7 +12,9 @@ export class RunDir {
   #dir = "";
   #shot = 0;
 
-  constructor(root = "runs") {
+  /** `existing`: a run directory the CLI created, shared by parallel workers. */
+  constructor(root = "runs", existing?: string) {
+    if (existing) { mkdirSync(existing, { recursive: true }); this.path = existing; return; }
     mkdirSync(root, { recursive: true });
     const base = join(root, new Date().toISOString().replace(/[:.]/g, "-"));
     // Parallel runs can start in the same millisecond: mkdir without `recursive` fails if the directory exists.
@@ -36,10 +38,17 @@ export class RunDir {
     appendFileSync(join(this.path, "trace.jsonl"), JSON.stringify({ t: new Date().toISOString(), scenario: this.#scenario, type, ...data }) + "\n");
   }
 
-  scenario(index: number, name: string): string {
+  scenario(name: string): string {
     this.#scenario = name;
     this.#shot = 0;
-    this.#dir = join(this.path, `${String(index + 1).padStart(2, "0")}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)}`);
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+    // Numbered in start order across parallel workers: claim a number with an exclusive mkdir, then name the folder.
+    mkdirSync(join(this.path, ".claimed"), { recursive: true });
+    let i = 1;
+    for (; ; i++) {
+      try { mkdirSync(join(this.path, ".claimed", String(i))); break; } catch (err) { if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err; }
+    }
+    this.#dir = join(this.path, `${String(i).padStart(2, "0")}-${slug}`);
     mkdirSync(this.#dir, { recursive: true });
     this.event("scenario");
     return this.#dir;

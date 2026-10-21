@@ -2,6 +2,8 @@
 // Outline rows ("pickles"), so the runner only sees flat Step lists.
 import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, PickleStepType } from "@cucumber/messages";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 export type StepKind = "action" | "attempt" | "assertion";
 
@@ -58,3 +60,10 @@ export function stepFeature(line: string): string {
   const text = /^(Given|When|Then|And|But|\*)\s/i.test(line) ? line : `When ${line}`;
   return `Feature: step\n  Scenario: step\n    ${text}\n`;
 }
+
+// Local paths keep their ?query (e.g. index.html?decoy=1) instead of having it encoded into the file name.
+export const toUrl = (u: string) => {
+  if (/^[a-z]+:\/\//i.test(u)) return u;
+  const [path, query] = u.split(/(?=\?)/);
+  return pathToFileURL(resolve(path)).href + (query ?? "");
+};

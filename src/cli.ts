@@ -1,22 +1,32 @@
 #!/usr/bin/env node
 import { loadConfiguration, runCucumber } from "@cucumber/cucumber/api";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { devNull, tmpdir } from "node:os";
+import { availableParallelism, devNull, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { qaseOn, qasePreflight } from "./qase.ts";
+import { doctor } from "./doctor.ts";
+import { RunDir } from "./trace.ts";
+import { MODEL } from "./jev.ts";
 
 const USAGE = `Usage:
   descisium step "<step>" --url <url|file> [--headed] [--judged] [-v] [--debug]
-  descisium run <file.feature> [--url <url|file>] [--headed] [--judged] [--record <mode>] [-v] [--debug]
+  descisium run <file.feature>... [--url <url|file>] [--headed] [--judged] [--record <mode>] [--reporter junit|json[:path]]
+                [--parallel <n|auto>] [-v] [--debug]
+  descisium doctor [<file.feature>...]
 
 The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags).
 --record (run only): Jev answers are recorded in <file>.cassette.json and replayed for identical requests.
   once (default): record if no cassette exists, else replay only; none: replay only, a miss fails as UI_CHANGED;
   new: replay, record misses live; all: always call Jev and rewrite the cassette.
+--reporter (repeatable): junit or json, written to the run directory (junit.xml, report.json) or to :path.
+--parallel <n|auto>: worker processes. Features run side by side, a feature's scenarios one after another. Only for
+  features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
+doctor: checks Node, Chromium, TYPESAFE_API_KEY (one tiny Jev call) and Qase if enabled; given features, also opens
+  every start URL.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 
@@ -39,25 +49,29 @@ async function main(): Promise<number> {
     allowPositionals: true,
     options: { url: { type: "string" }, headed: { type: "boolean", default: false }, judged: { type: "boolean", default: false },
       record: { type: "string", default: "once" },
+      reporter: { type: "string", multiple: true, default: [] }, parallel: { type: "string" },
       verbose: { type: "boolean", short: "v", default: false }, debug: { type: "boolean", default: false } },
   });
   const [cmd, arg] = positionals;
-  let file: string;
+  if (cmd === "doctor") return doctor(positionals.slice(1));
+  let files: string[];
   let scenarios: Scenario[];
   try {
     if (cmd === "step" && arg) {
-      file = join(mkdtempSync(join(tmpdir(), "descisium-")), "step.feature");
+      const file = join(mkdtempSync(join(tmpdir(), "descisium-")), "step.feature");
       writeFileSync(file, stepFeature(arg));
+      files = [file];
       const dir = dirname(file);
       process.on("exit", () => rmSync(dir, { recursive: true, force: true })); // every exit path, early returns included
     } else if (cmd === "run" && arg) {
-      if (!existsSync(arg)) { console.error(`File not found: ${arg}`); return 2; }
-      file = arg;
+      files = positionals.slice(1);
+      const missing = files.find(f => !existsSync(f));
+      if (missing) { console.error(`File not found: ${missing}`); return 2; }
     } else {
       console.error(USAGE);
       return 2;
     }
-    scenarios = parseFeature(readFileSync(file, "utf8"), file); // syntax and unsupported arguments: one line, before running
+    scenarios = files.flatMap(f => parseFeature(readFileSync(f, "utf8"), f)); // syntax and unsupported arguments: one line, before running
   } catch (err) {
     console.error((err as Error).message);
     return 2;
@@ -66,22 +80,35 @@ async function main(): Promise<number> {
   const missingUrl = scenarios.find(s => !(values.url ?? s.url));
   if (missingUrl) { console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${USAGE}`); return 2; }
   if (!process.env.TYPESAFE_API_KEY && (cmd === "step" || values.record !== "none")) { console.error("TYPESAFE_API_KEY is not set."); return 2; }
+  const reporters = values.reporter.map(r => /^(junit|json)(?::(.+))?$/.exec(r));
+  if (reporters.some(r => !r)) { console.error(`--reporter must be junit or json, optionally :path\n\n${USAGE}`); return 2; }
+  // Opt-in: features sharing one stateful app (campaign-manager) break each other's state when run side by side.
+  const parallel = values.parallel === "auto" ? Math.min(availableParallelism(), values.record === "none" ? Infinity : 4) : Number(values.parallel ?? 0);
+  if (!Number.isInteger(parallel) || parallel < 0) { console.error(`--parallel must be a whole number\n\n${USAGE}`); return 2; }
   const qaseError = await qasePreflight(scenarios);
   if (qaseError) { console.error(qaseError); return 2; }
+  const run = new RunDir(); // shared by every worker
 
   const flag = (on: boolean) => (on ? "1" : "");
   Object.assign(process.env, {
     DESCISIUM_URL: values.url ?? "", DESCISIUM_RECORD: values.record, DESCISIUM_STEP: flag(cmd === "step"),
     DESCISIUM_HEADED: flag(values.headed), DESCISIUM_JUDGED: flag(values.judged),
     DESCISIUM_VERBOSE: flag(values.verbose), DESCISIUM_DEBUG: flag(values.debug),
+    DESCISIUM_RUN_DIR: run.path, DESCISIUM_RUN_START: String(Date.now() - 1000), // a second of slack for mtime rounding
   });
+  const reports = reporters.map(r => [r![1], r![2] ?? join(run.path, r![1] === "junit" ? "junit.xml" : "report.json")] as [string, string]);
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
   const { runConfiguration } = await loadConfiguration({ file: false, provided: {
-    paths: [file], import: [here("./steps.ts")], // Only one formatter may write to stdout; the Qase reporter writes nothing there itself.
-    format: [here("./formatter.ts"), ...(qaseOn() ? [[here("cucumberjs-qase-reporter"), devNull] as [string, string]] : [])],
+    paths: files, import: [here("./steps.ts")],
+    // Workers only pay off across features (a feature's scenarios share its cassette and run in sequence).
+    parallel: files.length > 1 ? parallel : 0, // Only one formatter may write to stdout; the Qase reporter writes nothing there itself.
+    format: [here("./formatter.ts"), ...reports, ...(qaseOn() ? [[here("cucumberjs-qase-reporter"), devNull] as [string, string]] : [])],
   } });
+  console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);
-  return process.exitCode === 2 ? 2 : success ? 0 : 1; // steps.ts sets 2 on an infrastructure error
+  console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
+  // steps.ts marks an infrastructure error in the run directory (it may have happened in a worker).
+  return process.exitCode === 2 || existsSync(join(run.path, "infrastructure-error")) ? 2 : success ? 0 : 1;
 }
 
 // No process.exit on success paths: the Qase reporter finishes uploading after cucumber returns.
