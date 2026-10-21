@@ -340,6 +340,24 @@ test("runStep refuses low-confidence targets and stops when actions change nothi
   }
 });
 
+test("runStep: nothing left to do after an action that changed the page, plus a moderate done, is DONE", async () => {
+  // Fake page: clicking "Add to cart" turns it into "Remove" (like SauceDemo).
+  let added = false;
+  const rt: Runtime = {
+    observe: async () => parseSnapshot(`- button "${added ? "Remove" : "Add to cart"}" [ref=e1]`),
+    execute: async () => { added = true; },
+    waitForChange: async () => false,
+  };
+  const none = { choice: "none", probabilities: { none: 0.8, e1: 0.2 } };
+  const turns = (...answers: { done: number; target: Pick }[]): Decider => ({ ...oracle, turn: async () => answers.shift()! });
+  assert.equal((await runStep("I add the backpack to the cart", rt, turns({ done: 0, target: sure("e1") }, { done: 0.7, target: none }), () => {})).outcome, "DONE");
+  added = false;
+  assert.equal((await runStep("I add the backpack to the cart", rt, turns({ done: 0, target: sure("e1") }, { done: 0.3, target: none }), () => {})).outcome, "BLOCKED");
+  // No action yet: the control is missing, not the step done.
+  added = false;
+  assert.equal((await runStep("I add the backpack to the cart", rt, turns({ done: 0.7, target: none }), () => {})).outcome, "BLOCKED");
+});
+
 for (const variant of ["", "?dropdown=custom"]) {
   test(`runStep sets activation period end-to-end ${variant || "(native)"}`, async () => {
     const b = await Browser.open(APP + variant);

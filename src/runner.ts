@@ -23,6 +23,11 @@ const MAX_TURNS = 8;
 const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
+/**
+ * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
+ * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
+ */
+const DONE_AFTER_ACTION = 0.5;
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -228,6 +233,7 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     const t = await decider.turn(step, obs, recent, attempt);
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
+    if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
     if (!gate(t.target, GATE_TARGET_TOP, GATE_TARGET_MARGIN)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
     if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
