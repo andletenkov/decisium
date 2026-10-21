@@ -40,9 +40,12 @@ export const MASK = "\u2022\u2022\u2022\u2022";
 export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set(), editableRefs: ReadonlySet<string> = new Set()): Observation {
   const elements: Element[] = [];
   const readable: Element[] = [];
-  const kept: string[] = [];
+  const kept: (string | undefined)[] = [];
   const areas = new Set<Element>();
   const open: { el: Element; indent: number }[] = []; // ancestors of the current line, by indentation
+  const bare = new Map<Element, string[]>(); // container -> text it holds that has no element of its own
+  const named = new Map<Element, string[]>(); // container -> names of the ref'd elements inside it
+  const wrappers = new Map<Element, number>(); // nameless container -> its line in `kept`, dropped unless it holds text
   let pageText = "";
   let lastCombobox: { el: Element; indent: number } | undefined;
 
@@ -61,15 +64,25 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       kept.push(raw);
       continue;
     }
-    // Drop nameless structural wrappers; keep their children.
-    if (role === "generic" && !name && !value) continue;
+    // Drop nameless structural wrappers that cannot hold anything readable; the ref'd ones are decided below.
+    if (role === "generic" && !name && !value && !ref) continue;
     while (open.length && open.at(-1)!.indent >= indent.length) open.pop();
     const words = [name, value].filter(Boolean).join(" ");
     pageText += words + "\n";
-    for (const o of open) { o.el.text += " " + words; areas.add(o.el); }
-    kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : raw);
+    for (const o of open) {
+      o.el.text += " " + words;
+      areas.add(o.el);
+      if (ref && name) named.set(o.el, [...(named.get(o.el) ?? []), name]);
+    }
+    const at = kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : raw) - 1;
 
-    if (!ref) continue;
+    // Text with no element of its own (a bare `- text:` line, or text split across children): the nearest ref'd
+    // container is the only thing a check can read it from, so that container becomes readable (task 0006).
+    const host = open.at(-1)?.el;
+    if (!ref) {
+      if (words && host) bare.set(host, [...(bare.get(host) ?? []), words]);
+      continue;
+    }
     const state = attrs.replace(/\s*\[ref=\w+\]/, "").trim();
     const el: Element = {
       ref, role, name, value, state, secret,
@@ -79,18 +92,27 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       text: words,
     };
     open.push({ el, indent: indent.length });
+    if (role === "generic" && !name && !value) wrappers.set(el, at);
     if (!(ACTIONABLE.has(role) || name || value)) continue;
     readable.push(el);
     if (ACTIONABLE.has(role) && !/\[disabled\]/.test(attrs)) elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
+  for (const [el, texts] of bare) {
+    // Text that only names a control inside the container (a field's label) adds nothing a check can read.
+    if (texts.every(t => named.get(el)?.includes(t))) continue;
+    el.value = el.text.trim(); // a check compares the container's full text, own and descendants'
+    if (!readable.includes(el)) readable.push(el);
+    wrappers.delete(el); // Jev must see its line to pick it
+  }
+  for (const at of wrappers.values()) kept[at] = undefined;
   for (const el of [...readable, ...areas]) {
     if (el.options.length) el.verb = "SELECT";
     // A long value (a whole file in a code view) would bury the description; the full value stays in `value` and `ui`.
     const value = el.value.length > 60 ? el.value.slice(0, 60) + "…" : el.value;
     el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.state ? " " + el.state : ""}`;
   }
-  return { text: kept.join("\n"), elements, readable, areas: [...areas], pageText };
+  return { text: kept.filter(l => l !== undefined).join("\n"), elements, readable, areas: [...areas], pageText };
 }
 
 /** Double-quoted strings in a Step. Single quotes are left alone so apostrophes ("campaign's") don't open a quote. */

@@ -30,6 +30,32 @@ test("parseSnapshot keeps actionable refs, attaches native options, drops wrappe
   assert.ok(obs.text.includes("Status: Draft"));
 });
 
+test("parseSnapshot: text with no element of its own is read from the container that holds it", () => {
+  const obs = parseSnapshot(`- generic [ref=e1]:
+  - generic [ref=e2]: Deposit Successful
+  - generic [ref=e3]:
+    - strong [ref=e4]: "2"
+    - text: items left
+  - generic [ref=e5]:
+    - text: Your password is invalid!
+  - generic [ref=e6]:
+    - button "Save" [ref=e7]`);
+  const line = (ref: string) => obs.readable.find(e => e.ref === ref)?.line;
+  assert.equal(line("e3"), `generic value="2 items left"`); // split across a child and a bare text node
+  assert.equal(line("e5"), `generic value="Your password is invalid!"`); // bare text node
+  assert.equal(line("e2"), `generic value="Deposit Successful"`); // text on the container's own line, as before
+  assert.equal(line("e6"), undefined); // holds a control, no text of its own
+  // A container Jev can pick must be visible in the snapshot it reads; the others stay dropped.
+  assert.ok(obs.text.includes("[ref=e3]") && obs.text.includes("[ref=e5]"));
+  assert.ok(!obs.text.includes("[ref=e6]") && obs.text.includes(`button "Save"`));
+});
+
+test("parseSnapshot: a bare text that only labels a control inside the container is not readable text", () => {
+  const obs = parseSnapshot(NATIVE);
+  assert.equal(obs.readable.find(e => e.ref === "e7"), undefined); // "Activation period" is the combobox's label
+  assert.ok(!obs.text.includes("generic [ref=e7]"));
+});
+
 test("Browser: editable comboboxes (search with suggestions) are typed into; button-like ones are clicked", async () => {
   const b = await Browser.open(`data:text/html,<input role=combobox aria-label="Search or jump to" aria-expanded=false>`
     + `<div role=combobox aria-label="Activation period" tabindex=0>1 week</div>`);
