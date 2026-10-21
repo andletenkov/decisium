@@ -142,6 +142,8 @@ test("containsValue matches whole words only", () => {
   // A line break the snapshot lost ("1815<br>London") still separates a number from a word.
   assert.ok(containsValue("Augusta Ada Byron 10 December 1815London, England", "10 December 1815"));
   assert.ok(!containsValue("v1815", "815") && !containsValue("Drafts2", "Draft"));
+  // Snapshots can put a space before punctuation that sits in its own text node ("cart !").
+  assert.ok(containsValue("Success: You have added iPhone to your shopping cart !", "Success: You have added iPhone to your shopping cart!"));
 });
 
 test("gate needs a confident top answer with margin", () => {

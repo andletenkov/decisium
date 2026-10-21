@@ -29,7 +29,8 @@ const DONE_THRESHOLD = 0.8;
  */
 const DONE_AFTER_ACTION = 0.5;
 
-const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+// A space before closing punctuation is dropped: snapshots join text nodes with one ("cart !").
+const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").replace(/ ([!?.,;:)])/g, "$1").trim();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
