@@ -21,7 +21,7 @@ const links = (snapshot: string): [string, string][] =>
   [...snapshot.matchAll(/- link\b[^\n]*\[ref=(\w+)\][^\n]*\n\s*- \/url: "?(.*?)"?$/gm)].map(m => [m[1], m[2]]);
 
 /** Adds `[current]` to the given refs' lines (Playwright's snapshot drops aria-current). */
-export const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
+const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
   refs.size ? snapshot.replace(/ \[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? ` [current]${m}` : m)) : snapshot;
 
 export class Browser {
@@ -184,9 +184,13 @@ export class Browser {
   async waitForChange(since: string, timeoutMs = WAIT_CAP_MS): Promise<boolean> {
     const deadline = Date.now() + timeoutMs;
     let idleBefore = false;
+    let seen: number | undefined; // __lastMutation at the last snapshot: no DOM mutation since means no new snapshot
     while (Date.now() < deadline) {
       await this.page.waitForTimeout(100);
-      if ((await this.observe()).text !== since) {
+      const stamp = await this.page.evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation).catch(() => undefined);
+      const moved = stamp === undefined || stamp !== seen;
+      seen = stamp;
+      if (moved && (await this.observe()).text !== since) {
         await this.settle();
         return true;
       }

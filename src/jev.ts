@@ -15,7 +15,7 @@ export interface TurnAnswer {
 }
 
 /** Non-element moves offered next to the element refs. */
-export const PAGE_ACTIONS = {
+const PAGE_ACTIONS = {
   scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
   wait: "Wait: `ui` is still loading the needed element.",
 } as const;
@@ -68,7 +68,7 @@ export interface Decider {
 const refs = (els: Element[]): Record<string, string> => Object.fromEntries(els.map(e => [e.ref, e.line]));
 
 /** Jev API limit: options per choice question. */
-export const MAX_CHOICES = 255;
+const MAX_CHOICES = 255;
 const FINALISTS = 3; // kept from each batch
 
 /**

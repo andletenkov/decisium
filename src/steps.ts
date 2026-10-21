@@ -57,9 +57,13 @@ Before(async function (this: Scenario, { pickle }) {
   if (broken) return "skipped";
   const url = env.DESCISIUM_URL || urlFromTags(pickle.tags);
   if (!url) throw infra(new Error(`No start URL for "${pickle.name}": pass --url or add an @url:<url> tag.`));
-  if (!deciders.has(pickle.uri)) {
-    const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record);
-    deciders.set(pickle.uri, { cassette, decider: run.decider(new JevDecider(cassette)) });
+  try {
+    if (!deciders.has(pickle.uri)) { // a corrupt cassette is a setup error, not a failed scenario
+      const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record);
+      deciders.set(pickle.uri, { cassette, decider: run.decider(new JevDecider(cassette)) });
+    }
+  } catch (err) {
+    throw infra(err);
   }
   this.decider = deciders.get(pickle.uri)!.decider;
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);

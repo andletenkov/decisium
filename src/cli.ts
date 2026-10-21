@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { loadConfiguration, runCucumber } from "@cucumber/cucumber/api";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { devNull, tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RECORD_MODES, type RecordMode } from "./cassette.ts";
@@ -48,6 +48,8 @@ async function main(): Promise<number> {
     if (cmd === "step" && arg) {
       file = join(mkdtempSync(join(tmpdir(), "descisium-")), "step.feature");
       writeFileSync(file, stepFeature(arg));
+      const dir = dirname(file);
+      process.on("exit", () => rmSync(dir, { recursive: true, force: true })); // every exit path, early returns included
     } else if (cmd === "run" && arg) {
       if (!existsSync(arg)) { console.error(`File not found: ${arg}`); return 2; }
       file = arg;

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
 /** once: record if no cassette yet, else replay only. none: replay only. new: replay, record misses. all: always live. */
 export type RecordMode = "once" | "none" | "new" | "all";
@@ -30,9 +30,14 @@ export class Cassette {
   constructor(path: string, model: string, mode: RecordMode) {
     this.path = path;
     this.model = model;
-    const old: File | undefined = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : undefined;
+    let old: File | undefined;
+    try {
+      old = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : undefined;
+    } catch (err) {
+      throw new Error(`Cannot read cassette ${path}: ${(err as Error).message}. Delete it to record again.`);
+    }
     const keep = old && old.model === model && mode !== "all"; // other model version: discard whole cassette
-    this.#file = { model, entries: keep ? old.entries : {} };
+    this.#file = { model, entries: keep && old ? old.entries : {} };
     if (old && !keep) this.#dirty = true;
     this.#replayOnly = mode === "none" || (mode === "once" && !!old);
     this.#live = mode === "all";
@@ -53,7 +58,9 @@ export class Cassette {
   }
 
   save() {
-    if (this.#dirty) writeFileSync(this.path, JSON.stringify(this.#file, null, 2) + "\n");
+    if (!this.#dirty) return;
+    writeFileSync(this.path + ".tmp", JSON.stringify(this.#file, null, 2) + "\n");
+    renameSync(this.path + ".tmp", this.path); // atomic: a crash mid-save never leaves half a cassette
   }
 
   /** Why no recording fits: the Step is new, or how the page differs from the closest recording of the same Step. */

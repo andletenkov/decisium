@@ -21,7 +21,7 @@ export async function qasePreflight(scenarios: { name: string; tags: string[] }[
   const cases = [...new Map(scenarios.flatMap(s => qaseIds(s.tags).map(id => [id, s.name] as const))).entries()];
   const check = async (id: number) => {
     try {
-      return (await fetch(`${base}/v1/case/${project}/${id}`, { headers: { Token: token } })).status;
+      return (await fetch(`${base}/v1/case/${project}/${id}`, { headers: { Token: token }, signal: AbortSignal.timeout(10_000) })).status;
     } catch (err) {
       return `Cannot reach Qase at ${base}: ${(err as Error).message}`;
     }
