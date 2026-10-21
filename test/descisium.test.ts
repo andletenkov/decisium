@@ -537,3 +537,12 @@ test("subject: when Jev is unsure which element a check is about, every plausibl
   assert.equal(await split("state", { e5: 0.6, e6: 0.35 }, "enabled"), "AMBIGUOUS");
   assert.equal(await split("state", { e5: 0.99, e6: 0.01 }), "PASSED");
 });
+
+test("run directory: runs started in the same millisecond get their own directory", async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { RunDir } = await import("../src/trace.ts");
+  const root = mkdtempSync(`${tmpdir()}/runs-`);
+  const paths = Array.from({ length: 5 }, () => new RunDir(root).path);
+  assert.equal(new Set(paths).size, 5, paths.join(", "));
+});

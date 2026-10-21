@@ -3,3 +3,4 @@ runs/
 .env
 build/
 logs/
+examples/real/*.cassette.json

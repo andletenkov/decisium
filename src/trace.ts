@@ -13,8 +13,13 @@ export class RunDir {
   #shot = 0;
 
   constructor(root = "runs") {
-    this.path = join(root, new Date().toISOString().replace(/[:.]/g, "-"));
-    mkdirSync(this.path, { recursive: true });
+    mkdirSync(root, { recursive: true });
+    const base = join(root, new Date().toISOString().replace(/[:.]/g, "-"));
+    // Parallel runs can start in the same millisecond: mkdir without `recursive` fails if the directory exists.
+    for (let i = 1; ; i++) {
+      const path = i === 1 ? base : `${base}-${i}`;
+      try { mkdirSync(path); this.path = path; return; } catch (err) { if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err; }
+    }
   }
 
   /** Full verbose log of the run (what -v prints). */
