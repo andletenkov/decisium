@@ -32,9 +32,16 @@ const DONE_AFTER_ACTION = 0.5;
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** Whole-word, case/space-insensitive containment: "1 week" must not match "11 weeks". */
-export const containsValue = (actual: string, expected: string) =>
-  new RegExp(`(?<![\\p{L}\\p{N}])${escape(norm(expected))}(?![\\p{L}\\p{N}])`, "u").test(norm(actual));
+/**
+ * Whole-word, case/space-insensitive containment: "1 week" must not match "11 weeks". Only a neighbour of the same kind
+ * (letter next to letter, digit next to digit) joins words: snapshots drop line breaks ("1815<br>London" -> "1815London").
+ */
+export function containsValue(actual: string, expected: string): boolean {
+  const e = norm(expected);
+  const kind = (c = "") => /\p{L}/u.test(c) ? "\\p{L}" : /\p{N}/u.test(c) ? "\\p{N}" : undefined;
+  const [before, after] = [kind(e[0]), kind(e.at(-1))];
+  return new RegExp(`${before ? `(?<!${before})` : ""}${escape(e)}${after ? `(?!${after})` : ""}`, "u").test(norm(actual));
+}
 
 const STATE_FLAG: Record<keyof typeof STATES, [flag: string, on: boolean]> = {
   disabled: ["disabled", true], enabled: ["disabled", false],
@@ -193,9 +200,15 @@ function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[]
   const actual = assertableText(el);
   if (actual === undefined) return { outcome: "UNVERIFIABLE", reason: `${el.line} has no text to compare (only a label)`, inapplicable: true };
   log(`  Compare: "${values[0]}" in "${actual}"`);
-  return containsValue(actual, values[0])
-    ? { outcome: "PASSED" }
-    : { outcome: "ASSERTION_FAILED", reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${actual}"` };
+  if (containsValue(actual, values[0])) return { outcome: "PASSED" };
+  // The subject shows part of the quoted text (prose split across a link and bare text, "<b>2</b> items left"):
+  // the rest can only be in the container holding it, so read that one, not anywhere on the page.
+  const host = el.parent;
+  if (actual && host && containsValue(values[0], actual)) {
+    log(`  Compare: "${values[0]}" in "${host.text.trim()}" (${host.line}, holding ${el.line})`);
+    if (containsValue(host.text, values[0])) return { outcome: "PASSED" };
+  }
+  return { outcome: "ASSERTION_FAILED", reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${actual}"` };
 }
 
 const finish = (log: typeof console.log) => (outcome: StepOutcome, reason?: string): StepResult => {

@@ -13,6 +13,7 @@ export interface Element {
   verb: Verb;
   options: string[]; // native <select> options (they carry no refs)
   text: string; // own name/value plus every descendant's, for scoped presence checks
+  parent?: Element; // nearest ref'd ancestor
 }
 
 export interface Observation {
@@ -95,6 +96,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       verb: TYPEABLE.has(role) || editableRefs.has(ref) ? "TYPE" : "CLICK",
       options: [],
       text: words,
+      parent: host,
     };
     open.push({ el, indent: indent.length });
     if (role === "generic" && !name && !value) wrappers.set(el, at);

@@ -120,6 +120,9 @@ test("containsValue matches whole words only", () => {
   assert.ok(containsValue("Status:  Scheduled", "scheduled"));
   assert.ok(!containsValue("11 weeks", "1 week"));
   assert.ok(!containsValue("Unscheduled", "Scheduled"));
+  // A line break the snapshot lost ("1815<br>London") still separates a number from a word.
+  assert.ok(containsValue("Augusta Ada Byron 10 December 1815London, England", "10 December 1815"));
+  assert.ok(!containsValue("v1815", "815") && !containsValue("Drafts2", "Draft"));
 });
 
 test("gate needs a confident top answer with margin", () => {
@@ -213,6 +216,26 @@ test("runAssertion: value checks compare the subject's text", async () => {
   } finally {
     await b.close();
   }
+});
+
+test("runAssertion: a subject showing part of the quoted text is read with the container holding the rest", async () => {
+  // Prose split across elements: "britische" is bare text, "Mathematikerin" a link (de.wikipedia); todomvc "<strong>2</strong> items left".
+  const snap = `- main [ref=e1]:
+  - paragraph [ref=e2]:
+    - text: war eine britische
+    - link "Mathematikerin" [ref=e3]
+    - text: und Gesellschaftsdame.
+  - paragraph [ref=e4]: eine Mathematikerin aus England
+  - generic [ref=e5]:
+    - strong [ref=e6]: "2"
+    - text: items left`;
+  const rt: Runtime = { observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
+  const run = (s: string, ref: string) => runAssertion(s, rt, assessing("value", () => ({ subject: sure(ref) })), () => {}).then(r => r.outcome);
+  assert.equal(await run(`I should see "britische Mathematikerin"`, "e3"), "PASSED");
+  assert.equal(await run(`the counter should show "2 items left"`, "e6"), "PASSED");
+  // The container is the subject's own: another paragraph with the words does not count, nor does a wrong value.
+  assert.equal(await run(`I should see "englische Mathematikerin"`, "e3"), "ASSERTION_FAILED");
+  assert.equal(await run(`the counter should show "3 items left"`, "e6"), "ASSERTION_FAILED");
 });
 
 // Live check of the claim the design rests on: Jev picks the subject by meaning, not by matching text.
