@@ -24,6 +24,19 @@ const links = (snapshot: string): [string, string][] =>
 const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
   refs.size ? snapshot.replace(/ \[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? ` [current]${m}` : m)) : snapshot;
 
+/**
+ * Adds `[collapsed; hidden entries: "A", "B"]` to collapsed controls' lines: the snapshot drops hidden content, so a
+ * Step naming an entry inside a collapsed ToC section or accordion had nothing to pick (task 0024). Links only: hidden
+ * headings and buttons were mostly error templates of menus ("Uh oh!", "Please reload this page" on GitHub). Only `ui` gets it;
+ * names, values and pageText do not, so a check cannot pass on text that is not shown.
+ */
+const markCollapsed = (snapshot: string, hidden: ReadonlyMap<string, string[]>) =>
+  hidden.size ? snapshot.split("\n").map(line => {
+    const m = /^\s*- \w+ "((?:[^"\\]|\\.)*)"[^\n]*?( \[ref=\w+\])/.exec(line);
+    const entries = m && !/\[expanded\]/.test(line) ? hidden.get(m[1].replace(/\\(.)/g, "$1")) : undefined;
+    return entries ? line.replace(m![2], ` [collapsed; hidden entries: ${entries.map(e => `"${e}"`).join(", ")}]${m![2]}`) : line;
+  }).join("\n") : snapshot;
+
 export class Browser {
   private browser: PwBrowser;
   private page: Page;
@@ -136,7 +149,31 @@ export class Browser {
       if (kind === "secret") secret.add(ref);
       else if (kind === "editable" && role === "combobox") editable.add(ref);
     }
-    return (this.last = parseSnapshot(markCurrent(snapshot, await this.currentLinks(snapshot)), secret, editable));
+    const marked = markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed());
+    return (this.last = parseSnapshot(marked, secret, editable));
+  }
+
+  /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
+  private async collapsed(): Promise<Map<string, string[]>> {
+    const found = await this.page.evaluate(() => {
+      // Accessible-name approximation: aria-label, else text without aria-hidden parts (Wikipedia's "1.1" numbers).
+      const text = (n: Node): string => n.nodeType === Node.TEXT_NODE ? n.textContent ?? ""
+        : (n as Element).getAttribute?.("aria-hidden") === "true" ? "" : [...n.childNodes].map(text).join(" ");
+      const name = (e: Element) => (e.getAttribute("aria-label") || text(e)).replace(/\s+/g, " ").trim();
+      const controls = [...document.querySelectorAll('[aria-expanded="false"][aria-controls], details:not([open]) > summary')];
+      return controls.map(c => {
+        const scope = c.tagName === "SUMMARY" ? [c.parentElement!]
+          : c.getAttribute("aria-controls")!.split(/\s+/).map(id => document.getElementById(id)).filter(e => e !== null);
+        const entries = [...new Set(scope.flatMap(s => [...s.querySelectorAll("a[href]")])
+          .filter(e => !e.checkVisibility()).map(name).filter(Boolean))];
+        return [name(c), entries.slice(0, 10).map(e => (e.length > 60 ? e.slice(0, 60) + "…" : e).replace(/["\]]/g, "'"))] as const;
+      }).filter(([n, entries]) => n && entries.length);
+    }).catch(() => [] as (readonly [string, string[]])[]); // mid-navigation: no hints this time
+    // shortcut: matched by name, so two collapsed controls with the same name and different entries get the first
+    // one's; resolve by ref (one locator call per candidate) if a page shows that.
+    const out = new Map<string, string[]>();
+    for (const [n, entries] of found) if (!out.has(n)) out.set(n, entries);
+    return out;
   }
 
   /**

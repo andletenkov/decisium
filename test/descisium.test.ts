@@ -95,6 +95,25 @@ test("Browser: password fields are detected from the DOM; TYPE checks its effect
   }
 });
 
+test("Browser: a collapsed control lists the hidden entries it holds; checks cannot read them", async () => {
+  const b = await Browser.open(`data:text/html,<ul><li><a href=b>Biography</a>
+    <button aria-expanded=false aria-controls=sub>Toggle Biography subsection</button>
+    <ul id=sub hidden><li><a href=c><span aria-hidden=true>1.1</span> Childhood</a><li><a href=d>Death</a></ul></li>
+    <li><button aria-expanded=true aria-controls=open>Toggle Work</button><ul id=open><li><a href=w>Notes</a></ul></li></ul>
+    <details><summary>Assets</summary><a href=/zip>Source code (zip)</a></details>`);
+  try {
+    const obs = await b.observe();
+    const line = (name: string) => obs.readable.find(e => e.name === name)!.line;
+    assert.match(line("Toggle Biography subsection"), /\[collapsed; hidden entries: "Childhood", "Death"\]/);
+    assert.match(line("Assets"), /\[collapsed; hidden entries: "Source code \(zip\)"\]/);
+    assert.doesNotMatch(line("Toggle Work"), /collapsed/); // open: its entries are in the snapshot already
+    assert.match(obs.text, /hidden entries: "Childhood"/); // Jev reads it
+    assert.ok(!obs.pageText.includes("Childhood")); // a presence check does not: it is not shown
+  } finally {
+    await b.close();
+  }
+});
+
 test("Browser: SELECT and TYPE check their effect on the control the app re-rendered in place of the old one", async () => {
   // Like a React list re-render: on change the control is replaced by a new element with the new value.
   const b = await Browser.open(`data:text/html,<div id=w></div><script>
