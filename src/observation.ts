@@ -8,7 +8,7 @@ export interface Element {
   name: string;
   value: string;
   state: string; // e.g. "[checked] [expanded]"
-  secret: boolean; // password field: value never leaves the runtime
+  secret: boolean; // password field: the value the page shows is masked (not the value quoted in the Step)
   line: string; // compact one-line description shown to Jev
   verb: Verb;
   options: string[]; // native <select> options (they carry no refs)

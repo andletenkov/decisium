@@ -93,6 +93,7 @@ export async function narrow(candidates: Record<string, string>, fixed: Record<s
   return { ...Object.fromEntries(left), ...fixed };
 }
 
+/** Every question sends the Step text as-is, so a value quoted in a Step (a password included) reaches the API. */
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
   #cassette?: Cassette;
