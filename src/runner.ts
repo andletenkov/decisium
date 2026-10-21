@@ -1,5 +1,5 @@
 import type { Action } from "./browser.ts";
-import { AREA_MISSING, AREA_PAGE, gate, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
+import { AREA_MISSING, AREA_PAGE, gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
 import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -228,7 +228,7 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     const t = await decider.turn(step, obs, recent, attempt);
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
-    if (!gate(t.target)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
+    if (!gate(t.target, GATE_TARGET_TOP, GATE_TARGET_MARGIN)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
     if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
     let action: Action;

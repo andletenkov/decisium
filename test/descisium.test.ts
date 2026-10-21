@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { Browser } from "../src/browser.ts";
-import { gate, JevDecider, type Assessment, type Decider, type Pick } from "../src/jev.ts";
+import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, JevDecider, type Assessment, type Decider, type Pick } from "../src/jev.ts";
 import { MASK, parseSnapshot, stepValues, type Observation } from "../src/observation.ts";
 import { containsValue, runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
@@ -111,6 +111,9 @@ test("gate needs a confident top answer with margin", () => {
   assert.ok(gate(p({ a: 0.9, b: 0.1 })));
   assert.ok(!gate(p({ a: 0.7, b: 0.3 })));
   assert.ok(!gate(p({ a: 0.5, b: 0.45 })));
+  // Which element to act on is gated lower than a check (task 0002), but a coin flip is still refused.
+  assert.ok(gate(p({ a: 0.64, b: 0.22 }), GATE_TARGET_TOP, GATE_TARGET_MARGIN));
+  assert.ok(!gate(p({ a: 0.47, b: 0.46 }), GATE_TARGET_TOP, GATE_TARGET_MARGIN));
 });
 
 test("parseFeature: Then/And are assertions, try/attempt are attempts, Background and Outline rows expand", () => {
@@ -305,6 +308,10 @@ test("runStep refuses low-confidence targets and stops when actions change nothi
   try {
     const unsure: Decider = { ...oracle, turn: async () => ({ done: 0, target: { choice: "x", probabilities: { x: 0.5, y: 0.45 } } }) };
     assert.equal((await runStep("anything", b, unsure, () => {})).outcome, "AMBIGUOUS");
+
+    // Above the action gate but below the check gate: Jev's element is used (it is gone, so the Step says so).
+    const lowish: Decider = { ...oracle, turn: async () => ({ done: 0, target: { choice: "gone", probabilities: { gone: 0.64, y: 0.22 } } }) };
+    assert.equal((await runStep("anything", b, lowish, () => {})).outcome, "ELEMENT_NOT_FOUND");
 
     const draft = await ref("Save draft"); // clicking it changes nothing on the page
     const noop: Decider = { ...oracle, turn: async () => ({ done: 0, target: sure(draft) }) };

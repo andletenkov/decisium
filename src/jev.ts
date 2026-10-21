@@ -185,6 +185,13 @@ export class JevDecider implements Decider {
 
 /** Confidence gate: act only on a clear, confident top answer. */
 export const GATE_TOP = 0.8;
+/**
+ * Which element to act on is gated lower than a check (task 0002): a wrong action fails a later Step loudly,
+ * while a wrong check can pass falsely. Fitted on 26 labelled AMBIGUOUS Turns from the real-site corpus, where
+ * every top answer naming an element was the right one down to 0.47; below 0.1 margin the two answers are a coin flip.
+ */
+export const GATE_TARGET_TOP = 0.5;
+export const GATE_TARGET_MARGIN = 0.1;
 export function gate(pick: Pick, minTop = GATE_TOP, minMargin = 0.3): boolean {
   const [top = 0, second = 0] = Object.values(pick.probabilities).sort((a, b) => b - a);
   return top >= minTop && top - second >= minMargin;
