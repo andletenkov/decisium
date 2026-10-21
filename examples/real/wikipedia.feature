@@ -8,8 +8,8 @@ Feature: Wikipedia (real content, search, navigation)
 
   Scenario: Jump to a section from the contents
     When I open the "Ada Lovelace" article through the Wikipedia search
-    And I jump to the "Early life" section from the contents
-    Then the "Early life" heading should be shown
+    And I jump to the "Childhood" section from the contents
+    Then the "Childhood" heading should be shown
 
   Scenario: Read the article in another language
     When I open the "Ada Lovelace" article through the Wikipedia search
