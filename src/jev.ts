@@ -160,7 +160,7 @@ export class JevDecider implements Decider {
       jevUsage.calls++;
       jevUsage.inputTokens += res.usage?.input_tokens ?? 0;
       jevUsage.outputTokens += res.usage?.output_tokens ?? 0;
-        return { model: res.model, answers: res.answers as Record<string, any> };
+      return { model: res.model, answers: res.answers as Record<string, any> };
     };
     return this.#cassette ? this.#cassette.call(request, live) : live();
   }

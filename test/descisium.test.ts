@@ -449,7 +449,7 @@ test("cassette replays identical requests, fails UI_CHANGED with the difference,
   await assert.rejects(other.call(req("a\nb"), live), UiChanged);
 });
 
-test("cassette: scenarios of one feature on different workers share it; the run start decides what is old", async () => {
+test("cassette: scenarios of one feature on different workers share it; the run id decides what is old", async () => {
   const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { Cassette } = await import("../src/cassette.ts");
@@ -459,7 +459,7 @@ test("cassette: scenarios of one feature on different workers share it; the run 
   const keys = () => Object.keys(JSON.parse(readFileSync(path, "utf8")).entries).length;
 
   // once, no cassette at run start: a second worker that finds the first one's file still records.
-  let since = Date.now() - 1;
+  let since = "run-1";
   const w1 = new Cassette(path, "m1", "once", since);
   await w1.call(req("a"), live); w1.save();
   const w2 = new Cassette(path, "m1", "once", since);
@@ -468,8 +468,7 @@ test("cassette: scenarios of one feature on different workers share it; the run 
 
   // all: entries from before the run are dropped, entries from this run's other workers kept.
   writeFileSync(path, JSON.stringify({ model: "m1", entries: { stale: { request: 1, response: 1 } } }));
-  await new Promise(r => setTimeout(r, 5));
-  since = Date.now();
+  since = "run-2";
   const a1 = new Cassette(path, "m1", "all", since);
   await a1.call(req("a"), live); a1.save();
   const a2 = new Cassette(path, "m1", "all", since);
@@ -563,7 +562,7 @@ test("Qase preflight (testops mode): missing token or unknown case id is one lin
   const seen: string[] = [];
   const server = createServer((req, res) => {
     seen.push(`${req.url} ${req.headers.token}`);
-    res.statusCode = req.headers.token !== "good" ? 401 : req.url === "/v1/case/DEMO/1" ? 200 : 404;
+    res.statusCode = req.headers.token !== "good" ? 401 : ["/v1/case/DEMO/1", "/v1/project/DEMO"].includes(req.url!) ? 200 : 404;
     res.end("{}");
   });
   await new Promise<void>(r => server.listen(0, r));
@@ -577,6 +576,8 @@ test("Qase preflight (testops mode): missing token or unknown case id is one lin
     assert.equal(await qasePreflight(scenarios, env("good")), `Qase case DEMO-99 not found (scenario "b", @QaseID=99).`);
     assert.equal(await qasePreflight(scenarios.slice(0, 1), env("good")), undefined);
     assert.ok(seen.includes("/v1/case/DEMO/1 good"));
+    assert.equal(await qasePreflight([], env("good")), undefined); // no case ids: the project is still checked
+    assert.equal(await qasePreflight([], { ...env("good"), QASE_TESTOPS_PROJECT: "NOPE" }), "Qase project NOPE not found.");
   } finally {
     server.close();
   }

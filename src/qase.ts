@@ -19,13 +19,19 @@ export async function qasePreflight(scenarios: { name: string; tags: string[] }[
   // Same host rules as qase-javascript-commons: a full URL as is, "qase.io" -> api.qase.io, other hosts -> api-<host>.
   const base = /^https?:\/\//.test(host) ? host.replace(/\/+$/, "") : host === "qase.io" ? "https://api.qase.io" : `https://api-${host}`;
   const cases = [...new Map(scenarios.flatMap(s => qaseIds(s.tags).map(id => [id, s.name] as const))).entries()];
-  const check = async (id: number) => {
+  const check = async (id?: number) => {
     try {
-      return (await fetch(`${base}/v1/case/${project}/${id}`, { headers: { Token: token }, signal: AbortSignal.timeout(10_000) })).status;
+      return (await fetch(`${base}/v1/${id === undefined ? "project" : "case"}/${project}${id === undefined ? "" : `/${id}`}`, { headers: { Token: token }, signal: AbortSignal.timeout(10_000) })).status;
     } catch (err) {
       return `Cannot reach Qase at ${base}: ${(err as Error).message}`;
     }
   };
+  // The project itself first: reachable and the token accepted, even with no case ids to check.
+  const reach = await check();
+  if (typeof reach === "string") return reach;
+  if (reach === 401 || reach === 403) return `Qase rejected QASE_TESTOPS_API_TOKEN (${reach}) for project ${project}.`;
+  if (reach === 404) return `Qase project ${project} not found.`;
+  if (reach !== 200) return `Qase API error ${reach} checking project ${project}.`;
   const statuses = await Promise.all(cases.map(([id]) => check(id)));
   for (const [i, status] of statuses.entries()) {
     const [id, name] = cases[i];

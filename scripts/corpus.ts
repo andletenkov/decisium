@@ -22,7 +22,7 @@ function runFeature(file: string): Promise<Result> {
       const run = /Run directory: (\S+)/.exec(out)?.[1];
       const events = run ? readFileSync(join(run, "trace.jsonl"), "utf8").trim().split("\n").map(l => JSON.parse(l)) : [];
       const scenarios = events.filter(e => e.type === "result").map(e => ({ name: e.scenario, passed: e.passed }));
-      const steps = events.filter(e => e.type === "step").map(({ scenario, kind, step, outcome, reason, seconds, jevCalls, inputTokens, outputTokens }) => ({ scenario, kind, step, outcome, reason, seconds, jevCalls, inputTokens, outputTokens }));
+      const steps = events.filter(e => e.type === "step").map(({ t, type, ...step }) => step as Step);
       // Infrastructure errors (exit 2) leave no step event: keep the console's last lines.
       const error = exit === 2 ? out.trim().split("\n").filter(l => /Error|Cannot|not set/.test(l)).slice(0, 2).join(" / ") : undefined;
       console.log(`${file}: exit ${exit}, ${scenarios.filter(s => s.passed).length}/${scenarios.length} scenarios`);

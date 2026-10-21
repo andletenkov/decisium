@@ -26,15 +26,15 @@ export async function doctor(files: string[]): Promise<number> {
   else await attempt(`TYPESAFE_API_KEY accepted by Jev (${MODEL})`, () => new TypeSafeClient({ defaultModel: MODEL })
     .systemOne({ state: { word: "yes" }, questions: { q: noul("Is `word` yes?") } }));
 
-  let scenarios: Scenario[] = [];
+  const scenarios: Scenario[] = [];
   for (const f of files) {
     try { scenarios.push(...parseFeature(readFileSync(f, "utf8"), f)); line(true, `${f} parses`); }
     catch (err) { line(false, `${f}: ${(err as Error).message}`); }
   }
-  if (qaseOn()) {
+  if (process.env.QASE_MODE === "testops") {
     const error = await qasePreflight(scenarios);
-    line(!error, error ?? "Qase settings and case ids");
-  }
+    line(!error, error ?? `Qase reachable, project and case ids found`);
+  } else if (qaseOn()) line(true, `Qase mode ${process.env.QASE_MODE ?? "from qase.config.json"}: nothing to reach (only testops calls Qase)`);
   for (const url of new Set(scenarios.map(s => s.url).filter(u => u !== undefined))) {
     await attempt(`opens ${url}`, async () => (await Browser.open(toUrl(url))).close());
   }

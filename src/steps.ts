@@ -11,7 +11,7 @@ import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
 import { quoted } from "./observation.ts";
 import { outcomeMessage } from "./report.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
-import { RunDir } from "./trace.ts";
+import { INFRA_MARKER, RunDir } from "./trace.ts";
 
 const env = process.env;
 const opt = (name: string) => env[`DESCISIUM_${name}`] === "1";
@@ -24,10 +24,8 @@ setDefaultTimeout(10 * 60_000);
 // Parallel workers (`--parallel`) are separate processes: the CLI creates the run directory (DESCISIUM_RUN_DIR) and an
 // infrastructure error is signalled through a marker file in it, read by the CLI and by the other workers.
 let run: RunDir;
-const since = Number(env.DESCISIUM_RUN_START) || Date.now(); // run start, for cassettes shared across workers
-const worker = !!env.DESCISIUM_RUN_DIR; // the CLI prints the run directory once, not each worker
-const INFRA = "infrastructure-error";
-const broken = () => !!run && existsSync(join(run.path, INFRA)); // after one, the remaining scenarios are skipped
+const cliOwnsRun = !!env.DESCISIUM_RUN_DIR; // the CLI prints the run directory once, not each worker
+const broken = () => !!run && existsSync(join(run.path, INFRA_MARKER)); // after one, the remaining scenarios are skipped
 const deciders = new Map<string, { cassette?: Cassette; decider: Decider }>(); // per feature file
 
 class Scenario extends World {
@@ -48,7 +46,7 @@ BeforeAll(function () {
   if (!RECORD_MODES.includes(record)) throw new Error(`DESCISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP"))) throw new Error("TYPESAFE_API_KEY is not set.");
   run = new RunDir("runs", env.DESCISIUM_RUN_DIR || undefined);
-  if (!worker) console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
+  if (!cliOwnsRun) console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
 
 Before(async function (this: Scenario, { pickle }) {
@@ -57,7 +55,7 @@ Before(async function (this: Scenario, { pickle }) {
   if (!url) throw infra(new Error(`No start URL for "${pickle.name}": pass --url or add an @url:<url> tag.`));
   try {
     if (!deciders.has(pickle.uri)) { // a corrupt cassette is a setup error, not a failed scenario
-      const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record, since);
+      const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record, run.path);
       deciders.set(pickle.uri, { cassette, decider: run.decider(new JevDecider(cassette)) });
     }
   } catch (err) {
@@ -113,24 +111,28 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
 });
 
 After(async function (this: Scenario, { result }) {
+  run.flush(); // the scenario's whole log in one write
   if (!this.browser) return;
   const ok = result?.status === Status.PASSED;
   if (!ok) run.failure(this.browser.consoleErrors);
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
   run.event("result", { passed: ok });
   for (const { cassette } of deciders.values()) cassette?.save(); // per scenario, so a crash keeps what was recorded
+  run.flush();
 });
 
 AfterAll(function () {
   if (!run) return;
-  if (!worker) console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
+  run.flush(); // a scenario skipped or broken before its browser opened
+  if (!cliOwnsRun) run.done();
+  if (!cliOwnsRun) console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
   for (const { cassette: c } of deciders.values()) if (c) console.log(`Cassette ${c.path}: ${c.hits} replayed, ${c.recorded} recorded live`);
 });
 
 /** Infrastructure error (app not running, bad API key, network): one clear line, `--debug` for the stack. Exit code 2. */
 function infra(err: unknown): Error {
   process.exitCode = 2;
-  if (run) writeFileSync(join(run.path, INFRA), String((err as Error)?.message ?? err)); // read by `descisium run`
+  if (run) writeFileSync(join(run.path, INFRA_MARKER), String((err as Error)?.message ?? err)); // read by `descisium run`
   if (opt("DEBUG")) return err as Error;
   const e = err as Error & { status?: number };
   const out = new Error(`${e.message.split("\n")[0]}${e.status === 401 ? " (check TYPESAFE_API_KEY in .env)" : ""}\nRerun with --debug for details.`);

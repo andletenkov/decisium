@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
 /** once: record if no cassette yet, else replay only. none: replay only. new: replay, record misses. all: always live. */
 export type RecordMode = "once" | "none" | "new" | "all";
 export const RECORD_MODES: RecordMode[] = ["once", "none", "new", "all"];
 
 interface Entry { request: unknown; response: unknown }
-interface File { model: string; entries: Record<string, Entry> }
+interface File { model: string; run?: string; entries: Record<string, Entry> } // run: id of the run that last saved it
 
 /** No recorded answer for this exact request in replay-only mode: the UI (or the Step) differs from the recording. */
 export class UiChanged extends Error {
@@ -28,20 +28,20 @@ export class Cassette {
   model: string;
 
   #mode: RecordMode;
-  #since: number;
+  #run?: string;
 
   /**
-   * `since`: when the run started. Parallel workers each open the feature's cassette; a file written after `since` is
-   * this run's (another worker's scenario), so it is not "existing" for `once`/`new` and not stale for `all`.
+   * `run`: id of this run. Parallel workers each open the feature's cassette; a file last saved by this run holds
+   * another worker's scenarios, so it is not "existing" for `once`/`new` and not stale for `all`.
    */
-  constructor(path: string, model: string, mode: RecordMode, since = Infinity) {
+  constructor(path: string, model: string, mode: RecordMode, run?: string) {
     this.path = path;
     this.model = model;
     this.#mode = mode;
-    this.#since = since;
+    this.#run = run;
     const { file: old, thisRun } = this.#read();
     const existed = !!old && !thisRun;
-    this.#file = { model, entries: this.#keep(old, thisRun) ?? {} };
+    this.#file = { model, run, entries: this.#keep(old, thisRun) ?? {} };
     if (old && !this.#keep(old, thisRun)) this.#dirty = true;
     this.#replayOnly = mode === "none" || (mode === "once" && existed);
     this.#live = mode === "all";
@@ -51,7 +51,8 @@ export class Cassette {
   #read(): { file?: File; thisRun: boolean } {
     try {
       if (!existsSync(this.path)) return { thisRun: false };
-      return { file: JSON.parse(readFileSync(this.path, "utf8")), thisRun: statSync(this.path).mtimeMs >= this.#since };
+      const file: File = JSON.parse(readFileSync(this.path, "utf8"));
+      return { file, thisRun: this.#run !== undefined && file.run === this.#run };
     } catch (err) {
       throw new Error(`Cannot read cassette ${this.path}: ${(err as Error).message}. Delete it to record again.`);
     }

@@ -9,7 +9,7 @@ import { RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { qaseOn, qasePreflight } from "./qase.ts";
 import { doctor } from "./doctor.ts";
-import { RunDir } from "./trace.ts";
+import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 
 const USAGE = `Usage:
@@ -84,7 +84,7 @@ async function main(): Promise<number> {
   if (reporters.some(r => !r)) { console.error(`--reporter must be junit or json, optionally :path\n\n${USAGE}`); return 2; }
   // Opt-in: features sharing one stateful app (campaign-manager) break each other's state when run side by side.
   const parallel = values.parallel === "auto" ? Math.min(availableParallelism(), values.record === "none" ? Infinity : 4) : Number(values.parallel ?? 0);
-  if (!Number.isInteger(parallel) || parallel < 0) { console.error(`--parallel must be a whole number\n\n${USAGE}`); return 2; }
+  if (!Number.isInteger(parallel) || parallel < 0) { console.error(`--parallel must be a whole number or auto\n\n${USAGE}`); return 2; }
   const qaseError = await qasePreflight(scenarios);
   if (qaseError) { console.error(qaseError); return 2; }
   const run = new RunDir(); // shared by every worker
@@ -94,21 +94,23 @@ async function main(): Promise<number> {
     DESCISIUM_URL: values.url ?? "", DESCISIUM_RECORD: values.record, DESCISIUM_STEP: flag(cmd === "step"),
     DESCISIUM_HEADED: flag(values.headed), DESCISIUM_JUDGED: flag(values.judged),
     DESCISIUM_VERBOSE: flag(values.verbose), DESCISIUM_DEBUG: flag(values.debug),
-    DESCISIUM_RUN_DIR: run.path, DESCISIUM_RUN_START: String(Date.now() - 1000), // a second of slack for mtime rounding
+    DESCISIUM_RUN_DIR: run.path,
   });
   const reports = reporters.map(r => [r![1], r![2] ?? join(run.path, r![1] === "junit" ? "junit.xml" : "report.json")] as [string, string]);
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
   const { runConfiguration } = await loadConfiguration({ file: false, provided: {
     paths: files, import: [here("./steps.ts")],
     // Workers only pay off across features (a feature's scenarios share its cassette and run in sequence).
-    parallel: files.length > 1 ? parallel : 0, // Only one formatter may write to stdout; the Qase reporter writes nothing there itself.
+    parallel: files.length > 1 ? parallel : 0,
+    // Only one formatter may write to stdout; the Qase reporter writes nothing there itself.
     format: [here("./formatter.ts"), ...reports, ...(qaseOn() ? [[here("cucumberjs-qase-reporter"), devNull] as [string, string]] : [])],
   } });
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);
+  run.done();
   console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
   // steps.ts marks an infrastructure error in the run directory (it may have happened in a worker).
-  return process.exitCode === 2 || existsSync(join(run.path, "infrastructure-error")) ? 2 : success ? 0 : 1;
+  return process.exitCode === 2 || existsSync(join(run.path, INFRA_MARKER)) ? 2 : success ? 0 : 1;
 }
 
 // No process.exit on success paths: the Qase reporter finishes uploading after cucumber returns.

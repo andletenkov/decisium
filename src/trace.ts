@@ -1,9 +1,12 @@
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Action, Browser } from "./browser.ts";
 import type { Decider } from "./jev.ts";
 import type { Observation } from "./observation.ts";
 import type { Runtime } from "./runner.ts";
+
+/** File in the run directory marking an infrastructure error (exit 2), written by any worker, read by the CLI. */
+export const INFRA_MARKER = "infrastructure-error";
 
 /** runs/<timestamp>/: trace.jsonl for the whole run, one folder per scenario with a screenshot per Turn. */
 export class RunDir {
@@ -24,9 +27,22 @@ export class RunDir {
     }
   }
 
-  /** Full verbose log of the run (what -v prints). */
+  #lines: string[] = [];
+
+  /** Full verbose log of the run (what -v prints). Buffered per scenario so parallel workers do not interleave lines. */
   log(line: string) {
-    appendFileSync(join(this.path, "log.txt"), line + "\n");
+    this.#lines.push(line);
+  }
+
+  /** Appends the buffered scenario log to log.txt in one write. Call at the end of every scenario. */
+  flush() {
+    if (this.#lines.length) appendFileSync(join(this.path, "log.txt"), this.#lines.join("\n") + "\n");
+    this.#lines = [];
+  }
+
+  /** End of the run: drop the folder-number claims. */
+  done() {
+    rmSync(join(this.path, ".claimed"), { recursive: true, force: true });
   }
 
   /** Last screenshot of the current scenario, for failure reports. */
