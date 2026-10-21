@@ -122,7 +122,10 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     if (!values.length) return { outcome: "UNVERIFIABLE", reason: "the check quotes no text to look for (e.g. \"Winter Sale\" should appear)" };
     // Jev names the area the check is scoped to; code looks for the quoted text inside it. As with kinds, every
     // plausible area is checked and they must agree. A text that is nowhere on the page is decided by code alone.
-    const has = (text: string) => values.every(v => containsValue(text, v));
+    // Presence needs every quoted text; absence fails on any one of them, so "any shown" is what it must look for.
+    const has = (text: string) => kind === "absence"
+      ? values.some(v => containsValue(text, v))
+      : values.every(v => containsValue(text, v));
     let where = "the page";
     let found = has(obs.pageText);
     if (found) {
@@ -141,7 +144,7 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
       [[found, where]] = seen;
     }
     const pass = found === (kind === "presence");
-    const text = values.map(v => `"${v}"`).join(" and ");
+    const text = values.map(v => `"${v}"`).join(kind === "absence" ? " or " : " and ");
     return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `${text} ${found ? "is shown" : "is not shown"} in ${where}${found ? ", expected it to be absent" : ""}` };
   }
 

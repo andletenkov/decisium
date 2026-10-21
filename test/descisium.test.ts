@@ -188,6 +188,8 @@ test("runAssertion: presence, absence, state and judged checks", async () => {
     assert.equal(await run(`the "Save draft" button is shown`, assessing("presence", byName("Save draft"))), "PASSED");
     assert.equal(await run(`the "Delete" button is shown`, assessing("presence")), "ASSERTION_FAILED"); // no text match: code decides
     assert.equal(await run(`the "Delete" button is not shown`, assessing("absence")), "PASSED");
+    // Absence fails on any one of the quoted texts; "all of them" would pass here although "Save draft" is shown.
+    assert.equal(await run(`"Save draft" and "Delete" are not shown`, assessing("absence")), "ASSERTION_FAILED");
     assert.equal(await run(`the "Schedule" button is disabled`, assessing("state", byName("Schedule"))), "ASSERTION_FAILED");
     assert.equal(await run(`the "Schedule" button is enabled`, assessing("state", obs => ({ ...byName("Schedule")(obs), state: sure("enabled") }))), "PASSED");
     assert.equal(await run(`the form looks complete`, assessing("fuzzy", undefined, 0.95)), "UNVERIFIABLE");
