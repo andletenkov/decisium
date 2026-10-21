@@ -1,11 +1,11 @@
 {
   "model": "jev-1.14.0",
   "entries": {
-    "18edeec6f149156ae179dcdc440f5e043875ff19986d9207c56494efa79452c4": {
+    "bf9bd43304bae7152270da705af275bf3f3fd1e1a2f5f89df820df8b59c36869": {
       "request": {
         "state": {
           "step": "I start a new campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e6]\n    - button \"New campaign\" [ref=e7]\n    - table [ref=e8]:\n      - rowgroup [ref=e9]:\n        - row [ref=e10]:\n          - columnheader \"Name\" [ref=e11]\n          - columnheader \"Status\" [ref=e12]\n          - columnheader \"Activation date\" [ref=e13]\n      - rowgroup [ref=e14]:\n        - row [ref=e15]:\n          - cell [ref=e16]:\n            - link \"Autumn Sale\" [ref=e17] [cursor=pointer]:\n              - /url: \"#/campaigns/1\"\n          - cell \"Scheduled\" [ref=e18]\n          - cell \"2026-10-20\" [ref=e19]\n        - row [ref=e20]:\n          - cell [ref=e21]:\n            - link \"Spring Sale\" [ref=e22] [cursor=pointer]:\n              - /url: \"#/campaigns/2\"\n          - cell \"Draft\" [ref=e23]\n          - cell \"—\" [ref=e24]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e6]\n    - button \"New campaign\" [ref=e7]\n    - table [ref=e8]:\n      - rowgroup [ref=e9]:\n        - row [ref=e10]:\n          - columnheader \"Name\" [ref=e11]\n          - columnheader \"Status\" [ref=e12]\n          - columnheader \"Activation date\" [ref=e13]\n      - rowgroup [ref=e14]:\n        - row [ref=e15]:\n          - cell [ref=e16]:\n            - link \"Autumn Sale\" [ref=e17] [cursor=pointer]:\n          - cell \"Scheduled\" [ref=e18]\n          - cell \"2026-10-20\" [ref=e19]\n        - row [ref=e20]:\n          - cell [ref=e21]:\n            - link \"Spring Sale\" [ref=e22] [cursor=pointer]:\n          - cell \"Draft\" [ref=e23]\n          - cell \"—\" [ref=e24]\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -54,11 +54,11 @@
         }
       }
     },
-    "7b0a74a7a31ff51efbaed5892e7870626e878ec3a01aa3b140abe7ffee09dc4b": {
+    "0448b4b270d5cd23d9f0eddc3310f7c03cd17f56682a1495f1be05f1994e2c89": {
       "request": {
         "state": {
           "step": "I start a new campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": [
             "CLICK button \"New campaign\""
           ]
@@ -91,33 +91,33 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.82
+            "noul": 0.84
           },
           "target": {
             "type": "choice",
             "choice": "e27",
-            "confidence": 0.78,
+            "confidence": 0.72,
             "probabilities": {
-              "e3": 0.01,
+              "e3": 0.03,
               "e4": 0,
-              "e27": 0.8,
-              "e29": 0,
+              "e27": 0.75,
+              "e29": 0.01,
               "e32": 0,
-              "e33": 0.06,
+              "e33": 0.07,
               "e34": 0,
-              "none": 0.11,
+              "none": 0.13,
               "scroll": 0,
-              "wait": 0.02
+              "wait": 0.01
             }
           }
         }
       }
     },
-    "997dfde311a6d2b70176ba0fc0a3bc777fab96ca24c4281bffe4ee0eba6aa058": {
+    "ea2ccdc8dab6386f362358354e53b2372dbd3501eae7b482e5b9bcfd894e612e": {
       "request": {
         "state": {
           "step": "I enter \"Winter Sale\" as the campaign name",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -170,11 +170,11 @@
         }
       }
     },
-    "44e02fc732918b269ec93335ae21757f9a77c334d6377a6544cd0e5d67f26256": {
+    "9c2a3ab5381ea82da43665ee9113c9e973e66d75f82a784c2d7968145bccacf5": {
       "request": {
         "state": {
           "step": "I enter \"Winter Sale\" as the campaign name",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "element": "textbox \"Campaign name\""
         },
         "questions": {
@@ -203,11 +203,11 @@
         }
       }
     },
-    "0740a31b9ef5e24a8211da3bf23f8a97e69ded9682898223025117ed1031f7c3": {
+    "54626287ed35135465e40e7caa075d49488e4cbc2307226dcb1f3c03f2d9c6f2": {
       "request": {
         "state": {
           "step": "I enter \"Winter Sale\" as the campaign name",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": [
             "TYPE textbox \"Campaign name\" <- \"Winter Sale\""
           ]
@@ -230,7 +230,8 @@
               "e34": "link \"Cancel\" [cursor=pointer]",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -240,33 +241,34 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.96
+            "noul": 0.97
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.67,
+            "confidence": 0.61,
             "probabilities": {
               "e3": 0.01,
               "e4": 0,
-              "e27": 0.07,
-              "e29": 0.02,
+              "e27": 0.02,
+              "e29": 0.04,
               "e32": 0,
-              "e33": 0.2,
+              "e33": 0.27,
               "e34": 0,
-              "none": 0.7,
+              "none": 0.65,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0.01
             }
           }
         }
       }
     },
-    "ee87beb8a48000d5830af2466965c1a64b5cccac1f6195ce24da4b67f740721d": {
+    "4e8abd838a3e5b1471f31edbad9a02d5358755d4cde52d531e30904db3b86bb8": {
       "request": {
         "state": {
           "step": "I set the activation date to \"2026-12-01\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -287,7 +289,8 @@
               "e34": "link \"Cancel\" [cursor=pointer]",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -313,17 +316,18 @@
               "e34": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
       }
     },
-    "d08050b060389f65b0ae9e14c4c93638fd5264d73b00c0af8bbf59b0319e97df": {
+    "02d0ed02628df713e5eb63a7e80df60fea1342c17d40df2ce81c4afe925df8b5": {
       "request": {
         "state": {
           "step": "I set the activation date to \"2026-12-01\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "element": "textbox \"Activation date\""
         },
         "questions": {
@@ -358,11 +362,11 @@
         }
       }
     },
-    "7686d412b0f4fba61d49e48c7b467c5bf8c126756ea1a747be7a6eab39a8c1c0": {
+    "5ae1bedee48add557dafa364322ebaa641d4205f7bbdcc3035b42b67f3670521": {
       "request": {
         "state": {
           "step": "I set the activation date to \"2026-12-01\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": [
             "TYPE textbox \"Activation date\" <- \"2026-12-01\""
           ]
@@ -385,7 +389,8 @@
               "e34": "link \"Cancel\" [cursor=pointer]",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -395,33 +400,34 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.94
+            "noul": 0.95
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.56,
+            "confidence": 0.48,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
-              "e29": 0.12,
+              "e29": 0.05,
               "e32": 0.01,
-              "e33": 0.27,
+              "e33": 0.35,
               "e34": 0,
-              "none": 0.6,
+              "none": 0.53,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0.06
             }
           }
         }
       }
     },
-    "e287db57c371d5e2dc86bf88fc4e5201520082a38fb49ba885ba9579f9feb654": {
+    "235409b809b0f64efa3c3beda04b6a70eefdef631b9874cb8a32ebea226cceb5": {
       "request": {
         "state": {
           "step": "I set the activation period to 2 weeks",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -442,7 +448,8 @@
               "e34": "link \"Cancel\" [cursor=pointer]",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -468,17 +475,18 @@
               "e34": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
       }
     },
-    "4f9e54e1236e37666e17c5cf71e76b8f8d6e4b03a5c23ba9592a8f5d6861f68d": {
+    "958fd770b6c41e44e7fad21223f4440753c13c3d90e324dae07d3faf348a2970": {
       "request": {
         "state": {
           "step": "I set the activation period to 2 weeks",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "element": "combobox \"Activation period\" value=\"1 week\""
         },
         "questions": {
@@ -511,11 +519,11 @@
         }
       }
     },
-    "6d8e65e2e562cb9130ab4f6363146a67e0589fa811dc7e187b803c75f9f7a045": {
+    "3de58e8d83e2543a331ef07fbedd6267fb6497a715960cf76c111ed2974bdf76": {
       "request": {
         "state": {
           "step": "I set the activation period to 2 weeks",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": [
             "SELECT combobox \"Activation period\" <- \"2 weeks\""
           ]
@@ -538,7 +546,8 @@
               "e34": "link \"Cancel\" [cursor=pointer]",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -553,28 +562,29 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.52,
+            "confidence": 0.53,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e27": 0,
               "e29": 0,
-              "e32": 0.35,
-              "e33": 0.08,
+              "e32": 0.25,
+              "e33": 0.18,
               "e34": 0,
               "none": 0.5700000000000001,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
       }
     },
-    "2376eb5809020cc9da7eddb35d14eebc5334ef8b365c972ce36bcb9a45168bca": {
+    "259808d03bf8dad3253b555caaeb7975fb452b8c8fc64575ea3768cea403d0a2": {
       "request": {
         "state": {
           "step": "I save the draft",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -595,7 +605,8 @@
               "e34": "link \"Cancel\" [cursor=pointer]",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -621,17 +632,18 @@
               "e34": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
       }
     },
-    "e2a235209bb36c8e98778723d661d91d30c48ca84c5841274e631bd560005205": {
+    "1554bdaeb8eb7ff6863757d486ebdda42e8baf7bc500cdecba43b9625891ee2c": {
       "request": {
         "state": {
           "step": "I save the draft",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
           "actions_taken_for_step": [
             "CLICK button \"Save draft\""
           ]
@@ -666,25 +678,25 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.91,
+            "confidence": 0.93,
             "probabilities": {
               "e3": 0,
               "e4": 0,
               "e43": 0.03,
-              "e44": 0.03,
-              "none": 0.92,
-              "scroll": 0.02,
+              "e44": 0.02,
+              "none": 0.94,
+              "scroll": 0.01,
               "wait": 0
             }
           }
         }
       }
     },
-    "f3ad1022c3018bd4de05f3f12cf8fb520311bedace98d553606229162e246956": {
+    "0ce9079e13591423ad8945387208330e9cea8070be0567e6c2f4cc3c1c0a38bb": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Draft\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved"
         },
         "questions": {
           "kind": {
@@ -738,9 +750,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic [active]",
               "e2": "navigation \"Main\"",
               "e5": "main",
-              "e35": "heading \"Winter Sale\" [level=1]",
+              "e36": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -765,14 +778,14 @@
           "subject": {
             "type": "choice",
             "choice": "e38",
-            "confidence": 0.99,
+            "confidence": 0.98,
             "probabilities": {
               "e2": 0,
               "e3": 0,
               "e4": 0,
               "e35": 0,
-              "e37": 0.01,
-              "e38": 0.99,
+              "e37": 0.02,
+              "e38": 0.98,
               "e39": 0,
               "e40": 0,
               "e41": 0,
@@ -786,40 +799,41 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.36,
+            "confidence": 0.39,
             "probabilities": {
-              "disabled": 0.03,
-              "enabled": 0.25,
-              "checked": 0.42,
-              "unchecked": 0.02,
+              "disabled": 0.02,
+              "enabled": 0.21,
+              "checked": 0.45,
+              "unchecked": 0.03,
               "expanded": 0.03,
               "collapsed": 0.01,
-              "selected": 0.21,
-              "unselected": 0.01,
+              "selected": 0.2,
+              "unselected": 0.02,
               "pressed": 0.01,
-              "unpressed": 0.01
+              "unpressed": 0.02
             }
           },
           "area": {
             "type": "choice",
             "choice": "e5",
-            "confidence": 0.52,
+            "confidence": 0.41,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.62,
-              "e35": 0.05,
-              "page": 0.33,
-              "missing": 0
+              "e5": 0.51,
+              "e36": 0,
+              "page": 0.48,
+              "missing": 0.01
             }
           }
         }
       }
     },
-    "b15086260958814aac648d90ab16e2951c1e9c201c768ef7e8e6c5196eb845ad": {
+    "876d2ac46670ce1e7f25d1b1b388fb2bec576d1f31f52c3cb6970bc070ec19df": {
       "request": {
         "state": {
           "step": "I schedule the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Draft\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign \"Winter Sale\" saved",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -847,16 +861,16 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.09
+            "noul": 0.04
           },
           "target": {
             "type": "choice",
             "choice": "e43",
-            "confidence": 0.99,
+            "confidence": 1,
             "probabilities": {
               "e3": 0,
-              "e4": 0.01,
-              "e43": 0.99,
+              "e4": 0,
+              "e43": 1,
               "e44": 0,
               "none": 0,
               "scroll": 0,
@@ -866,11 +880,11 @@
         }
       }
     },
-    "b6dfab7fdebf2459f6e66c86871b053c8a092ea4f70e9f44b40dea1145053cd0": {
+    "ba09201231643837e5751a3e350614d039298e92b103f16d6eba1ffb52b1e022": {
       "request": {
         "state": {
           "step": "I schedule the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
           "actions_taken_for_step": [
             "CLICK button \"Schedule\""
           ]
@@ -904,12 +918,12 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.94,
+            "confidence": 0.95,
             "probabilities": {
               "e3": 0.01,
               "e4": 0,
-              "e44": 0.03,
-              "none": 0.95,
+              "e44": 0.02,
+              "none": 0.96,
               "scroll": 0,
               "wait": 0.01
             }
@@ -917,11 +931,11 @@
         }
       }
     },
-    "ad336ca089566dee2ba0e6c33ecfe33aaa311e14a7f6e26a580f52d48f10477d": {
+    "31a7b1c6b79f79f93e403c5aca365319a30129e7a2963932994ec9713cf683cf": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Scheduled\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled"
         },
         "questions": {
           "kind": {
@@ -975,9 +989,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic [active]",
               "e2": "navigation \"Main\"",
               "e5": "main",
-              "e35": "heading \"Winter Sale\" [level=1]",
+              "e36": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -1023,15 +1038,15 @@
           "state": {
             "type": "choice",
             "choice": "disabled",
-            "confidence": 0.34,
+            "confidence": 0.49,
             "probabilities": {
-              "disabled": 0.41000000000000003,
+              "disabled": 0.54,
               "enabled": 0.11,
-              "checked": 0.31,
+              "checked": 0.22,
               "unchecked": 0.01,
               "expanded": 0.01,
               "collapsed": 0,
-              "selected": 0.12,
+              "selected": 0.08,
               "unselected": 0.01,
               "pressed": 0.01,
               "unpressed": 0.01
@@ -1039,24 +1054,25 @@
           },
           "area": {
             "type": "choice",
-            "choice": "e5",
-            "confidence": 0.39,
+            "choice": "page",
+            "confidence": 0.42,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.51,
-              "e35": 0.06,
-              "page": 0.42,
-              "missing": 0.01
+              "e5": 0.48,
+              "e36": 0,
+              "page": 0.52,
+              "missing": 0
             }
           }
         }
       }
     },
-    "2f13a34427242e120e3616e2f02424b53589b1919c7066e64e06380fa19e0d37": {
+    "ecbb90eec67d7fe5b6d59d1810ff3402c83ab449150e4aca17f210955a9f9419": {
       "request": {
         "state": {
           "check": "the \"Schedule\" button should be disabled",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled"
         },
         "questions": {
           "kind": {
@@ -1110,9 +1126,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic [active]",
               "e2": "navigation \"Main\"",
               "e5": "main",
-              "e35": "heading \"Winter Sale\" [level=1]",
+              "e36": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -1175,23 +1192,24 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.46,
+            "confidence": 0.58,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.42,
-              "e35": 0,
-              "page": 0.57,
+              "e5": 0.33,
+              "e36": 0.01,
+              "page": 0.65,
               "missing": 0.01
             }
           }
         }
       }
     },
-    "d187b7eca5fc967ef33ad4183a2356d230c2da10b821f876f4caf82d50360db6": {
+    "1b79d2df69f49253e6e3cd0b500fb3fca2f16207557f2d1e0f04467a93d46772": {
       "request": {
         "state": {
           "step": "I open the calendar",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Winter Sale\" [level=1] [ref=e35]\n      - term [ref=e37]: Status\n      - definition [ref=e38]: Scheduled\n      - term [ref=e39]: Activation date\n      - definition [ref=e40]: 2026-12-01\n      - term [ref=e41]: Activation period\n      - definition [ref=e42]: 2 weeks\n    - alert\n    - button \"Schedule\" [disabled] [ref=e43]\n    - button \"More actions\" [ref=e44]\n  - status [ref=e45]: Campaign scheduled",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -1218,17 +1236,17 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.19
+            "noul": 0.47
           },
           "target": {
             "type": "choice",
             "choice": "e4",
-            "confidence": 0.92,
+            "confidence": 0.6,
             "probabilities": {
               "e3": 0,
-              "e4": 0.93,
-              "e44": 0,
-              "none": 0.07,
+              "e4": 0.67,
+              "e44": 0.01,
+              "none": 0.32,
               "scroll": 0,
               "wait": 0
             }
@@ -1236,11 +1254,11 @@
         }
       }
     },
-    "e2a4c26657af8a002a98139ac85aa19dc24ac93c0ce0b0da016355acd3269868": {
+    "8ac59327d4b1f22c90824a948087b87bfc253215a65811aaca15715db418ac9c": {
       "request": {
         "state": {
           "step": "I open the calendar",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n      - listitem [ref=e49]: \"2026-12-01: Winter Sale (2 weeks)\"\n  - status [ref=e45]: Campaign scheduled",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n      - listitem [ref=e49]: \"2026-12-01: Winter Sale (2 weeks)\"\n  - status [ref=e45]: Campaign scheduled",
           "actions_taken_for_step": [
             "CLICK link \"Calendar\""
           ]
@@ -1268,16 +1286,16 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.95
+            "noul": 0.97
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.52,
+            "confidence": 0.59,
             "probabilities": {
               "e3": 0,
-              "e4": 0.38,
-              "none": 0.62,
+              "e4": 0.33,
+              "none": 0.67,
               "scroll": 0,
               "wait": 0
             }
@@ -1285,11 +1303,11 @@
         }
       }
     },
-    "d7b1161ad30c016adfecdae7e90f9cb4484ff6502d25f4ef88aa2933c51aec49": {
+    "1ef027d2b8f2c0b907bcbb196e8e1854a2a60980779e0637b9a810fb1b18af36": {
       "request": {
         "state": {
           "check": "\"Winter Sale\" should appear in the calendar",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n      - listitem [ref=e49]: \"2026-12-01: Winter Sale (2 weeks)\"\n  - status [ref=e45]: Campaign scheduled"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [active] [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Calendar\" [level=1] [ref=e46]\n    - list \"Scheduled campaigns\" [ref=e47]:\n      - listitem [ref=e48]: \"2026-10-20: Autumn Sale (1 week)\"\n      - listitem [ref=e49]: \"2026-12-01: Winter Sale (2 weeks)\"\n  - status [ref=e45]: Campaign scheduled"
         },
         "questions": {
           "kind": {
@@ -1338,6 +1356,7 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic",
               "e2": "navigation \"Main\"",
               "e5": "main",
               "e47": "list \"Scheduled campaigns\"",
@@ -1353,10 +1372,10 @@
           "kind": {
             "type": "choice",
             "choice": "presence",
-            "confidence": 0.46,
+            "confidence": 0.56,
             "probabilities": {
-              "value": 0.43,
-              "presence": 0.5700000000000001,
+              "value": 0.35,
+              "presence": 0.65,
               "absence": 0,
               "state": 0,
               "fuzzy": 0
@@ -1381,16 +1400,16 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.63,
+            "confidence": 0.68,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.14,
-              "checked": 0.67,
+              "enabled": 0.12,
+              "checked": 0.71,
               "unchecked": 0.01,
-              "expanded": 0.04,
+              "expanded": 0.05,
               "collapsed": 0,
-              "selected": 0.12,
-              "unselected": 0.01,
+              "selected": 0.1,
+              "unselected": 0,
               "pressed": 0.01,
               "unpressed": 0
             }
@@ -1398,11 +1417,12 @@
           "area": {
             "type": "choice",
             "choice": "e47",
-            "confidence": 0.7,
+            "confidence": 0.64,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.04,
-              "e47": 0.76,
+              "e5": 0.1,
+              "e47": 0.7,
               "page": 0.2,
               "missing": 0
             }
@@ -1410,11 +1430,11 @@
         }
       }
     },
-    "fcf7dfc1f162abff843fc39c77cf0476597f4fe768a8d4f2642b5563d8413d5c": {
+    "0968b6f5526884e71bdf784506b01d1cfd9287ac1f91f08a2c50df59996fa534": {
       "request": {
         "state": {
           "step": "I open the \"Spring Sale\" campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e6]\n    - button \"New campaign\" [ref=e7]\n    - table [ref=e8]:\n      - rowgroup [ref=e9]:\n        - row [ref=e10]:\n          - columnheader \"Name\" [ref=e11]\n          - columnheader \"Status\" [ref=e12]\n          - columnheader \"Activation date\" [ref=e13]\n      - rowgroup [ref=e14]:\n        - row [ref=e15]:\n          - cell [ref=e16]:\n            - link \"Autumn Sale\" [ref=e17] [cursor=pointer]:\n              - /url: \"#/campaigns/1\"\n          - cell \"Scheduled\" [ref=e18]\n          - cell \"2026-10-20\" [ref=e19]\n        - row [ref=e20]:\n          - cell [ref=e21]:\n            - link \"Spring Sale\" [ref=e22] [cursor=pointer]:\n              - /url: \"#/campaigns/2\"\n          - cell \"Draft\" [ref=e23]\n          - cell \"—\" [ref=e24]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e6]\n    - button \"New campaign\" [ref=e7]\n    - table [ref=e8]:\n      - rowgroup [ref=e9]:\n        - row [ref=e10]:\n          - columnheader \"Name\" [ref=e11]\n          - columnheader \"Status\" [ref=e12]\n          - columnheader \"Activation date\" [ref=e13]\n      - rowgroup [ref=e14]:\n        - row [ref=e15]:\n          - cell [ref=e16]:\n            - link \"Autumn Sale\" [ref=e17] [cursor=pointer]:\n          - cell \"Scheduled\" [ref=e18]\n          - cell \"2026-10-20\" [ref=e19]\n        - row [ref=e20]:\n          - cell [ref=e21]:\n            - link \"Spring Sale\" [ref=e22] [cursor=pointer]:\n          - cell \"Draft\" [ref=e23]\n          - cell \"—\" [ref=e24]\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -1443,7 +1463,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.02
+            "noul": 0.03
           },
           "target": {
             "type": "choice",
@@ -1463,11 +1483,11 @@
         }
       }
     },
-    "005de5803e2e210dc1c47fe57e92c9cbaaff8048e9e834580c3ff1e44c3f9a78": {
+    "9637e8c2e54da7515134966e753a8c9f8a766a686873a8204fe79b1a9ef3ed82": {
       "request": {
         "state": {
           "step": "I open the \"Spring Sale\" campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
           "actions_taken_for_step": [
             "CLICK link \"Spring Sale\""
           ]
@@ -1502,25 +1522,25 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.79,
+            "confidence": 0.77,
             "probabilities": {
-              "e3": 0.02,
+              "e3": 0.01,
               "e4": 0,
-              "e33": 0.13,
+              "e33": 0.16,
               "e34": 0.02,
-              "none": 0.82,
+              "none": 0.8,
               "scroll": 0,
-              "wait": 0.01
+              "wait": 0
             }
           }
         }
       }
     },
-    "98b3e04e79e229077f0dd362e797adab03e6278b52988cdcb7c95cdde6ff3861": {
+    "a1cce16bc4b37af2c2813cc5df4c20239119eb72119e616e9e1bd11fe1fb4e92": {
       "request": {
         "state": {
           "step": "I try to schedule the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -1548,30 +1568,30 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.02
+            "noul": 0.01
           },
           "target": {
             "type": "choice",
             "choice": "e33",
-            "confidence": 1,
+            "confidence": 0.99,
             "probabilities": {
               "e3": 0,
               "e4": 0,
-              "e33": 1,
+              "e33": 0.99,
               "e34": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0.01
             }
           }
         }
       }
     },
-    "d3f6f81ac5cae44f71a32aac0f2eb350fdfaf6f505079fb80669b2a9c9d448b2": {
+    "6393f0911e0c63ce9fa724f938aa9313608006576ab7b059cf09c9e860b1c83a": {
       "request": {
         "state": {
           "step": "I try to schedule the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert [ref=e35]: Set an activation date before scheduling\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert [ref=e35]: Set an activation date before scheduling\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
           "actions_taken_for_step": [
             "CLICK button \"Schedule\""
           ]
@@ -1601,30 +1621,30 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.95
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.46,
+            "confidence": 0.36,
             "probabilities": {
               "e3": 0.01,
-              "e4": 0.23,
-              "e33": 0.05,
-              "e34": 0.04,
-              "none": 0.54,
-              "scroll": 0.13,
+              "e4": 0.24,
+              "e33": 0.04,
+              "e34": 0.07,
+              "none": 0.45,
+              "scroll": 0.19,
               "wait": 0
             }
           }
         }
       }
     },
-    "54cac19aa688c5fd75627ccc4108b31b9555eade59eb757e270164380bca4c58": {
+    "abeb5fe71fa65c04feab7792a051a2ebb5d6fad9bf086582c6825c5fe800190c": {
       "request": {
         "state": {
           "check": "the error should say \"Set an activation date before scheduling\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert [ref=e35]: Set an activation date before scheduling\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert [ref=e35]: Set an activation date before scheduling\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status"
         },
         "questions": {
           "kind": {
@@ -1678,9 +1698,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic [active]",
               "e2": "navigation \"Main\"",
               "e5": "main",
-              "e25": "heading \"Spring Sale\" [level=1]",
+              "e26": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -1728,10 +1749,10 @@
             "choice": "disabled",
             "confidence": 0.41,
             "probabilities": {
-              "disabled": 0.47000000000000003,
-              "enabled": 0.39,
-              "checked": 0.1,
-              "unchecked": 0.01,
+              "disabled": 0.47,
+              "enabled": 0.37,
+              "checked": 0.11,
+              "unchecked": 0.02,
               "expanded": 0.01,
               "collapsed": 0.01,
               "selected": 0.01,
@@ -1743,23 +1764,24 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.6,
+            "confidence": 0.66,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.31,
-              "e25": 0,
-              "page": 0.68,
+              "e5": 0.27,
+              "e26": 0,
+              "page": 0.72,
               "missing": 0.01
             }
           }
         }
       }
     },
-    "30508fb46818da39ba1d9847e7e26a68d46ec8eab769a399d62a1e9ce93dd415": {
+    "c387c83d3985f4a4bd714a1778b538cdfbe07b187a6d6df7e993f82a5ca2278f": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Draft\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert [ref=e35]: Set an activation date before scheduling\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert [ref=e35]: Set an activation date before scheduling\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status"
         },
         "questions": {
           "kind": {
@@ -1813,9 +1835,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic [active]",
               "e2": "navigation \"Main\"",
               "e5": "main",
-              "e25": "heading \"Spring Sale\" [level=1]",
+              "e26": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -1861,16 +1884,16 @@
           "state": {
             "type": "choice",
             "choice": "checked",
-            "confidence": 0.33,
+            "confidence": 0.31,
             "probabilities": {
-              "disabled": 0.17,
-              "enabled": 0.18,
-              "checked": 0.4,
+              "disabled": 0.08,
+              "enabled": 0.21,
+              "checked": 0.38,
               "unchecked": 0.03,
-              "expanded": 0.01,
+              "expanded": 0.02,
               "collapsed": 0.01,
-              "selected": 0.17,
-              "unselected": 0.01,
+              "selected": 0.23,
+              "unselected": 0.02,
               "pressed": 0.01,
               "unpressed": 0.01
             }
@@ -1878,23 +1901,24 @@
           "area": {
             "type": "choice",
             "choice": "e5",
-            "confidence": 0.36,
+            "confidence": 0.42,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.49,
-              "e25": 0.04,
-              "page": 0.45,
-              "missing": 0.02
+              "e5": 0.52,
+              "e26": 0,
+              "page": 0.47,
+              "missing": 0.01
             }
           }
         }
       }
     },
-    "469f29906840b7eb14684ffd514893ed6a363cec842a2bc81dd5c916fe33c4c8": {
+    "ef755e5f120f01d9bf10997f3ad10a4f779cbcafac9f9df51aacb4b3b4654f0c": {
       "request": {
         "state": {
           "step": "I delete the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [ref=e34]\n  - status",
           "actions_taken_for_step": "none yet"
         },
         "questions": {
@@ -1941,11 +1965,11 @@
         }
       }
     },
-    "6669f5591d91bee07508526b15f3046b74e66086c2c873b836491b8ed26963f9": {
+    "1f9fcb8e6423be9407ce5b417ad42dbd6b99decf772d0da7cacc2f848ae4506a": {
       "request": {
         "state": {
           "step": "I delete the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [expanded] [active] [ref=e34]\n    - menu [ref=e35]:\n      - menuitem \"Delete campaign\" [ref=e36] [cursor=pointer]\n  - status",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Spring Sale\" [level=1] [ref=e25]\n      - term [ref=e27]: Status\n      - definition [ref=e28]: Draft\n      - term [ref=e29]: Activation date\n      - definition [ref=e30]: Not set\n      - term [ref=e31]: Activation period\n      - definition [ref=e32]: 1 week\n    - alert\n    - button \"Schedule\" [ref=e33]\n    - button \"More actions\" [expanded] [active] [ref=e34]\n    - menu [ref=e35]:\n      - menuitem \"Delete campaign\" [ref=e36] [cursor=pointer]\n  - status",
           "actions_taken_for_step": [
             "CLICK button \"More actions\"",
             "CLICK menuitem \"Delete campaign\""
@@ -1997,11 +2021,11 @@
         }
       }
     },
-    "96fd94185527676133c3ff2c144e2774bb69679a377737b99815cceae698bb15": {
+    "90317c6c379c4cd59fb2224c51551f765f475ce4b577e490924124ec0a8cdc20": {
       "request": {
         "state": {
           "step": "I delete the campaign",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e37]\n    - button \"New campaign\" [ref=e38]\n    - table [ref=e39]:\n      - rowgroup [ref=e40]:\n        - row [ref=e41]:\n          - columnheader \"Name\" [ref=e42]\n          - columnheader \"Status\" [ref=e43]\n          - columnheader \"Activation date\" [ref=e44]\n      - rowgroup [ref=e45]:\n        - row [ref=e46]:\n          - cell [ref=e47]:\n            - link \"Autumn Sale\" [ref=e48] [cursor=pointer]:\n              - /url: \"#/campaigns/1\"\n          - cell \"Scheduled\" [ref=e49]\n          - cell \"2026-10-20\" [ref=e50]\n  - status [ref=e51]: Campaign \"Spring Sale\" deleted",
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e37]\n    - button \"New campaign\" [ref=e38]\n    - table [ref=e39]:\n      - rowgroup [ref=e40]:\n        - row [ref=e41]:\n          - columnheader \"Name\" [ref=e42]\n          - columnheader \"Status\" [ref=e43]\n          - columnheader \"Activation date\" [ref=e44]\n      - rowgroup [ref=e45]:\n        - row [ref=e46]:\n          - cell [ref=e47]:\n            - link \"Autumn Sale\" [ref=e48] [cursor=pointer]:\n          - cell \"Scheduled\" [ref=e49]\n          - cell \"2026-10-20\" [ref=e50]\n  - status [ref=e51]: Campaign \"Spring Sale\" deleted",
           "actions_taken_for_step": [
             "CLICK button \"More actions\"",
             "CLICK menuitem \"Delete campaign\""
@@ -2037,25 +2061,25 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.87,
+            "confidence": 0.88,
             "probabilities": {
-              "e3": 0.04,
+              "e3": 0.03,
               "e4": 0,
-              "e38": 0.02,
+              "e38": 0.01,
               "e48": 0.03,
-              "none": 0.89,
-              "scroll": 0.01,
+              "none": 0.9,
+              "scroll": 0.02,
               "wait": 0.01
             }
           }
         }
       }
     },
-    "17bc95940c19036fece1af01ea17f814beb6c7cf7508bc0c6ebdcb95800fe1b3": {
+    "373da32487aa1811ab1fd2587e771f9c007755028208f938845fb47b7556d7c9": {
       "request": {
         "state": {
           "check": "\"Spring Sale\" should not appear in the campaign list",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e37]\n    - button \"New campaign\" [ref=e38]\n    - table [ref=e39]:\n      - rowgroup [ref=e40]:\n        - row [ref=e41]:\n          - columnheader \"Name\" [ref=e42]\n          - columnheader \"Status\" [ref=e43]\n          - columnheader \"Activation date\" [ref=e44]\n      - rowgroup [ref=e45]:\n        - row [ref=e46]:\n          - cell [ref=e47]:\n            - link \"Autumn Sale\" [ref=e48] [cursor=pointer]:\n              - /url: \"#/campaigns/1\"\n          - cell \"Scheduled\" [ref=e49]\n          - cell \"2026-10-20\" [ref=e50]\n  - status [ref=e51]: Campaign \"Spring Sale\" deleted"
+          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Campaigns\" [level=1] [ref=e37]\n    - button \"New campaign\" [ref=e38]\n    - table [ref=e39]:\n      - rowgroup [ref=e40]:\n        - row [ref=e41]:\n          - columnheader \"Name\" [ref=e42]\n          - columnheader \"Status\" [ref=e43]\n          - columnheader \"Activation date\" [ref=e44]\n      - rowgroup [ref=e45]:\n        - row [ref=e46]:\n          - cell [ref=e47]:\n            - link \"Autumn Sale\" [ref=e48] [cursor=pointer]:\n          - cell \"Scheduled\" [ref=e49]\n          - cell \"2026-10-20\" [ref=e50]\n  - status [ref=e51]: Campaign \"Spring Sale\" deleted"
         },
         "questions": {
           "kind": {
@@ -2108,6 +2132,7 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
+              "e1": "generic [active]",
               "e2": "navigation \"Main\"",
               "e5": "main",
               "e39": "table",
@@ -2139,416 +2164,57 @@
           },
           "subject": {
             "type": "choice",
-            "choice": "none",
-            "confidence": 0.33,
+            "choice": "e51",
+            "confidence": 0.39,
             "probabilities": {
               "e2": 0,
               "e3": 0.01,
               "e4": 0,
               "e37": 0.01,
               "e38": 0,
-              "e42": 0.04,
+              "e42": 0.06,
               "e43": 0,
               "e44": 0,
-              "e48": 0.28,
+              "e48": 0.19,
               "e49": 0,
               "e50": 0,
-              "e51": 0.27,
-              "none": 0.38
+              "e51": 0.44,
+              "none": 0.29
             }
           },
           "state": {
             "type": "choice",
             "choice": "unselected",
-            "confidence": 0.39,
+            "confidence": 0.5,
             "probabilities": {
               "disabled": 0.01,
               "enabled": 0.02,
-              "checked": 0.06,
-              "unchecked": 0.41,
+              "checked": 0.07,
+              "unchecked": 0.29,
               "expanded": 0.01,
               "collapsed": 0.02,
               "selected": 0,
-              "unselected": 0.45,
+              "unselected": 0.55,
               "pressed": 0,
-              "unpressed": 0.02
+              "unpressed": 0.03
             }
           },
           "area": {
             "type": "choice",
             "choice": "e39",
-            "confidence": 0.86,
+            "confidence": 0.81,
             "probabilities": {
+              "e1": 0,
               "e2": 0,
-              "e5": 0.02,
-              "e39": 0.87,
-              "e40": 0.01,
+              "e5": 0.03,
+              "e39": 0.83,
+              "e40": 0,
               "e41": 0,
-              "e45": 0.05,
+              "e45": 0.07,
               "e46": 0.01,
               "e47": 0,
-              "page": 0.03,
+              "page": 0.05,
               "missing": 0.01
-            }
-          }
-        }
-      }
-    },
-    "d1cd20983a34f41ace368a564581807f1584a7a2cf92d3d80d47a2d64b0bf25f": {
-      "request": {
-        "state": {
-          "step": "I enter \"Winter Sale\" as the campaign name",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
-          "actions_taken_for_step": [
-            "TYPE textbox \"Campaign name\" <- \"Winter Sale\""
-          ]
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e3": "link \"Campaigns\" [cursor=pointer]",
-              "e4": "link \"Calendar\" [cursor=pointer]",
-              "e27": "textbox \"Campaign name\" value=\"Winter Sale\" [active]",
-              "e29": "textbox \"Activation date\"",
-              "e32": "combobox \"Activation period\" value=\"1 week\"",
-              "e33": "button \"Save draft\"",
-              "e34": "link \"Cancel\" [cursor=pointer]",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.97
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.61,
-            "probabilities": {
-              "e3": 0.01,
-              "e4": 0,
-              "e27": 0.03,
-              "e29": 0.06,
-              "e32": 0,
-              "e33": 0.23,
-              "e34": 0,
-              "none": 0.65,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0.02
-            }
-          }
-        }
-      }
-    },
-    "3a93a9d1e8b6ec7450fbcddc94c6c71df924bc44246da313aa6f31d5391277da": {
-      "request": {
-        "state": {
-          "step": "I set the activation date to \"2026-12-01\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [ref=e29]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e3": "link \"Campaigns\" [cursor=pointer]",
-              "e4": "link \"Calendar\" [cursor=pointer]",
-              "e27": "textbox \"Campaign name\" value=\"Winter Sale\" [active]",
-              "e29": "textbox \"Activation date\"",
-              "e32": "combobox \"Activation period\" value=\"1 week\"",
-              "e33": "button \"Save draft\"",
-              "e34": "link \"Cancel\" [cursor=pointer]",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.02
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e29",
-            "confidence": 1,
-            "probabilities": {
-              "e3": 0,
-              "e4": 0,
-              "e27": 0,
-              "e29": 1,
-              "e32": 0,
-              "e33": 0,
-              "e34": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "5425501cb1abef7cc07a10d2827ed268fa56f5755275934c64c9724c905e988a": {
-      "request": {
-        "state": {
-          "step": "I set the activation date to \"2026-12-01\"",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
-          "actions_taken_for_step": [
-            "TYPE textbox \"Activation date\" <- \"2026-12-01\""
-          ]
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e3": "link \"Campaigns\" [cursor=pointer]",
-              "e4": "link \"Calendar\" [cursor=pointer]",
-              "e27": "textbox \"Campaign name\" value=\"Winter Sale\"",
-              "e29": "textbox \"Activation date\" value=\"2026-12-01\" [active]",
-              "e32": "combobox \"Activation period\" value=\"1 week\"",
-              "e33": "button \"Save draft\"",
-              "e34": "link \"Cancel\" [cursor=pointer]",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.94
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.44,
-            "probabilities": {
-              "e3": 0,
-              "e4": 0,
-              "e27": 0,
-              "e29": 0.09,
-              "e32": 0.01,
-              "e33": 0.35000000000000003,
-              "e34": 0,
-              "none": 0.49,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0.06
-            }
-          }
-        }
-      }
-    },
-    "128ef81a64ae472980fbf91ac04157aa78171c0b7764c76590a05d97e64662fd": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e3": "link \"Campaigns\" [cursor=pointer]",
-              "e4": "link \"Calendar\" [cursor=pointer]",
-              "e27": "textbox \"Campaign name\" value=\"Winter Sale\"",
-              "e29": "textbox \"Activation date\" value=\"2026-12-01\" [active]",
-              "e32": "combobox \"Activation period\" value=\"1 week\"",
-              "e33": "button \"Save draft\"",
-              "e34": "link \"Cancel\" [cursor=pointer]",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e32",
-            "confidence": 1,
-            "probabilities": {
-              "e3": 0,
-              "e4": 0,
-              "e27": 0,
-              "e29": 0,
-              "e32": 1,
-              "e33": 0,
-              "e34": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "c722e242353b4090c3bde7048467b06e9f039e112672eded5919e6f3edc5da8f": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
-          "actions_taken_for_step": [
-            "SELECT combobox \"Activation period\" <- \"2 weeks\""
-          ]
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e3": "link \"Campaigns\" [cursor=pointer]",
-              "e4": "link \"Calendar\" [cursor=pointer]",
-              "e27": "textbox \"Campaign name\" value=\"Winter Sale\"",
-              "e29": "textbox \"Activation date\" value=\"2026-12-01\" [active]",
-              "e32": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e33": "button \"Save draft\"",
-              "e34": "link \"Cancel\" [cursor=pointer]",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.95
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.54,
-            "probabilities": {
-              "e3": 0,
-              "e4": 0,
-              "e27": 0,
-              "e29": 0,
-              "e32": 0.24,
-              "e33": 0.18,
-              "e34": 0,
-              "none": 0.58,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "acb8210557f5076648e62d03939be744e9b348fadf190c10ce7ebc537b9b400e": {
-      "request": {
-        "state": {
-          "step": "I save the draft",
-          "ui": "  - navigation \"Main\" [ref=e2]:\n    - link \"Campaigns\" [ref=e3] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n    - link \"Calendar\" [ref=e4] [cursor=pointer]:\n      - /url: \"#/calendar\"\n  - main [ref=e5]:\n    - heading \"New campaign\" [level=1] [ref=e25]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e27]: Winter Sale\n      - text: Activation date\n      - textbox \"Activation date\" [active] [ref=e29]: 2026-12-01\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e32]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - alert\n    - button \"Save draft\" [ref=e33]\n    - link \"Cancel\" [ref=e34] [cursor=pointer]:\n      - /url: \"#/campaigns\"\n  - status",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e3": "link \"Campaigns\" [cursor=pointer]",
-              "e4": "link \"Calendar\" [cursor=pointer]",
-              "e27": "textbox \"Campaign name\" value=\"Winter Sale\"",
-              "e29": "textbox \"Activation date\" value=\"2026-12-01\" [active]",
-              "e32": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e33": "button \"Save draft\"",
-              "e34": "link \"Cancel\" [cursor=pointer]",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.03
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e33",
-            "confidence": 1,
-            "probabilities": {
-              "e3": 0,
-              "e4": 0,
-              "e27": 0,
-              "e29": 0,
-              "e32": 0,
-              "e33": 1,
-              "e34": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
             }
           }
         }

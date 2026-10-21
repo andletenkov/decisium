@@ -33,6 +33,10 @@ const LINE = /^(\s*)- (\w+)(?: "((?:[^"\\]|\\.)*)")?((?: \[[^\]]+\])*)(?::\s*(.*
 
 export const MASK = "\u2022\u2022\u2022\u2022";
 
+/** Longest `ui` line Jev reads (citation blobs, inline code); the full text stays in `value` and `pageText` (task 0021). */
+const MAX_LINE = 200;
+const cap = (line: string) => line.length > MAX_LINE ? line.slice(0, MAX_LINE) + "…" : line;
+
 /**
  * `secretRefs`: refs of password fields (the snapshot itself shows them as plain textboxes with their value).
  * `editableRefs`: comboboxes you type into (search boxes with suggestions); other comboboxes are clicked open.
@@ -51,7 +55,8 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
 
   for (const raw of snapshot.split("\n")) {
     const m = LINE.exec(raw);
-    if (!m) { if (raw.trim()) kept.push(raw); continue; }
+    // `/url` lines repeat what the link's name already says; browser.ts reads urls from the raw snapshot.
+    if (!m) { if (raw.trim() && !/^\s*- \/url:/.test(raw)) kept.push(cap(raw)); continue; }
     const [, indent, role, name = "", attrs = "", rest = ""] = m;
     const ref = /\[ref=(\w+)\]/.exec(attrs)?.[1];
     const secret = ref !== undefined && secretRefs.has(ref);
@@ -61,7 +66,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     if (role === "option" && !ref && lastCombobox && indent.length > lastCombobox.indent) {
       lastCombobox.el.options.push(name);
       if (/\[selected\]/.test(attrs)) lastCombobox.el.value = name;
-      kept.push(raw);
+      kept.push(cap(raw));
       continue;
     }
     // Drop nameless structural wrappers that cannot hold anything readable; the ref'd ones are decided below.
@@ -74,7 +79,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       areas.add(o.el);
       if (ref && name) named.set(o.el, [...(named.get(o.el) ?? []), name]);
     }
-    const at = kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : raw) - 1;
+    const at = kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : cap(raw)) - 1;
 
     // Text with no element of its own (a bare `- text:` line, or text split across children): the nearest ref'd
     // container is the only thing a check can read it from, so that container becomes readable (task 0006).
@@ -108,7 +113,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
   for (const at of wrappers.values()) kept[at] = undefined;
   for (const el of [...readable, ...areas]) {
     if (el.options.length) el.verb = "SELECT";
-    // A long value (a whole file in a code view) would bury the description; the full value stays in `value` and `ui`.
+    // A long value (a whole file in a code view) would bury the description; the full value stays in `value`.
     const value = el.value.length > 60 ? el.value.slice(0, 60) + "…" : el.value;
     el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.state ? " " + el.state : ""}`;
   }

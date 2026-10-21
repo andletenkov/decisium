@@ -93,11 +93,63 @@ export async function narrow(candidates: Record<string, string>, fixed: Record<s
   return { ...Object.fromEntries(left), ...fixed };
 }
 
+/**
+ * Jev rejects requests over its token limit (`max_tokens_exceeded`): measured between 115k and 117k characters of
+ * Wikipedia snapshot in one request. `ui` stays under this budget so 255 choices still fit next to it (task 0021).
+ */
+export const UI_BUDGET = 80_000;
+const SECTION = 8_000; // a page over budget is read in sections of about this size
+
+/**
+ * A `ui` over budget, reduced to the sections that matter for `step`. Sections are cut at lines and carry their
+ * ancestor lines (so a list item keeps its list); narrow() keeps the likeliest ones per batch until they fit, so every
+ * question of the Turn reads one reduced `ui` and their probabilities stay comparable.
+ */
+export async function reduceUi(ui: string, ask: (sections: Record<string, string>) => Promise<Pick>,
+  budget = UI_BUDGET, section = SECTION): Promise<string> {
+  if (ui.length <= budget) return ui;
+  const lines = ui.split("\n");
+  const indent = (l: string) => /^\s*/.exec(l)![0].length;
+  const parts: number[][] = [];
+  const open: number[] = []; // ancestors of the current line, by indentation
+  let part: number[] = [], size = 0;
+  lines.forEach((l, i) => {
+    while (open.length && indent(lines[open.at(-1)!]) >= indent(l)) open.pop();
+    if (size + l.length > section && part.length) {
+      parts.push(part);
+      part = [...open]; size = open.reduce((n, a) => n + lines[a].length + 1, 0);
+    }
+    part.push(i); size += l.length + 1;
+    open.push(i);
+  });
+  parts.push(part);
+  const text = (p: number[]) => p.map(i => lines[i]).join("\n");
+  const kept = await narrow(Object.fromEntries(parts.map((p, i) => [`s${i}`, text(p)])), {}, ask, Math.floor(budget / (section * 1.5)));
+  const keep = new Set(Object.keys(kept).flatMap(k => parts[Number(k.slice(1))]));
+  return lines.filter((_, i) => keep.has(i)).join("\n");
+}
+
 /** Every question sends the Step text as-is, so a value quoted in a Step (a password included) reaches the API. */
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
   #cassette?: Cassette;
+  #reduced = new WeakMap<Observation, Map<string, Promise<string>>>(); // per Observation and Step: asked once per Turn
   constructor(cassette?: Cassette) { this.#cassette = cassette; }
+
+  /** `ui` for `step` on this Observation, reduced to the sections that matter when the page is over budget. */
+  #ui(obs: Observation, about: "step" | "check", step: string): Promise<string> {
+    const byStep = this.#reduced.get(obs) ?? new Map<string, Promise<string>>();
+    this.#reduced.set(obs, byStep);
+    if (!byStep.has(step)) byStep.set(step, reduceUi(obs.text, async sections => {
+      const res = await this.#ask({
+        state: { [about]: step, ...sections },
+        questions: { pick: choice(`Which of these sections of the page holds what \`${about}\` needs?`,
+          Object.fromEntries(Object.keys(sections).map(k => [k, `section \`${k}\``]))) },
+      });
+      return res.answers.pick;
+    }));
+    return byStep.get(step)!;
+  }
 
   async #ask<Q extends Parameters<TypeSafeClient["systemOne"]>[0]>(request: Q) {
     const live = async () => {
@@ -114,7 +166,7 @@ export class JevDecider implements Decider {
   }
 
   async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
-    const state = { step, ui: obs.text, actions_taken_for_step: recent.length ? recent : "none yet" };
+    const state = { step, ui: await this.#ui(obs, "step", step), actions_taken_for_step: recent.length ? recent : "none yet" };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
     const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs) },
       this.#choose(state, question));
@@ -144,7 +196,7 @@ export class JevDecider implements Decider {
   }
 
   async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
-    const state = { step, ui: obs.text, element: el.line };
+    const state = { step, ui: await this.#ui(obs, "step", step), element: el.line };
     const question = "Which value should be entered into `element` to accomplish `step`?";
     const criteria = await narrow(Object.fromEntries(candidates.map((c, i) => [`v${i}`, c])),
       { none: "None of these values is what `step` asks for." }, this.#choose(state, question));
@@ -159,7 +211,7 @@ export class JevDecider implements Decider {
   }
 
   async assess(step: string, obs: Observation, judged: boolean): Promise<Assessment> {
-    const state = { check: step, ui: obs.text };
+    const state = { check: step, ui: await this.#ui(obs, "check", step) };
     const subjectQ = "Which element in `ui` is the one `check` is about, regardless of whether the check passes?";
     const areaQ = "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.";
     const subjects = await narrow(refs(obs.readable), { none: "No element in `ui` is the one `check` is about." }, this.#choose(state, subjectQ));

@@ -78,15 +78,20 @@ BeforeStep(function (this: Scenario, { pickleStep }) {
 
 defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
   const log = (line: string) => { run.log(line); if (opt("VERBOSE")) console.log(line); };
-  let r: StepResult | { outcome: "UI_CHANGED"; reason: string };
+  let r: StepResult | { outcome: "UI_CHANGED" | "PAGE_TOO_LARGE"; reason: string };
   try {
     r = this.kind === "assertion"
       ? await runAssertion(text, this.rt, this.decider, log, opt("JUDGED"), { ...this.earlier })
       : await runStep(text, this.rt, this.decider, log, this.kind === "attempt");
   } catch (err) {
-    if (!(err instanceof UiChanged)) throw infra(err);
-    log(`  => UI_CHANGED`);
-    r = { outcome: "UI_CHANGED", reason: err.reason };
+    if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
+      // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).
+      log(`  => PAGE_TOO_LARGE`);
+      r = { outcome: "PAGE_TOO_LARGE", reason: "the page is too large for one Jev request, even reduced to the sections that matter" };
+    } else if (err instanceof UiChanged) {
+      log(`  => UI_CHANGED`);
+      r = { outcome: "UI_CHANGED", reason: err.reason };
+    } else throw infra(err);
   }
   run.event("step", { kind: this.kind, step: text, ...r });
   for (const v of quoted(text)) this.earlier[v] = text;

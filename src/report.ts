@@ -16,6 +16,7 @@ export const HINTS: Record<string, string> = {
   STEP_TIMEOUT: "The step needed more than 8 actions. Split it into smaller steps.",
   UI_CHANGED: "The run replays recorded Jev answers (cassette) and this step has none that fits. If the change is intended, rerun with --record new to record just the changed steps (calls Jev), or --record all to re-record everything.",
   JUDGED_FAILED: "Jev judged that the page does not satisfy the check.",
+  PAGE_TOO_LARGE: "The page is too large for Jev to read. Start the scenario on a smaller page, or report it so the size budget can be revisited.",
 };
 export const KIND: Record<StepKind, string> = { action: "Step", attempt: "Attempt", assertion: "Check" };
 

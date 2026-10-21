@@ -499,6 +499,32 @@ test("narrow: more candidates than Jev accepts are cut down in rounds, keeping t
   assert.equal(sizes.length, 0);
 });
 
+test("oversized page: ui drops /url lines and caps lines; reduceUi keeps the step's section under budget", async () => {
+  const { reduceUi, UI_BUDGET } = await import("../src/jev.ts");
+  const obs = parseSnapshot(`- link "Docs" [ref=e1]:\n  - /url: /docs\n- paragraph [ref=e2]: ${"cite ".repeat(100)}`);
+  assert.doesNotMatch(obs.text, /\/url/);
+  assert.ok(obs.text.split("\n").every(l => l.length <= 201), obs.text);
+  assert.equal(obs.readable[1].value.length, 500); // checks still read the full text
+
+  // A 300k-char page; the step's element sits deep in one list.
+  const rows = Array.from({ length: 3000 }, (_, i) => `    - listitem [ref=e${i}]: ${i === 2200 ? "Latest release v9" : "row " + "x".repeat(80)}`);
+  const ui = ["- main [ref=m]:", "  - list \"Releases\" [ref=l]:", ...rows].join("\n");
+  const asked: number[] = [];
+  const ask = async (sections: Record<string, string>) => {
+    asked.push(Object.values(sections).join("").length);
+    const keys = Object.keys(sections);
+    const w = (k: string) => (sections[k].includes("Latest release") ? 50 : 1);
+    const total = keys.reduce((s, k) => s + w(k), 0);
+    return { choice: "", probabilities: Object.fromEntries(keys.map(k => [k, w(k) / total])) };
+  };
+  const out = await reduceUi(ui, ask);
+  assert.ok(out.length <= UI_BUDGET, `${out.length}`);
+  assert.ok(asked.every(n => n <= UI_BUDGET), `asked with ${asked}`);
+  assert.match(out, /Latest release v9/);
+  assert.match(out, /^- main \[ref=m\]:\n  - list "Releases"/); // ancestors kept, in page order
+  assert.equal(await reduceUi("small", ask), "small");
+});
+
 test("Enter: offered only while a text field has focus; submits what was typed", async () => {
   const { pageActions } = await import("../src/jev.ts");
   const page = `data:text/html,<form onsubmit="event.preventDefault();o.textContent='Results for '+q.value">`

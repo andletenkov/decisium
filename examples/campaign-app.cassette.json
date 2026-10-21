@@ -85,7 +85,7 @@
         }
       }
     },
-    "3ee648be8456d692f31caa43becd5134c882d6d558911b4602c8733327efad71": {
+    "a01c89c0bf2f6204ed13644e94e3a10e3cf2029ffc94aec0bb40dcf27b22ca9c": {
       "request": {
         "state": {
           "step": "I enter \"Autumn Sale\" as the campaign name",
@@ -109,7 +109,8 @@
               "e10": "button \"Save draft\"",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -124,21 +125,22 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.82,
+            "confidence": 0.7,
             "probabilities": {
-              "e5": 0.06,
-              "e8": 0.01,
-              "e9": 0.03,
-              "e10": 0.05,
-              "none": 0.85,
+              "e5": 0.03,
+              "e8": 0.02,
+              "e9": 0.08,
+              "e10": 0.12,
+              "none": 0.74,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0.01
             }
           }
         }
       }
     },
-    "661e518f1eeea6e1757f6c0b767c797d7e9829d720c1f3dba42ab677e9dc5a56": {
+    "66f69b6da8071574e3185e9ed92af20f2873f2c01265e1a063a403aba5592a8c": {
       "request": {
         "state": {
           "step": "I set the activation period to 2 weeks",
@@ -160,7 +162,8 @@
               "e10": "button \"Save draft\"",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -183,7 +186,8 @@
               "e10": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
@@ -226,7 +230,7 @@
         }
       }
     },
-    "0ac62774527a06d23fb40445aac3d5ce7c11e4b69826436c666d71c75531bab3": {
+    "6fbda24416ca84c0efbbd0cec470b5f0816b86b3752baf0bac06adec8cb34f24": {
       "request": {
         "state": {
           "step": "I set the activation period to 2 weeks",
@@ -250,7 +254,8 @@
               "e10": "button \"Save draft\"",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -265,21 +270,22 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.6,
+            "confidence": 0.59,
             "probabilities": {
               "e5": 0,
-              "e8": 0.25,
-              "e9": 0.08,
+              "e8": 0.21,
+              "e9": 0.14,
               "e10": 0.01,
-              "none": 0.66,
+              "none": 0.64,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
       }
     },
-    "1f183109e5a79361fccd9492370fe1417273ec646d93422f567d478ab27b10d4": {
+    "e4f16a515f2a8bed2e4007adb1d6c74079686081a924fe81307a8cb289eabec7": {
       "request": {
         "state": {
           "step": "I schedule the campaign",
@@ -301,7 +307,8 @@
               "e10": "button \"Save draft\"",
               "none": "No element on screen helps accomplish `step`.",
               "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
             }
           }
         }
@@ -324,7 +331,8 @@
               "e10": 0,
               "none": 0,
               "scroll": 0,
-              "wait": 0
+              "wait": 0,
+              "enter": 0
             }
           }
         }
@@ -364,7 +372,7 @@
         "answers": {
           "done": {
             "type": "noul",
-            "noul": 0.97
+            "noul": 0.96
           },
           "target": {
             "type": "choice",
@@ -383,7 +391,7 @@
         }
       }
     },
-    "78066edc8f1bebd9cd58fa840ef711cfef9a6ca34b1206004008f6106518a633": {
+    "e74d204a2fa84dba6df5f14fffce22b73748304d4ad8787bf626f9b73df44a6c": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Scheduled\"",
@@ -434,7 +442,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e2": "heading \"New campaign\" [level=1]",
+              "e1": "generic",
+              "e3": "generic",
+              "e4": "generic",
+              "e7": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -476,13 +487,13 @@
             "confidence": 0.37,
             "probabilities": {
               "disabled": 0.02,
-              "enabled": 0.36,
-              "checked": 0.13,
+              "enabled": 0.41,
+              "checked": 0.1,
               "unchecked": 0.01,
-              "expanded": 0.01,
+              "expanded": 0,
               "collapsed": 0.01,
               "selected": 0.43,
-              "unselected": 0.01,
+              "unselected": 0,
               "pressed": 0.01,
               "unpressed": 0.01
             }
@@ -492,8 +503,11 @@
             "choice": "page",
             "confidence": 0.89,
             "probabilities": {
-              "e2": 0.03,
-              "page": 0.93,
+              "e1": 0.02,
+              "e3": 0.01,
+              "e4": 0.01,
+              "e7": 0.01,
+              "page": 0.91,
               "missing": 0.04
             }
           }
@@ -627,13 +641,13 @@
           "target": {
             "type": "choice",
             "choice": "none",
-            "confidence": 0.71,
+            "confidence": 0.69,
             "probabilities": {
               "e5": 0,
               "e8": 0.16,
-              "e9": 0.08,
+              "e9": 0.1,
               "e10": 0.01,
-              "none": 0.75,
+              "none": 0.73,
               "scroll": 0,
               "wait": 0
             }
@@ -641,7 +655,7 @@
         }
       }
     },
-    "7300754885e88601ebbbd6aba997dada81e0333f77241f151aaab43a68afb57e": {
+    "2e56cb8b1906ed516810aa56bc8d2486c2639edc94b937691815824b9ad4ae51": {
       "request": {
         "state": {
           "check": "the activation period should be \"2 weeks\"",
@@ -692,7 +706,10 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e2": "heading \"New campaign\" [level=1]",
+              "e1": "generic [active]",
+              "e3": "generic",
+              "e4": "generic",
+              "e7": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -705,12 +722,12 @@
           "kind": {
             "type": "choice",
             "choice": "value",
-            "confidence": 0.6,
+            "confidence": 0.44,
             "probabilities": {
-              "value": 0.68,
+              "value": 0.55,
               "presence": 0,
               "absence": 0,
-              "state": 0.32,
+              "state": 0.45,
               "fuzzy": 0
             }
           },
@@ -748,17 +765,20 @@
           "area": {
             "type": "choice",
             "choice": "page",
-            "confidence": 0.7,
+            "confidence": 0.51,
             "probabilities": {
-              "e2": 0.13,
-              "page": 0.8,
-              "missing": 0.07
+              "e1": 0.06,
+              "e3": 0.12,
+              "e4": 0.05,
+              "e7": 0.08,
+              "page": 0.59,
+              "missing": 0.1
             }
           }
         }
       }
     },
-    "38890b908bbc196fdb7c044d3cd95a034244daa65038d91bf0f900cba1e1188e": {
+    "6e72854d8d90e1c38249bb897a29995c5560fbea1b42fc39a5a598bcea788a1d": {
       "request": {
         "state": {
           "check": "the campaign status should be \"Scheduled\"",
@@ -810,8 +830,11 @@
             "type": "choice",
             "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
             "criteria": {
-              "e2": "heading \"New campaign\" [level=1]",
-              "e11": "paragraph value=\"Status: Draft\"",
+              "e1": "generic [active]",
+              "e3": "generic",
+              "e4": "generic",
+              "e7": "generic",
+              "e12": "generic",
               "page": "`check` names no specific area; anywhere on the page counts.",
               "missing": "`check` names a specific area, but no element in `ui` is that area."
             }
@@ -851,245 +874,32 @@
           "state": {
             "type": "choice",
             "choice": "selected",
-            "confidence": 0.89,
+            "confidence": 0.86,
             "probabilities": {
               "disabled": 0,
-              "enabled": 0.02,
-              "checked": 0.02,
+              "enabled": 0.03,
+              "checked": 0.03,
               "unchecked": 0.01,
               "expanded": 0,
               "collapsed": 0,
-              "selected": 0.9,
-              "unselected": 0.05,
+              "selected": 0.87,
+              "unselected": 0.06,
               "pressed": 0,
               "unpressed": 0
             }
           },
           "area": {
             "type": "choice",
-            "choice": "e11",
-            "confidence": 0.6,
+            "choice": "page",
+            "confidence": 0.8,
             "probabilities": {
-              "e2": 0.01,
-              "e11": 0.7,
-              "page": 0.29,
-              "missing": 0
-            }
-          }
-        }
-      }
-    },
-    "a01c89c0bf2f6204ed13644e94e3a10e3cf2029ffc94aec0bb40dcf27b22ca9c": {
-      "request": {
-        "state": {
-          "step": "I enter \"Autumn Sale\" as the campaign name",
-          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": [
-            "TYPE textbox \"Campaign name\" <- \"Autumn Sale\""
-          ]
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.98
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.65,
-            "probabilities": {
-              "e5": 0.07,
-              "e8": 0.01,
-              "e9": 0.09,
-              "e10": 0.12,
-              "none": 0.6900000000000001,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0.01
-            }
-          }
-        }
-      }
-    },
-    "66f69b6da8071574e3185e9ed92af20f2873f2c01265e1a063a403aba5592a8c": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e8",
-            "confidence": 1,
-            "probabilities": {
-              "e5": 0,
-              "e8": 1,
-              "e9": 0,
-              "e10": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "6fbda24416ca84c0efbbd0cec470b5f0816b86b3752baf0bac06adec8cb34f24": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": [
-            "SELECT combobox \"Activation period\" <- \"2 weeks\""
-          ]
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.99
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.54,
-            "probabilities": {
-              "e5": 0,
-              "e8": 0.27,
-              "e9": 0.11,
-              "e10": 0.02,
-              "none": 0.6,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "e4f16a515f2a8bed2e4007adb1d6c74079686081a924fe81307a8cb289eabec7": {
-      "request": {
-        "state": {
-          "step": "I schedule the campaign",
-          "ui": "  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e9",
-            "confidence": 1,
-            "probabilities": {
-              "e5": 0,
-              "e8": 0,
-              "e9": 1,
-              "e10": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
+              "e1": 0.01,
+              "e3": 0.03,
+              "e4": 0.01,
+              "e7": 0.02,
+              "e12": 0.07,
+              "page": 0.83,
+              "missing": 0.03
             }
           }
         }
