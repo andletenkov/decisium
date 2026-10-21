@@ -95,6 +95,22 @@ test("Browser: password fields are detected from the DOM; TYPE checks its effect
   }
 });
 
+test("Browser: SELECT and TYPE check their effect on the control the app re-rendered in place of the old one", async () => {
+  // Like a React list re-render: on change the control is replaced by a new element with the new value.
+  const b = await Browser.open(`data:text/html,<div id=w></div><script>
+    const draw = (v, t) => { w.innerHTML = '<select aria-label=Sort><option>A to Z</option><option>Price (low to high)</option></select>'
+      + '<input aria-label=Search>'; w.querySelector('select').value = v; w.querySelector('input').value = t;
+      w.querySelector('select').onchange = e => draw(e.target.value, t); w.querySelector('input').oninput = e => draw(v, e.target.value); };
+    draw('A to Z', '');</script>`);
+  try {
+    const ref = async (name: string) => (await b.observe()).elements.find(e => e.name === name)!.ref; // a fresh Observation per action, as in runStep
+    await b.execute({ verb: "SELECT", ref: await ref("Sort"), value: "Price (low to high)" });
+    await b.execute({ verb: "TYPE", ref: await ref("Search"), value: "bag" });
+  } finally {
+    await b.close();
+  }
+});
+
 test("stepValues pulls quoted strings and numbers with units", () => {
   assert.deepEqual(stepValues(`Create a campaign called "Autumn Sale" for 2 weeks`), ["Autumn Sale", "2 weeks"]);
   assert.deepEqual(stepValues(`Set the campaign's name to "Autumn Sale"`), ["Autumn Sale"]);

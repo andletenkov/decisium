@@ -28,6 +28,7 @@ export class Browser {
   private browser: PwBrowser;
   private page: Page;
   private inflight = 0;
+  private last?: Observation; // refs are valid for the latest Observation only
   readonly consoleErrors: string[] = [];
   private constructor(browser: PwBrowser, page: Page) {
     this.browser = browser;
@@ -135,7 +136,7 @@ export class Browser {
       if (kind === "secret") secret.add(ref);
       else if (kind === "editable" && role === "combobox") editable.add(ref);
     }
-    return parseSnapshot(markCurrent(snapshot, await this.currentLinks(snapshot)), secret, editable);
+    return (this.last = parseSnapshot(markCurrent(snapshot, await this.currentLinks(snapshot)), secret, editable));
   }
 
   /**
@@ -164,18 +165,26 @@ export class Browser {
     else {
       const target = this.page.locator(`aria-ref=${ref}`);
       if (verb === "CLICK") await target.click(opts);
-      else if (verb === "TYPE") {
-        await target.fill(value, opts);
-        // Message omits the values: the field may be a password.
-        if ((await target.inputValue(opts)) !== value) throw new Error("field does not hold the typed value after TYPE");
-      } else {
-        await target.selectOption({ label: value }, opts);
-        const shown = await target.evaluate(el => (el as HTMLSelectElement).selectedOptions[0]?.label, undefined, opts);
-        if (shown !== value) throw new Error(`select shows "${shown}" after SELECT "${value}"`);
+      else {
+        // The app may replace the control while re-rendering (a sorted list redrawn on change): the effect is then
+        // read from the control with the same role and name.
+        const el = this.last?.elements.find(e => e.ref === ref);
+        const now = async () => (await target.count()) || !el ? target
+          : this.page.getByRole(el.role as Parameters<Page["getByRole"]>[0], { name: el.name, exact: true }).first();
+        if (verb === "TYPE") {
+          await target.fill(value, opts);
+          // Message omits the values: the field may be a password.
+          if ((await (await now()).inputValue(opts)) !== value) throw new Error("field does not hold the typed value after TYPE");
+        } else {
+          await target.selectOption({ label: value }, opts);
+          const shown = await (await now()).evaluate(el => (el as HTMLSelectElement).selectedOptions[0]?.label, undefined, opts);
+          if (shown !== value) throw new Error(`select shows "${shown}" after SELECT "${value}"`);
+        }
       }
     }
     await this.settle();
   }
+
 
   /**
    * Waits until the Observation differs from `since` (true), the timeout passes, or the page cannot change on its
