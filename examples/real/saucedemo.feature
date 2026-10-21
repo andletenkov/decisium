@@ -3,7 +3,7 @@ Feature: Sauce Demo shop (login, sorting, cart, checkout validation)
   Demo credentials are listed on the login page.
 
   Scenario: A locked out user cannot log in
-    When I log in as "locked_out_user" with password "secret_sauce"
+    When I try to log in as "locked_out_user" with password "secret_sauce"
     Then the error should say "Sorry, this user has been locked out."
 
   Scenario: Sorting by price puts the cheapest product first
