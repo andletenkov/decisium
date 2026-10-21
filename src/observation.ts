@@ -142,3 +142,16 @@ export function assertableText(el: Element): string | undefined {
   if (ACTIONABLE.has(el.role) && el.role !== "link") return el.value || undefined; // a link's text is what it shows
   return el.value || el.name;
 }
+
+/**
+ * Adds the page URL and title as two readable pseudo-elements (refs `url`, `title`) on top of `ui`, so a value check
+ * can pick them as the subject (task 0025). Not actionable, and not in `pageText`: text only in the URL is not shown.
+ */
+export function withPage(obs: Observation, url: string, title: string): Observation {
+  const page = ([["url", url], ["title", title]] as const).map(([role, value]): Element => ({
+    ref: role, role, name: "", value, state: "", secret: false, verb: "CLICK", options: [], text: value,
+    line: `${role} value="${value.length > 60 ? value.slice(0, 60) + "…" : value}"`,
+  }));
+  const top = page.map(e => cap(`- ${e.role}: ${e.value}`)).join("\n");
+  return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [...page, ...obs.readable] };
+}

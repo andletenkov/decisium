@@ -87,7 +87,7 @@ test("Browser: password fields are detected from the DOM; TYPE checks its effect
   const b = await Browser.open(`data:text/html,<label>Password <input type=password value=hunter2></label><label>Code <input maxlength=3></label>`);
   try {
     const obs = await b.observe();
-    assert.ok(!obs.text.includes("hunter2"));
+    assert.ok(!obs.text.split("\n").slice(1).join("\n").includes("hunter2")); // line 1: the data: URL holds the markup
     const code = obs.elements.find(e => e.name === "Code")!;
     await assert.rejects(b.execute({ verb: "TYPE", ref: code.ref, value: "12345" }), /does not hold the typed value/);
   } finally {
@@ -614,7 +614,7 @@ test("Enter: offered only while a text field has focus; submits what was typed",
     const decider: Decider = {
       ...oracle,
       async turn(_s, obs) {
-        if (/Results for/.test(obs.text)) return { done: 1, target: sure("none") };
+        if (/Results for/.test(obs.pageText)) return { done: 1, target: sure("none") };
         const box = obs.elements.find(e => e.name === "Search")!;
         if (!box.value) return { done: 0, target: sure(box.ref) };
         assert.ok("enter" in pageActions(obs), "field focused after typing");
@@ -624,7 +624,7 @@ test("Enter: offered only while a text field has focus; submits what was typed",
     };
     const r = await runStep(`search for "playwright"`, b, decider, () => {});
     assert.equal(r.outcome, "DONE");
-    assert.match((await b.observe()).text, /Results for playwright/);
+    assert.match((await b.observe()).pageText, /Results for playwright/);
   } finally {
     await b.close();
   }
@@ -684,4 +684,25 @@ test("run directory: runs started in the same millisecond get their own director
   const root = mkdtempSync(`${tmpdir()}/runs-`);
   const paths = Array.from({ length: 5 }, () => new RunDir(root).path);
   assert.equal(new Set(paths).size, 5, paths.join(", "));
+});
+
+test("Browser: the page URL and title are readable subjects, not actionable and not page text", async () => {
+  const b = await Browser.open(`data:text/html,<title>Ada Lovelace - Wikipedia</title><h1>Ada</h1>`);
+  try {
+    const obs = await b.observe();
+    const url = obs.readable.find(e => e.role === "url")!, title = obs.readable.find(e => e.role === "title")!;
+    assert.match(url.value, /^data:text\/html/);
+    assert.equal(title.value, "Ada Lovelace - Wikipedia");
+    assert.match(obs.text.split("\n")[0], /^- url: data:/);
+    assert.equal(obs.text.split("\n")[1], "- title: Ada Lovelace - Wikipedia");
+    assert.ok(!obs.elements.some(e => e === url || e === title));
+    assert.ok(!obs.pageText.includes("Wikipedia"));
+    const run = (s: string, ref: string) => runAssertion(s, b, assessing("value", () => ({ subject: sure(ref) })), () => {}).then(r => r.outcome);
+    assert.equal(await run(`the title should be "ada lovelace"`, title.ref), "PASSED");
+    assert.equal(await run(`the URL should contain "<title>"`, url.ref), "PASSED");
+    assert.equal(await run(`the URL should contain "<TITLE>"`, url.ref), "ASSERTION_FAILED"); // case-sensitive
+    assert.equal(await run(`the URL should contain "/wiki/Ada_Lovelace"`, url.ref), "ASSERTION_FAILED");
+  } finally {
+    await b.close();
+  }
 });

@@ -16,3 +16,12 @@ Feature: Wikipedia (real content, search, navigation)
     And I switch the article language to Deutsch
     Then the article title should be "Ada Lovelace"
     And I should see "britische Mathematikerin"
+
+  Scenario: The article URL names the article
+    When I open the "Ada Lovelace" article through the Wikipedia search
+    Then the URL should contain "/wiki/Ada_Lovelace"
+
+  # Should FAIL: still on the search results page.
+  Scenario: The search page URL does not name the article
+    When I search Wikipedia for "Ada Lovelace computer pioneer" without opening a result
+    Then the URL should contain "/wiki/Ada_Lovelace"

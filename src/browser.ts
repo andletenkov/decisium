@@ -1,6 +1,6 @@
 // Browser runtime: the only module that knows about Playwright. Swap for CDP behind the same surface.
 import { chromium, type Browser as PwBrowser, type Page } from "playwright";
-import { parseSnapshot, type Observation, type Verb } from "./observation.ts";
+import { parseSnapshot, withPage, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
   verb: Verb | "SCROLL" | "WAIT" | "ENTER";
@@ -150,7 +150,8 @@ export class Browser {
       else if (kind === "editable" && role === "combobox") editable.add(ref);
     }
     const marked = markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed());
-    return (this.last = parseSnapshot(marked, secret, editable));
+    const title = await this.page.title().catch(() => ""); // mid-navigation
+    return (this.last = withPage(parseSnapshot(marked, secret, editable), this.page.url(), title));
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
