@@ -1,10 +1,21 @@
 // cucumber-js console formatter: one ✓/✗ line per Step, the reason under a failed one, and an end-of-run Failures block.
 import { Formatter, formatterHelpers, Status, type IFormatterOptions } from "@cucumber/cucumber";
 import type { Envelope } from "@cucumber/messages";
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { stepKind, urlFromTags } from "./feature.ts";
-import { failureReport, KIND, MARGINAL, MARGINAL_HINT, parseOutcome } from "./report.ts";
+import { agentReport, failureReport, KIND, MARGINAL, MARGINAL_HINT, parseOutcome, stepEvents, type AgentFailure, type TraceEvent } from "./report.ts";
+
+const env = process.env;
+/** Shell-quoted for a copy-paste command line. */
+const q = (s: string) => /^[\w./:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`;
+/** The command that reruns one scenario (or the one command-line Step) with this run's options. */
+function rerun(target: string[]): string {
+  const cli = relative(process.cwd(), fileURLToPath(import.meta.resolve("./cli.ts")));
+  const flags = [env.DESCISIUM_URL && `--url ${q(env.DESCISIUM_URL)}`, env.DESCISIUM_JUDGED === "1" && "--judged", env.DESCISIUM_STRICT === "1" && "--strict"];
+  return ["node", cli, ...target.map(q), ...flags].filter(Boolean).join(" ");
+}
 
 export default class DescisiumFormatter extends Formatter {
   static readonly documentation = "Descisium console output";
@@ -12,7 +23,7 @@ export default class DescisiumFormatter extends Formatter {
   constructor(options: IFormatterOptions) {
     super(options);
     const scenarios: { name: string; passed: boolean }[] = [];
-    const failures: (() => string)[] = []; // built at the end: the Playwright trace is saved after the step
+    const failures: (() => Omit<AgentFailure, "events">)[] = []; // built at the end: the Playwright trace is saved after the step
     const warnings: string[] = [];
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
       if (e.testCaseStarted) {
@@ -43,19 +54,38 @@ export default class DescisiumFormatter extends Formatter {
         if (!r) return;
         const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[step.astNodeIds[0]]?.location.line;
         const screenshot = attachments.findLast(a => a.mediaType === "image/png")?.fileName;
-        const where = process.env.DESCISIUM_STEP === "1" ? "command line" : `${pickle.uri}:${line}`;
+        const cmdLine = env.DESCISIUM_STEP === "1";
+        const where = cmdLine ? "command line" : `${pickle.uri}:${line}`;
+        // The scenario's own line; for an Outline, its Examples row (the last AST node).
+        const scenarioLine = formatterHelpers.GherkinDocumentParser.getGherkinScenarioLocationMap(gherkinDocument)[pickle.astNodeIds.at(-1)!]?.line;
         failures.push(() => {
           const trace = screenshot && join(dirname(screenshot), "playwright-trace.zip");
-          return failureReport(where, pickle.name, kind, step.text, r, screenshot, trace && existsSync(trace) ? trace : undefined);
+          const ui = screenshot && join(dirname(screenshot), "ui.txt");
+          return {
+            where, scenario: pickle.name, kind, step: step.text, ...r, screenshot,
+            trace: trace && existsSync(trace) ? trace : undefined, ui: ui && existsSync(ui) ? ui : undefined,
+            rerun: rerun(cmdLine ? ["step", step.text] : ["run", `${pickle.uri}:${scenarioLine}`]),
+          };
         });
       } else if (e.testCaseFinished && !e.testCaseFinished.willBeRetried) {
         const { pickle, worstTestStepResult } = this.eventDataCollector.getTestCaseAttempt(e.testCaseFinished.testCaseStartedId);
         scenarios.push({ name: pickle.name, passed: worstTestStepResult.status === Status.PASSED });
       } else if (e.testRunFinished) {
-        if (failures.length) this.log(`\n${"─".repeat(60)}\nFailures\n\n${failures.map(f => f()).join("\n\n")}\n`);
+        const failed = failures.map(f => f());
+        if (failed.length) this.log(`\n${"─".repeat(60)}\nFailures\n\n${failed.map(f => failureReport(f.where, f.scenario, f.kind, f.step, f, f.screenshot, f.trace)).join("\n\n")}\n`);
         if (warnings.length) this.log(`\n${"─".repeat(60)}\nMarginal passes\n\n${warnings.join("\n\n")}\n\nWhat to do: ${MARGINAL_HINT}\n`);
-        const failed = scenarios.filter(s => !s.passed).map(s => s.name);
-        this.log(`\n${scenarios.length - failed.length}/${scenarios.length} scenarios passed${failed.length ? `; failed: ${failed.join(", ")}` : ""}\n`);
+        const failedNames = scenarios.filter(s => !s.passed).map(s => s.name);
+        this.log(`\n${scenarios.length - failedNames.length}/${scenarios.length} scenarios passed${failedNames.length ? `; failed: ${failedNames.join(", ")}` : ""}\n`);
+        // The run directory: the CLI's, or (raw cucumber-js) the one the screenshots are in.
+        const shot = failed.find(f => f.screenshot)?.screenshot;
+        const runDir = env.DESCISIUM_RUN_DIR || (shot && dirname(dirname(shot)));
+        if (failed.length && runDir && env.DESCISIUM_NO_AGENT_REPORT !== "1") {
+          const tracePath = join(runDir, "trace.jsonl");
+          const events: TraceEvent[] = existsSync(tracePath) ? readFileSync(tracePath, "utf8").trim().split("\n").filter(Boolean).map(l => JSON.parse(l)) : [];
+          const path = join(runDir, "report.md");
+          writeFileSync(path, agentReport(failed.map(f => ({ ...f, events: stepEvents(events, f.scenario, f.step) }))));
+          this.log(`Agent report: ${path}\n`);
+        }
       }
     });
   }

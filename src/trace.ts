@@ -14,7 +14,7 @@ export class RunDir {
   #scenario = "";
   #dir = "";
   #shot = 0;
-
+  #ui = ""; // the scenario's last Observation, written next to the screenshots on failure
   /** `existing`: a run directory the CLI created, shared by parallel workers. */
   constructor(root = "runs", existing?: string) {
     if (existing) { mkdirSync(existing, { recursive: true }); this.path = existing; return; }
@@ -57,6 +57,7 @@ export class RunDir {
   scenario(name: string): string {
     this.#scenario = name;
     this.#shot = 0;
+    this.#ui = "";
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
     // Numbered in start order across parallel workers: claim a number with an exclusive mkdir, then name the folder.
     mkdirSync(join(this.path, ".claimed"), { recursive: true });
@@ -78,6 +79,7 @@ export class RunDir {
         const screenshot = `${String(++this.#shot).padStart(3, "0")}.png`;
         await b.screenshot(join(this.#dir, screenshot));
         this.event("observe", { screenshot, ui: obs.text });
+        this.#ui = obs.text;
         return obs;
       },
       execute: async (a: Action) => {
@@ -102,8 +104,9 @@ export class RunDir {
     };
   }
 
-  /** On failure: console errors next to the screenshots (the Playwright trace is saved by Browser.close). */
+  /** On failure: console errors and the last page text next to the screenshots (the Playwright trace is saved by Browser.close). */
   failure(errors: string[]) {
     writeFileSync(join(this.#dir, "console-errors.txt"), errors.length ? errors.join("\n") + "\n" : "(none)\n");
+    if (this.#ui) writeFileSync(join(this.#dir, "ui.txt"), this.#ui + "\n");
   }
 }
