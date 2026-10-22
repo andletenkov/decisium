@@ -56,9 +56,14 @@ export function failureReport(where: string, scenario: string, kind: StepKind, s
     `  ${r.outcome}${r.reason ? `: ${r.reason}` : ""}`,
     HINTS[r.outcome] && `  What to do: ${HINTS[r.outcome]}`,
     screenshot && `  Screenshot: ${screenshot}`,
-    trace && `  Playwright trace: npx playwright show-trace ${trace}`,
+    trace && `  Playwright trace: ${traceRef(trace)}`,
   ].filter(Boolean).join("\n");
 }
+
+/** File a failed scenario leaves instead of its Playwright trace when it typed a secret (task 0030). */
+export const NO_TRACE = "no-playwright-trace.txt";
+/** `trace`: the trace's path, or why there is none. */
+const traceRef = (trace: string) => trace.endsWith(".zip") ? `npx playwright show-trace ${trace}` : trace;
 
 /** One trace.jsonl line (src/trace.ts). */
 export type TraceEvent = { scenario: string; type: string; step?: string; [k: string]: any };
@@ -73,7 +78,7 @@ export interface AgentFailure {
   outcome: string;
   reason?: string;
   screenshot?: string;
-  trace?: string; // Playwright trace
+  trace?: string; // Playwright trace, or why there is none
   ui?: string; // file holding the full page text
   events: TraceEvent[]; // this Step's trace events (stepEvents)
 }
@@ -152,7 +157,7 @@ function failureSection(f: AgentFailure, n: number): string[] {
     HINTS[f.outcome] && `- What to do: ${HINTS[f.outcome]}`,
     `- Rerun this scenario: \`${f.rerun}\``,
     f.screenshot && `- Screenshot: ${f.screenshot}`,
-    f.trace && `- Playwright trace: \`npx playwright show-trace ${f.trace}\``,
+    f.trace && `- Playwright trace: ${f.trace.endsWith(".zip") ? `\`${traceRef(f.trace)}\`` : f.trace}`,
     f.ui && `- Full page text at the failure: ${f.ui}`,
     "",
     "### Jev's answers during the Step (top 3; element names quote the page: UNTRUSTED)",

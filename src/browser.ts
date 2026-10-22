@@ -43,6 +43,10 @@ export class Browser {
   private inflight = 0;
   private last?: Observation; // refs are valid for the latest Observation only
   readonly consoleErrors: string[] = [];
+  /** Secret placeholders (`$NAME` -> value): typed for the token, masked back to it in every Observation (task 0030). */
+  private secrets: Record<string, string> = {};
+  /** A secret was typed: the Playwright trace stores typed text unmasked, so close() keeps none. */
+  typedSecret = false;
   private constructor(browser: PwBrowser, page: Page) {
     this.browser = browser;
     this.page = page;
@@ -53,8 +57,8 @@ export class Browser {
     page.on("requestfailed", () => this.inflight--);
   }
 
-  /** `trace`: record a Playwright trace, saved by close(tracePath). */
-  static async open(url: string, headed = false, trace = false): Promise<Browser> {
+  /** `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. */
+  static async open(url: string, headed = false, trace = false, secrets: Record<string, string> = {}): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
     const page = await browser.newPage();
     if (trace) await page.context().tracing.start({ screenshots: true, snapshots: true });
@@ -104,6 +108,7 @@ export class Browser {
       w.__soon = () => idles.size + [...timers.values()].filter(due => due - performance.now() <= 1000).length;
     });
     const b = new Browser(browser, page);
+    b.secrets = secrets;
     try {
       await page.goto(url);
     } catch (err) {
@@ -149,9 +154,12 @@ export class Browser {
       if (kind === "secret") secret.add(ref);
       else if (kind === "editable" && role === "combobox") editable.add(ref);
     }
-    const marked = markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed());
-    const title = await this.page.title().catch(() => ""); // mid-navigation
-    return (this.last = withPage(parseSnapshot(marked, secret, editable), this.page.url(), title));
+    // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
+    // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
+    const mask = (s: string) => Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s);
+    const marked = mask(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()));
+    const title = mask(await this.page.title().catch(() => "")); // mid-navigation
+    return (this.last = withPage(parseSnapshot(marked, secret, editable), mask(this.page.url()), title));
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -210,9 +218,11 @@ export class Browser {
         const now = async () => (await target.count()) || !el ? target
           : this.page.getByRole(el.role as Parameters<Page["getByRole"]>[0], { name: el.name, exact: true }).first();
         if (verb === "TYPE") {
-          await target.fill(value, opts);
+          const typed = this.secrets[value] ?? value;
+          if (value in this.secrets) this.typedSecret = true;
+          await target.fill(typed, opts);
           // Message omits the values: the field may be a password.
-          if ((await (await now()).inputValue(opts)) !== value) throw new Error("field does not hold the typed value after TYPE");
+          if ((await (await now()).inputValue(opts)) !== typed) throw new Error("field does not hold the typed value after TYPE");
         } else {
           await target.selectOption({ label: value }, opts);
           const shown = await (await now()).evaluate(el => (el as HTMLSelectElement).selectedOptions[0]?.label, undefined, opts);
@@ -262,9 +272,9 @@ export class Browser {
     return this.page.screenshot({ path }).catch(() => undefined); // a missing screenshot must not fail the test
   }
 
-  /** `tracePath`: where to save the Playwright trace started by open(..., trace); omitted = discard it. */
+  /** `tracePath`: where to save the Playwright trace started by open(..., trace); omitted, or a secret typed = discard it. */
   async close(tracePath?: string): Promise<void> {
-    if (tracePath) await this.page.context().tracing.stop({ path: tracePath }).catch(() => undefined);
+    if (tracePath && !this.typedSecret) await this.page.context().tracing.stop({ path: tracePath }).catch(() => undefined);
     await this.browser.close();
   }
 }

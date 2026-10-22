@@ -125,6 +125,9 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
 /** Double-quoted strings in a Step. Single quotes are left alone so apostrophes ("campaign's") don't open a quote. */
 export const quoted = (step: string): string[] => [...step.matchAll(/["“]([^"”]+)["”]/g)].map(m => m[1]);
 
+/** A quoted `"$NAME"` is a secret placeholder (task 0030): the variable's name, else undefined. */
+export const placeholder = (value: string) => /^\$([A-Za-z_]\w*)$/.exec(value)?.[1];
+
 /** Candidate values a Step can supply: quoted strings and numbers with an optional unit word. */
 export function stepValues(step: string): string[] {
   const numbers = [...step.matchAll(/\b\d+(?:[.,]\d+)?(?:\s+[a-z]+)?/gi)].map(m => m[0]);

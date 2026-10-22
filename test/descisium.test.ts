@@ -95,6 +95,27 @@ test("Browser: password fields are detected from the DOM; TYPE checks its effect
   }
 });
 
+test("Browser: a secret placeholder is typed as its value, masked back to the token everywhere, and drops the trace", async () => {
+  const { mkdtempSync, existsSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  // The page echoes what was typed, as a greeting (not a password field: nothing else would mask it).
+  const b = await Browser.open(`data:text/html,<label>User <input oninput="o.textContent='Hi '+this.value"></label><p id=o></p>`,
+    false, true, { $APP_USER: "s3cr3t-user" });
+  try {
+    const user = (await b.observe()).elements.find(e => e.name === "User")!;
+    await b.execute({ verb: "TYPE", ref: user.ref, value: "$APP_USER" }); // effect check compares the real value
+    const obs = await b.observe();
+    assert.ok(!obs.text.includes("s3cr3t") && !obs.pageText.includes("s3cr3t"));
+    assert.match(obs.text, /textbox "User".*\$APP_USER/);
+    assert.match(obs.pageText, /Hi \$APP_USER/);
+    assert.ok(b.typedSecret);
+  } finally {
+    const trace = `${mkdtempSync(`${tmpdir()}/descisium-`)}/t.zip`;
+    await b.close(trace);
+    assert.ok(!existsSync(trace));
+  }
+});
+
 test("Browser: a collapsed control lists the hidden entries it holds; checks cannot read them", async () => {
   const b = await Browser.open(`data:text/html,<ul><li><a href=b>Biography</a>
     <button aria-expanded=false aria-controls=sub>Toggle Biography subsection</button>

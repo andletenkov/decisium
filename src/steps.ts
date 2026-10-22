@@ -8,8 +8,8 @@ import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.ts";
 import { stepKind, toUrl, urlFromTags, type StepKind } from "./feature.ts";
 import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
-import { quoted } from "./observation.ts";
-import { MARGINAL, outcomeMessage } from "./report.ts";
+import { placeholder, quoted } from "./observation.ts";
+import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 
@@ -62,10 +62,18 @@ Before(async function (this: Scenario, { pickle }) {
     throw infra(err);
   }
   this.decider = deciders.get(pickle.uri)!.decider;
+  // Secret placeholders ("$NAME"): a missing variable is a setup error, not a failed Step (task 0030).
+  const secrets: Record<string, string> = {};
+  for (const token of pickle.steps.flatMap(s => quoted(s.text))) {
+    const name = placeholder(token);
+    if (!name) continue;
+    if (!env[name]) throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
+    secrets[token] = env[name];
+  }
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
   this.dir = run.scenario(pickle.name);
   try {
-    this.browser = await Browser.open(toUrl(url), opt("HEADED"), true); // fresh browser per scenario: no shared state
+    this.browser = await Browser.open(toUrl(url), opt("HEADED"), true, secrets); // fresh browser per scenario: no shared state
   } catch (err) {
     throw infra(err);
   }
@@ -119,6 +127,7 @@ After(async function (this: Scenario, { result }) {
   if (!this.browser) return;
   const ok = result?.status === Status.PASSED;
   if (!ok) run.failure(this.browser.consoleErrors);
+  if (!ok && this.browser.typedSecret) writeFileSync(join(this.dir, NO_TRACE), "The scenario typed a secret value; Playwright traces store typed text unmasked, so none is kept.\n");
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
   run.event("result", { passed: ok });
   for (const { cassette } of deciders.values()) cassette?.save(); // per scenario, so a crash keeps what was recorded

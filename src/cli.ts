@@ -41,8 +41,10 @@ Runs inside cucumber-js (raw \`npx cucumber-js <file>\` works too, see cucumber.
 Qase: tag scenarios @QaseID=<id> and set QASE_MODE=testops, QASE_TESTOPS_API_TOKEN, QASE_TESTOPS_PROJECT
 (QASE_TESTOPS_RUN_ID to report into an existing run). QASE_MODE=report writes the results to build/qase-report.
 
-Secrets: what a password field holds is masked everywhere, but a password quoted in a Step is part of the Step text,
-so it is sent to Jev, recorded in the cassette and written to log.txt. Use throwaway credentials in feature files.
+Secrets: write "$NAME" in a Step's quotes (e.g. with password "$SAUCE_PASSWORD"): Jev, logs, trace and cassette see only
+the token; the value comes from the environment (or .env) and is typed into the page. Wherever the page shows it, it is
+masked back to the token. A scenario that typed one keeps no Playwright trace (it would store the value). A value
+written literally in a Step is sent to Jev, recorded in the cassette and written to log.txt.
 
 Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`;
 

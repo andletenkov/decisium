@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stepKind, urlFromTags } from "./feature.ts";
-import { agentReport, failureReport, KIND, MARGINAL, MARGINAL_HINT, parseOutcome, stepEvents, type AgentFailure, type TraceEvent } from "./report.ts";
+import { agentReport, failureReport, KIND, MARGINAL, MARGINAL_HINT, NO_TRACE, parseOutcome, stepEvents, type AgentFailure, type TraceEvent } from "./report.ts";
 
 const env = process.env;
 /** Shell-quoted for a copy-paste command line. */
@@ -61,9 +61,10 @@ export default class DescisiumFormatter extends Formatter {
         failures.push(() => {
           const trace = screenshot && join(dirname(screenshot), "playwright-trace.zip");
           const ui = screenshot && join(dirname(screenshot), "ui.txt");
+          const noTrace = screenshot && join(dirname(screenshot), NO_TRACE);
           return {
             where, scenario: pickle.name, kind, step: step.text, ...r, screenshot,
-            trace: trace && existsSync(trace) ? trace : undefined, ui: ui && existsSync(ui) ? ui : undefined,
+            trace: trace && existsSync(trace) ? trace : noTrace && existsSync(noTrace) ? `not kept: ${readFileSync(noTrace, "utf8").trim()}` : undefined, ui: ui && existsSync(ui) ? ui : undefined,
             rerun: rerun(cmdLine ? ["step", step.text] : ["run", `${pickle.uri}:${scenarioLine}`]),
           };
         });
