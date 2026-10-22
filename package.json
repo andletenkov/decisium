@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --env-file-if-exists=.env --test test/*.test.ts",
     "typecheck": "tsc -p .",
-    "example:server": "node examples/campaign-manager/server.ts"
+    "example:server": "node examples/campaign-manager/server.ts",
+    "cookbook": "node scripts/cookbook.ts"
   },
   "keywords": [],
   "author": "",

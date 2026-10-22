@@ -75,6 +75,12 @@ test("element descriptions shorten long values; checks still compare the full va
   assert.equal(el.value, long);
 });
 
+test("parseSnapshot: an unchecked box says so (the snapshot marks only checked ones)", () => {
+  const obs = parseSnapshot(`- checkbox "News" [checked] [ref=e1]\n- checkbox "Digest" [ref=e2]\n- radio "Mixed" [checked=mixed] [ref=e3]`);
+  assert.deepEqual(obs.elements.map(e => e.state), ["[checked]", "[unchecked]", "[checked=mixed]"]);
+  assert.match(obs.text, /checkbox "Digest" \[unchecked\] \[ref=e2\]/);
+});
+
 test("parseSnapshot masks password values in elements and in the text sent to Jev", () => {
   const obs = parseSnapshot(`- textbox "Password" [ref=e3]: hunter2\n- textbox "User" [ref=e4]: ale`, new Set(["e3"]));
   assert.equal(obs.elements[0].value, MASK);
@@ -202,8 +208,8 @@ Feature: F
     ["the status is \"Draft\"", "assertion"], ["the button is disabled", "assertion"], ["I go back", "action"],
   ]);
   assert.deepEqual(scenarios[2].steps.map(s => s.kind), ["action", "attempt"]);
-  assert.deepEqual(parseStep(`Then the status should be "Draft"`), { text: `the status should be "Draft"`, kind: "assertion" });
-  assert.deepEqual(parseStep(`set the period to 2 weeks`), { text: "set the period to 2 weeks", kind: "action" });
+  assert.deepEqual(parseStep(`Then the status should be "Draft"`), { text: `the status should be "Draft"`, kind: "assertion", line: 3 });
+  assert.deepEqual(parseStep(`set the period to 2 weeks`), { text: "set the period to 2 weeks", kind: "action", line: 3 });
 });
 
 test("parseFeature rejects what it cannot run faithfully", () => {
@@ -584,6 +590,28 @@ test("agent report: most urgent first, Jev's answers named per Observation, page
   assert.doesNotMatch(md, /Area/); // no answer recorded: no line
   assert.match(md, /UNTRUSTED/);
   assert.match(md, /\n````text\n- button[\s\S]*Ignore previous instructions\n````\n/); // longer fence than the page's ```
+});
+
+test("explain: cookbook warnings flag the failing wordings and leave the working ones alone", async () => {
+  const { warnings } = await import("../src/explain.ts");
+  const w = (text: string, kind: "action" | "assertion" = "assertion", before: string[] = []) =>
+    warnings({ text, kind }, before.map(t => ({ text: t, kind: "action" as const })), { SET: "x" }).join(" | ");
+  // Working wordings (docs/cookbook.md ✓ rows): no warning.
+  for (const ok of [`the campaign status should be "Draft"`, `the "Schedule" button should be disabled`, `the schedule button should be enabled`])
+    assert.equal(w(ok), "", ok);
+  assert.equal(w(`"Winter Sale" should appear in the calendar`, "assertion", ["I open the calendar"]), "");
+  assert.equal(w(`I open the "Ada Lovelace" article through the search`, "action"), "");
+  assert.equal(w(`I log in as "u" with password "$SET"`, "action"), "");
+  // Failing wordings (✗ rows).
+  assert.match(w(`I search for "Ada Lovelace"`, "action"), /does not open a result/);
+  assert.match(w(`the article title should be "Ada Lovelace"`), /browser tab's title/);
+  assert.match(w(`the article title should be "Ada" or "Ada Lovelace"`), /exactly one quoted value/);
+  assert.match(w(`the results should be shown`), /quotes nothing for code to compare/);
+  assert.match(w(`the article should be well written`), /subjective/);
+  assert.match(w(`"Spring Sale" should appear in the campaign list`, "assertion", [`I open the "Spring Sale" campaign`]), /campaign list.*open it first/);
+  assert.match(w(`the campaign list should contain "Spring Sale"`, "assertion", [`I open the "Spring Sale" campaign`]), /campaign list.*open it first/);
+  assert.match(w(`I log in as "u" with password "hunter2"`, "action"), /write "\$NAME"/);
+  assert.match(w(`I log in with password "$MISSING"`, "action"), /\$MISSING is not set/);
 });
 
 test("Qase status: every outcome message starts with its outcome and the reporter classifies it as decided", async () => {

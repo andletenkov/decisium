@@ -54,7 +54,10 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
   let pageText = "";
   let lastCombobox: { el: Element; indent: number } | undefined;
 
-  for (const raw of snapshot.split("\n")) {
+  for (let raw of snapshot.split("\n")) {
+    // The snapshot marks only checked boxes. Without a mark for the other state, Jev never read "uncheck X" as done
+    // (task 0031: 8 clicks, then STEP_TIMEOUT).
+    if (/^\s*- (checkbox|radio|switch|menuitemcheckbox|menuitemradio)\b/.test(raw) && !/\[checked/.test(raw)) raw = raw.replace(" [ref=", " [unchecked] [ref=");
     const m = LINE.exec(raw);
     // `/url` lines repeat what the link's name already says; browser.ts reads urls from the raw snapshot.
     if (!m) { if (raw.trim() && !/^\s*- \/url:/.test(raw)) kept.push(cap(raw)); continue; }

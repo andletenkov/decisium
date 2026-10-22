@@ -9,6 +9,7 @@ import { RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { qaseOn, qasePreflight } from "./qase.ts";
 import { doctor } from "./doctor.ts";
+import { explain } from "./explain.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 
@@ -17,6 +18,7 @@ const USAGE = `Usage:
   descisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>] [--reporter junit|json[:path]]
                 [--parallel <n|auto>] [--no-agent-report] [-v] [--debug]
   descisium doctor [<file.feature>...]
+  descisium explain <file.feature>...
 
 The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
@@ -28,6 +30,8 @@ the scenario (or Examples row) at that line.
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
 doctor: checks Node, Chromium, TYPESAFE_API_KEY (one tiny Jev call) and Qase if enabled; given features, also opens
   every start URL.
+explain: no browser, no Jev. Per Step: its kind, the quoted values, secret placeholders, and warnings for wordings
+  docs/cookbook.md shows failing.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 --strict: a check that passes on a barely-confident Jev answer (shown as "marginal pass") fails as AMBIGUOUS.
@@ -63,6 +67,15 @@ async function main(): Promise<number> {
   });
   const [cmd, arg] = positionals;
   if (cmd === "doctor") return doctor(positionals.slice(1));
+  if (cmd === "explain" && arg) {
+    try {
+      console.log(positionals.slice(1).map(f => explain(f)).join("\n\n"));
+      return 0;
+    } catch (err) {
+      console.error((err as Error).message);
+      return 2;
+    }
+  }
   let files: string[];
   let scenarios: Scenario[];
   try {

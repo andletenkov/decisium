@@ -10,6 +10,7 @@ export type StepKind = "action" | "attempt" | "assertion";
 export interface ParsedStep {
   text: string;
   kind: StepKind;
+  line?: number; // in the .feature file (a Background step: its own line)
 }
 
 export interface Scenario {
@@ -38,6 +39,8 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   const empty = pickles.find(p => !p.steps.length);
   if (empty) throw new Error(`Scenario "${empty.name}" has no steps (lines without Given/When/Then/And/But are read as description)`);
   if (!pickles.length) throw new Error("No scenarios found");
+  const lines = new Map((doc.feature?.children ?? []).flatMap(c => c.rule ? c.rule.children : [c])
+    .flatMap(c => (c.background ?? c.scenario)?.steps ?? []).map(s => [s.id, s.location.line]));
   return pickles.map(pickle => ({
     name: pickle.name,
     tags: pickle.tags.map(t => t.name),
@@ -45,7 +48,7 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
     steps: pickle.steps.map(step => {
       // Ignoring an attached table/doc string would silently run a different test than the one written.
       if (step.argument) throw new Error(`Step "${step.text}" has a data table or doc string; not supported yet`);
-      return { text: step.text, kind: stepKind(step) };
+      return { text: step.text, kind: stepKind(step), line: lines.get(step.astNodeIds[0]) };
     }),
   }));
 }

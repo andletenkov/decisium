@@ -1,7 +1,7 @@
 // cucumber-js support code (ADR 0003): one catch-all step definition runs every Step through Jev; hooks give each
 // scenario a fresh browser, its run-directory folder, the feature's cassette and an empty memory.
 // Options come from DESCISIUM_* env (set by `descisium run`), so raw `npx cucumber-js` works too.
-import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
+import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Browser } from "./browser.ts";
@@ -34,6 +34,7 @@ class Scenario extends World {
   decider!: Decider;
   dir = "";
   kind: StepKind = "action";
+  at = ""; // file:line of the running Step, in its trace event (scripts/cookbook.ts)
   earlier: Record<string, string> = {}; // memory: quoted value -> the Step that named it
 }
 setWorldConstructor(Scenario);
@@ -80,7 +81,9 @@ Before(async function (this: Scenario, { pickle }) {
   this.rt = run.runtime(this.browser);
 });
 
-BeforeStep(function (this: Scenario, { pickleStep }) {
+BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
+  const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[pickleStep.astNodeIds[0]]?.location.line;
+  this.at = `${pickle.uri}:${line}`;
   this.kind = stepKind(pickleStep);
 });
 
@@ -105,7 +108,7 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   const cost = { seconds: (Date.now() - start) / 1000, jevCalls: jevUsage.calls - before.calls,
     inputTokens: jevUsage.inputTokens - before.inputTokens, outputTokens: jevUsage.outputTokens - before.outputTokens };
-  run.event("step", { kind: this.kind, step: text, ...r, ...cost });
+  run.event("step", { kind: this.kind, step: text, at: this.at, ...r, ...cost });
   for (const v of quoted(text)) this.earlier[v] = text;
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   if ("marginal" in r && r.marginal) {

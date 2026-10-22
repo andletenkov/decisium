@@ -1,0 +1,2300 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-22T23-27-21-848Z",
+  "entries": {
+    "7d2951f0ae0c80c6f6b26ca4181be4a53edbd566b65f438081df111b801f97f3": {
+      "request": {
+        "state": {
+          "step": "I open the \"Ada Lovelace\" article through the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\"",
+              "e10": "button \"Search\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e9",
+            "confidence": 0.99,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e9": 0.99,
+              "e10": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "aa45fa569eb70554877f04bfe14abe577c232966dd01c46fc24fad6d2ec5933b": {
+      "request": {
+        "state": {
+          "step": "I open the \"Ada Lovelace\" article through the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "element": "textbox \"Search articles\""
+        },
+        "questions": {
+          "value": {
+            "type": "choice",
+            "instructions": "Which value should be entered into `element` to accomplish `step`?",
+            "criteria": {
+              "v0": "Ada Lovelace",
+              "none": "None of these values is what `step` asks for."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "value": {
+            "type": "choice",
+            "choice": "v0",
+            "confidence": 1,
+            "probabilities": {
+              "v0": 1,
+              "none": 0
+            }
+          }
+        }
+      }
+    },
+    "75a626783f38afebbec1668cfcaa78394e323303b9428489b0a7465bd9f4907d": {
+      "request": {
+        "state": {
+          "step": "I open the \"Ada Lovelace\" article through the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [active] [ref=e9]: Ada Lovelace\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada Lovelace\"",
+            "CLICK button \"Search\"",
+            "CLICK link \"Ada Lovelace\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\" value=\"Ada Lovelace\" [active]",
+              "e10": "button \"Search\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.04
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e10",
+            "confidence": 0.78,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e9": 0,
+              "e10": 0.81,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0.19
+            }
+          }
+        }
+      }
+    },
+    "769c2300bb9635823f6f1389e904ae1e49159873e3e81dbea173b1fc20f518d6": {
+      "request": {
+        "state": {
+          "step": "I open the \"Ada Lovelace\" article through the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada Lovelace\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada Lovelace\"",
+            "CLICK button \"Search\"",
+            "CLICK link \"Ada Lovelace\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\" value=\"Ada Lovelace\"",
+              "e10": "button \"Search\" [active]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.37
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e15",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e9": 0,
+              "e10": 0,
+              "e15": 1,
+              "e17": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "59b695af03bc84bc1cf65dc4386956f9d2faa8b19f08b8dc1e14701239769c67": {
+      "request": {
+        "state": {
+          "step": "I open the \"Ada Lovelace\" article through the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Ada Lovelace\" [level=1] [ref=e18]\n    - paragraph [ref=e19]: Ada Lovelace (born 10 December 1815) was an English mathematician.",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada Lovelace\"",
+            "CLICK button \"Search\"",
+            "CLICK link \"Ada Lovelace\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.97
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.8,
+            "probabilities": {
+              "e3": 0.16,
+              "e4": 0,
+              "none": 0.84,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "fb3ba72e82285f2fcfe2eeaeb79febf83573b2d682bfcf1ddfbce9b58a736ba2": {
+      "request": {
+        "state": {
+          "check": "the article heading should be \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Ada Lovelace\" [level=1] [ref=e18]\n    - paragraph [ref=e19]: Ada Lovelace (born 10 December 1815) was an English mathematician."
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e18": "heading \"Ada Lovelace\" [level=1]",
+              "e19": "paragraph value=\"Ada Lovelace (born 10 December 1815) was an English mathemat…\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic [active]",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "value",
+            "confidence": 1,
+            "probabilities": {
+              "value": 1,
+              "presence": 0,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e18",
+            "confidence": 1,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e18": 1,
+              "e19": 0,
+              "none": 0
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.92,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.02,
+              "checked": 0.93,
+              "unchecked": 0.02,
+              "expanded": 0.01,
+              "collapsed": 0,
+              "selected": 0.02,
+              "unselected": 0,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "e5",
+            "confidence": 0.54,
+            "probabilities": {
+              "e1": 0.03,
+              "e2": 0,
+              "e5": 0.63,
+              "page": 0.33,
+              "missing": 0.01
+            }
+          }
+        }
+      }
+    },
+    "b3601958b875567f3aa4b45b955ea5df0c8144cb235eb7d8a5a16fe09842b85c": {
+      "request": {
+        "state": {
+          "check": "the article should say \"born 10 December 1815\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Ada Lovelace\" [level=1] [ref=e18]\n    - paragraph [ref=e19]: Ada Lovelace (born 10 December 1815) was an English mathematician."
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e18": "heading \"Ada Lovelace\" [level=1]",
+              "e19": "paragraph value=\"Ada Lovelace (born 10 December 1815) was an English mathemat…\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic [active]",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "value",
+            "confidence": 0.99,
+            "probabilities": {
+              "value": 0.99,
+              "presence": 0.01,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e19",
+            "confidence": 1,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e18": 0,
+              "e19": 1,
+              "none": 0
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.84,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.05,
+              "checked": 0.86,
+              "unchecked": 0.03,
+              "expanded": 0.02,
+              "collapsed": 0,
+              "selected": 0.02,
+              "unselected": 0.01,
+              "pressed": 0,
+              "unpressed": 0.01
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.46,
+            "probabilities": {
+              "e1": 0,
+              "e2": 0,
+              "e5": 0.43,
+              "page": 0.57,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "af3ab7062e7ea7525326ae02b78cca6761815301f81b3b3ab5cfa26ef02ec8d7": {
+      "request": {
+        "state": {
+          "check": "the article title should be \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Ada Lovelace\" [level=1] [ref=e18]\n    - paragraph [ref=e19]: Ada Lovelace (born 10 December 1815) was an English mathematician."
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e18": "heading \"Ada Lovelace\" [level=1]",
+              "e19": "paragraph value=\"Ada Lovelace (born 10 December 1815) was an English mathemat…\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic [active]",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "value",
+            "confidence": 1,
+            "probabilities": {
+              "value": 1,
+              "presence": 0,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e18",
+            "confidence": 0.68,
+            "probabilities": {
+              "url": 0,
+              "title": 0.27,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e18": 0.72,
+              "e19": 0,
+              "none": 0.01
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.84,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.05,
+              "checked": 0.86,
+              "unchecked": 0.04,
+              "expanded": 0.01,
+              "collapsed": 0,
+              "selected": 0.03,
+              "unselected": 0.01,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.42,
+            "probabilities": {
+              "e1": 0.03,
+              "e2": 0,
+              "e5": 0.42,
+              "page": 0.54,
+              "missing": 0.01
+            }
+          }
+        }
+      }
+    },
+    "f1a81cd36fe00c722c21f44e3f08e1292c8d858826c8f86bc4f1c92e5be11803": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\"",
+              "e10": "button \"Search\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e9",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e9": 1,
+              "e10": 0,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "362d66eb32afd86a7bfc071c86ba2a03cfeaaba4e33d94653cacfde257f40914": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "element": "textbox \"Search articles\""
+        },
+        "questions": {
+          "value": {
+            "type": "choice",
+            "instructions": "Which value should be entered into `element` to accomplish `step`?",
+            "criteria": {
+              "v0": "Ada Lovelace",
+              "none": "None of these values is what `step` asks for."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "value": {
+            "type": "choice",
+            "choice": "v0",
+            "confidence": 1,
+            "probabilities": {
+              "v0": 1,
+              "none": 0
+            }
+          }
+        }
+      }
+    },
+    "8d0c2fc79f5c7ab6e05812eb4e4d2cd0f054f84983528482ca34669ec54c02d7": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [active] [ref=e9]: Ada Lovelace\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada Lovelace\"",
+            "CLICK button \"Search\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\" value=\"Ada Lovelace\" [active]",
+              "e10": "button \"Search\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.75
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e10",
+            "confidence": 0.81,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e9": 0,
+              "e10": 0.83,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0.17
+            }
+          }
+        }
+      }
+    },
+    "090c94b6559b6ba585b37453ff66e96c1d368c57748b225ef03d819d3168604c": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada Lovelace\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada Lovelace\"",
+            "CLICK button \"Search\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\" value=\"Ada Lovelace\"",
+              "e10": "button \"Search\" [active]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.96
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e15",
+            "confidence": 0.57,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e9": 0.01,
+              "e10": 0.01,
+              "e15": 0.62,
+              "e17": 0,
+              "none": 0.35,
+              "scroll": 0,
+              "wait": 0.01
+            }
+          }
+        }
+      }
+    },
+    "a3fc771f435bc4f52631ec7f4202d10dd6078b97e597fc4930fe965557de46ce": {
+      "request": {
+        "state": {
+          "check": "the article heading should be \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada Lovelace\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e6": "heading \"Search\" [level=1]",
+              "e9": "textbox \"Search articles\" value=\"Ada Lovelace\"",
+              "e10": "button \"Search\" [active]",
+              "e11": "region \"Results\"",
+              "e12": "heading \"Results\" [level=2]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e7": "search",
+              "e8": "generic",
+              "e11": "region \"Results\"",
+              "e13": "list",
+              "e14": "listitem",
+              "e16": "listitem",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "value",
+            "confidence": 0.89,
+            "probabilities": {
+              "value": 0.91,
+              "presence": 0.01,
+              "absence": 0.01,
+              "state": 0,
+              "fuzzy": 0.07
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e6",
+            "confidence": 0.59,
+            "probabilities": {
+              "url": 0,
+              "title": 0.01,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e6": 0.62,
+              "e9": 0.02,
+              "e10": 0,
+              "e11": 0,
+              "e12": 0,
+              "e15": 0.32,
+              "e17": 0,
+              "none": 0.03
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.2,
+            "probabilities": {
+              "disabled": 0.01,
+              "enabled": 0.17,
+              "checked": 0.27999999999999997,
+              "unchecked": 0.2,
+              "expanded": 0.02,
+              "collapsed": 0.01,
+              "selected": 0.26,
+              "unselected": 0.03,
+              "pressed": 0.01,
+              "unpressed": 0.01
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.38,
+            "probabilities": {
+              "e1": 0,
+              "e2": 0,
+              "e5": 0.37,
+              "e7": 0.01,
+              "e8": 0,
+              "e11": 0.05,
+              "e13": 0.05,
+              "e14": 0.06,
+              "e16": 0,
+              "page": 0.44,
+              "missing": 0.02
+            }
+          }
+        }
+      }
+    },
+    "8128c8cc7661e9d9f5a7c0380eebaf53e3ec69a9f99cfd0a32e3d18c3941e578": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada\" and submit the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\"",
+              "e10": "button \"Search\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e9",
+            "confidence": 0.94,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e9": 0.95,
+              "e10": 0.04,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "1f51a35f4a84dd5b39730ad4701564be7df09c2ea4fd72a37a578c4d42afc825": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada\" and submit the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "element": "textbox \"Search articles\""
+        },
+        "questions": {
+          "value": {
+            "type": "choice",
+            "instructions": "Which value should be entered into `element` to accomplish `step`?",
+            "criteria": {
+              "v0": "Ada",
+              "none": "None of these values is what `step` asks for."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "value": {
+            "type": "choice",
+            "choice": "v0",
+            "confidence": 1,
+            "probabilities": {
+              "v0": 1,
+              "none": 0
+            }
+          }
+        }
+      }
+    },
+    "5b00fc439dee3fffba16d6bc41b57f5c72337176c97a54d4c0b7dc2508389116": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada\" and submit the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [active] [ref=e9]: Ada\n      - button \"Search\" [ref=e10]\n    - region \"Results\"",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada\"",
+            "CLICK button \"Search\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\" value=\"Ada\" [active]",
+              "e10": "button \"Search\"",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element.",
+              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.06
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e10",
+            "confidence": 0.86,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e9": 0,
+              "e10": 0.88,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0,
+              "enter": 0.12
+            }
+          }
+        }
+      }
+    },
+    "e7e39e1da4198bdadfb013092c6c36feaa2e575f69d84dfc328feaa3c92b6d97": {
+      "request": {
+        "state": {
+          "step": "I search for \"Ada\" and submit the search",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:",
+          "actions_taken_for_step": [
+            "TYPE textbox \"Search articles\" <- \"Ada\"",
+            "CLICK button \"Search\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e9": "textbox \"Search articles\" value=\"Ada\"",
+              "e10": "button \"Search\" [active]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.97
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.72,
+            "probabilities": {
+              "e3": 0.01,
+              "e4": 0,
+              "e9": 0.04,
+              "e10": 0.06,
+              "e15": 0.06,
+              "e17": 0.01,
+              "none": 0.75,
+              "scroll": 0,
+              "wait": 0.07
+            }
+          }
+        }
+      }
+    },
+    "958bdb5e0d91c5340e8278511cb64a8d64abaa26d7ac1ce6191d454968c67139": {
+      "request": {
+        "state": {
+          "check": "\"Ada (programming language)\" should appear in the results",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e6": "heading \"Search\" [level=1]",
+              "e9": "textbox \"Search articles\" value=\"Ada\"",
+              "e10": "button \"Search\" [active]",
+              "e11": "region \"Results\"",
+              "e12": "heading \"Results\" [level=2]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e7": "search",
+              "e8": "generic",
+              "e11": "region \"Results\"",
+              "e13": "list",
+              "e14": "listitem",
+              "e16": "listitem",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "presence",
+            "confidence": 0.73,
+            "probabilities": {
+              "value": 0.22,
+              "presence": 0.78,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e17",
+            "confidence": 1,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e6": 0,
+              "e9": 0,
+              "e10": 0,
+              "e11": 0,
+              "e12": 0,
+              "e15": 0,
+              "e17": 1,
+              "none": 0
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "enabled",
+            "confidence": 0.4,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.46,
+              "checked": 0.2,
+              "unchecked": 0.01,
+              "expanded": 0.09,
+              "collapsed": 0,
+              "selected": 0.21,
+              "unselected": 0.02,
+              "pressed": 0.01,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "e11",
+            "confidence": 0.57,
+            "probabilities": {
+              "e1": 0,
+              "e2": 0,
+              "e5": 0,
+              "e7": 0,
+              "e8": 0,
+              "e11": 0.61,
+              "e13": 0.14,
+              "e14": 0,
+              "e16": 0.02,
+              "page": 0.23,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "a4b815280ad04ee726c345d22159325b22bb4c96f3d437e0fafe51cf5af03403": {
+      "request": {
+        "state": {
+          "check": "\"Charles Babbage\" should not appear in the results",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e6": "heading \"Search\" [level=1]",
+              "e9": "textbox \"Search articles\" value=\"Ada\"",
+              "e10": "button \"Search\" [active]",
+              "e11": "region \"Results\"",
+              "e12": "heading \"Results\" [level=2]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e7": "search",
+              "e8": "generic",
+              "e11": "region \"Results\"",
+              "e13": "list",
+              "e14": "listitem",
+              "e16": "listitem",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "absence",
+            "confidence": 1,
+            "probabilities": {
+              "value": 0,
+              "presence": 0,
+              "absence": 1,
+              "state": 0,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e11",
+            "confidence": 0.5,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e6": 0,
+              "e9": 0.01,
+              "e10": 0,
+              "e11": 0.54,
+              "e12": 0,
+              "e15": 0.02,
+              "e17": 0,
+              "none": 0.43
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "unselected",
+            "confidence": 0.41,
+            "probabilities": {
+              "disabled": 0.01,
+              "enabled": 0.05,
+              "checked": 0.14,
+              "unchecked": 0.25,
+              "expanded": 0.01,
+              "collapsed": 0.04,
+              "selected": 0.01,
+              "unselected": 0.47,
+              "pressed": 0,
+              "unpressed": 0.02
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "e11",
+            "confidence": 0.34,
+            "probabilities": {
+              "e1": 0,
+              "e2": 0,
+              "e5": 0,
+              "e7": 0,
+              "e8": 0,
+              "e11": 0.4,
+              "e13": 0.26,
+              "e14": 0.01,
+              "e16": 0,
+              "page": 0.33,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "f9d055bf7a2892bd54ba4e3211da63b44b3a63f92b33b184ebb9abca611168a4": {
+      "request": {
+        "state": {
+          "check": "the results should be shown"
+        },
+        "questions": {
+          "value": {
+            "type": "choice",
+            "instructions": "`check` quotes no value. Which value from an earlier step of the same test does it refer to (e.g. \"the campaign\" meaning the campaign named earlier)?",
+            "criteria": {
+              "v0": "\"Ada\", from the earlier step: I search for \"Ada\" and submit the search",
+              "none": "`check` does not refer to any of these values."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "value": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.84,
+            "probabilities": {
+              "v0": 0.08,
+              "none": 0.92
+            }
+          }
+        }
+      }
+    },
+    "b6d608de57aac6e56e1885ceda3d4adaa5dc66edb510529e6d729abd17e17c5e": {
+      "request": {
+        "state": {
+          "check": "the results should be shown",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Search\" [level=1] [ref=e6]\n    - search [ref=e7]:\n        - text: Search articles\n        - textbox \"Search articles\" [ref=e9]: Ada\n      - button \"Search\" [active] [ref=e10]\n    - region \"Results\" [ref=e11]:\n      - heading \"Results\" [level=2] [ref=e12]\n      - list [ref=e13]:\n        - listitem [ref=e14]:\n          - link \"Ada Lovelace\" [ref=e15] [cursor=pointer]:\n        - listitem [ref=e16]:\n          - link \"Ada (programming language)\" [ref=e17] [cursor=pointer]:"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e6": "heading \"Search\" [level=1]",
+              "e9": "textbox \"Search articles\" value=\"Ada\"",
+              "e10": "button \"Search\" [active]",
+              "e11": "region \"Results\"",
+              "e12": "heading \"Results\" [level=2]",
+              "e15": "link \"Ada Lovelace\" [cursor=pointer]",
+              "e17": "link \"Ada (programming language)\" [cursor=pointer]",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e7": "search",
+              "e8": "generic",
+              "e11": "region \"Results\"",
+              "e13": "list",
+              "e14": "listitem",
+              "e16": "listitem",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "presence",
+            "confidence": 0.99,
+            "probabilities": {
+              "value": 0,
+              "presence": 0.99,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0.01
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e11",
+            "confidence": 0.93,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e6": 0,
+              "e9": 0,
+              "e10": 0,
+              "e11": 0.94,
+              "e12": 0.02,
+              "e15": 0.02,
+              "e17": 0.01,
+              "none": 0.01
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "expanded",
+            "confidence": 0.79,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.12,
+              "checked": 0.06,
+              "unchecked": 0,
+              "expanded": 0.81,
+              "collapsed": 0.01,
+              "selected": 0,
+              "unselected": 0,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "e11",
+            "confidence": 0.66,
+            "probabilities": {
+              "e1": 0,
+              "e2": 0,
+              "e5": 0,
+              "e7": 0,
+              "e8": 0,
+              "e11": 0.6900000000000001,
+              "e13": 0.08,
+              "e14": 0,
+              "e16": 0,
+              "page": 0.22,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "69c197de3ecbd809c50ae27608838d046432a614a05803101d5b113545f61772": {
+      "request": {
+        "state": {
+          "check": "the article title should be \"Ada\" or \"Ada Lovelace\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Ada Lovelace\" [level=1] [ref=e18]\n    - paragraph [ref=e19]: Ada Lovelace (born 10 December 1815) was an English mathematician."
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e18": "heading \"Ada Lovelace\" [level=1]",
+              "e19": "paragraph value=\"Ada Lovelace (born 10 December 1815) was an English mathemat…\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic [active]",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "value",
+            "confidence": 0.97,
+            "probabilities": {
+              "value": 0.98,
+              "presence": 0,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 0.02
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e18",
+            "confidence": 0.66,
+            "probabilities": {
+              "url": 0,
+              "title": 0.29,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e18": 0.7,
+              "e19": 0,
+              "none": 0.01
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.6,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.04,
+              "checked": 0.64,
+              "unchecked": 0.26,
+              "expanded": 0.01,
+              "collapsed": 0,
+              "selected": 0.04,
+              "unselected": 0.01,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.4,
+            "probabilities": {
+              "e1": 0.05,
+              "e2": 0,
+              "e5": 0.42,
+              "page": 0.52,
+              "missing": 0.01
+            }
+          }
+        }
+      }
+    },
+    "f32b587ddd886aba45987ff8a1a2eb7e9a400c6a101b2c9c4a1ebeb62c762fb0": {
+      "request": {
+        "state": {
+          "check": "the article should be well written"
+        },
+        "questions": {
+          "value": {
+            "type": "choice",
+            "instructions": "`check` quotes no value. Which value from an earlier step of the same test does it refer to (e.g. \"the campaign\" meaning the campaign named earlier)?",
+            "criteria": {
+              "v0": "\"Ada Lovelace\", from the earlier step: I open the \"Ada Lovelace\" article through the search",
+              "none": "`check` does not refer to any of these values."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "value": {
+            "type": "choice",
+            "choice": "v0",
+            "confidence": 0.3,
+            "probabilities": {
+              "v0": 0.65,
+              "none": 0.35
+            }
+          }
+        }
+      }
+    },
+    "c268bfe5cc77ab8e6111391933aba1df11621be144472575cbb9ec7eb705c30b": {
+      "request": {
+        "state": {
+          "check": "the article should be well written",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Ada Lovelace\" [level=1] [ref=e18]\n    - paragraph [ref=e19]: Ada Lovelace (born 10 December 1815) was an English mathematician."
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e18": "heading \"Ada Lovelace\" [level=1]",
+              "e19": "paragraph value=\"Ada Lovelace (born 10 December 1815) was an English mathemat…\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic [active]",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "fuzzy",
+            "confidence": 1,
+            "probabilities": {
+              "value": 0,
+              "presence": 0,
+              "absence": 0,
+              "state": 0,
+              "fuzzy": 1
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e19",
+            "confidence": 0.84,
+            "probabilities": {
+              "url": 0.01,
+              "title": 0.01,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e18": 0.01,
+              "e19": 0.86,
+              "none": 0.11
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "checked",
+            "confidence": 0.63,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0.21,
+              "checked": 0.67,
+              "unchecked": 0.08,
+              "expanded": 0.01,
+              "collapsed": 0,
+              "selected": 0.01,
+              "unselected": 0.01,
+              "pressed": 0,
+              "unpressed": 0.01
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.76,
+            "probabilities": {
+              "e1": 0,
+              "e2": 0,
+              "e5": 0.19,
+              "page": 0.81,
+              "missing": 0
+            }
+          }
+        }
+      }
+    },
+    "1b40d7b5d5bb12cb0a3c9d9b3e4cbc3b2fbe7becbd8eb956b911727e4263771f": {
+      "request": {
+        "state": {
+          "step": "I uncheck \"Newsletter\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html?settings\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Settings\" [level=1] [ref=e6]\n    - generic [ref=e7]:\n      - checkbox [unchecked] [ref=e8]\n      - text: checkbox 1\n      - checkbox [checked] [ref=e9]\n      - text: checkbox 2\n    - heading \"Notifications\" [level=2] [ref=e10]\n      - checkbox \"Weekly digest\" [unchecked] [ref=e12]\n      - text: Weekly digest\n      - checkbox \"Newsletter\" [checked] [ref=e14]\n      - text: Newsletter",
+          "actions_taken_for_step": "none yet"
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e8": "checkbox [unchecked]",
+              "e9": "checkbox [checked]",
+              "e12": "checkbox \"Weekly digest\" [unchecked]",
+              "e14": "checkbox \"Newsletter\" [checked]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.01
+          },
+          "target": {
+            "type": "choice",
+            "choice": "e14",
+            "confidence": 1,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e8": 0,
+              "e9": 0,
+              "e12": 0,
+              "e14": 1,
+              "none": 0,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "95750c8278d4c660471414fc526d06b9a6998c35c9b75f1052982c531904498c": {
+      "request": {
+        "state": {
+          "step": "I uncheck \"Newsletter\"",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html?settings\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Settings\" [level=1] [ref=e6]\n    - generic [ref=e7]:\n      - checkbox [unchecked] [ref=e8]\n      - text: checkbox 1\n      - checkbox [checked] [ref=e9]\n      - text: checkbox 2\n    - heading \"Notifications\" [level=2] [ref=e10]\n      - checkbox \"Weekly digest\" [unchecked] [ref=e12]\n      - text: Weekly digest\n      - checkbox \"Newsletter\" [active] [unchecked] [ref=e14]\n      - text: Newsletter",
+          "actions_taken_for_step": [
+            "CLICK checkbox \"Newsletter\""
+          ]
+        },
+        "questions": {
+          "done": {
+            "type": "noul",
+            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
+          },
+          "target": {
+            "type": "choice",
+            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
+            "criteria": {
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e8": "checkbox [unchecked]",
+              "e9": "checkbox [checked]",
+              "e12": "checkbox \"Weekly digest\" [unchecked]",
+              "e14": "checkbox \"Newsletter\" [active] [unchecked]",
+              "none": "No element on screen helps accomplish `step`.",
+              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+              "wait": "Wait: `ui` is still loading the needed element."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "done": {
+            "type": "noul",
+            "noul": 0.93
+          },
+          "target": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.82,
+            "probabilities": {
+              "e3": 0,
+              "e4": 0,
+              "e8": 0,
+              "e9": 0,
+              "e12": 0,
+              "e14": 0.16,
+              "none": 0.84,
+              "scroll": 0,
+              "wait": 0
+            }
+          }
+        }
+      }
+    },
+    "c01ccc316b60fbe846eb09fac979a9a4c0c7c6730157e03498d879ce329c7967": {
+      "request": {
+        "state": {
+          "check": "\"Newsletter\" should be unchecked",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html?settings\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Settings\" [level=1] [ref=e6]\n    - generic [ref=e7]:\n      - checkbox [unchecked] [ref=e8]\n      - text: checkbox 1\n      - checkbox [checked] [ref=e9]\n      - text: checkbox 2\n    - heading \"Notifications\" [level=2] [ref=e10]\n      - checkbox \"Weekly digest\" [unchecked] [ref=e12]\n      - text: Weekly digest\n      - checkbox \"Newsletter\" [active] [unchecked] [ref=e14]\n      - text: Newsletter"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e6": "heading \"Settings\" [level=1]",
+              "e8": "checkbox [unchecked]",
+              "e9": "checkbox [checked]",
+              "e10": "heading \"Notifications\" [level=2]",
+              "e12": "checkbox \"Weekly digest\" [unchecked]",
+              "e14": "checkbox \"Newsletter\" [active] [unchecked]",
+              "e7": "generic value=\"checkbox 1  checkbox 2\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e7": "generic value=\"checkbox 1  checkbox 2\"",
+              "e11": "generic",
+              "e13": "generic",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "state",
+            "confidence": 1,
+            "probabilities": {
+              "value": 0,
+              "presence": 0,
+              "absence": 0,
+              "state": 1,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e14",
+            "confidence": 1,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e6": 0,
+              "e8": 0,
+              "e9": 0,
+              "e10": 0,
+              "e12": 0,
+              "e14": 1,
+              "e7": 0,
+              "none": 0
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "unchecked",
+            "confidence": 1,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0,
+              "checked": 0,
+              "unchecked": 1,
+              "expanded": 0,
+              "collapsed": 0,
+              "selected": 0,
+              "unselected": 0,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.61,
+            "probabilities": {
+              "e1": 0.01,
+              "e2": 0,
+              "e5": 0.27,
+              "e7": 0,
+              "e11": 0.01,
+              "e13": 0.01,
+              "page": 0.66,
+              "missing": 0.04
+            }
+          }
+        }
+      }
+    },
+    "7b68846285307dff6d4aae985f2589b0a993e9ea925a0e42e1f56034742f90a9": {
+      "request": {
+        "state": {
+          "check": "\"Weekly digest\" should be unchecked",
+          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/cookbook/index.html?settings\n- title: Cookbook lab\n  - navigation \"Main\" [ref=e2]:\n    - link \"Search\" [ref=e3] [cursor=pointer]:\n    - link \"Settings\" [ref=e4] [cursor=pointer]:\n  - main [ref=e5]:\n    - heading \"Settings\" [level=1] [ref=e6]\n    - generic [ref=e7]:\n      - checkbox [unchecked] [ref=e8]\n      - text: checkbox 1\n      - checkbox [checked] [ref=e9]\n      - text: checkbox 2\n    - heading \"Notifications\" [level=2] [ref=e10]\n      - checkbox \"Weekly digest\" [unchecked] [ref=e12]\n      - text: Weekly digest\n      - checkbox \"Newsletter\" [active] [unchecked] [ref=e14]\n      - text: Newsletter"
+        },
+        "questions": {
+          "kind": {
+            "type": "choice",
+            "instructions": "What kind of check is `check`?",
+            "criteria": {
+              "value": "Checks that some element shows a specific text or value.",
+              "presence": "Checks that something is shown or exists on the page.",
+              "absence": "Checks that something is not shown or does not exist on the page.",
+              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
+            "criteria": {
+              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/cookbook/…\"",
+              "title": "title value=\"Cookbook lab\"",
+              "e2": "navigation \"Main\"",
+              "e3": "link \"Search\" [cursor=pointer]",
+              "e4": "link \"Settings\" [cursor=pointer]",
+              "e6": "heading \"Settings\" [level=1]",
+              "e8": "checkbox [unchecked]",
+              "e9": "checkbox [checked]",
+              "e10": "heading \"Notifications\" [level=2]",
+              "e12": "checkbox \"Weekly digest\" [unchecked]",
+              "e14": "checkbox \"Newsletter\" [active] [unchecked]",
+              "e7": "generic value=\"checkbox 1  checkbox 2\"",
+              "none": "No element in `ui` is the one `check` is about."
+            }
+          },
+          "state": {
+            "type": "choice",
+            "instructions": "Which control state does `check` require?",
+            "criteria": {
+              "disabled": "disabled",
+              "enabled": "enabled (not disabled)",
+              "checked": "checked",
+              "unchecked": "not checked",
+              "expanded": "expanded / open",
+              "collapsed": "collapsed / closed",
+              "selected": "selected",
+              "unselected": "not selected",
+              "pressed": "pressed / toggled on",
+              "unpressed": "not pressed / toggled off"
+            }
+          },
+          "area": {
+            "type": "choice",
+            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
+            "criteria": {
+              "e1": "generic",
+              "e2": "navigation \"Main\"",
+              "e5": "main",
+              "e7": "generic value=\"checkbox 1  checkbox 2\"",
+              "e11": "generic",
+              "e13": "generic",
+              "page": "`check` names no specific area; anywhere on the page counts.",
+              "missing": "`check` names a specific area, but no element in `ui` is that area."
+            }
+          }
+        }
+      },
+      "response": {
+        "model": "jev-1.14.0",
+        "answers": {
+          "kind": {
+            "type": "choice",
+            "choice": "state",
+            "confidence": 1,
+            "probabilities": {
+              "value": 0,
+              "presence": 0,
+              "absence": 0,
+              "state": 1,
+              "fuzzy": 0
+            }
+          },
+          "subject": {
+            "type": "choice",
+            "choice": "e12",
+            "confidence": 1,
+            "probabilities": {
+              "url": 0,
+              "title": 0,
+              "e2": 0,
+              "e3": 0,
+              "e4": 0,
+              "e6": 0,
+              "e8": 0,
+              "e9": 0,
+              "e10": 0,
+              "e12": 1,
+              "e14": 0,
+              "e7": 0,
+              "none": 0
+            }
+          },
+          "state": {
+            "type": "choice",
+            "choice": "unchecked",
+            "confidence": 0.99,
+            "probabilities": {
+              "disabled": 0,
+              "enabled": 0,
+              "checked": 0.01,
+              "unchecked": 0.99,
+              "expanded": 0,
+              "collapsed": 0,
+              "selected": 0,
+              "unselected": 0,
+              "pressed": 0,
+              "unpressed": 0
+            }
+          },
+          "area": {
+            "type": "choice",
+            "choice": "page",
+            "confidence": 0.42,
+            "probabilities": {
+              "e1": 0.01,
+              "e2": 0,
+              "e5": 0.37,
+              "e7": 0,
+              "e11": 0.03,
+              "e13": 0.02,
+              "page": 0.49,
+              "missing": 0.08
+            }
+          }
+        }
+      }
+    }
+  }
+}
