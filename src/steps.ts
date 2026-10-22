@@ -9,7 +9,7 @@ import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.t
 import { stepKind, toUrl, urlFromTags, type StepKind } from "./feature.ts";
 import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
 import { quoted } from "./observation.ts";
-import { outcomeMessage } from "./report.ts";
+import { MARGINAL, outcomeMessage } from "./report.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 
@@ -100,6 +100,10 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
   run.event("step", { kind: this.kind, step: text, ...r, ...cost });
   for (const v of quoted(text)) this.earlier[v] = text;
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
+  if ("marginal" in r && r.marginal) {
+    if (opt("STRICT")) r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
+    else this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
+  }
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
     // Failed Step only (passed ones keep theirs in the run directory); fileName carries the path to the console formatter.
     const shot = run.lastScreenshot;

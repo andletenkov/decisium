@@ -20,6 +20,10 @@ export const HINTS: Record<string, string> = {
 };
 export const KIND: Record<StepKind, string> = { action: "Step", attempt: "Attempt", assertion: "Check" };
 
+/** Prefix of the attachment a marginal pass leaves on its Step (task 0027). */
+export const MARGINAL = "MARGINAL: passed, but Jev was barely confident: ";
+export const MARGINAL_HINT = "Make the step more specific (name the element or area), or run with --strict to fail such passes.";
+
 // Substrings the reporter reads as "assertion" (=> failed). Kept out of `invalid` messages with an invisible word joiner.
 const ASSERTION_WORDS = /expect|assert|matcher|objectcontaining|actual|to (?:be|equal|contain|match|throw|have been called)|test failed/gi;
 const JOINER = "\u2060";

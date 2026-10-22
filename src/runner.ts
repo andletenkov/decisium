@@ -1,5 +1,5 @@
 import type { Action } from "./browser.ts";
-import { AREA_MISSING, AREA_PAGE, gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
+import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
 import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -17,6 +17,8 @@ export interface Runtime {
 export interface StepResult {
   outcome: StepOutcome;
   reason?: string;
+  /** PASSED resting on a barely-confident Jev answer: which answers, for the warning (task 0027). */
+  marginal?: string;
 }
 
 const MAX_TURNS = 8;
@@ -59,6 +61,18 @@ const STATE_ROLES: Record<string, string[]> = {
   pressed: ["button"],
 };
 const JUDGED_THRESHOLD = 0.8;
+/**
+ * A pass resting on an answer less than this above its gate is marginal (task 0027). On the corpus (29 passes) it
+ * flags 6: the answers that agree carry 0.69-0.89 together.
+ */
+const MARGINAL_BAND = 0.1;
+
+/** Readings that agree (`agreeing`) carry the pass together; under gate + band they are a marginal answer. */
+const weakMass = (what: string, pick: Pick, agreeing: string[], obs?: Observation): string[] =>
+  agreeing.reduce((s, k) => s + (pick.probabilities[k] ?? 0), 0) < GATE_TOP + MARGINAL_BAND ? [`${what}: ${named(pick, obs)}`] : [];
+/** A gated answer (state, recall) that cleared its gate by less than the band. */
+const weakGate = (what: string, pick: Pick): string[] =>
+  gate(pick, GATE_TOP + MARGINAL_BAND, GATE_MARGIN + MARGINAL_BAND) ? [] : [`${what}: ${named(pick)}`];
 
 /**
  * Jev classifies the check and picks the element it is about; code decides pass/fail.
@@ -70,10 +84,11 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   const end = finish(log);
   const values = quoted(step);
   let recallNote = "";
+  let recallWeak: string[] = [];
   if (!values.length && Object.keys(earlier).length) {
     const r = await decider.recall(step, earlier);
     log(`  Recall: ${fmt(r)}`);
-    if (gate(r) && r.choice !== "none") values.push(r.choice);
+    if (gate(r) && r.choice !== "none") { values.push(r.choice); recallWeak = weakGate("earlier value", r); }
     else recallNote = `; Jev could not tell which earlier value it refers to (${named(r)})`;
   }
 
@@ -86,7 +101,8 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
     if (verdict.outcome === "UNVERIFIABLE") verdict.reason += recallNote;
-    if (final || left <= 0) return end(verdict.outcome, verdict.reason);
+    if (verdict.outcome === "PASSED") verdict.marginal = [...recallWeak, ...verdict.marginal ?? []];
+    if (final || left <= 0) return end(verdict.outcome, verdict.reason, verdict.marginal);
     log("  (not passed yet; waiting for the UI to change)");
     if (!(await rt.waitForChange(obs.text, left))) return end(verdict.outcome, verdict.reason);
     obs = await rt.observe();
@@ -102,7 +118,11 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
     const results = all.filter(r => !r.inapplicable);
     if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map(r => r.reason).join("; ") };
     const first = results[0];
-    if (results.every(r => r.outcome === first.outcome)) return first;
+    if (results.every(r => r.outcome === first.outcome)) {
+      if (first.outcome !== "PASSED") return first;
+      const marginal = [...weakMass("kind", a.kind, results.map(r => r.kind)), ...results.flatMap(r => r.marginal ?? [])];
+      return { ...first, marginal: [...new Set(marginal)] };
+    }
     return { outcome: "AMBIGUOUS", reason: `Jev could not tell what kind of check this is, and the readings disagree: ${results.map(r => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}` };
   }
 }
@@ -119,7 +139,7 @@ function plausible(pick: Pick): string[] {
   return out;
 }
 
-type Verdict = { outcome: StepOutcome; reason?: string; inapplicable?: true };
+type Verdict = { outcome: StepOutcome; reason?: string; inapplicable?: true; marginal?: string[] };
 
 /** Pass/fail for one kind of check, decided by code from the elements Jev identified. */
 function evaluate(kind: string, a: Assessment, obs: Observation, values: string[], log: typeof console.log): Verdict {
@@ -141,10 +161,13 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
       : values.every(v => containsValue(text, v));
     let where = "the page";
     let found = has(obs.pageText);
+    let marginal: string[] = []; // a text nowhere on the page rests on no area answer
     if (found) {
       log(`  Area: ${fmt(a.area)}`);
       const seen = new Map<boolean, string>();
-      for (const ref of plausible(a.area)) {
+      const areas = plausible(a.area);
+      marginal = weakMass("area", a.area, areas, obs);
+      for (const ref of areas) {
         if (ref === AREA_PAGE) seen.set(true, "the page");
         else if (ref === AREA_MISSING) seen.set(false, "the area the check names (that area is not on this screen)");
         else {
@@ -158,7 +181,7 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     }
     const pass = found === (kind === "presence");
     const text = values.map(v => `"${v}"`).join(kind === "absence" ? " or " : " and ");
-    return pass ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `${text} ${found ? "is shown" : "is not shown"} in ${where}${found ? ", expected it to be absent" : ""}` };
+    return pass ? { outcome: "PASSED", marginal } : { outcome: "ASSERTION_FAILED", reason: `${text} ${found ? "is shown" : "is not shown"} in ${where}${found ? ", expected it to be absent" : ""}` };
   }
 
   // State and value checks read one element. Jev may be unsure which, e.g. a repository name shown in the breadcrumb
@@ -171,12 +194,17 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     log(`  Subject: ${fmt(a.subject)}`);
   }
   // A reading that cannot apply (a link's text is its label, a link cannot be checked) carries no evidence.
-  const all = plausible(a.subject).map(ref => (kind === "state" ? stateOf : valueOf)(ref, a, obs, values, log));
+  const subjects = plausible(a.subject);
+  const all = subjects.map(ref => (kind === "state" ? stateOf : valueOf)(ref, a, obs, values, log));
   const readings = all.filter(r => !r.inapplicable);
   // No subject applies: unchanged from a single reading. A value check on a label stays a final UNVERIFIABLE, so a
   // plausible presence reading of the same check cannot pass on the label's text.
   if (!readings.length) return kind === "value" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0];
-  if (readings.every(r => r.outcome === readings[0].outcome)) return readings[0];
+  if (readings.every(r => r.outcome === readings[0].outcome)) {
+    if (readings[0].outcome !== "PASSED") return readings[0];
+    const marginal = weakMass("subject", a.subject, subjects.filter((_, i) => !all[i].inapplicable), obs);
+    return { ...readings[0], marginal: kind === "state" ? [...marginal, ...weakGate("state", a.state)] : marginal };
+  }
   const what = kind === "state" ? "control" : "element";
   return { outcome: "AMBIGUOUS", reason: `Jev is unsure which ${what} the check is about, and they give different answers: ${named(a.subject, obs)}` };
 }
@@ -214,9 +242,10 @@ function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[]
   return { outcome: "ASSERTION_FAILED", reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${actual}"` };
 }
 
-const finish = (log: typeof console.log) => (outcome: StepOutcome, reason?: string): StepResult => {
-  log(`  => ${outcome}${reason ? `: ${reason}` : ""}`);
-  return { outcome, reason };
+const finish = (log: typeof console.log) => (outcome: StepOutcome, reason?: string, weak: string[] = []): StepResult => {
+  const marginal = weak.length ? weak.join("; ") : undefined;
+  log(`  => ${outcome}${reason ? `: ${reason}` : ""}${marginal ? ` (marginal: ${marginal})` : ""}`);
+  return { outcome, reason, ...(marginal ? { marginal } : {}) };
 };
 
 const SPECIAL: Record<string, string> = {

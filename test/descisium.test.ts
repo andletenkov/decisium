@@ -259,6 +259,21 @@ test("runAssertion: a subject showing part of the quoted text is read with the c
   assert.equal(await run(`the counter should show "3 items left"`, "e6"), "ASSERTION_FAILED");
 });
 
+test("runAssertion: a pass resting on a barely-confident answer is marked marginal (task 0027)", async () => {
+  const snap = `- main [ref=e1]:
+  - paragraph [ref=e2]: "Status: Draft"
+  - paragraph [ref=e3]: Draft saved`;
+  const rt: Runtime = { observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
+  const run = (probabilities: Record<string, number>) =>
+    runAssertion(`the status should be "Draft"`, rt, assessing("value", () => ({ subject: { choice: "e2", probabilities } })), () => {});
+  const marginal = await run({ e2: 0.84, e3: 0.02, none: 0.14 });
+  assert.equal(marginal.outcome, "PASSED");
+  assert.match(marginal.marginal ?? "", /^subject: paragraph .*84%/);
+  assert.deepEqual(await run({ e2: 0.97, none: 0.03 }), { outcome: "PASSED", reason: undefined });
+  // Two subjects that agree carry the pass together (0.55 + 0.4): confident.
+  assert.equal((await run({ e2: 0.55, e3: 0.4, none: 0.05 })).marginal, undefined);
+});
+
 // Live check of the claim the design rests on: Jev picks the subject by meaning, not by matching text.
 test("decoy: status assertion fails although another element says \"Scheduled\" (real Jev)", { skip: !process.env.TYPESAFE_API_KEY }, async () => {
   const b = await Browser.open(APP + "?decoy=1");

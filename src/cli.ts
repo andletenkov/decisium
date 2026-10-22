@@ -13,8 +13,8 @@ import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 
 const USAGE = `Usage:
-  descisium step "<step>" --url <url|file> [--headed] [--judged] [-v] [--debug]
-  descisium run <file.feature>... [--url <url|file>] [--headed] [--judged] [--record <mode>] [--reporter junit|json[:path]]
+  descisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]
+  descisium run <file.feature>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>] [--reporter junit|json[:path]]
                 [--parallel <n|auto>] [-v] [--debug]
   descisium doctor [<file.feature>...]
 
@@ -29,6 +29,7 @@ doctor: checks Node, Chromium, TYPESAFE_API_KEY (one tiny Jev call) and Qase if 
   every start URL.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
+--strict: a check that passes on a barely-confident Jev answer (shown as "marginal pass") fails as AMBIGUOUS.
 
 Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes) and per scenario a
 screenshot per Turn; failed scenarios also get playwright-trace.zip and console-errors.txt.
@@ -48,6 +49,7 @@ async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
     options: { url: { type: "string" }, headed: { type: "boolean", default: false }, judged: { type: "boolean", default: false },
+      strict: { type: "boolean", default: false },
       record: { type: "string", default: "once" },
       reporter: { type: "string", multiple: true, default: [] }, parallel: { type: "string" },
       verbose: { type: "boolean", short: "v", default: false }, debug: { type: "boolean", default: false } },
@@ -92,7 +94,7 @@ async function main(): Promise<number> {
   const flag = (on: boolean) => (on ? "1" : "");
   Object.assign(process.env, {
     DESCISIUM_URL: values.url ?? "", DESCISIUM_RECORD: values.record, DESCISIUM_STEP: flag(cmd === "step"),
-    DESCISIUM_HEADED: flag(values.headed), DESCISIUM_JUDGED: flag(values.judged),
+    DESCISIUM_HEADED: flag(values.headed), DESCISIUM_JUDGED: flag(values.judged), DESCISIUM_STRICT: flag(values.strict),
     DESCISIUM_VERBOSE: flag(values.verbose), DESCISIUM_DEBUG: flag(values.debug),
     DESCISIUM_RUN_DIR: run.path,
   });
@@ -103,7 +105,7 @@ async function main(): Promise<number> {
     // Workers only pay off across features (a feature's scenarios share its cassette and run in sequence).
     parallel: files.length > 1 ? parallel : 0,
     // Only one formatter may write to stdout; the Qase reporter writes nothing there itself.
-    format: [here("./formatter.ts"), ...reports, ...(qaseOn() ? [[here("cucumberjs-qase-reporter"), devNull] as [string, string]] : [])],
+    format: [here("./formatter.ts"), ...reports, ...(qaseOn() ? [[here("./qase-reporter.ts"), devNull] as [string, string]] : [])],
   } });
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);

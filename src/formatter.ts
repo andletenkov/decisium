@@ -4,7 +4,7 @@ import type { Envelope } from "@cucumber/messages";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { stepKind, urlFromTags } from "./feature.ts";
-import { failureReport, KIND, parseOutcome } from "./report.ts";
+import { failureReport, KIND, MARGINAL, MARGINAL_HINT, parseOutcome } from "./report.ts";
 
 export default class DescisiumFormatter extends Formatter {
   static readonly documentation = "Descisium console output";
@@ -13,6 +13,7 @@ export default class DescisiumFormatter extends Formatter {
     super(options);
     const scenarios: { name: string; passed: boolean }[] = [];
     const failures: (() => string)[] = []; // built at the end: the Playwright trace is saved after the step
+    const warnings: string[] = [];
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
       if (e.testCaseStarted) {
         const { pickle } = this.eventDataCollector.getTestCaseAttempt(e.testCaseStarted.id);
@@ -31,6 +32,11 @@ export default class DescisiumFormatter extends Formatter {
         const attachments = stepAttachments[testStepId] ?? [];
         const judged = attachments.some(a => a.body.startsWith("JUDGED_PASSED"));
         this.log(`  ${failed ? "✗" : "✓"} ${KIND[kind]}: ${step.text}${judged ? "  (judged by Jev)" : ""}\n`);
+        const marginal = attachments.find(a => a.body.startsWith(MARGINAL))?.body.slice(MARGINAL.length);
+        if (marginal) {
+          this.log(`      ⚠ marginal pass: ${marginal}\n`);
+          warnings.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${step.text}\n  Jev was barely confident: ${marginal}`);
+        }
         if (!failed) return;
         const r = parseOutcome(result.message ?? "");
         this.log(`      ${r ? `${r.outcome}${r.reason ? `: ${r.reason}` : ""}` : `Error: ${result.message}`}`.replace(/\n/g, "\n      ") + "\n");
@@ -47,6 +53,7 @@ export default class DescisiumFormatter extends Formatter {
         scenarios.push({ name: pickle.name, passed: worstTestStepResult.status === Status.PASSED });
       } else if (e.testRunFinished) {
         if (failures.length) this.log(`\n${"─".repeat(60)}\nFailures\n\n${failures.map(f => f()).join("\n\n")}\n`);
+        if (warnings.length) this.log(`\n${"─".repeat(60)}\nMarginal passes\n\n${warnings.join("\n\n")}\n\nWhat to do: ${MARGINAL_HINT}\n`);
         const failed = scenarios.filter(s => !s.passed).map(s => s.name);
         this.log(`\n${scenarios.length - failed.length}/${scenarios.length} scenarios passed${failed.length ? `; failed: ${failed.join(", ")}` : ""}\n`);
       }
