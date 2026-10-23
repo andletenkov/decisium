@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
-import { Browser } from "../src/browser.ts";
-import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, JevDecider, type Assessment, type Decider, type Pick } from "../src/jev.ts";
+import { Browser, type Action } from "../src/browser.ts";
+import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, type Assessment, type Decider, type Pick } from "../src/decision.ts";
+import { JevDecider } from "../src/jev.ts";
 import { MASK, parseSnapshot, type Observation } from "../src/observation.ts";
 import { containsValue, runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
@@ -794,7 +795,7 @@ test("Enter: offered only while a text field has focus; submits what was typed",
     + `<input id=q aria-label="Search"></form><p id=o></p>`;
   const b = await Browser.open(page);
   try {
-    assert.ok(!("enter" in pageActions(await b.observe(), "search")), "no field has focus yet");
+    assert.ok(!("enter" in pageActions(await b.observe(), [])), "no field has focus yet");
     // Scripted Jev: type into the search box, press Enter, then done once results show.
     const decider: Decider = {
       ...oracle,
@@ -802,7 +803,7 @@ test("Enter: offered only while a text field has focus; submits what was typed",
         if (/Results for/.test(obs.pageText)) return { done: 1, target: sure("none") };
         const box = obs.elements.find(e => e.name === "Search")!;
         if (!box.value) return { done: 0, target: sure(box.ref) };
-        assert.ok("enter" in pageActions(obs, "search"), "field focused after typing");
+        assert.ok("enter" in pageActions(obs, []), "field focused after typing");
         return { done: 0, target: sure("enter") };
       },
       async value() { return sure("playwright"); },
@@ -1032,11 +1033,11 @@ test("keys: a press-only Step is pressed by code; other Steps offer only the key
     assert.equal(entry.done(true), undefined);
     cassette.save();
     assert.ok(!existsSync(cassette.path));
-    // Only the named keys are offered; Enter keeps its own action.
+    // Only the named keys are offered; Enter keeps its own action (offered only while a field has focus).
     const obs = await b.observe();
-    assert.deepEqual(Object.keys(pageActions(obs, "I open the palette by pressing Ctrl+K")).filter(k => k.startsWith("press")), ["press Control+K"]);
-    assert.deepEqual(Object.keys(pageActions(obs, "I type it and press Enter")).filter(k => k.startsWith("press")), []);
-    assert.deepEqual(Object.keys(pageActions(obs, "I open the palette")).filter(k => k.startsWith("press")), []);
+    assert.deepEqual(Object.keys(pageActions(obs, ["Control+K"])).filter(k => k.startsWith("press")), ["press Control+K"]);
+    assert.deepEqual(Object.keys(pageActions(obs, ["Enter"])).filter(k => k.startsWith("press")), []);
+    assert.deepEqual(Object.keys(pageActions(obs, [])).filter(k => k.startsWith("press")), []);
     const picker: Decider = { ...oracle, turn: async (_s, o) => /Tab/.test(o.pageText) ? { done: 1, target: sure("none") } : { done: 0, target: sure("press Tab") } };
     assert.equal((await runStep("I move on by pressing Tab", b, picker, () => {})).outcome, "DONE");
     assert.match((await b.observe()).pageText, /^Tab$/m);
@@ -1249,4 +1250,15 @@ test("executeStep: table rows, UI_CHANGED, PAGE_TOO_LARGE, setup errors, --stric
   assert.equal(lax.outcome, "PASSED");
   assert.match(lax.marginal!, /kind/);
   assert.equal((await executeStep(`"Ada" should be shown`, { ...check, strict: true })).outcome, "AMBIGUOUS");
+});
+
+test("keys: Jev is offered only the keys the Step text names, never one inside its doc string (task 0053)", async () => {
+  const done: Action[] = [];
+  const seen: unknown[] = [];
+  const rt: Runtime = { observe: async () => parseSnapshot(`- textbox "Notes" [ref=e1]`), execute: async a => { done.push(a); }, waitForChange: async () => false };
+  const pressing: Decider = { ...oracle, turn: async (...args) => { seen.push(args[4]); return { done: 0, target: sure("press Escape") }; } };
+  const r = await runStep("I write the notes:", rt, pressing, () => {}, false, "He said “hi” — press Escape");
+  assert.deepEqual(seen, [[]]);
+  assert.deepEqual(done, []); // "press Escape" is no answer this Step was offered
+  assert.equal(r.outcome, "ELEMENT_NOT_FOUND");
 });

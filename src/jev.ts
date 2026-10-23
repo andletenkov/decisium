@@ -1,18 +1,8 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
+import { AREA_MISSING, AREA_PAGE, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
-import { readStep } from "./step.ts";
 
 export const MODEL = "jev-1.14.0";
-
-export interface Pick {
-  choice: string;
-  probabilities: Record<string, number>;
-}
-
-export interface TurnAnswer {
-  done: number; // P(step already accomplished)
-  target: Pick; // element ref, a pageActions() key, or "none"
-}
 
 /** Non-element moves offered next to the element refs. */
 const PAGE_ACTIONS = {
@@ -23,11 +13,11 @@ const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. 
 
 /**
  * Page actions for this Observation and Step: Enter only while a text field has focus, so it is not offered on every
- * Turn; other keys only when the Step names them ("press Escape"), pressed wherever the focus is (task 0039).
+ * Turn; other keys only when the Step names them (`keys`, "press Escape"), pressed wherever the focus is (task 0039).
  */
-export function pageActions(obs: Observation, step: string): Record<string, string> {
+export function pageActions(obs: Observation, keys: string[]): Record<string, string> {
   const out: Record<string, string> = obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : { ...PAGE_ACTIONS };
-  for (const key of readStep({ text: step, kind: "action" }).keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
+  for (const key of keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
   return out;
 }
 
@@ -47,31 +37,6 @@ export const STATES = {
   selected: "selected", unselected: "not selected",
   pressed: "pressed / toggled on", unpressed: "not pressed / toggled off",
 } as const;
-
-export interface Assessment {
-  kind: Pick;
-  subject: Pick; // element ref the check is about, or "none"
-  area: Pick; // presence/absence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
-  state: Pick; // required control state, used by `state` checks
-  judged?: number; // P(step holds), only when asked
-}
-
-export const AREA_PAGE = "page";
-export const AREA_MISSING = "missing";
-
-/** The decision layer. Jev implements it; tests use a scripted fake. */
-export interface Decider {
-  /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
-  /** `attempt`: done means the user performed the actions, whether or not the app accepted them. */
-  turn(step: string, obs: Observation, recent: string[], attempt?: boolean): Promise<TurnAnswer>;
-  value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
-  /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
-  assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
-  /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
-  recall(step: string, earlier: Record<string, string>): Promise<Pick>;
-  /** The open browser dialog (`obs.dialog`): "accept", "dismiss", or for a prompt one of the Step's quoted values. */
-  dialog(step: string, obs: Observation, answers: string[]): Promise<Pick>;
-}
 
 /** What answering each kind of browser dialog means, for Jev (task 0040). */
 const DIALOG_ANSWERS = {
@@ -187,10 +152,10 @@ export class JevDecider implements Decider {
       (await this.#ask({ state, questions: { pick: choice(question, criteria) } })).answers.pick;
   }
 
-  async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
+  async turn(step: string, obs: Observation, recent: string[], attempt = false, keys: string[] = []): Promise<TurnAnswer> {
     const state = { step, ui: await this.#ui(obs, "step", step), actions_taken_for_step: recent.length ? recent : "none yet" };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
-    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs, step) },
+    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs, keys) },
       this.#choose(state, question));
     const res = await this.#ask({
       state,
@@ -272,17 +237,3 @@ export class JevDecider implements Decider {
 
 }
 
-/** Confidence gate: act only on a clear, confident top answer. */
-export const GATE_TOP = 0.8;
-export const GATE_MARGIN = 0.3;
-/**
- * Which element to act on is gated lower than a check (task 0002): a wrong action fails a later Step loudly,
- * while a wrong check can pass falsely. Fitted on 26 labelled AMBIGUOUS Turns from the real-site corpus, where
- * every top answer naming an element was the right one down to 0.47; below 0.1 margin the two answers are a coin flip.
- */
-export const GATE_TARGET_TOP = 0.5;
-export const GATE_TARGET_MARGIN = 0.1;
-export function gate(pick: Pick, minTop = GATE_TOP, minMargin = GATE_MARGIN): boolean {
-  const [top = 0, second = 0] = Object.values(pick.probabilities).sort((a, b) => b - a);
-  return top >= minTop && top - second >= minMargin;
-}

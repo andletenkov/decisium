@@ -1,6 +1,7 @@
 import type { Action } from "./browser.ts";
 import { readStep, type StepArgument } from "./step.ts";
-import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
+import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, NotYet, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { pageActions, STATES } from "./jev.ts";
 import { assertableText, MASK, type Dialog, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -25,15 +26,6 @@ export interface StepResult {
   reason?: string;
   /** PASSED resting on a barely-confident Jev answer: which answers, for the warning (task 0027). */
   marginal?: string;
-}
-
-/**
- * Thrown by a Decider that needs a later Observation (a replayed control not on a still-loading page): the runner
- * waits for the page to change and asks again, and throws `final` once ASSERT_TIMEOUT_MS has passed.
- */
-export class NotYet extends Error {
-  final: Error;
-  constructor(final: Error) { super(final.message); this.final = final; }
 }
 
 /** `ask` on `obs`, re-observing after each change while it throws NotYet. */
@@ -166,18 +158,6 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
     }
     return { outcome: "AMBIGUOUS", reason: `Jev could not tell what kind of check this is, and the readings disagree: ${results.map(r => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}` };
   }
-}
-
-/** Most likely answers first, until together they cover the gate's confidence (cassette.ts stores exactly these). */
-export function plausible(pick: Pick): string[] {
-  const out: string[] = [];
-  let covered = 0;
-  for (const [k, p] of Object.entries(pick.probabilities).sort((x, y) => y[1] - x[1])) {
-    if (covered >= GATE_TOP) break;
-    out.push(k);
-    covered += p;
-  }
-  return out;
 }
 
 type Verdict = { outcome: StepOutcome; reason?: string; inapplicable?: true; marginal?: string[] };
@@ -428,7 +408,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     }
 
     let t: TurnAnswer;
-    [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt));
+    [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt, read.keys));
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
@@ -437,7 +417,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     let action: Action;
     let described: string;
-    if (t.target.choice in pageActions(obs, said)) {
+    if (t.target.choice in pageActions(obs, read.keys)) {
       const key = /^press (.+)$/.exec(t.target.choice)?.[1];
       action = key ? { verb: "PRESS", value: key } : { verb: PAGE_VERBS[t.target.choice] };
       described = key ? `PRESS ${key}` : action.verb;

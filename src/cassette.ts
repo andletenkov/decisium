@@ -1,8 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import type { Assessment, Decider, Pick, TurnAnswer } from "./jev.ts";
+import { NotYet, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
-import { NotYet, plausible } from "./runner.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -147,7 +146,7 @@ export class Cassette {
     let broken: string | undefined; // why replay stopped
     let turn = 0;
     const replayOnly = this.mode === "none";
-    /** `wait`: replay-only waits for a loading page to show the control (runner.ts NotYet); live mode just asks Jev, who can answer "wait". */
+    /** `wait`: replay-only waits for a loading page to show the control (NotYet); live mode just asks Jev, who can answer "wait". */
     const fail = (why: string, wait = false) => {
       if (replayOnly && old && wait) throw new NotYet(new UiChanged(`the recorded resolution no longer holds: ${why}`));
       if (replayOnly) throw new UiChanged(old ? `the recorded resolution no longer holds: ${why}` : "this step has no recorded resolution: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev");
@@ -160,7 +159,7 @@ export class Cassette {
     };
 
     return {
-      turn: async (step, obs, recent, attempt) => {
+      turn: async (step, obs, recent, attempt, keys) => {
         const i = turn; // advanced only once answered: a NotYet retries the same recorded turn
         const r = replay(e => {
           const t = e.turns?.[i];
@@ -169,7 +168,7 @@ export class Cassette {
           return { done: t.done, target: load(t.target, obs.elements) };
         }, true);
         turn = i + 1;
-        const a = r ?? await live.turn(step, obs, recent, attempt);
+        const a = r ?? await live.turn(step, obs, recent, attempt, keys);
         (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements) };
         return a;
       },

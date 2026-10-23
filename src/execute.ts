@@ -1,6 +1,7 @@
 // Step execution (task 0051): one Gherkin Step from text to Step outcome, without cucumber. steps.ts adapts it.
 import { UiChanged, type Cassette } from "./cassette.ts";
-import { jevUsage, type Decider } from "./jev.ts";
+import type { Decider } from "./decision.ts";
+import { jevUsage } from "./jev.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { readStep, type StepArgument, type StepKind } from "./step.ts";
 

@@ -1,8 +1,7 @@
 import { appendFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Action, Browser } from "./browser.ts";
-import type { Decider } from "./jev.ts";
-import type { Observation } from "./observation.ts";
+import { traced, type Decider } from "./decision.ts";
 import type { Runtime } from "./runner.ts";
 
 /** File in the run directory marking an infrastructure error (exit 2), written by any worker, read by the CLI. */
@@ -96,19 +95,9 @@ export class RunDir {
     };
   }
 
-  /** Jev's answers with their probabilities. Values chosen for secret fields are masked. */
+  /** Jev's answers with their probabilities, one event per question. Values chosen for secret fields are masked. */
   decider(d: Decider): Decider {
-    return {
-      turn: async (step, obs: Observation, recent, attempt) => { const a = await d.turn(step, obs, recent, attempt); this.event("turn", { step, answer: a }); return a; },
-      value: async (step, obs, el, candidates) => {
-        const a = await d.value(step, obs, el, candidates);
-        this.event("value", { step, element: el.line, answer: el.secret ? "(secret)" : a });
-        return a;
-      },
-      assess: async (step, obs, judged) => { const a = await d.assess(step, obs, judged); this.event("assess", { step, answer: a }); return a; },
-      recall: async (step, earlier) => { const a = await d.recall(step, earlier); this.event("recall", { step, answer: a }); return a; },
-      dialog: async (step, obs, answers) => { const a = await d.dialog(step, obs, answers); this.event("dialog", { step, dialog: obs.dialog, answer: a }); return a; },
-    };
+    return traced(d, (type, data) => this.event(type, data));
   }
 
   /** On failure: console errors and the last page text next to the screenshots (the Playwright trace is saved by Browser.close). */
