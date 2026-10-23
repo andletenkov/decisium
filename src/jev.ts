@@ -1,5 +1,4 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import type { Cassette } from "./cassette.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
@@ -135,9 +134,7 @@ export const jevUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
 /** Every question sends the Step text as-is, so a value quoted in a Step (a password included) reaches the API. */
 export class JevDecider implements Decider {
   #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
-  #cassette?: Cassette;
   #reduced = new WeakMap<Observation, Map<string, Promise<string>>>(); // per Observation and Step: asked once per Turn
-  constructor(cassette?: Cassette) { this.#cassette = cassette; }
 
   /** `ui` for `step` on this Observation, reduced to the sections that matter when the page is over budget. */
   #ui(obs: Observation, about: "step" | "check", step: string): Promise<string> {
@@ -155,14 +152,11 @@ export class JevDecider implements Decider {
   }
 
   async #ask<Q extends Parameters<TypeSafeClient["systemOne"]>[0]>(request: Q) {
-    const live = async () => {
-      const res = await this.#client.systemOne(request);
-      jevUsage.calls++;
-      jevUsage.inputTokens += res.usage?.input_tokens ?? 0;
-      jevUsage.outputTokens += res.usage?.output_tokens ?? 0;
-      return { model: res.model, answers: res.answers as Record<string, any> };
-    };
-    return this.#cassette ? this.#cassette.call(request, live) : live();
+    const res = await this.#client.systemOne(request);
+    jevUsage.calls++;
+    jevUsage.inputTokens += res.usage?.input_tokens ?? 0;
+    jevUsage.outputTokens += res.usage?.output_tokens ?? 0;
+    return { model: res.model, answers: res.answers as Record<string, any> };
   }
 
   /** One choice question over `criteria`, for narrow(). */

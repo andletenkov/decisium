@@ -462,33 +462,67 @@ for (const variant of ["", "?dropdown=custom"]) {
   });
 }
 
-test("cassette replays identical requests, fails UI_CHANGED with the difference, discards on model change", async () => {
+test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when they no longer match", async () => {
   const { mkdtempSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { Cassette, UiChanged } = await import("../src/cassette.ts");
   const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
-  const req = (ui: string) => ({ state: { step: "s", ui }, questions: {} });
+  const page = (counter: string, extra = "") => parseSnapshot([
+    `- generic [ref=e1]: ${counter} open`, // live content: refs below shift with it in a real page
+    `- list "Issues" [ref=e2]:`,
+    extra,
+    `  - link "Bug" [ref=e3]`,
+    `  - link "Feature" [ref=e4]`,
+    `- link "Bug" [ref=e5]`, // same name, other container
+  ].filter(Boolean).join("\n"));
   let calls = 0;
-  const live = async () => ({ n: ++calls });
+  const live: Decider = {
+    ...oracle,
+    async turn(_s, obs, recent) {
+      calls++;
+      const bug = obs.elements.find(e => e.name === "Bug" && e.parent?.name === "Issues")!;
+      return { done: recent.length ? 1 : 0, target: sure(bug.ref) };
+    },
+    async assess(_s, obs) {
+      calls++;
+      return { kind: sure("value"), subject: sure(obs.readable[0].ref), area: sure("page"), state: sure("disabled") };
+    },
+  };
+  const go = async (cassette: InstanceType<typeof Cassette>, obs: Observation) => {
+    const clicked: string[] = [];
+    let after = false;
+    const rt: Runtime = { observe: async () => after ? { ...obs, text: obs.text + "\nclicked" } : obs, execute: async a => { clicked.push(a.ref!); after = true; }, waitForChange: async () => false };
+    const d = cassette.step("S #1: open the Bug issue", live);
+    const r = await runStep("open the Bug issue", rt, d, () => {});
+    d.done(r.outcome === "DONE");
+    const c = cassette.step("S #2: \"3 open\" is shown", live);
+    const v = await runAssertion(`the counter shows "3 open"`, rt, c, () => {});
+    c.done(v.outcome === "PASSED");
+    return { outcome: r.outcome, check: v.outcome, clicked };
+  };
 
-  const rec = new Cassette(path, "m1", "once");
-  assert.deepEqual(await rec.call(req("a\nb"), live), { n: 1 });
+  const rec = new Cassette(path, "m1", "new");
+  assert.deepEqual(await go(rec, page("3")), { outcome: "DONE", check: "PASSED", clicked: ["e3"] });
+  assert.equal(rec.recorded, 2);
   rec.save();
+  calls = 0;
 
-  const replay = new Cassette(path, "m1", "once"); // file exists: replay only
-  assert.deepEqual(await replay.call(req("a\nb"), live), { n: 1 });
-  assert.equal(calls, 1);
-  await assert.rejects(replay.call(req("a\nc"), live), (e: Error) => e instanceof UiChanged && e.reason ===
-    "the page is not the one this step was recorded on, so the recorded Jev answer cannot be reused. Differences (- recorded, + now):\n  - b\n  + c");
-  await assert.rejects(replay.call({ state: { step: "reworded", ui: "a\nb" }, questions: {} }, live), (e: Error) => e instanceof UiChanged && e.reason ===
-    "this step has no recorded Jev answer: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev");
+  // Unchanged structure, other refs: zero Jev calls. A changed value still fails (verdicts are not stored).
+  const shifted = parseSnapshot(page("4").text.replaceAll("ref=e", "ref=f"));
+  assert.deepEqual(await go(new Cassette(path, "m1", "none"), shifted), { outcome: "DONE", check: "ASSERTION_FAILED", clicked: ["f3"] });
+  assert.equal(calls, 0);
 
-  const drift = new Cassette(path, "m1", "new");
-  assert.deepEqual(await drift.call(req("a\nc"), live), { n: 2 });
-  assert.equal(drift.recorded, 1);
+  // A second "Bug" in the list: the recorded control no longer names one element. Never acted on silently.
+  const two = page("3", `  - link "Bug" [ref=e9]`);
+  await assert.rejects(go(new Cassette(path, "m1", "none"), two), (e: Error) => e instanceof UiChanged && /link "Bug" in list "Issues" matches 2 elements like it now, recorded 1/.test(e.reason));
+  assert.equal(calls, 0);
+  const heal = new Cassette(path, "m1", "new");
+  assert.deepEqual(await go(heal, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
+  assert.deepEqual([heal.healed, heal.replayed, calls], [1, 1, 2]);
 
-  const other = new Cassette(path, "m2", "none");
-  await assert.rejects(other.call(req("a\nb"), live), UiChanged);
+  // Missing step in replay-only mode; a different model discards the cassette.
+  await assert.rejects(async () => { const d = new Cassette(path, "m1", "none").step("new step", live); await d.turn("x", two, []); }, UiChanged);
+  await assert.rejects(go(new Cassette(path, "m2", "none"), page("3")), UiChanged);
 });
 
 test("cassette: scenarios of one feature on different workers share it; the run id decides what is old", async () => {
@@ -496,25 +530,25 @@ test("cassette: scenarios of one feature on different workers share it; the run 
   const { tmpdir } = await import("node:os");
   const { Cassette } = await import("../src/cassette.ts");
   const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
-  const req = (ui: string) => ({ state: { step: "s", ui }, questions: {} });
-  const live = async () => ({ n: 1 });
+  const obs = parseSnapshot(`- button "Go" [ref=e1]`);
+  const record = async (c: InstanceType<typeof Cassette>, key: string) => {
+    const d = c.step(key, { ...oracle, turn: async () => ({ done: 1, target: sure("none") }) });
+    await d.turn(key, obs, []);
+    d.done(true);
+    c.save();
+  };
   const keys = () => Object.keys(JSON.parse(readFileSync(path, "utf8")).entries).length;
 
-  // once, no cassette at run start: a second worker that finds the first one's file still records.
   let since = "run-1";
-  const w1 = new Cassette(path, "m1", "once", since);
-  await w1.call(req("a"), live); w1.save();
-  const w2 = new Cassette(path, "m1", "once", since);
-  await w2.call(req("b"), live); w2.save();
+  await record(new Cassette(path, "m1", "new", since), "a");
+  await record(new Cassette(path, "m1", "new", since), "b");
   assert.equal(keys(), 2); // merged, not overwritten
 
   // all: entries from before the run are dropped, entries from this run's other workers kept.
-  writeFileSync(path, JSON.stringify({ model: "m1", entries: { stale: { request: 1, response: 1 } } }));
+  writeFileSync(path, JSON.stringify({ model: "m1", entries: { stale: {} } }));
   since = "run-2";
-  const a1 = new Cassette(path, "m1", "all", since);
-  await a1.call(req("a"), live); a1.save();
-  const a2 = new Cassette(path, "m1", "all", since);
-  await a2.call(req("b"), live); a2.save();
+  await record(new Cassette(path, "m1", "all", since), "a");
+  await record(new Cassette(path, "m1", "all", since), "b");
   assert.deepEqual(Object.keys(JSON.parse(readFileSync(path, "utf8")).entries).includes("stale"), false);
   assert.equal(keys(), 2);
 });

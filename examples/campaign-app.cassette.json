@@ -1,920 +1,352 @@
 {
   "model": "jev-1.14.0",
+  "run": "runs/2026-10-23T09-41-39-733Z",
   "entries": {
-    "4d67fb739a0f75207a2639d35967d715c215281760024b084658549f11d61513": {
-      "request": {
-        "state": {
-          "step": "I enter \"Autumn Sale\" as the campaign name",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\"",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e5",
-            "confidence": 1,
-            "probabilities": {
-              "e5": 1,
-              "e8": 0,
-              "e9": 0,
-              "e10": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0
-            }
-          }
-        }
-      }
-    },
-    "7d62041347c36617b4064c178077fec76ab0870f668f85d10441f95cff46e36b": {
-      "request": {
-        "state": {
-          "step": "I enter \"Autumn Sale\" as the campaign name",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "element": "textbox \"Campaign name\""
-        },
-        "questions": {
-          "value": {
-            "type": "choice",
-            "instructions": "Which value should be entered into `element` to accomplish `step`?",
-            "criteria": {
-              "v0": "Autumn Sale",
-              "none": "None of these values is what `step` asks for."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "value": {
-            "type": "choice",
-            "choice": "v0",
-            "confidence": 1,
-            "probabilities": {
-              "v0": 1,
-              "none": 0
-            }
-          }
-        }
-      }
-    },
-    "808d2b84e14009cafe3da7b3863606c5c064719f82ac1434ba6d9577943e1011": {
-      "request": {
-        "state": {
-          "step": "I enter \"Autumn Sale\" as the campaign name",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": [
-            "TYPE textbox \"Campaign name\" <- \"Autumn Sale\""
+    "Schedule a campaign #1: I enter \"Autumn Sale\" as the campaign name": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Campaign name",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              1
+            ]
+          ],
+          "value": [
+            [
+              "Autumn Sale",
+              1
+            ]
           ]
         },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.65
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Schedule",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              0.2
+            ]
+          ]
         }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.98
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.65,
-            "probabilities": {
-              "e5": 0.03,
-              "e8": 0.02,
-              "e9": 0.17,
-              "e10": 0.08,
-              "none": 0.69,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0.01
-            }
-          }
-        }
-      }
+      ]
     },
-    "a30b0538aefb0865409ed194e0c96c60f7e6a4bbfbee191bce29cfc51c21ec22": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e8",
-            "confidence": 1,
-            "probabilities": {
-              "e5": 0,
-              "e8": 1,
-              "e9": 0,
-              "e10": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "0bc25ffd7a5609b16a48152e4647191837982b0562c9bcfa86f00d4f2e3c37ad": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "element": "combobox \"Activation period\" value=\"1 week\""
-        },
-        "questions": {
-          "value": {
-            "type": "choice",
-            "instructions": "Which value should be entered into `element` to accomplish `step`?",
-            "criteria": {
-              "v0": "1 week",
-              "v1": "2 weeks",
-              "v2": "3 weeks",
-              "none": "None of these values is what `step` asks for."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "value": {
-            "type": "choice",
-            "choice": "v1",
-            "confidence": 1,
-            "probabilities": {
-              "v0": 0,
-              "v1": 1,
-              "v2": 0,
-              "none": 0
-            }
-          }
-        }
-      }
-    },
-    "f68508c40083fef679ca402a2ba03d3d3119d5a5818912c2ed1499a0d2cd4c0b": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": [
-            "SELECT combobox \"Activation period\" <- \"2 weeks\""
+    "Schedule a campaign #2: I set the activation period to 2 weeks": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "combobox",
+                "name": "Activation period",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              1
+            ]
+          ],
+          "value": [
+            [
+              "2 weeks",
+              1
+            ]
           ]
         },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
+        {
+          "done": 0.99,
+          "target": [
+            [
+              "none",
+              0.56
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Schedule",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              0.24
+            ]
+          ]
         }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.98
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.53,
-            "probabilities": {
-              "e5": 0,
-              "e8": 0.17,
-              "e9": 0.23,
-              "e10": 0.01,
-              "none": 0.59,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
+      ]
     },
-    "83e0171005f37e713f1213ed67331bc5c943169b79bd79bf1d7ba6bbc6173075": {
-      "request": {
-        "state": {
-          "step": "I schedule the campaign",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [active] [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": "none yet"
-        },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\" [active]",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element.",
-              "enter": "Press Enter in the focused field, to submit what was typed (e.g. run a search)."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e9",
-            "confidence": 1,
-            "probabilities": {
-              "e5": 0,
-              "e8": 0,
-              "e9": 1,
-              "e10": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0,
-              "enter": 0
-            }
-          }
-        }
-      }
-    },
-    "9a3953ce8cf410318597832bdfce0a5c01bb7d177d47fa7205cfd1009ead96cd": {
-      "request": {
-        "state": {
-          "step": "I schedule the campaign",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [active] [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Scheduled\"",
-          "actions_taken_for_step": [
-            "CLICK button \"Schedule\""
+    "Schedule a campaign #3: I schedule the campaign": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Schedule",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              1
+            ]
           ]
         },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\"",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\" [active]",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
-            }
-          }
+        {
+          "done": 0.97,
+          "target": [
+            [
+              "none",
+              0.84
+            ]
+          ]
         }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.97
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.8,
-            "probabilities": {
-              "e5": 0,
-              "e8": 0,
-              "e9": 0.16,
-              "e10": 0,
-              "none": 0.83,
-              "scroll": 0,
-              "wait": 0.01
-            }
-          }
-        }
-      }
+      ]
     },
-    "0be99f0cea74ac36b7a668498ca7b296149dfc9942a2aabf2a0d697ea7fb61eb": {
-      "request": {
-        "state": {
-          "check": "the campaign status should be \"Scheduled\"",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]: Autumn Sale\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [active] [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Scheduled\""
+    "Schedule a campaign #4: the campaign status should be \"Scheduled\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.97,
+          "probabilities": {
+            "value": 0.98,
+            "presence": 0,
+            "absence": 0,
+            "state": 0.02,
+            "fuzzy": 0
+          }
         },
-        "questions": {
-          "kind": {
-            "type": "choice",
-            "instructions": "What kind of check is `check`?",
-            "criteria": {
-              "value": "Checks that some element shows a specific text or value.",
-              "presence": "Checks that something is shown or exists on the page.",
-              "absence": "Checks that something is not shown or does not exist on the page.",
-              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
-              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
-            }
-          },
-          "subject": {
-            "type": "choice",
-            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
-            "criteria": {
-              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/campaign-…\"",
-              "title": "title value=\"Campaigns\"",
-              "e2": "heading \"New campaign\" [level=1]",
-              "e5": "textbox \"Campaign name\" value=\"Autumn Sale\"",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\" [active]",
-              "e10": "button \"Save draft\"",
-              "e11": "paragraph value=\"Status: Scheduled\"",
-              "none": "No element in `ui` is the one `check` is about."
-            }
-          },
-          "state": {
-            "type": "choice",
-            "instructions": "Which control state does `check` require?",
-            "criteria": {
-              "disabled": "disabled",
-              "enabled": "enabled (not disabled)",
-              "checked": "checked",
-              "unchecked": "not checked",
-              "expanded": "expanded / open",
-              "collapsed": "collapsed / closed",
-              "selected": "selected",
-              "unselected": "not selected",
-              "pressed": "pressed / toggled on",
-              "unpressed": "not pressed / toggled off"
-            }
-          },
-          "area": {
-            "type": "choice",
-            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
-            "criteria": {
-              "e1": "generic",
-              "e3": "generic",
-              "e4": "generic",
-              "e7": "generic",
-              "page": "`check` names no specific area; anywhere on the page counts.",
-              "missing": "`check` names a specific area, but no element in `ui` is that area."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "kind": {
-            "type": "choice",
-            "choice": "value",
-            "confidence": 0.97,
-            "probabilities": {
-              "value": 0.98,
-              "presence": 0,
-              "absence": 0,
-              "state": 0.02,
-              "fuzzy": 0
-            }
-          },
-          "subject": {
-            "type": "choice",
-            "choice": "e11",
-            "confidence": 1,
-            "probabilities": {
-              "url": 0,
-              "title": 0,
-              "e2": 0,
-              "e5": 0,
-              "e8": 0,
-              "e9": 0,
-              "e10": 0,
-              "e11": 1,
-              "none": 0
-            }
-          },
-          "state": {
-            "type": "choice",
-            "choice": "enabled",
-            "confidence": 0.42,
-            "probabilities": {
-              "disabled": 0.01,
-              "enabled": 0.48,
-              "checked": 0.1,
-              "unchecked": 0.01,
-              "expanded": 0.01,
-              "collapsed": 0,
-              "selected": 0.37,
-              "unselected": 0,
-              "pressed": 0.01,
-              "unpressed": 0.01
-            }
-          },
-          "area": {
-            "type": "choice",
-            "choice": "page",
-            "confidence": 0.81,
-            "probabilities": {
-              "e1": 0.03,
-              "e3": 0.03,
-              "e4": 0.02,
-              "e7": 0.01,
-              "page": 0.84,
-              "missing": 0.07
-            }
-          }
-        }
-      }
-    },
-    "0a999810850534fca516de3786e242321e1d5ba790feb7fc99c716e71ceca02b": {
-      "request": {
         "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": "none yet"
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.36,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.42,
+            "checked": 0.1,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0.01,
+            "selected": 0.4,
+            "unselected": 0.01,
+            "pressed": 0.02,
+            "unpressed": 0.01
+          }
         },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\"",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.01
-          },
-          "target": {
-            "type": "choice",
-            "choice": "e8",
-            "confidence": 1,
-            "probabilities": {
-              "e5": 0,
-              "e8": 1,
-              "e9": 0,
-              "e10": 0,
-              "none": 0,
-              "scroll": 0,
-              "wait": 0
-            }
-          }
-        }
+        "subject": [
+          [
+            {
+              "role": "paragraph",
+              "name": "",
+              "container": "",
+              "nth": 0,
+              "of": 1
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.87
+          ]
+        ]
       }
     },
-    "230deceb6d003e8962360e6a2e49f251bea8d7175bf6f013c9069c9d6931e48f": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "element": "combobox \"Activation period\" value=\"1 week\""
-        },
-        "questions": {
-          "value": {
-            "type": "choice",
-            "instructions": "Which value should be entered into `element` to accomplish `step`?",
-            "criteria": {
-              "v0": "1 week",
-              "v1": "2 weeks",
-              "v2": "3 weeks",
-              "none": "None of these values is what `step` asks for."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "value": {
-            "type": "choice",
-            "choice": "v1",
-            "confidence": 1,
-            "probabilities": {
-              "v0": 0,
-              "v1": 1,
-              "v2": 0,
-              "none": 0
-            }
-          }
-        }
-      }
-    },
-    "f374756c6d8bedb0214e2249c88cc5a4e483b4b2b91784fcf491810f2259e056": {
-      "request": {
-        "state": {
-          "step": "I set the activation period to 2 weeks",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"",
-          "actions_taken_for_step": [
-            "SELECT combobox \"Activation period\" <- \"2 weeks\""
+    "Set the activation period #1: I set the activation period to 2 weeks": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "combobox",
+                "name": "Activation period",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              1
+            ]
+          ],
+          "value": [
+            [
+              "2 weeks",
+              1
+            ]
           ]
         },
-        "questions": {
-          "done": {
-            "type": "noul",
-            "instructions": "Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"
-          },
-          "target": {
-            "type": "choice",
-            "instructions": "Which element in `ui` should be interacted with next to accomplish `step`?",
-            "criteria": {
-              "e5": "textbox \"Campaign name\"",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "none": "No element on screen helps accomplish `step`.",
-              "scroll": "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-              "wait": "Wait: `ui` is still loading the needed element."
-            }
-          }
+        {
+          "done": 0.99,
+          "target": [
+            [
+              "none",
+              0.63
+            ],
+            [
+              {
+                "role": "combobox",
+                "name": "Activation period",
+                "container": "",
+                "nth": 0,
+                "of": 1
+              },
+              0.25
+            ]
+          ]
         }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "done": {
-            "type": "noul",
-            "noul": 0.99
-          },
-          "target": {
-            "type": "choice",
-            "choice": "none",
-            "confidence": 0.56,
-            "probabilities": {
-              "e5": 0,
-              "e8": 0.28,
-              "e9": 0.1,
-              "e10": 0,
-              "none": 0.62,
-              "scroll": 0,
-              "wait": 0
-            }
+      ]
+    },
+    "Set the activation period #2: the activation period should be \"2 weeks\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.51,
+          "probabilities": {
+            "value": 0.61,
+            "presence": 0,
+            "absence": 0,
+            "state": 0.39,
+            "fuzzy": 0
           }
-        }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "selected",
+          "confidence": 1,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 1,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "combobox",
+              "name": "Activation period",
+              "container": "",
+              "nth": 0,
+              "of": 1
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.53
+          ],
+          [
+            "missing",
+            0.12
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "nth": 1,
+              "of": 4
+            },
+            0.11
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "nth": 0,
+              "of": 4
+            },
+            0.09
+          ]
+        ]
       }
     },
-    "12f396a546ee0c6e53b0f798ecad0acc2a7bea1cf7a4539e033fb49c59e9b534": {
-      "request": {
-        "state": {
-          "check": "the activation period should be \"2 weeks\"",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\"\n        - option \"2 weeks\" [selected]\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\""
+    "Status assertion ignores a decoy #1: the campaign status should be \"Scheduled\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.94,
+          "probabilities": {
+            "value": 0.95,
+            "presence": 0,
+            "absence": 0,
+            "state": 0.05,
+            "fuzzy": 0
+          }
         },
-        "questions": {
-          "kind": {
-            "type": "choice",
-            "instructions": "What kind of check is `check`?",
-            "criteria": {
-              "value": "Checks that some element shows a specific text or value.",
-              "presence": "Checks that something is shown or exists on the page.",
-              "absence": "Checks that something is not shown or does not exist on the page.",
-              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
-              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
-            }
-          },
-          "subject": {
-            "type": "choice",
-            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
-            "criteria": {
-              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/campaign-…\"",
-              "title": "title value=\"Campaigns\"",
-              "e2": "heading \"New campaign\" [level=1]",
-              "e5": "textbox \"Campaign name\"",
-              "e8": "combobox \"Activation period\" value=\"2 weeks\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "e11": "paragraph value=\"Status: Draft\"",
-              "none": "No element in `ui` is the one `check` is about."
-            }
-          },
-          "state": {
-            "type": "choice",
-            "instructions": "Which control state does `check` require?",
-            "criteria": {
-              "disabled": "disabled",
-              "enabled": "enabled (not disabled)",
-              "checked": "checked",
-              "unchecked": "not checked",
-              "expanded": "expanded / open",
-              "collapsed": "collapsed / closed",
-              "selected": "selected",
-              "unselected": "not selected",
-              "pressed": "pressed / toggled on",
-              "unpressed": "not pressed / toggled off"
-            }
-          },
-          "area": {
-            "type": "choice",
-            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
-            "criteria": {
-              "e1": "generic [active]",
-              "e3": "generic",
-              "e4": "generic",
-              "e7": "generic",
-              "page": "`check` names no specific area; anywhere on the page counts.",
-              "missing": "`check` names a specific area, but no element in `ui` is that area."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "kind": {
-            "type": "choice",
-            "choice": "value",
-            "confidence": 0.46,
-            "probabilities": {
-              "value": 0.57,
-              "presence": 0,
-              "absence": 0,
-              "state": 0.43,
-              "fuzzy": 0
-            }
-          },
-          "subject": {
-            "type": "choice",
-            "choice": "e8",
-            "confidence": 1,
-            "probabilities": {
-              "url": 0,
-              "title": 0,
-              "e2": 0,
-              "e5": 0,
-              "e8": 1,
-              "e9": 0,
-              "e10": 0,
-              "e11": 0,
-              "none": 0
-            }
-          },
-          "state": {
-            "type": "choice",
-            "choice": "selected",
-            "confidence": 1,
-            "probabilities": {
-              "disabled": 0,
-              "enabled": 0,
-              "checked": 0,
-              "unchecked": 0,
-              "expanded": 0,
-              "collapsed": 0,
-              "selected": 1,
-              "unselected": 0,
-              "pressed": 0,
-              "unpressed": 0
-            }
-          },
-          "area": {
-            "type": "choice",
-            "choice": "page",
-            "confidence": 0.35,
-            "probabilities": {
-              "e1": 0.09,
-              "e3": 0.11,
-              "e4": 0.07,
-              "e7": 0.11,
-              "page": 0.46,
-              "missing": 0.16
-            }
-          }
-        }
-      }
-    },
-    "57361edc3cfa755816ef24a32c3220fd9336b5605a87d6892e215fb54b080549": {
-      "request": {
         "state": {
-          "check": "the campaign status should be \"Scheduled\"",
-          "ui": "- url: file:///Users/ale/orca/projects/descisium/examples/campaign-app/index.html?decoy=1\n- title: Campaigns\n  - heading \"New campaign\" [level=1] [ref=e2]\n      - text: Campaign name\n      - textbox \"Campaign name\" [ref=e5]\n      - text: Activation period\n      - combobox \"Activation period\" [ref=e8]:\n        - option \"1 week\" [selected]\n        - option \"2 weeks\"\n        - option \"3 weeks\"\n    - button \"Schedule\" [ref=e9]\n    - button \"Save draft\" [ref=e10]\n  - paragraph [ref=e11]: \"Status: Draft\"\n    - text: Show campaigns\n    - combobox \"Show campaigns\" [ref=e13]:\n      - option \"All\"\n      - option \"Scheduled\" [selected]"
+          "type": "choice",
+          "choice": "selected",
+          "confidence": 0.83,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.04,
+            "checked": 0.03,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.85,
+            "unselected": 0.06,
+            "pressed": 0,
+            "unpressed": 0
+          }
         },
-        "questions": {
-          "kind": {
-            "type": "choice",
-            "instructions": "What kind of check is `check`?",
-            "criteria": {
-              "value": "Checks that some element shows a specific text or value.",
-              "presence": "Checks that something is shown or exists on the page.",
-              "absence": "Checks that something is not shown or does not exist on the page.",
-              "state": "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
-              "fuzzy": "A subjective or holistic check that none of the other kinds can express."
-            }
-          },
-          "subject": {
-            "type": "choice",
-            "instructions": "Which element in `ui` is the one `check` is about, regardless of whether the check passes?",
-            "criteria": {
-              "url": "url value=\"file:///Users/ale/orca/projects/descisium/examples/campaign-…\"",
-              "title": "title value=\"Campaigns\"",
-              "e2": "heading \"New campaign\" [level=1]",
-              "e5": "textbox \"Campaign name\"",
-              "e8": "combobox \"Activation period\" value=\"1 week\"",
-              "e9": "button \"Schedule\"",
-              "e10": "button \"Save draft\"",
-              "e11": "paragraph value=\"Status: Draft\"",
-              "e13": "combobox \"Show campaigns\" value=\"Scheduled\"",
-              "none": "No element in `ui` is the one `check` is about."
-            }
-          },
-          "state": {
-            "type": "choice",
-            "instructions": "Which control state does `check` require?",
-            "criteria": {
-              "disabled": "disabled",
-              "enabled": "enabled (not disabled)",
-              "checked": "checked",
-              "unchecked": "not checked",
-              "expanded": "expanded / open",
-              "collapsed": "collapsed / closed",
-              "selected": "selected",
-              "unselected": "not selected",
-              "pressed": "pressed / toggled on",
-              "unpressed": "not pressed / toggled off"
-            }
-          },
-          "area": {
-            "type": "choice",
-            "instructions": "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.",
-            "criteria": {
-              "e1": "generic [active]",
-              "e3": "generic",
-              "e4": "generic",
-              "e7": "generic",
-              "e12": "generic",
-              "page": "`check` names no specific area; anywhere on the page counts.",
-              "missing": "`check` names a specific area, but no element in `ui` is that area."
-            }
-          }
-        }
-      },
-      "response": {
-        "model": "jev-1.14.0",
-        "answers": {
-          "kind": {
-            "type": "choice",
-            "choice": "value",
-            "confidence": 0.96,
-            "probabilities": {
-              "value": 0.97,
-              "presence": 0,
-              "absence": 0,
-              "state": 0.03,
-              "fuzzy": 0
-            }
-          },
-          "subject": {
-            "type": "choice",
-            "choice": "e11",
-            "confidence": 0.99,
-            "probabilities": {
-              "url": 0,
-              "title": 0,
-              "e2": 0,
-              "e5": 0,
-              "e8": 0,
-              "e9": 0,
-              "e10": 0,
-              "e11": 0.99,
-              "e13": 0.01,
-              "none": 0
-            }
-          },
-          "state": {
-            "type": "choice",
-            "choice": "selected",
-            "confidence": 0.81,
-            "probabilities": {
-              "disabled": 0,
-              "enabled": 0.06,
-              "checked": 0.02,
-              "unchecked": 0.01,
-              "expanded": 0.01,
-              "collapsed": 0,
-              "selected": 0.83,
-              "unselected": 0.05,
-              "pressed": 0.01,
-              "unpressed": 0.01
-            }
-          },
-          "area": {
-            "type": "choice",
-            "choice": "page",
-            "confidence": 0.69,
-            "probabilities": {
-              "e1": 0.02,
-              "e3": 0.05,
-              "e4": 0.02,
-              "e7": 0.02,
-              "e12": 0.1,
-              "page": 0.73,
-              "missing": 0.06
-            }
-          }
-        }
+        "subject": [
+          [
+            {
+              "role": "paragraph",
+              "name": "",
+              "container": "",
+              "nth": 0,
+              "of": 1
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.72
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "nth": 4,
+              "of": 5
+            },
+            0.12
+          ]
+        ]
       }
     }
   }

@@ -15,7 +15,7 @@ import { INFRA_MARKER, RunDir } from "./trace.ts";
 
 const env = process.env;
 const opt = (name: string) => env[`DESCISIUM_${name}`] === "1";
-const record = (env.DESCISIUM_RECORD ?? "once") as RecordMode;
+const record = (env.DESCISIUM_RECORD ?? "new") as RecordMode;
 
 // Jev steps take seconds per Turn; the runner has its own caps (8 Turns, 5 s waits).
 setDefaultTimeout(10 * 60_000);
@@ -26,12 +26,14 @@ setDefaultTimeout(10 * 60_000);
 let run: RunDir;
 const cliOwnsRun = !!env.DESCISIUM_RUN_DIR; // the CLI prints the run directory once, not each worker
 const broken = () => !!run && existsSync(join(run.path, INFRA_MARKER)); // after one, the remaining scenarios are skipped
-const deciders = new Map<string, { cassette?: Cassette; decider: Decider }>(); // per feature file
+const deciders = new Map<string, { cassette?: Cassette; live: Decider }>(); // per feature file
 
 class Scenario extends World {
   browser!: Browser;
   rt!: Runtime;
-  decider!: Decider;
+  cassette?: Cassette;
+  live!: Decider;
+  key = ""; // the running Step in its cassette: scenario, position, text
   dir = "";
   kind: StepKind = "action";
   at = ""; // file:line of the running Step, in its trace event (scripts/cookbook.ts)
@@ -57,12 +59,12 @@ Before(async function (this: Scenario, { pickle }) {
   try {
     if (!deciders.has(pickle.uri)) { // a corrupt cassette is a setup error, not a failed scenario
       const cassette = opt("STEP") ? undefined : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record, run.path);
-      deciders.set(pickle.uri, { cassette, decider: run.decider(new JevDecider(cassette)) });
+      deciders.set(pickle.uri, { cassette, live: new JevDecider() });
     }
   } catch (err) {
     throw infra(err);
   }
-  this.decider = deciders.get(pickle.uri)!.decider;
+  ({ cassette: this.cassette, live: this.live } = deciders.get(pickle.uri)!);
   // Secret placeholders ("$NAME"): a missing variable is a setup error, not a failed Step (task 0030).
   const secrets: Record<string, string> = {};
   for (const token of pickle.steps.flatMap(s => quoted(s.text))) {
@@ -85,16 +87,19 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[pickleStep.astNodeIds[0]]?.location.line;
   this.at = `${pickle.uri}:${line}`;
   this.kind = stepKind(pickleStep);
+  this.key = `${pickle.name} #${pickle.steps.findIndex(s => s.id === pickleStep.id) + 1}: ${pickleStep.text}`;
 });
 
 defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
   const log = (line: string) => { run.log(line); if (opt("VERBOSE")) console.log(line); };
   let r: StepResult | { outcome: "UI_CHANGED" | "PAGE_TOO_LARGE"; reason: string };
   const start = Date.now(), before = { ...jevUsage };
+  const step = this.cassette?.step(this.key, this.live, log);
+  const decider = run.decider(step ?? this.live);
   try {
     r = this.kind === "assertion"
-      ? await runAssertion(text, this.rt, this.decider, log, opt("JUDGED"), { ...this.earlier })
-      : await runStep(text, this.rt, this.decider, log, this.kind === "attempt");
+      ? await runAssertion(text, this.rt, decider, log, opt("JUDGED"), { ...this.earlier })
+      : await runStep(text, this.rt, decider, log, this.kind === "attempt");
   } catch (err) {
     if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
       // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).
@@ -105,6 +110,7 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
       r = { outcome: "UI_CHANGED", reason: err.reason };
     } else throw infra(err);
   }
+  step?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome));
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   const cost = { seconds: (Date.now() - start) / 1000, jevCalls: jevUsage.calls - before.calls,
     inputTokens: jevUsage.inputTokens - before.inputTokens, outputTokens: jevUsage.outputTokens - before.outputTokens };
@@ -142,7 +148,7 @@ AfterAll(function () {
   run.flush(); // a scenario skipped or broken before its browser opened
   if (!cliOwnsRun) run.done();
   if (!cliOwnsRun) console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
-  for (const { cassette: c } of deciders.values()) if (c) console.log(`Cassette ${c.path}: ${c.hits} replayed, ${c.recorded} recorded live`);
+  for (const { cassette: c } of deciders.values()) if (c) console.log(`Cassette ${c.path}: ${c.replayed} replayed, ${c.recorded} recorded, ${c.healed} healed`);
 });
 
 /** Infrastructure error (app not running, bad API key, network): one clear line, `--debug` for the stack. Exit code 2. */

@@ -22,9 +22,10 @@ const USAGE = `Usage:
 
 The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
---record (run only): Jev answers are recorded in <file>.cassette.json and replayed for identical requests.
-  once (default): record if no cassette exists, else replay only; none: replay only, a miss fails as UI_CHANGED;
-  new: replay, record misses live; all: always call Jev and rewrite the cassette.
+--record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
+  <file>.cassette.json and replayed without Jev while exactly one element still matches it.
+  new (default): replay, resolve new or no-longer-matching Steps live and write them back (reported as healed);
+  none: replay only, a missing or broken resolution fails as UI_CHANGED (CI); all: resolve everything live, rewrite.
 --reporter (repeatable): junit or json, written to the run directory (junit.xml, report.json) or to :path.
 --parallel <n|auto>: worker processes. Features run side by side, a feature's scenarios one after another. Only for
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
@@ -61,7 +62,7 @@ async function main(): Promise<number> {
     allowNegative: true,
     options: { url: { type: "string" }, headed: { type: "boolean", default: false }, judged: { type: "boolean", default: false },
       strict: { type: "boolean", default: false }, "agent-report": { type: "boolean", default: true },
-      record: { type: "string", default: "once" },
+      record: { type: "string", default: "new" },
       reporter: { type: "string", multiple: true, default: [] }, parallel: { type: "string" },
       verbose: { type: "boolean", short: "v", default: false }, debug: { type: "boolean", default: false } },
   });

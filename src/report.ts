@@ -14,7 +14,7 @@ export const HINTS: Record<string, string> = {
   ELEMENT_NOT_FOUND: "The page changed while deciding. Rerun; if it repeats, the page may be re-rendering constantly.",
   ACTION_FAILED: "The browser could not perform the action (hidden, disabled or covered element). See the Playwright trace and console errors.",
   STEP_TIMEOUT: "The step needed more than 8 actions. Split it into smaller steps.",
-  UI_CHANGED: "The run replays recorded Jev answers (cassette) and this step has none that fits. If the change is intended, rerun with --record new to record just the changed steps (calls Jev), or --record all to re-record everything.",
+  UI_CHANGED: "The run replays recorded resolutions (cassette) and this step has none that still matches the page. If the change is intended, rerun with --record new to re-resolve just the changed steps (calls Jev, reported as healed), or --record all to re-record everything.",
   JUDGED_FAILED: "Jev judged that the page does not satisfy the check.",
   PAGE_TOO_LARGE: "The page is too large for Jev to read. Start the scenario on a smaller page, or report it so the size budget can be revisited.",
 };
