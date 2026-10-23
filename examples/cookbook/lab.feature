@@ -42,3 +42,8 @@ Feature: Cookbook lab (task 0031): wordings that work, and wordings that do not,
     When I uncheck "Newsletter"
     Then "Newsletter" should be unchecked
     And "Weekly digest" should be unchecked
+
+  @url:examples/cookbook/index.html?settings
+  Scenario: Check a labelled checkbox
+    When I check "Weekly digest"
+    Then "Weekly digest" should be checked

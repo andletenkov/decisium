@@ -25,7 +25,7 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
     if (/\bsearch(es)? (for|the)\b/i.test(t) && !/\b(open|opens|submit|submits)\b/i.test(t)) {
       out.push(`"search for" runs a search but does not open a result, and Jev may count typing alone as done; say "I open the "X" ... through the search", or add "and submit the search" (${SEE}, Navigate)`);
     }
-    if (/^(I\s+)?(check|tick)\b/i.test(t)) out.push("checking a box is unreliable: Jev keeps clicking it (docs/tasks/0033-toggle-steps-oscillate.md)");
+    if (/^(I\s+)?(un)?(check|tick)\b/i.test(t) && /\b(and|then)\b|,/i.test(t)) out.push(`checking a box is decided by code only when the Step does nothing else; split "and ..." into its own Step (${SEE}, Submit and act)`);
     return out;
   }
   // Checks. A state check ("should be disabled") needs no quoted value.

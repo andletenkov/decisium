@@ -44,6 +44,19 @@ async function settled<T>(rt: Runtime, obs: Observation, ask: (obs: Observation)
 }
 
 const MAX_TURNS = 8;
+
+const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
+/**
+ * A Step that only checks or unchecks one box, e.g. `I uncheck "Newsletter"`: the state it asks for, else undefined.
+ * Jev's `done` barely tells checked from unchecked (task 0033: 0.45-0.80 on checked boxes, so it kept clicking), so
+ * code reads the box after the click instead, like the TYPE/SELECT effect check. "and"/"then" mean more to do.
+ */
+export function toggleGoal(step: string): boolean | undefined {
+  if (/\b(and|then)\b|,/i.test(step)) return undefined;
+  if (/^(I\s+)?(uncheck|untick|deselect|clear|turn off|switch off|disable)\b/i.test(step)) return false;
+  if (/^(I\s+)?(check|tick|select|turn on|switch on|enable)\b/i.test(step)) return true;
+  return undefined;
+}
 const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
@@ -335,6 +348,9 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     recent.push(described);
 
     const next = await rt.observe();
+    const goal = toggleGoal(step);
+    const box = action.verb === "CLICK" && goal !== undefined ? next.elements.find(e => e.ref === action.ref && TOGGLES.has(e.role)) : undefined;
+    if (box && /\[checked\]/.test(box.state) === goal) { log(`  Toggle: ${box.line}`); return end("DONE"); }
     unchanged = next.text === obs.text ? unchanged + 1 : 0;
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;

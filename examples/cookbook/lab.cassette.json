@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T09-42-02-021Z",
+  "run": "runs/2026-10-23T14-23-34-442Z",
   "entries": {
     "Open an article through the search #1: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
@@ -1090,6 +1090,80 @@
               "container": ""
             },
             0.37
+          ]
+        ]
+      }
+    },
+    "Check a labelled checkbox #1: I check \"Weekly digest\"": {
+      "turns": [
+        {
+          "done": 0.04,
+          "target": [
+            [
+              {
+                "role": "checkbox",
+                "name": "Weekly digest",
+                "container": ""
+              },
+              0.99
+            ]
+          ]
+        }
+      ]
+    },
+    "Check a labelled checkbox #2: \"Weekly digest\" should be checked": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 0.86,
+          "probabilities": {
+            "value": 0.04,
+            "presence": 0.06,
+            "absence": 0,
+            "state": 0.89,
+            "fuzzy": 0.01
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.82,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.02,
+            "checked": 0.84,
+            "unchecked": 0.14,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "checkbox",
+              "name": "Weekly digest",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.58
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.32
           ]
         ]
       }

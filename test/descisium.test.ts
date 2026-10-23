@@ -886,3 +886,19 @@ test("doctor: Node needs type stripping on by default (22.18+)", async () => {
   const { nodeOk } = await import("../src/doctor.ts");
   assert.deepEqual(["22.17.0", "22.18.0", "23.0.0", "23.6.0", "24.1.0", "20.9.0"].map(v => nodeOk(v)), [false, true, false, true, true, false]);
 });
+
+test("check/uncheck steps: code reads the box after the click, Jev's done is not needed", async () => {
+  const { toggleGoal } = await import("../src/runner.ts");
+  assert.deepEqual(["I check \"A\"", "I uncheck checkbox 2", "I check \"A\" and submit", "I open the page"].map(toggleGoal), [true, false, undefined, undefined]);
+  for (const [step, start] of [["I check \"Weekly digest\"", false], ["I uncheck \"Newsletter\"", true]] as const) {
+    let on = start, clicks = 0;
+    const rt: Runtime = {
+      observe: async () => parseSnapshot(`- checkbox "Box"${on ? " [checked]" : ""} [ref=e1]`),
+      execute: async () => { on = !on; clicks++; },
+      waitForChange: async () => true,
+    };
+    const unsure: Decider = { ...oracle, turn: async () => ({ done: 0.45, target: sure("e1") }) }; // task 0033: done stays low
+    assert.equal((await runStep(step, rt, unsure, () => {})).outcome, "DONE");
+    assert.equal(clicks, 1);
+  }
+});
