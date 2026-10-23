@@ -37,6 +37,9 @@ Feature: Data tables and doc strings (task 0038)
       | Charles    | Babbage   | Inventor      |
       | Grace      | Hopper    | Inventor      |
       | Alan       | Turing    | Mathematician |
+    And the contacts table should not show:
+      | Lovelace |
+      | Knuth    |
 
   # Should FAIL: a check's first table row is its header, so one row compares nothing.
   Scenario: A check table with only one row
@@ -44,3 +47,8 @@ Feature: Data tables and doc strings (task 0038)
       | First name | Ada |
     Then the new contact should show:
       | First name | Ada |
+
+  # Should FAIL, correctly: "Babbage" is in the table (such a check once passed, read as presence).
+  Scenario: A list that should not be shown, but is
+    Then the contacts table should not show:
+      | Babbage |
