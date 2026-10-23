@@ -790,7 +790,7 @@ test("oversized page: ui drops /url lines and caps lines; reduceUi keeps the ste
 });
 
 test("Enter: offered only while a text field has focus; submits what was typed", async () => {
-  const { pageActions } = await import("../src/jev.ts");
+  const { pageActions } = await import("../src/decision.ts");
   const page = `data:text/html,<form onsubmit="event.preventDefault();o.textContent='Results for '+q.value">`
     + `<input id=q aria-label="Search"></form><p id=o></p>`;
   const b = await Browser.open(page);
@@ -1014,7 +1014,7 @@ test("secret placeholders: a doc string or table cell \"$NAME\" is one too, at r
 });
 
 test("keys: a press-only Step is pressed by code; other Steps offer only the keys they name (task 0039)", async () => {
-  const { pageActions } = await import("../src/jev.ts");
+  const { pageActions } = await import("../src/decision.ts");
   const b = await Browser.open(`data:text/html,<p id=o>none</p><input aria-label=Note autofocus>`
     + `<script>addEventListener('keydown',e=>o.textContent=(e.ctrlKey?'Ctrl+':'')+e.key)</script>`);
   try {

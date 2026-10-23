@@ -1,5 +1,5 @@
-// The Decision module (task 0053): the seam to the decision model (Decider), the confidence gates, and the tracing every
-// answer gets. Jev (jev.ts) and the tests' scripted fakes are its adapters; cassette.ts replays answers across it.
+// The Decision module (task 0053): the seam to the decision model (Decider), the answers its questions can have, the
+// confidence gates, and the tracing every answer gets. Jev (jev.ts) and the tests' scripted fakes are its adapters; cassette.ts replays answers across it.
 import type { Element, Observation } from "./observation.ts";
 
 export interface Pick {
@@ -11,6 +11,41 @@ export interface TurnAnswer {
   done: number; // P(step already accomplished)
   target: Pick; // element ref, a pageActions() key, or "none"
 }
+
+// The answers a question can have besides element refs: Jev is offered them, code reads them.
+/** Non-element moves offered next to the element refs. */
+const PAGE_ACTIONS = {
+  scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+  wait: "Wait: `ui` is still loading the needed element.",
+} as const;
+const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. run a search).";
+
+/**
+ * Page actions for this Observation and Step: Enter only while a text field has focus, so it is not offered on every
+ * Turn; other keys only when the Step names them (`keys`, "press Escape"), pressed wherever the focus is (task 0039).
+ */
+export function pageActions(obs: Observation, keys: string[]): Record<string, string> {
+  const out: Record<string, string> = obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : { ...PAGE_ACTIONS };
+  for (const key of keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
+  return out;
+}
+
+export const ASSERTION_KINDS = {
+  value: "Checks that some element shows a specific text or value.",
+  presence: "Checks that something is shown or exists on the page.",
+  absence: "Checks that something is not shown or does not exist on the page.",
+  state: "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
+  fuzzy: "A subjective or holistic check that none of the other kinds can express.",
+} as const;
+
+/** State labels Jev can pick; code reads the matching snapshot flag. */
+export const STATES = {
+  disabled: "disabled", enabled: "enabled (not disabled)",
+  checked: "checked", unchecked: "not checked",
+  expanded: "expanded / open", collapsed: "collapsed / closed",
+  selected: "selected", unselected: "not selected",
+  pressed: "pressed / toggled on", unpressed: "not pressed / toggled off",
+} as const;
 
 export interface Assessment {
   kind: Pick;
@@ -75,9 +110,9 @@ export function plausible(pick: Pick): string[] {
 }
 
 /**
- * `d` with each answer written as a trace event named after its question (turn, value, assess...): the Step and the
- * answer, so a new question is traced without code here. A value chosen for a Secret field is masked; a dialog answer
- * carries the dialog.
+ * `d` with each answer written as a trace event named after its question (turn, value, assess...): the Step (every
+ * question's first argument) and the answer. A question answering plainly needs no code here; a value chosen for a
+ * Secret field is masked, and a dialog answer carries the dialog. Only Decider questions are reached through it.
  */
 export function traced(d: Decider, event: (type: string, data: Record<string, unknown>) => void): Decider {
   return new Proxy(d, {
@@ -86,9 +121,10 @@ export function traced(d: Decider, event: (type: string, data: Record<string, un
       if (typeof ask !== "function") return ask;
       return async (...args: unknown[]) => {
         const answer = await ask.apply(target, args);
-        const [step, obs, el] = args as [string, Observation, Element];
-        event(question, { step, ...question === "value" ? { element: el.line, answer: el.secret ? "(secret)" : answer }
-          : question === "dialog" ? { dialog: obs.dialog, answer } : { answer } });
+        const el = args[2] as Element; // value(step, obs, el, candidates)
+        const extra = question === "value" ? { element: el.line, answer: el.secret ? "(secret)" : answer }
+          : question === "dialog" ? { dialog: (args[1] as Observation).dialog, answer } : { answer };
+        event(question, { step: args[0], ...extra });
         return answer;
       };
     },

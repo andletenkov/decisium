@@ -1,42 +1,8 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { AREA_MISSING, AREA_PAGE, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { AREA_MISSING, AREA_PAGE, ASSERTION_KINDS, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
-
-/** Non-element moves offered next to the element refs. */
-const PAGE_ACTIONS = {
-  scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-  wait: "Wait: `ui` is still loading the needed element.",
-} as const;
-const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. run a search).";
-
-/**
- * Page actions for this Observation and Step: Enter only while a text field has focus, so it is not offered on every
- * Turn; other keys only when the Step names them (`keys`, "press Escape"), pressed wherever the focus is (task 0039).
- */
-export function pageActions(obs: Observation, keys: string[]): Record<string, string> {
-  const out: Record<string, string> = obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : { ...PAGE_ACTIONS };
-  for (const key of keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
-  return out;
-}
-
-export const ASSERTION_KINDS = {
-  value: "Checks that some element shows a specific text or value.",
-  presence: "Checks that something is shown or exists on the page.",
-  absence: "Checks that something is not shown or does not exist on the page.",
-  state: "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
-  fuzzy: "A subjective or holistic check that none of the other kinds can express.",
-} as const;
-
-/** State labels Jev can pick; code reads the matching snapshot flag. */
-export const STATES = {
-  disabled: "disabled", enabled: "enabled (not disabled)",
-  checked: "checked", unchecked: "not checked",
-  expanded: "expanded / open", collapsed: "collapsed / closed",
-  selected: "selected", unselected: "not selected",
-  pressed: "pressed / toggled on", unpressed: "not pressed / toggled off",
-} as const;
 
 /** What answering each kind of browser dialog means, for Jev (task 0040). */
 const DIALOG_ANSWERS = {
