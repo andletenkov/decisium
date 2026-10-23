@@ -58,7 +58,7 @@ export function parseStep(line: string): ParsedStep {
   return parseFeature(stepFeature(line))[0].steps[0];
 }
 
-/** A one-Step `.feature` source, so `descisium step` runs through the same runner as files. */
+/** A one-Step `.feature` source, so `decisium step` runs through the same runner as files. */
 export function stepFeature(line: string): string {
   const text = /^(Given|When|Then|And|But|\*)\s/i.test(line) ? line : `When ${line}`;
   return `Feature: step\n  Scenario: step\n    ${text}\n`;

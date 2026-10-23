@@ -14,11 +14,11 @@ import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 
 const USAGE = `Usage:
-  descisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]
-  descisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>] [--reporter junit|json[:path]]
+  decisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]
+  decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>] [--reporter junit|json[:path]]
                 [--parallel <n|auto>] [--no-agent-report] [-v] [--debug]
-  descisium doctor [<file.feature>...]
-  descisium lint <file.feature>...
+  decisium doctor [<file.feature>...]
+  decisium lint <file.feature>...
 
 The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
@@ -42,7 +42,7 @@ screenshot per Turn; failed scenarios also get playwright-trace.zip, console-err
 A run with a failure writes report.md: every failure with Jev's answers, the page text around it and a rerun command,
 for a coding agent (--no-agent-report: off).
 
-Runs inside cucumber-js (raw \`npx cucumber-js <file>\` works too, see cucumber.mjs; options as DESCISIUM_* env).
+Runs inside cucumber-js (raw \`npx cucumber-js <file>\` works too, see cucumber.mjs; options as DECISIUM_* env).
 Qase: tag scenarios @QaseID=<id> and set QASE_MODE=testops, QASE_TESTOPS_API_TOKEN, QASE_TESTOPS_PROJECT
 (QASE_TESTOPS_RUN_ID to report into an existing run). QASE_MODE=report writes the results to build/qase-report.
 
@@ -81,7 +81,7 @@ async function main(): Promise<number> {
   let scenarios: Scenario[];
   try {
     if (cmd === "step" && arg) {
-      const file = join(mkdtempSync(join(tmpdir(), "descisium-")), "step.feature");
+      const file = join(mkdtempSync(join(tmpdir(), "decisium-")), "step.feature");
       writeFileSync(file, stepFeature(arg));
       files = [file];
       const dir = dirname(file);
@@ -114,11 +114,11 @@ async function main(): Promise<number> {
 
   const flag = (on: boolean) => (on ? "1" : "");
   Object.assign(process.env, {
-    DESCISIUM_URL: values.url ?? "", DESCISIUM_RECORD: values.record, DESCISIUM_STEP: flag(cmd === "step"),
-    DESCISIUM_HEADED: flag(values.headed), DESCISIUM_JUDGED: flag(values.judged), DESCISIUM_STRICT: flag(values.strict),
-    DESCISIUM_NO_AGENT_REPORT: flag(!values["agent-report"]),
-    DESCISIUM_VERBOSE: flag(values.verbose), DESCISIUM_DEBUG: flag(values.debug),
-    DESCISIUM_RUN_DIR: run.path,
+    DECISIUM_URL: values.url ?? "", DECISIUM_RECORD: values.record, DECISIUM_STEP: flag(cmd === "step"),
+    DECISIUM_HEADED: flag(values.headed), DECISIUM_JUDGED: flag(values.judged), DECISIUM_STRICT: flag(values.strict),
+    DECISIUM_NO_AGENT_REPORT: flag(!values["agent-report"]),
+    DECISIUM_VERBOSE: flag(values.verbose), DECISIUM_DEBUG: flag(values.debug),
+    DECISIUM_RUN_DIR: run.path,
   });
   const reports = reporters.map(r => [r![1], r![2] ?? join(run.path, r![1] === "junit" ? "junit.xml" : "report.json")] as [string, string]);
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
@@ -139,6 +139,6 @@ async function main(): Promise<number> {
 
 // No process.exit on success paths: the Qase reporter finishes uploading after cucumber returns.
 main().then(code => { process.exitCode = code; }, err => {
-  console.error(process.env.DESCISIUM_DEBUG ? err : `\nError: ${(err as Error).message.split("\n")[0]}\nRerun with --debug for details.`);
+  console.error(process.env.DECISIUM_DEBUG ? err : `\nError: ${(err as Error).message.split("\n")[0]}\nRerun with --debug for details.`);
   process.exitCode = 2;
 });

@@ -13,12 +13,12 @@ const q = (s: string) => /^[\w./:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'
 /** The command that reruns one scenario (or the one command-line Step) with this run's options. */
 function rerun(target: string[]): string {
   const cli = relative(process.cwd(), fileURLToPath(import.meta.resolve("./cli.ts")));
-  const flags = [env.DESCISIUM_URL && `--url ${q(env.DESCISIUM_URL)}`, env.DESCISIUM_JUDGED === "1" && "--judged", env.DESCISIUM_STRICT === "1" && "--strict"];
+  const flags = [env.DECISIUM_URL && `--url ${q(env.DECISIUM_URL)}`, env.DECISIUM_JUDGED === "1" && "--judged", env.DECISIUM_STRICT === "1" && "--strict"];
   return ["node", cli, ...target.map(q), ...flags].filter(Boolean).join(" ");
 }
 
-export default class DescisiumFormatter extends Formatter {
-  static readonly documentation = "Descisium console output";
+export default class DecisiumFormatter extends Formatter {
+  static readonly documentation = "Decisium console output";
 
   constructor(options: IFormatterOptions) {
     super(options);
@@ -28,7 +28,7 @@ export default class DescisiumFormatter extends Formatter {
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
       if (e.testCaseStarted) {
         const { pickle } = this.eventDataCollector.getTestCaseAttempt(e.testCaseStarted.id);
-        this.log(`\n${pickle.name}  (${process.env.DESCISIUM_URL || urlFromTags(pickle.tags) || "no URL"})\n`);
+        this.log(`\n${pickle.name}  (${process.env.DECISIUM_URL || urlFromTags(pickle.tags) || "no URL"})\n`);
       } else if (e.testStepFinished) {
         const { testCaseStartedId, testStepId, testStepResult: result } = e.testStepFinished;
         const { pickle, gherkinDocument, testCase, stepAttachments } = this.eventDataCollector.getTestCaseAttempt(testCaseStartedId);
@@ -54,7 +54,7 @@ export default class DescisiumFormatter extends Formatter {
         if (!r) return;
         const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[step.astNodeIds[0]]?.location.line;
         const screenshot = attachments.findLast(a => a.mediaType === "image/png")?.fileName;
-        const cmdLine = env.DESCISIUM_STEP === "1";
+        const cmdLine = env.DECISIUM_STEP === "1";
         const where = cmdLine ? "command line" : `${pickle.uri}:${line}`;
         // The scenario's own line; for an Outline, its Examples row (the last AST node).
         const scenarioLine = formatterHelpers.GherkinDocumentParser.getGherkinScenarioLocationMap(gherkinDocument)[pickle.astNodeIds.at(-1)!]?.line;
@@ -79,8 +79,8 @@ export default class DescisiumFormatter extends Formatter {
         this.log(`\n${scenarios.length - failedNames.length}/${scenarios.length} scenarios passed${failedNames.length ? `; failed: ${failedNames.join(", ")}` : ""}\n`);
         // The run directory: the CLI's, or (raw cucumber-js) the one the screenshots are in.
         const shot = failed.find(f => f.screenshot)?.screenshot;
-        const runDir = env.DESCISIUM_RUN_DIR || (shot && dirname(dirname(shot)));
-        if (failed.length && runDir && env.DESCISIUM_NO_AGENT_REPORT !== "1") {
+        const runDir = env.DECISIUM_RUN_DIR || (shot && dirname(dirname(shot)));
+        if (failed.length && runDir && env.DECISIUM_NO_AGENT_REPORT !== "1") {
           const tracePath = join(runDir, "trace.jsonl");
           const events: TraceEvent[] = existsSync(tracePath) ? readFileSync(tracePath, "utf8").trim().split("\n").filter(Boolean).map(l => JSON.parse(l)) : [];
           const path = join(runDir, "report.md");

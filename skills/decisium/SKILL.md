@@ -1,9 +1,9 @@
 ---
-name: descisium
-description: Write or repair Descisium Gherkin features (natural-language Steps run by Jev). Use when writing a .feature for Descisium, or when a Step ends AMBIGUOUS, UNVERIFIABLE or STEP_TIMEOUT.
+name: decisium
+description: Write or repair Decisium Gherkin features (natural-language Steps run by Jev). Use when writing a .feature for Decisium, or when a Step ends AMBIGUOUS, UNVERIFIABLE or STEP_TIMEOUT.
 ---
 
-Descisium runs each Step by asking Jev, a model that only picks among offered answers. Code decides pass/fail. A
+Decisium runs each Step by asking Jev, a model that only picks among offered answers. Code decides pass/fail. A
 Step's wording decides most outcomes, so write the wording from evidence: `docs/cookbook.md` lists the wordings that
 pass on the examples and the ones that fail, with why. Read it before writing a Step. It is the single source of
 the rules; this skill is the procedure.

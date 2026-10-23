@@ -1,4 +1,4 @@
-// `descisium doctor`: the setup checks a CI job wants before the first run, one [OK]/[FAIL] line each.
+// `decisium doctor`: the setup checks a CI job wants before the first run, one [OK]/[FAIL] line each.
 import { noul, TypeSafeClient } from "@typesafe-ai/sdk";
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";

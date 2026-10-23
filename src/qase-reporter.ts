@@ -7,7 +7,7 @@ import { MARGINAL } from "./report.ts";
 
 type Storage = { convertTestCase(f: TestCaseFinished): { execution: { status: string }; message: string | null } | undefined };
 
-export default class DescisiumQaseReporter extends CucumberQaseReporter {
+export default class DecisiumQaseReporter extends CucumberQaseReporter {
   constructor(options: IFormatterOptions) {
     super(options);
     const warnings = new Map<string, string[]>(); // testCaseStartedId -> marginal-pass warnings

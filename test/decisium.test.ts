@@ -116,7 +116,7 @@ test("Browser: a secret placeholder is typed as its value, masked back to the to
     assert.match(obs.pageText, /Hi \$APP_USER/);
     assert.ok(b.typedSecret);
   } finally {
-    const trace = `${mkdtempSync(`${tmpdir()}/descisium-`)}/t.zip`;
+    const trace = `${mkdtempSync(`${tmpdir()}/decisium-`)}/t.zip`;
     await b.close(trace);
     assert.ok(!existsSync(trace));
   }

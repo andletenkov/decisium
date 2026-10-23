@@ -1,4 +1,4 @@
-// `descisium lint <file.feature>`: what each Step will be taken as, read without a browser or Jev (task 0031).
+// `decisium lint <file.feature>`: what each Step will be taken as, read without a browser or Jev (task 0031).
 // Per Step: its kind, the quoted values Jev can pick from, secret placeholders, and warnings for wordings that
 // docs/cookbook.md shows failing.
 import { readFileSync } from "node:fs";

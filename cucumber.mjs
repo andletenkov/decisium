@@ -1,4 +1,4 @@
-// Raw `npx cucumber-js <file.feature>` runs Descisium too; options come from DESCISIUM_* env (see `descisium` usage).
+// Raw `npx cucumber-js <file.feature>` runs Decisium too; options come from DECISIUM_* env (see `decisium` usage).
 import { devNull } from "node:os";
 import { qaseOn } from "./src/qase.ts";
 

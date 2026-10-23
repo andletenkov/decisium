@@ -1,6 +1,6 @@
 // cucumber-js support code (ADR 0003): one catch-all step definition runs every Step through Jev; hooks give each
 // scenario a fresh browser, its run-directory folder, the feature's cassette and an empty memory.
-// Options come from DESCISIUM_* env (set by `descisium run`), so raw `npx cucumber-js` works too.
+// Options come from DECISIUM_* env (set by `decisium run`), so raw `npx cucumber-js` works too.
 import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -14,17 +14,17 @@ import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.t
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 
 const env = process.env;
-const opt = (name: string) => env[`DESCISIUM_${name}`] === "1";
-const record = (env.DESCISIUM_RECORD ?? "new") as RecordMode;
+const opt = (name: string) => env[`DECISIUM_${name}`] === "1";
+const record = (env.DECISIUM_RECORD ?? "new") as RecordMode;
 
 // Jev steps take seconds per Turn; the runner has its own caps (8 Turns, 5 s waits).
 setDefaultTimeout(10 * 60_000);
 
 
-// Parallel workers (`--parallel`) are separate processes: the CLI creates the run directory (DESCISIUM_RUN_DIR) and an
+// Parallel workers (`--parallel`) are separate processes: the CLI creates the run directory (DECISIUM_RUN_DIR) and an
 // infrastructure error is signalled through a marker file in it, read by the CLI and by the other workers.
 let run: RunDir;
-const cliOwnsRun = !!env.DESCISIUM_RUN_DIR; // the CLI prints the run directory once, not each worker
+const cliOwnsRun = !!env.DECISIUM_RUN_DIR; // the CLI prints the run directory once, not each worker
 const broken = () => !!run && existsSync(join(run.path, INFRA_MARKER)); // after one, the remaining scenarios are skipped
 const deciders = new Map<string, { cassette?: Cassette; live: Decider }>(); // per feature file
 
@@ -46,15 +46,15 @@ setParallelCanAssign((pickle, running) => !running.some(p => p.uri === pickle.ur
 
 BeforeAll(function () {
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
-  if (!RECORD_MODES.includes(record)) throw new Error(`DESCISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
+  if (!RECORD_MODES.includes(record)) throw new Error(`DECISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED"))) throw new Error("TYPESAFE_API_KEY is not set.");
-  run = new RunDir("runs", env.DESCISIUM_RUN_DIR || undefined);
+  run = new RunDir("runs", env.DECISIUM_RUN_DIR || undefined);
   if (!cliOwnsRun) console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
 
 Before(async function (this: Scenario, { pickle }) {
   if (broken()) return "skipped";
-  const url = env.DESCISIUM_URL || urlFromTags(pickle.tags);
+  const url = env.DECISIUM_URL || urlFromTags(pickle.tags);
   if (!url) throw infra(new Error(`No start URL for "${pickle.name}": pass --url or add an @url:<url> tag.`));
   try {
     if (!deciders.has(pickle.uri)) { // a corrupt cassette is a setup error, not a failed scenario
@@ -154,7 +154,7 @@ AfterAll(function () {
 /** Infrastructure error (app not running, bad API key, network): one clear line, `--debug` for the stack. Exit code 2. */
 function infra(err: unknown): Error {
   process.exitCode = 2;
-  if (run) writeFileSync(join(run.path, INFRA_MARKER), String((err as Error)?.message ?? err)); // read by `descisium run`
+  if (run) writeFileSync(join(run.path, INFRA_MARKER), String((err as Error)?.message ?? err)); // read by `decisium run`
   if (opt("DEBUG")) return err as Error;
   const e = err as Error & { status?: number };
   const out = new Error(`${e.message.split("\n")[0]}${e.status === 401 ? " (check TYPESAFE_API_KEY in .env)" : ""}\nRerun with --debug for details.`);
