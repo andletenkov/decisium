@@ -213,7 +213,6 @@ Feature: F
 });
 
 test("parseFeature rejects what it cannot run faithfully", () => {
-  assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    When I create:\n      | a |\n`), /data table or doc string/);
   // A keyword-less line is Gherkin "description": without the guard the scenario would pass with no steps.
   assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    Attempt to schedule\n`), /has no steps/);
   assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    When x\n  Scenario s2\n`), /Parser errors|expected/i);
@@ -901,4 +900,102 @@ test("check/uncheck steps: code reads the box after the click, Jev's done is not
     assert.equal((await runStep(step, rt, unsure, () => {})).outcome, "DONE");
     assert.equal(clicks, 1);
   }
+});
+
+test("parseFeature: data tables and doc strings ride on their Step (task 0038)", async () => {
+  const { stepLabel, tableSteps } = await import("../src/feature.ts");
+  const [s] = parseFeature(`Feature: f\n  Scenario: s\n    When I fill in the form:\n      | First name | Ada |\n      | Last name | Lovelace |\n`
+    + `    And I write the notes:\n      """\n      Line one.\n      Line "two".\n      """\n    Then the cart should list:\n      | Product | Qty |\n      | Backpack | 2 |\n    When I go back\n`);
+  assert.deepEqual(s.steps.map(({ line, ...st }) => st), [
+    { text: "I fill in the form:", kind: "action", table: [["First name", "Ada"], ["Last name", "Lovelace"]] },
+    { text: "I write the notes:", kind: "action", docString: `Line one.\nLine "two".` },
+    { text: "the cart should list:", kind: "assertion", table: [["Product", "Qty"], ["Backpack", "2"]] },
+    { text: "I go back", kind: "action" },
+  ]);
+  // Reports and cassette keys: the table compactly; 2 columns are label/value pairs for an action, a header for a check.
+  assert.deepEqual(s.steps.map(stepLabel), [
+    "I fill in the form: [First name=Ada, Last name=Lovelace]", `I write the notes: "Line one.\\nLine \\"two\\"."`,
+    "the cart should list: [Product=Backpack, Qty=2]", "I go back",
+  ]);
+  assert.equal(stepLabel({ text: "I add these:", kind: "action", table: [["Backpack"], ["Bike Light"]] }), "I add these: [Backpack, Bike Light]");
+  // An action's table runs as one Step per row.
+  assert.deepEqual(tableSteps("I fill in the form:", [["First name", "Ada"], ["Last name", "Lovelace"]]),
+    [`I enter "Ada" as First name`, `I enter "Lovelace" as Last name`]);
+  assert.deepEqual(tableSteps("I add these products to the cart:", [["Backpack"], ["Bike Light"]]),
+    [`I add these products to the cart "Backpack"`, `I add these products to the cart "Bike Light"`]);
+  assert.deepEqual(tableSteps("I order:", [["Product", "Quantity", "Gift"], ["Backpack", "2", "no"]]),
+    [`I order Product "Backpack", Quantity "2", Gift "no"`]);
+});
+
+test("runAssertion: a check's table is matched row by row under the page table's column headers (task 0038)", async () => {
+  const obs = parseSnapshot(`- table "Cart" [ref=e3]:
+  - rowgroup [ref=e4]:
+    - row [ref=e5]:
+      - columnheader "Product" [ref=e6]
+      - columnheader "Quantity" [ref=e7]
+      - columnheader "Note" [ref=e8]
+  - rowgroup [ref=e9]:
+    - row [ref=e10]:
+      - cell "Backpack" [ref=e11]
+      - cell "2" [ref=e12]
+      - cell [ref=e13]
+    - row [ref=e14]:
+      - cell "Bike Light" [ref=e15]
+      - cell "1" [ref=e16]
+      - cell [ref=e17]:
+        - button "Remove" [ref=e18]
+- paragraph [ref=e19]: Onesie 3`);
+  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  // Jev's kind is not used: the table's shape decides; Jev only names the area.
+  const run = (s: string, table: string[][], area = "e3") =>
+    runAssertion(s, rt, assessing("value", () => ({ area: sure(area) })), () => {}, false, {}, { table });
+  const outcome = async (...a: Parameters<typeof run>) => (await run(...a)).outcome;
+  const bike = ["Bike Light", "1"], pack = ["Backpack", "2"];
+  assert.equal(await outcome("the cart should contain:", [["Quantity", "Product"], ["1", "Bike Light"]]), "PASSED"); // columns by header, extra rows allowed
+  assert.equal(await outcome("the cart should contain:", [["Product", "Quantity"], bike, pack]), "PASSED"); // order free
+  assert.equal(await outcome("the cart should contain:", [["Product", "Note"], ["Backpack", ""]]), "PASSED"); // an empty cell is empty
+  const missing = await run("the cart should contain:", [["Product", "Quantity"], ["Backpack", "3"]]);
+  assert.equal(missing.outcome, "ASSERTION_FAILED");
+  assert.match(missing.reason!, /Product=Backpack, Quantity=3.*Backpack \| 2 \|/);
+  assert.match((await run("the cart should contain:", [["Product", "Size"], ["Backpack", "L"]])).reason!, /no column "Size"/);
+  assert.equal(await outcome("the cart should contain exactly:", [["Product", "Quantity"], pack]), "ASSERTION_FAILED"); // an extra page row
+  assert.equal(await outcome("the cart should contain exactly:", [["Product", "Quantity"], pack, bike]), "PASSED");
+  assert.equal(await outcome("the cart should list in this order:", [["Product", "Quantity"], bike, pack]), "ASSERTION_FAILED");
+  assert.equal(await outcome("the cart should list in this order:", [["Product", "Quantity"], pack, bike]), "PASSED");
+  assert.equal(await outcome("the cart should contain:", [["Product", "Quantity"], pack], "missing"), "ASSERTION_FAILED");
+  // Only a header row: nothing to compare.
+  assert.equal(await outcome("the cart should show:", [["Product", "Backpack"]]), "UNVERIFIABLE");
+  // One column: a list of values that must all be shown in the area.
+  assert.equal(await outcome("the cart should show:", [["Backpack"], ["Bike Light"]]), "PASSED");
+  assert.equal(await outcome("the cart should show:", [["Backpack"], ["Onesie"]]), "ASSERTION_FAILED"); // outside the table
+});
+
+test("doc strings: one more quoted value, to type or to compare (task 0038)", async () => {
+  const text = "Dear Ada,\nThe engine is ready.";
+  const b = await Browser.open(`data:text/html,<label>Notes <textarea></textarea></label><p id=p></p><script>document.querySelector('textarea').oninput=e=>p.textContent=e.target.value</script>`);
+  try {
+    const box = async () => (await b.observe()).elements.find(e => e.role === "textbox")!;
+    const writer: Decider = { ...oracle,
+      turn: async (_s, obs) => ({ done: obs.elements[0].value ? 1 : 0, target: sure(obs.elements[0].ref) }),
+      value: async (step, _o, _el, candidates) => {
+        assert.match(step, /^I write the notes: "Dear Ada,\\nThe engine is ready."$/); // Jev reads the text with the Step
+        assert.deepEqual(candidates, [text]);
+        return sure(text);
+      } };
+    assert.equal((await runStep("I write the notes:", b, writer, () => {}, false, text)).outcome, "DONE");
+    assert.equal((await box()).value, "Dear Ada, The engine is ready.");
+    const check = (doc: string) => runAssertion("the notes should say:", b, assessing("value", byName("Notes")), () => {}, false, {}, { docString: doc }).then(r => r.outcome);
+    assert.equal(await check(text), "PASSED");
+    assert.equal(await check("Dear Charles"), "ASSERTION_FAILED");
+  } finally {
+    await b.close();
+  }
+});
+
+test("lint: a check's table with only a header row compares nothing (task 0038)", async () => {
+  const { warnings } = await import("../src/lint.ts");
+  assert.match(warnings({ text: "the form should show:", kind: "assertion", table: [["First name", "Ada"]] }, []).join(), /header/);
+  assert.deepEqual(warnings({ text: "the cart should list:", kind: "assertion", table: [["Product", "Qty"], ["Backpack", "2"]] }, []), []);
+  assert.deepEqual(warnings({ text: "the notes should say:", kind: "assertion", docString: "Hello" }, []), []);
+  assert.deepEqual(warnings({ text: "I fill in the form:", kind: "action", table: [["First name", "Ada"]] }, []), []);
 });

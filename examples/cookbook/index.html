@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><title>Cookbook lab</title></head>
-<!-- Fixture for docs/cookbook.md (task 0031): an article search, and settings with labelled and unlabelled checkboxes. -->
+<!-- Fixture for docs/cookbook.md (task 0031): an article search, settings with labelled and unlabelled checkboxes,
+     and (?contacts, task 0038) a contact form and table for data tables and doc strings. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -39,9 +40,31 @@ function settings() {
     <label><input type="checkbox"> Weekly digest</label><br><label><input type="checkbox" checked> Newsletter</label>`;
 }
 
+function contacts() {
+  const rows = [["Charles", "Babbage", "Inventor"]];
+  main.innerHTML = `<h1>Contacts</h1>
+    <form aria-label="New contact"><label>First name <input name="first"></label> <label>Last name <input name="last"></label>
+      <fieldset><legend>Roles</legend><label><input type="checkbox" value="Mathematician"> Mathematician</label>
+        <label><input type="checkbox" value="Inventor"> Inventor</label></fieldset>
+      <label>Notes <textarea name="notes"></textarea></label> <button>Add contact</button></form>
+    <p role="status"></p>
+    <table aria-label="Contacts"><thead><tr><th>First name</th><th>Last name</th><th>Roles</th></tr></thead><tbody></tbody></table>`;
+  const form = main.querySelector("form");
+  const draw = () => main.querySelector("tbody").innerHTML = rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
+  form.onsubmit = e => {
+    e.preventDefault();
+    const roles = [...form.querySelectorAll(":checked")].map(c => c.value).join(", ");
+    rows.push([form.first.value, form.last.value, roles]);
+    form.reset();
+    main.querySelector("[role=status]").textContent = `Contact ${rows.at(-1)[0]} ${rows.at(-1)[1]} added`;
+    draw();
+  };
+  draw();
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
-location.search.includes("settings") ? settings() : search();
+location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts() : search();
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 // Per Step: its kind, the quoted values Jev can pick from, secret placeholders, and warnings for wordings that
 // docs/cookbook.md shows failing.
 import { readFileSync } from "node:fs";
-import { parseFeature, type ParsedStep } from "./feature.ts";
+import { parseFeature, stepLabel, tableSteps, type ParsedStep } from "./feature.ts";
 import { KIND } from "./report.ts";
 import { placeholder, quoted, stepValues } from "./observation.ts";
 
@@ -12,7 +12,7 @@ const SEE = "see docs/cookbook.md";
 export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<string, string | undefined> = process.env): string[] {
   const t = step.text;
   const earlier = before.flatMap(s => quoted(s.text)).filter(v => !placeholder(v));
-  const values = quoted(t);
+  const values = [...quoted(t), ...step.docString === undefined ? [] : [step.docString]];
   const out: string[] = [];
   for (const name of values.map(placeholder).filter(n => n !== undefined)) {
     if (!env[name]) out.push(`$${name} is not set in this environment: the run stops before it starts (exit 2)`);
@@ -26,6 +26,11 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
       out.push(`"search for" runs a search but does not open a result, and Jev may count typing alone as done; say "I open the "X" ... through the search", or add "and submit the search" (${SEE}, Navigate)`);
     }
     if (/^(I\s+)?(un)?(check|tick)\b/i.test(t) && /\b(and|then)\b|,/i.test(t)) out.push(`checking a box is decided by code only when the Step does nothing else; split "and ..." into its own Step (${SEE}, Submit and act)`);
+    return out;
+  }
+  // Checks. A table is matched by code, row by row under its header; a header alone compares nothing.
+  if (step.table) {
+    if (step.table[0].length > 1 && step.table.length < 2) out.push(`a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`);
     return out;
   }
   // Checks. A state check ("should be disabled") needs no quoted value.
@@ -67,7 +72,8 @@ export function lint(path: string, env: Record<string, string | undefined> = pro
     for (const step of s.steps) {
       const values = step.kind === "assertion" ? quoted(step.text) : stepValues(step.text);
       const secrets = values.filter(v => placeholder(v));
-      out.push(`  ${String(step.line ?? "").padStart(4)}  ${KIND[step.kind].padEnd(7)} ${step.text}`);
+      out.push(`  ${String(step.line ?? "").padStart(4)}  ${KIND[step.kind].padEnd(7)} ${stepLabel(step)}`);
+      if (step.table && step.kind !== "assertion") for (const row of tableSteps(step.text, step.table)) out.push(`${" ".repeat(15)}row: ${row}`);
       const shown = values.filter(v => !placeholder(v));
       if (shown.length) out.push(`${" ".repeat(15)}${step.kind === "assertion" ? "compares" : "values"}: ${shown.map(v => `"${v}"`).join(", ")}`);
       if (secrets.length) out.push(`${" ".repeat(15)}secrets (from the environment, never sent to Jev): ${secrets.join(", ")}`);

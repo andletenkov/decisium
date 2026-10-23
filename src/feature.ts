@@ -1,13 +1,19 @@
 // Gherkin `.feature` files -> runnable Scenarios. The official parser expands Background steps and Scenario
 // Outline rows ("pickles"), so the runner only sees flat Step lists.
 import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
-import { IdGenerator, PickleStepType } from "@cucumber/messages";
+import { IdGenerator, PickleStepType, type PickleStepArgument } from "@cucumber/messages";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export type StepKind = "action" | "attempt" | "assertion";
 
-export interface ParsedStep {
+/** A Step's Gherkin argument: a data table (rows of cells) or a doc string. */
+export interface StepArgument {
+  table?: string[][];
+  docString?: string;
+}
+
+export interface ParsedStep extends StepArgument {
   text: string;
   kind: StepKind;
   line?: number; // in the .feature file (a Background step: its own line)
@@ -30,7 +36,35 @@ export const stepKind = (step: { text: string; type?: PickleStepType }): StepKin
 export const urlFromTags = (tags: readonly { name: string }[]) =>
   tags.map(t => /^@url:(.+)$/.exec(t.name)?.[1]).filter(Boolean).at(-1);
 
-/** Parses a `.feature` source. Throws on Gherkin syntax errors and on step arguments we cannot honour yet. */
+/** A pickle step's data table or doc string, only the one it has. */
+export const stepArgument = ({ argument }: { argument?: PickleStepArgument }): StepArgument =>
+  argument?.dataTable ? { table: argument.dataTable.rows.map(r => r.cells.map(c => c.value)) }
+  : argument?.docString ? { docString: argument.docString.content } : {};
+
+/**
+ * A table's first row is a header for a check with 2+ columns and an action with 3+; 1 column is a list, and an
+ * action's 2 columns are label/value pairs (Cucumber `rowsHash`).
+ */
+const hasHeader = (kind: StepKind, table: string[][]) => table[0].length > (kind === "assertion" ? 1 : 2);
+
+/** The Step as reports and cassette keys show it: the table compactly, e.g. `[First name=Ada, Last name=Lovelace]`. */
+export function stepLabel(step: ParsedStep): string {
+  const { text, kind, table, docString } = step;
+  if (docString !== undefined) return `${text} ${JSON.stringify(docString)}`;
+  if (!table) return text;
+  const cells = hasHeader(kind, table) ? table.slice(1).map(row => row.map((v, i) => `${table[0][i]}=${v}`).join(", ")).join("; ")
+    : table.map(row => row.length === 1 ? row[0] : `${row[0]}=${row[1]}`).join(", ");
+  return `${text} [${cells}]`;
+}
+
+/** An Action step's table as one Step per row, each resolved alone. */
+export function tableSteps(text: string, table: string[][]): string[] {
+  const base = text.replace(/\s*:$/, "");
+  if (hasHeader("action", table)) return table.slice(1).map(row => `${base} ${row.map((v, i) => `${table[0][i]} "${v}"`).join(", ")}`);
+  return table.map(row => row.length === 1 ? `${base} "${row[0]}"` : `I enter "${row[1]}" as ${row[0]}`);
+}
+
+/** Parses a `.feature` source. Throws on Gherkin syntax errors. */
 export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   const newId = IdGenerator.uuid();
   const doc = new Parser(new AstBuilder(newId), new GherkinClassicTokenMatcher()).parse(source);
@@ -45,11 +79,7 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
     name: pickle.name,
     tags: pickle.tags.map(t => t.name),
     url: urlFromTags(pickle.tags),
-    steps: pickle.steps.map(step => {
-      // Ignoring an attached table/doc string would silently run a different test than the one written.
-      if (step.argument) throw new Error(`Step "${step.text}" has a data table or doc string; not supported yet`);
-      return { text: step.text, kind: stepKind(step), line: lines.get(step.astNodeIds[0]) };
-    }),
+    steps: pickle.steps.map(step => ({ text: step.text, kind: stepKind(step), line: lines.get(step.astNodeIds[0]), ...stepArgument(step) })),
   }));
 }
 

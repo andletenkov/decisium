@@ -1,0 +1,604 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-23T15-27-05-882Z",
+  "entries": {
+    "Fill a form from a table and check the table on the page #1: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 1)": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "First name",
+                "container": "form \"New contact\""
+              },
+              1
+            ]
+          ],
+          "value": [
+            [
+              "Ada",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.99,
+          "target": [
+            [
+              "none",
+              0.45
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              0.27
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Last name",
+                "container": "form \"New contact\""
+              },
+              0.16
+            ]
+          ]
+        }
+      ]
+    },
+    "Fill a form from a table and check the table on the page #1: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 2)": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Last name",
+                "container": "form \"New contact\""
+              },
+              1
+            ]
+          ],
+          "value": [
+            [
+              "Lovelace",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              0.67
+            ],
+            [
+              "none",
+              0.29
+            ]
+          ]
+        }
+      ]
+    },
+    "Fill a form from a table and check the table on the page #2: I check these roles: [Mathematician] (row 1)": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "checkbox",
+                "name": "Mathematician",
+                "container": "group \"Roles\""
+              },
+              0.96
+            ]
+          ]
+        }
+      ]
+    },
+    "Fill a form from a table and check the table on the page #3: I write the notes: \"Wrote the first program.\\nBorn in London.\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Notes",
+                "container": "form \"New contact\""
+              },
+              0.97
+            ]
+          ],
+          "value": [
+            [
+              "Wrote the first program.\nBorn in London.",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.97,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              0.74
+            ],
+            [
+              "none",
+              0.24000000000000002
+            ]
+          ]
+        }
+      ]
+    },
+    "Fill a form from a table and check the table on the page #4: the notes should say: \"Wrote the first program.\\nBorn in London.\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.97,
+          "probabilities": {
+            "value": 0.98,
+            "presence": 0,
+            "absence": 0.01,
+            "state": 0,
+            "fuzzy": 0.01
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.61,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.65,
+            "checked": 0.23,
+            "unchecked": 0.05,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.03,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "textbox",
+              "name": "Notes",
+              "container": "form \"New contact\""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "form",
+              "name": "New contact",
+              "container": ""
+            },
+            0.72
+          ],
+          [
+            "page",
+            0.16
+          ]
+        ]
+      }
+    },
+    "Fill a form from a table and check the table on the page #5: I add the contact": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.78
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              0.19
+            ]
+          ]
+        }
+      ]
+    },
+    "Fill a form from a table and check the table on the page #6: the contacts table should list: [First name=Ada, Roles=Mathematician; First name=Charles, Roles=Inventor]": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.85,
+          "probabilities": {
+            "value": 0.88,
+            "presence": 0.08,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0.04
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.53,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.18,
+            "checked": 0.58,
+            "unchecked": 0.13,
+            "expanded": 0.02,
+            "collapsed": 0,
+            "selected": 0.06,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            1
+          ]
+        ]
+      }
+    },
+    "Fill a form from a table and check the table on the page #7: the contacts table should show: [Lovelace, Babbage]": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.82,
+          "probabilities": {
+            "value": 0.86,
+            "presence": 0.12,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0.02
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.29,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.36,
+            "checked": 0.15,
+            "unchecked": 0.21,
+            "expanded": 0.12,
+            "collapsed": 0.01,
+            "selected": 0.11,
+            "unselected": 0.02,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            0.98
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            0.99
+          ]
+        ]
+      }
+    },
+    "Add contacts from a table with a header row #1: I add these contacts: [First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician] (row 1)": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "First name",
+                "container": "form \"New contact\""
+              },
+              0.98
+            ]
+          ],
+          "value": [
+            [
+              "Grace",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Last name",
+                "container": "form \"New contact\""
+              },
+              0.88
+            ]
+          ],
+          "value": [
+            [
+              "Hopper",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "checkbox",
+                "name": "Inventor",
+                "container": "group \"Roles\""
+              },
+              0.99
+            ]
+          ]
+        },
+        {
+          "done": 0.14,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.99,
+          "target": [
+            [
+              "none",
+              0.97
+            ]
+          ]
+        }
+      ]
+    },
+    "Add contacts from a table with a header row #1: I add these contacts: [First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician] (row 2)": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "First name",
+                "container": "form \"New contact\""
+              },
+              0.99
+            ]
+          ],
+          "value": [
+            [
+              "Alan",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Last name",
+                "container": "form \"New contact\""
+              },
+              0.99
+            ]
+          ],
+          "value": [
+            [
+              "Turing",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "checkbox",
+                "name": "Mathematician",
+                "container": "group \"Roles\""
+              },
+              0.97
+            ]
+          ]
+        },
+        {
+          "done": 0.03,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.93
+            ]
+          ]
+        }
+      ]
+    },
+    "Add contacts from a table with a header row #2: the contacts table should list exactly: [First name=Charles, Last name=Babbage, Roles=Inventor; First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician]": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.74,
+          "probabilities": {
+            "value": 0.79,
+            "presence": 0.07,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0.14
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.28,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.24,
+            "checked": 0.35,
+            "unchecked": 0.27,
+            "expanded": 0.05,
+            "collapsed": 0.01,
+            "selected": 0.05,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            0.99
+          ]
+        ]
+      }
+    },
+    "A check table with only one row #1: I fill in the new contact: [First name=Ada] (row 1)": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "First name",
+                "container": "form \"New contact\""
+              },
+              1
+            ]
+          ],
+          "value": [
+            [
+              "Ada",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.48
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              0.26
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Last name",
+                "container": "form \"New contact\""
+              },
+              0.14
+            ]
+          ]
+        }
+      ]
+    },
+    "A check table with only one row #2: the new contact should show: []": {}
+  }
+}

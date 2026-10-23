@@ -1,5 +1,6 @@
 import type { Action } from "./browser.ts";
 import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
+import { stepLabel, type StepArgument } from "./feature.ts";
 import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -113,15 +114,24 @@ const weakGate = (what: string, pick: Pick): string[] =>
  * Jev classifies the check and picks the element it is about; code decides pass/fail.
  * `judged` opts in to fuzzy checks, which Jev answers directly and are reported as JUDGED_*, never PASSED.
  */
-/** `earlier`: quoted values from this scenario's earlier Steps (value -> Step), for checks that quote none. */
-export async function runAssertion(step: string, rt: Runtime, decider: Decider, log = console.log, judged = false, earlier: Record<string, string> = {}): Promise<StepResult> {
-  log(`\nAssert: ${step}`);
+/**
+ * `earlier`: quoted values from this scenario's earlier Steps (value -> Step), for checks that quote none.
+ * `arg`: a doc string is one more quoted value; a one-column table is a list of values that must all be shown, a wider
+ * one is matched row by row to the page table under its column headers.
+ */
+export async function runAssertion(step: string, rt: Runtime, decider: Decider, log = console.log, judged = false, earlier: Record<string, string> = {}, arg: StepArgument = {}): Promise<StepResult> {
+  const said = stepLabel({ text: step, kind: "assertion", ...arg }); // what Jev reads: the Step with its table or doc string
+  log(`\nAssert: ${said}`);
   const end = finish(log);
-  const values = quoted(step);
+  const { table, docString } = arg;
+  const list = table?.[0].length === 1;
+  const values = [...quoted(step), ...docString === undefined ? [] : [docString], ...list ? table!.map(r => r[0]) : []];
+  if (table && !list && table.length < 2) return end("UNVERIFIABLE", "the table has only its header row (a check's first row names the columns), so there is no row to compare");
+  const exact = /\b(exactly|in this order)\b/i.test(step);
   let recallNote = "";
   let recallWeak: string[] = [];
-  if (!values.length && Object.keys(earlier).length) {
-    const r = await decider.recall(step, earlier);
+  if (!values.length && !table && Object.keys(earlier).length) {
+    const r = await decider.recall(said, earlier);
     log(`  Recall: ${fmt(r)}`);
     if (gate(r) && r.choice !== "none") { values.push(r.choice); recallWeak = weakGate("earlier value", r); }
     else recallNote = `; Jev could not tell which earlier value it refers to (${named(r)})`;
@@ -145,18 +155,20 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   }
 
   async function check(obs: Observation): Promise<Verdict> {
-    const a = await decider.assess(step, obs, judged);
+    const a = await decider.assess(said, obs, judged);
     log(`  Kind: ${fmt(a.kind)}`);
     // Gate on the result, not the label: evaluate every plausible kind (most likely first, until they
     // cover the gate's confidence) and accept only if they all reach the same outcome.
     // A reading that does not apply to the element Jev picked (e.g. "selected" on a combobox) carries no evidence.
-    const all = plausible(a.kind).map(kind => ({ kind, ...evaluate(kind, a, obs, values, log) }));
+    // A table's shape decides the kind; Jev only names the area.
+    const kinds = table ? [list ? "presence" : "rows"] : plausible(a.kind);
+    const all = kinds.map(kind => ({ kind, ...kind === "rows" ? matchRows(a, obs, table!, exact, log) : evaluate(kind, a, obs, values, log) }));
     const results = all.filter(r => !r.inapplicable);
     if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map(r => r.reason).join("; ") };
     const first = results[0];
     if (results.every(r => r.outcome === first.outcome)) {
       if (first.outcome !== "PASSED") return first;
-      const marginal = [...weakMass("kind", a.kind, results.map(r => r.kind)), ...results.flatMap(r => r.marginal ?? [])];
+      const marginal = [...table ? [] : weakMass("kind", a.kind, results.map(r => r.kind)), ...results.flatMap(r => r.marginal ?? [])];
       return { ...first, marginal: [...new Set(marginal)] };
     }
     return { outcome: "AMBIGUOUS", reason: `Jev could not tell what kind of check this is, and the readings disagree: ${results.map(r => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}` };
@@ -245,6 +257,64 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
   return { outcome: "AMBIGUOUS", reason: `Jev is unsure which ${what} the check is about, and they give different answers: ${named(a.subject, obs)}` };
 }
 
+const TABLES = new Set(["table", "grid", "treegrid"]);
+const cellText = (c: Element) => (c.name || c.text).trim();
+const within = (el: Element, area: Element) => { for (let p: Element | undefined = el; p; p = p.parent) if (p === area) return true; return false; };
+const tableOf = (row: Element) => { for (let p = row.parent; p; p = p.parent) if (TABLES.has(p.role)) return p; };
+const isHeader = (row: Element) => !!row.cells?.length && row.cells.every(c => c.role === "columnheader");
+/** Column of `name` among the header's: same text, else the header containing it (a sort arrow, "Quantity ▲"). */
+const column = (header: string[], name: string) => {
+  const i = header.findIndex(h => norm(h) === norm(name));
+  return i >= 0 ? i : header.findIndex(h => containsValue(h, name));
+};
+
+/**
+ * A check's table (header row, then expected rows) against the page rows in each plausible area: every expected row
+ * must match a page row by column header (extra page rows allowed, order free); `exact`: the same rows in this order.
+ */
+function matchRows(a: Assessment, obs: Observation, table: string[][], exact: boolean, log: typeof console.log): Verdict {
+  log(`  Area: ${fmt(a.area)}`);
+  const areas = plausible(a.area);
+  const verdicts: Verdict[] = [];
+  for (const ref of areas) {
+    if (ref === AREA_MISSING) { verdicts.push({ outcome: "ASSERTION_FAILED", reason: "the table the check names is not on this screen" }); continue; }
+    const area = obs.areas.find(e => e.ref === ref);
+    if (ref !== AREA_PAGE && !area) return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an area that is no longer on the page (${ref})` };
+    verdicts.push(rowsIn(area, obs, table, exact));
+  }
+  if (verdicts.some(v => v.outcome !== verdicts[0].outcome)) return { outcome: "AMBIGUOUS", reason: `Jev is unsure where the check says to look, and the candidates give different answers: ${named(a.area, obs)}` };
+  return verdicts[0].outcome === "PASSED" ? { outcome: "PASSED", marginal: weakMass("area", a.area, areas, obs) } : verdicts[0];
+}
+
+/** `area` undefined: the whole page. */
+function rowsIn(area: Element | undefined, obs: Observation, table: string[][], exact: boolean): Verdict {
+  const [names, ...expected] = table;
+  const where = area ? area.line : "the page";
+  const rows = obs.areas.filter(r => r.role === "row" && r.cells?.length && (!area || within(r, area)));
+  const header = (row: Element) => rows.concat(obs.areas).find(h => h.role === "row" && isHeader(h) && tableOf(h) === tableOf(row))?.cells!.map(cellText) ?? [];
+  const data = rows.filter(r => !isHeader(r));
+  if (!data.length) return { outcome: "ASSERTION_FAILED", reason: `${where} shows no table rows` };
+  const noColumn = names.find(n => !data.some(r => column(header(r), n) >= 0));
+  if (noColumn !== undefined) return { outcome: "ASSERTION_FAILED", reason: `the table in ${where} has no column "${noColumn}" (columns: ${[...new Set(data.flatMap(header))].join(", ")})` };
+  const matches = (row: Element, want: string[]) => names.every((n, i) => {
+    const cell = row.cells![column(header(row), n)];
+    return cell !== undefined && (want[i] ? containsValue(cellText(cell), want[i]) : !cellText(cell)); // an empty expected cell is an empty cell
+  });
+  const show = (want: string[]) => names.map((n, i) => `${n}=${want[i]}`).join(", ");
+  const shown = `its rows: ${data.map(r => r.cells!.map(cellText).join(" | ")).join("; ")}`;
+  if (exact) {
+    if (data.length === expected.length && expected.every((want, i) => matches(data[i], want))) return { outcome: "PASSED" };
+    return { outcome: "ASSERTION_FAILED", reason: `expected exactly these rows in this order: ${expected.map(show).join("; ")}; ${where} has ${shown}` };
+  }
+  const free = [...data];
+  for (const want of expected) {
+    const i = free.findIndex(r => matches(r, want));
+    if (i < 0) return { outcome: "ASSERTION_FAILED", reason: `expected row ${show(want)} is not in ${where}; ${shown}` };
+    free.splice(i, 1); // each page row matches one expected row
+  }
+  return { outcome: "PASSED" };
+}
+
 function stateOf(ref: string, a: Assessment, obs: Observation): Verdict {
   if (ref === "none") return { outcome: "ASSERTION_FAILED", reason: "no element on the page matches what the check describes" };
   const el = obs.readable.find(e => e.ref === ref);
@@ -299,9 +369,13 @@ const fmt = (p: Pick) =>
   Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3)
     .map(([k, v]) => `${k}=${v.toFixed(2)}`).join(" ");
 
-/** Action or Attempt step. An Attempt is done once its actions are performed, even if the app rejects them. */
-export async function runStep(step: string, rt: Runtime, decider: Decider, log = console.log, attempt = false): Promise<StepResult> {
-  log(`\n${attempt ? "Attempt" : "Step"}: ${step}`);
+/**
+ * Action or Attempt step. An Attempt is done once its actions are performed, even if the app rejects them.
+ * `docString`: one more value to type, read by Jev with the Step.
+ */
+export async function runStep(step: string, rt: Runtime, decider: Decider, log = console.log, attempt = false, docString?: string): Promise<StepResult> {
+  const said = stepLabel({ text: step, kind: "action", docString });
+  log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
@@ -312,7 +386,7 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     for (const e of obs.elements) log(`    [${e.ref}] ${e.line}`);
 
     let t: TurnAnswer;
-    [obs, t] = await settled(rt, obs, o => decider.turn(step, o, recent, attempt));
+    [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt));
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
@@ -329,9 +403,9 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       action = { verb: el.verb, ref: el.ref };
       if (el.verb !== "CLICK") {
-        const candidates = el.verb === "SELECT" ? el.options : stepValues(step);
+        const candidates = el.verb === "SELECT" ? el.options : docString === undefined ? stepValues(step) : [...stepValues(step), docString];
         if (!candidates.length) return end("AMBIGUOUS", `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`);
-        const v = await decider.value(step, obs, el, candidates);
+        const v = await decider.value(said, obs, el, candidates);
         log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);
         if (!gate(v) || v.choice === "none") return end("AMBIGUOUS", `Jev is unsure which value to enter into ${el.line}${el.secret ? "" : `: ${named(v)}`}`);
         action.value = v.choice;

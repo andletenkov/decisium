@@ -4,7 +4,7 @@ import type { Envelope } from "@cucumber/messages";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { stepKind, urlFromTags } from "./feature.ts";
+import { stepArgument, stepKind, stepLabel, urlFromTags } from "./feature.ts";
 import { agentReport, failureReport, KIND, MARGINAL, MARGINAL_HINT, NO_TRACE, parseOutcome, stepEvents, type AgentFailure, type TraceEvent } from "./report.ts";
 
 const env = process.env;
@@ -40,13 +40,14 @@ export default class DecisiumFormatter extends Formatter {
         }
         if (![Status.PASSED, Status.FAILED].includes(result.status)) return; // skipped after a failure
         const kind = stepKind(step);
+        const label = stepLabel({ text: step.text, kind, ...stepArgument(step) }); // with its table or doc string
         const attachments = stepAttachments[testStepId] ?? [];
         const judged = attachments.some(a => a.body.startsWith("JUDGED_PASSED"));
-        this.log(`  ${failed ? "✗" : "✓"} ${KIND[kind]}: ${step.text}${judged ? "  (judged by Jev)" : ""}\n`);
+        this.log(`  ${failed ? "✗" : "✓"} ${KIND[kind]}: ${label}${judged ? "  (judged by Jev)" : ""}\n`);
         const marginal = attachments.find(a => a.body.startsWith(MARGINAL))?.body.slice(MARGINAL.length);
         if (marginal) {
           this.log(`      ⚠ marginal pass: ${marginal}\n`);
-          warnings.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${step.text}\n  Jev was barely confident: ${marginal}`);
+          warnings.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${label}\n  Jev was barely confident: ${marginal}`);
         }
         if (!failed) return;
         const r = parseOutcome(result.message ?? "");
@@ -63,7 +64,7 @@ export default class DecisiumFormatter extends Formatter {
           const ui = screenshot && join(dirname(screenshot), "ui.txt");
           const noTrace = screenshot && join(dirname(screenshot), NO_TRACE);
           return {
-            where, scenario: pickle.name, kind, step: step.text, ...r, screenshot,
+            where, scenario: pickle.name, kind, step: label, ...r, screenshot,
             trace: trace && existsSync(trace) ? trace : noTrace && existsSync(noTrace) ? `not kept: ${readFileSync(noTrace, "utf8").trim()}` : undefined, ui: ui && existsSync(ui) ? ui : undefined,
             rerun: rerun(cmdLine ? ["step", step.text] : ["run", `${pickle.uri}:${scenarioLine}`]),
           };

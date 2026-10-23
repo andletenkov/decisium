@@ -14,6 +14,7 @@ export interface Element {
   options: string[]; // native <select> options (they carry no refs)
   text: string; // own name/value plus every descendant's, for scoped presence checks
   parent?: Element; // nearest ref'd ancestor
+  cells?: Element[]; // a table row's cells in order, empty ones included
 }
 
 export interface Observation {
@@ -28,6 +29,7 @@ const ACTIONABLE = new Set([
   "button", "link", "textbox", "searchbox", "spinbutton", "combobox", "option",
   "checkbox", "radio", "switch", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "treeitem",
 ]);
+const CELLS = new Set(["cell", "gridcell", "columnheader", "rowheader"]);
 const TYPEABLE = new Set(["textbox", "searchbox", "spinbutton"]);
 
 const LINE = /^(\s*)- (\w+)(?: "((?:[^"\\]|\\.)*)")?((?: \[[^\]]+\])*)(?::\s*(.*))?$/;
@@ -102,6 +104,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       parent: host,
     };
     open.push({ el, indent: indent.length });
+    if (host?.role === "row" && CELLS.has(role)) (host.cells ??= []).push(el);
     if (role === "generic" && !name && !value) wrappers.set(el, at);
     if (!(ACTIONABLE.has(role) || name || value)) continue;
     readable.push(el);
