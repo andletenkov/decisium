@@ -2,19 +2,20 @@
 // Per Step: its kind, the quoted values Jev can pick from, the keys it presses, secret placeholders, and warnings for wordings that
 // docs/cookbook.md shows failing.
 import { readFileSync } from "node:fs";
-import { hasHeader, parseFeature, placeholders, quotedValues, stepLabel, tableSteps, type ParsedStep } from "./feature.ts";
+import { parseFeature } from "./feature.ts";
 import { KIND } from "./report.ts";
-import { placeholder, quoted, stepKeys, stepValues } from "./observation.ts";
+import { placeholder, readStep, type ParsedStep } from "./step.ts";
 
 const SEE = "see docs/cookbook.md";
 
 /** Cookbook warnings for one Step. `before`: the scenario's earlier Steps. */
 export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<string, string | undefined> = process.env): string[] {
   const t = step.text;
-  const earlier = before.flatMap(s => quoted(s.text)).filter(v => !placeholder(v));
-  const values = quotedValues(step);
+  const read = readStep(step);
+  const earlier = before.flatMap(s => readStep(s).quoted).filter(v => !placeholder(v));
+  const { values } = read; // a check with a table returns before reading these
   const out: string[] = [];
-  for (const name of new Set(placeholders(step).map(v => placeholder(v)!))) {
+  for (const name of new Set(read.placeholders.map(v => placeholder(v)!))) {
     if (!env[name]) out.push(`$${name} is not set in this environment: the run stops before it starts (exit 2)`);
   }
   const secret = /\b(?:password|passcode|token|secret|api key)\b[^"“]*["“]([^"”]+)["”]/i.exec(t)?.[1];
@@ -26,16 +27,16 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
       out.push(`"search for" runs a search but does not open a result, and Jev may count typing alone as done; say "I open the "X" ... through the search", or add "and submit the search" (${SEE}, Navigate)`);
     }
     if (/^(I\s+)?(un)?(check|tick)\b/i.test(t) && /\b(and|then)\b|,/i.test(t)) out.push(`checking a box is decided by code only when the Step does nothing else; split "and ..." into its own Step (${SEE}, Submit and act)`);
-    for (const name of stepKeys(t).unknown) out.push(`"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}, Keys)`);
+    for (const name of read.unknownKeys) out.push(`"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}, Keys)`);
     if (!/\b(press(es|ed|ing)?|hit(s|ting)?)\b/i.test(t) && /\b(Esc|Escape)\b|\b(Tab|Enter|Return|Space|Backspace|Delete|Home|End|arrow|F\d+) key\b|\b(Ctrl|Control|Shift|Alt|Cmd|Meta)\s*\+\s*\w/i.test(t)) out.push(`names a key without "press" or "hit", so no key is offered: say "press Escape" (${SEE}, Keys)`);
     if (/^(I\s+)?(accept|dismiss|cancel|answer|confirm)\s+(the\s+)?(alert|confirm|confirmation|prompt|browser dialog)\b/i.test(t)) out.push(`a browser dialog is answered by the Step that opens it and dismissed when that Step ends, so this Step finds none open; say the intent in the Step that opens it ("I delete the note", "I start deleting the note but cancel") (${SEE}, Browser dialogs)`);
-    if (step.table && hasHeader("action", step.table) && step.table.length < 2) out.push(`an action's table with 3+ columns starts with its header row, so this one has no row to act on: AMBIGUOUS; add one row per entry under the header (${SEE}, Data tables)`);
+    if (step.table && read.header && step.table.length < 2) out.push(`an action's table with 3+ columns starts with its header row, so this one has no row to act on: AMBIGUOUS; add one row per entry under the header (${SEE}, Data tables)`);
     return out;
   }
   // Checks. A table is matched by code, row by row under its header; a header alone compares nothing.
   if (step.table) {
-    if (hasHeader("assertion", step.table) && step.table.length < 2) out.push(`a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`);
-    if (hasHeader("assertion", step.table) && /\b(not|no longer|never)\b/i.test(t)) out.push(`code can check that table rows are shown, not that they are absent: UNVERIFIABLE; check each row's absence in its own Step (${SEE}, Data tables)`);
+    if (read.header && step.table.length < 2) out.push(`a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`);
+    if (read.header && /\b(not|no longer|never)\b/i.test(t)) out.push(`code can check that table rows are shown, not that they are absent: UNVERIFIABLE; check each row's absence in its own Step (${SEE}, Data tables)`);
     return out;
   }
   // Checks. A state check ("should be disabled") needs no quoted value.
@@ -75,13 +76,14 @@ export function lint(path: string, env: Record<string, string | undefined> = pro
     out.push("", `  Scenario: ${s.name}${s.url ? `  (${s.url})` : ""}`);
     const before: ParsedStep[] = [];
     for (const step of s.steps) {
-      const values = step.kind === "assertion" ? quoted(step.text) : stepValues(step.text);
-      const secrets = [...new Set(placeholders(step))];
-      out.push(`  ${String(step.line ?? "").padStart(4)}  ${KIND[step.kind].padEnd(7)} ${stepLabel(step)}`);
-      if (step.table && step.kind !== "assertion") for (const row of tableSteps(step.text, step.table)) out.push(`${" ".repeat(15)}row: ${row}`);
+      const read = readStep(step);
+      const values = step.kind === "assertion" ? read.values : read.candidates;
+      const secrets = [...new Set(read.placeholders)];
+      out.push(`  ${String(step.line ?? "").padStart(4)}  ${KIND[step.kind].padEnd(7)} ${read.label}`);
+      if (step.table && step.kind !== "assertion") for (const row of read.rows) out.push(`${" ".repeat(15)}row: ${row}`);
       const shown = values.filter(v => !placeholder(v));
       if (shown.length) out.push(`${" ".repeat(15)}${step.kind === "assertion" ? "compares" : "values"}: ${shown.map(v => `"${v}"`).join(", ")}`);
-      const keys = step.kind === "assertion" ? [] : stepKeys(step.text).keys;
+      const { keys } = read;
       if (keys.length) out.push(`${" ".repeat(15)}keys: ${keys.join(", ")}`);
       if (secrets.length) out.push(`${" ".repeat(15)}secrets (from the environment, never sent to Jev): ${secrets.join(", ")}`);
       for (const w of warnings(step, before, env)) { out.push(`${" ".repeat(15)}⚠ ${w}`); flagged++; }

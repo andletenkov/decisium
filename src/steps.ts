@@ -7,11 +7,11 @@ import { join } from "node:path";
 import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts";
 import { executeStep, type StepReport } from "./execute.ts";
-import { placeholders, stepArgument, stepKind, stepLabel, toUrl, urlFromTags, type StepArgument, type StepKind } from "./feature.ts";
+import { stepArgument, toUrl, urlFromTags } from "./feature.ts";
 import { JevDecider, MODEL, type Decider } from "./jev.ts";
-import { placeholder } from "./observation.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import { type Runtime } from "./runner.ts";
+import { placeholder, readStep, stepKind, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 
 const env = process.env;
@@ -69,7 +69,7 @@ Before(async function (this: Scenario, { pickle }) {
   ({ cassette: this.cassette, live: this.live } = deciders.get(pickle.uri)!);
   // Secret placeholders ("$NAME"): a missing variable is a setup error, not a failed Step (task 0030).
   const secrets: Record<string, string> = {};
-  for (const token of pickle.steps.flatMap(s => placeholders({ text: s.text, ...stepArgument(s) }))) {
+  for (const token of pickle.steps.flatMap(s => readStep({ text: s.text, kind: stepKind(s), ...stepArgument(s) }).placeholders)) {
     const name = placeholder(token)!;
     if (!env[name]) throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
@@ -89,7 +89,7 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   this.at = `${pickle.uri}:${line}`;
   this.kind = stepKind(pickleStep);
   this.arg = stepArgument(pickleStep);
-  const labels = pickle.steps.map(s => stepLabel({ text: s.text, kind: stepKind(s), ...stepArgument(s) }));
+  const labels = pickle.steps.map(s => readStep({ text: s.text, kind: stepKind(s), ...stepArgument(s) }).label);
   this.key = stepKey(pickle.name, labels, pickle.steps.findIndex(s => s.id === pickleStep.id));
   Object.defineProperty(step, "length", { value: pickleStep.argument ? 2 : 1 });
 });
@@ -105,7 +105,7 @@ async function step(this: Scenario, text: string) {
   } catch (err) {
     throw infra(err);
   }
-  run.event("step", { kind: this.kind, step: stepLabel({ text, kind: this.kind, ...this.arg }), at: this.at, ...r });
+  run.event("step", { kind: this.kind, step: readStep({ text, kind: this.kind, ...this.arg }).label, at: this.at, ...r });
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   if (r.marginal) this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {

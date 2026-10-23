@@ -1,7 +1,7 @@
 import type { Action } from "./browser.ts";
+import { readStep, type StepArgument } from "./step.ts";
 import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
-import { hasHeader, quotedValues, stepLabel, type StepArgument } from "./feature.ts";
-import { assertableText, MASK, pressOnly, stepValues, type Dialog, type Element, type Observation } from "./observation.ts";
+import { assertableText, MASK, type Dialog, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
   | "DONE" | "BLOCKED" | "AMBIGUOUS" | "ELEMENT_NOT_FOUND" | "ACTION_FAILED" | "STEP_TIMEOUT" // Action steps
@@ -52,17 +52,6 @@ async function settled<T>(rt: Runtime, obs: Observation, ask: (obs: Observation)
 const MAX_TURNS = 8;
 
 const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
-/**
- * A Step that only checks or unchecks one box, e.g. `I uncheck "Newsletter"`: the state it asks for, else undefined.
- * Jev's `done` barely tells checked from unchecked (task 0033: 0.45-0.80 on checked boxes, so it kept clicking), so
- * code reads the box after the click instead, like the TYPE/SELECT effect check. "and"/"then" mean more to do.
- */
-export function toggleGoal(step: string): boolean | undefined {
-  if (/\b(and|then)\b|,/i.test(step)) return undefined;
-  if (/^(I\s+)?(uncheck|untick|deselect|clear|turn off|switch off|disable)\b/i.test(step)) return false;
-  if (/^(I\s+)?(check|tick|select|turn on|switch on|enable)\b/i.test(step)) return true;
-  return undefined;
-}
 const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
@@ -125,14 +114,11 @@ const weakGate = (what: string, pick: Pick): string[] =>
  * one is matched row by row to the page table under its column headers.
  */
 export async function runAssertion(step: string, rt: Runtime, decider: Decider, log = console.log, judged = false, earlier: Record<string, string> = {}, arg: StepArgument = {}): Promise<StepResult> {
-  const said = stepLabel({ text: step, kind: "assertion", ...arg }); // what Jev reads: the Step with its table or doc string
+  const { label: said, values, list, exact } = readStep({ text: step, kind: "assertion", ...arg }); // said: what Jev reads, with the table or doc string
   log(`\nAssert: ${said}`);
   const end = finish(log);
-  const { table, docString } = arg;
-  const list = !!table && !hasHeader("assertion", table);
-  const values = [...quotedValues({ text: step, docString }), ...list ? table.map(r => r[0]) : []];
+  const { table } = arg;
   if (table && !list && table.length < 2) return end("UNVERIFIABLE", "the table has only its header row (a check's first row names the columns), so there is no row to compare");
-  const exact = /\b(exactly|in this order)\b/i.test(step);
   let recallNote = "";
   let recallWeak: string[] = [];
   if (!values.length && !table && Object.keys(earlier).length) {
@@ -402,11 +388,12 @@ async function answerDialog(dialog: Dialog, said: string, values: string[], obs:
 }
 
 async function act(step: string, rt: Runtime, decider: Decider, log: typeof console.log, attempt: boolean, docString?: string): Promise<StepResult> {
-  const said = stepLabel({ text: step, kind: "action", docString });
+  const read = readStep({ text: step, kind: "action", docString });
+  const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
   // Only "press X": nothing to choose, so code presses it and the following checks verify the effect (task 0039).
-  const key = pressOnly(step);
+  const key = read.pressOnly;
   if (key) {
     log(`  Execute: PRESS ${key}`);
     try {
@@ -426,7 +413,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     // An open dialog blocks the page: this Turn answers it, nothing else.
     if (obs.dialog?.state === "open") {
-      const action = await answerDialog(obs.dialog, said, quotedValues({ text: step, docString }), obs, decider, log);
+      const action = await answerDialog(obs.dialog, said, read.values, obs, decider, log);
       const described = `${action.verb} ${obs.dialog.type} "${obs.dialog.message}"${action.value === undefined ? "" : ` <- "${action.value}"`}`;
       log(`  Execute: ${described}`);
       try {
@@ -459,7 +446,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       action = { verb: el.verb, ref: el.ref };
       if (el.verb !== "CLICK") {
-        const candidates = el.verb === "SELECT" ? el.options : docString === undefined ? stepValues(step) : [...stepValues(step), docString];
+        const candidates = el.verb === "SELECT" ? el.options : read.candidates;
         if (!candidates.length) return end("AMBIGUOUS", `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`);
         const v = await decider.value(said, obs, el, candidates);
         log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);
@@ -478,7 +465,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     recent.push(described);
 
     const next = await rt.observe();
-    const goal = toggleGoal(step);
+    const goal = read.toggle;
     const box = action.verb === "CLICK" && goal !== undefined ? next.elements.find(e => e.ref === action.ref && TOGGLES.has(e.role)) : undefined;
     if (box && /\[checked\]/.test(box.state) === goal) { log(`  Toggle: ${box.line}`); return end("DONE"); }
     unchanged = next.text === obs.text ? unchanged + 1 : 0;

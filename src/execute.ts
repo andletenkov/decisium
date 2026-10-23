@@ -1,9 +1,8 @@
 // Step execution (task 0051): one Gherkin Step from text to Step outcome, without cucumber. steps.ts adapts it.
 import { UiChanged, type Cassette } from "./cassette.ts";
-import { tableSteps, type StepArgument, type StepKind } from "./feature.ts";
 import { jevUsage, type Decider } from "./jev.ts";
-import { quoted } from "./observation.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
+import { readStep, type StepArgument, type StepKind } from "./step.ts";
 
 export interface StepContext {
   rt: Runtime;
@@ -41,7 +40,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   const start = Date.now(), before = { ...jevUsage };
   const { table, docString } = arg;
   const perRow = !!table && kind !== "assertion";
-  const rows = perRow ? tableSteps(text, table) : [text];
+  const { rows } = readStep({ text, kind, ...arg });
   // A header row alone (an action table with 3+ columns) leaves no row to act on; otherwise the rows decide.
   let r: StepResult = rows.length ? { outcome: "DONE" }
     : { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
@@ -68,7 +67,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     if (r.outcome !== "DONE") break;
   }
   if (r.marginal && ctx.strict) r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
-  for (const row of rows) for (const v of quoted(row)) earlier[v] = row;
+  for (const row of rows) for (const v of readStep({ text: row, kind }).quoted) earlier[v] = row;
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   return {
     ...r,

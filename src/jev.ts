@@ -1,5 +1,6 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { stepKeys, type Element, type Observation } from "./observation.ts";
+import type { Element, Observation } from "./observation.ts";
+import { readStep } from "./step.ts";
 
 export const MODEL = "jev-1.14.0";
 
@@ -26,7 +27,7 @@ const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. 
  */
 export function pageActions(obs: Observation, step: string): Record<string, string> {
   const out: Record<string, string> = obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : { ...PAGE_ACTIONS };
-  for (const key of stepKeys(step).keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
+  for (const key of readStep({ text: step, kind: "action" }).keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
   return out;
 }
 

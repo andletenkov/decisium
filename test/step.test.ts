@@ -1,0 +1,75 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { readStep, type ParsedStep } from "../src/step.ts";
+
+const action = (text: string, more: Partial<ParsedStep> = {}) => readStep({ text, kind: "action", ...more });
+const check = (text: string, more: Partial<ParsedStep> = {}) => readStep({ text, kind: "assertion", ...more });
+
+test("readStep: Candidate values are quoted strings and numbers with units, plus the doc string", () => {
+  assert.deepEqual(action(`Create a campaign called "Autumn Sale" for 2 weeks`).candidates, ["Autumn Sale", "2 weeks"]);
+  assert.deepEqual(action(`Set the campaign's name to "Autumn Sale"`).candidates, ["Autumn Sale"]); // an apostrophe opens no quote
+  assert.deepEqual(action("I write the notes:", { docString: "Hello" }).candidates, ["Hello"]);
+  assert.deepEqual(action(`I set "Name" to 3`).quoted, ["Name"]);
+});
+
+test("readStep: what a check compares, and how its table reads", () => {
+  assert.deepEqual(check(`the status should be "Draft"`).values, ["Draft"]);
+  assert.deepEqual(check("the notes should say:", { docString: "Hi" }).values, ["Hi"]);
+  const list = check("the cart should show:", { table: [["Backpack"], ["Bike Light"]] });
+  assert.deepEqual([list.values, list.list, list.header], [["Backpack", "Bike Light"], true, false]);
+  const rows = check("the cart should list:", { table: [["Product", "Qty"], ["Backpack", "2"]] });
+  assert.deepEqual([rows.values, rows.list, rows.header], [[], false, true]);
+  assert.deepEqual([check("the cart should show exactly:").exact, check("the rows in this order").exact, check("the cart").exact], [true, true, false]);
+});
+
+test("readStep: labels for reports and cassette keys, and an action's table as one Step per row", () => {
+  assert.equal(action("I fill in the form:", { table: [["First name", "Ada"], ["Last name", "Lovelace"]] }).label, "I fill in the form: [First name=Ada, Last name=Lovelace]");
+  assert.equal(action("I write the notes:", { docString: `Line one.\nLine "two".` }).label, `I write the notes: "Line one.\\nLine \\"two\\"."`);
+  assert.equal(check("the cart should list:", { table: [["Product", "Qty"], ["Backpack", "2"]] }).label, "the cart should list: [Product=Backpack, Qty=2]");
+  assert.equal(action("I add these:", { table: [["Backpack"], ["Bike Light"]] }).label, "I add these: [Backpack, Bike Light]");
+  assert.equal(action("I go back").label, "I go back");
+  assert.deepEqual(action("I fill in the form:", { table: [["First name", "Ada"], ["Last name", "Lovelace"]] }).rows,
+    [`I enter "Ada" as First name`, `I enter "Lovelace" as Last name`]);
+  assert.deepEqual(action("I add these products to the cart:", { table: [["Backpack"], ["Bike Light"]] }).rows,
+    [`I add these products to the cart "Backpack"`, `I add these products to the cart "Bike Light"`]);
+  assert.deepEqual(action("I order:", { table: [["Product", "Quantity", "Gift"], ["Backpack", "2", "no"]] }).rows, [`I order Product "Backpack", Quantity "2", Gift "no"`]);
+  assert.deepEqual(action("I order:", { table: [["Product", "Quantity", "Gift"]] }).rows, []); // a header alone
+  assert.deepEqual(check("the cart should show:", { table: [["Backpack"]] }).rows, ["the cart should show:"]); // a check runs once
+  assert.deepEqual(action("I go back").rows, ["I go back"]);
+});
+
+test("readStep: Secret placeholders, quoted, as the doc string or as a table cell", () => {
+  assert.deepEqual(action(`I log in as "$USER"`, { docString: "$NOTE" }).placeholders, ["$USER", "$NOTE"]);
+  assert.deepEqual(action("I fill in the form:", { table: [["Password", "$PW"], ["Name", "Ada"]] }).placeholders, ["$PW"]);
+});
+
+test("readStep: a check or uncheck Step that does nothing else names the box state it wants", () => {
+  assert.deepEqual([`I check "A"`, "I uncheck checkbox 2", `I check "A" and submit`, "I open the page"].map(s => action(s).toggle), [true, false, undefined, undefined]);
+});
+
+test("readStep: Named keys after press/hit, as Playwright names them (task 0039)", () => {
+  const keys = (s: string) => action(s).keys;
+  const none = (s: string) => assert.deepEqual([action(s).keys, action(s).unknownKeys], [[], []], s);
+  assert.deepEqual(keys("I press Escape"), ["Escape"]);
+  assert.deepEqual(keys(`I press "Escape"`), ["Escape"]);
+  assert.deepEqual(keys("I hit the Esc key"), ["Escape"]);
+  assert.deepEqual(keys("I press Ctrl+K and hit Shift + Tab"), ["Control+K", "Shift+Tab"]);
+  assert.deepEqual(keys("I press Cmd+K"), ["Meta+K"]); // as written: no Mod mapping
+  assert.deepEqual(keys("I press the down arrow twice"), ["ArrowDown"]);
+  assert.deepEqual(keys("I hit PageDown, then F2, then Return, Space, Backspace and Delete"), ["PageDown"]); // one key per press/hit
+  assert.deepEqual(["F2", "Return", "Space", "Backspace", "Delete", "Home", "page up", "arrow left", "Tab"].map(k => keys(`press ${k}`)[0]),
+    ["F2", "Enter", "Space", "Backspace", "Delete", "Home", "PageUp", "ArrowLeft", "Tab"]);
+  // Not keys: clicking a button by its name, words that are not after press/hit.
+  for (const s of [`I press the "Save" button`, "I press Save", "I delete the campaign", "I open the Settings tab"]) none(s);
+  // A key the Step means but that is not a key name.
+  assert.deepEqual(action("I press the Foo key").unknownKeys, ["Foo"]);
+  assert.deepEqual(action("I press Ctrl+Kay").unknownKeys, ["Ctrl+Kay"]);
+  // A Step that is only "press X": code presses it.
+  assert.deepEqual(["I press Escape", `press "Tab"`, "I hit the down arrow.", "I press Ctrl+K", "I press Escape to close the dialog", "I press the Save button"].map(s => action(s).pressOnly),
+    ["Escape", "Tab", "ArrowDown", "Control+K", undefined, undefined]);
+  // A button or link named like a key is clicked, not pressed; quoted text to type names no key.
+  for (const s of ["I press the Delete button", "I hit the Home link", `I type "press Escape to quit" in the note`, `I write the notes: "hit Tab"`]) none(s);
+  assert.deepEqual(keys(`I type "Ada" and press "Tab"`), ["Tab"]);
+  assert.deepEqual(keys("I press the Delete key"), ["Delete"]);
+  assert.deepEqual(action("I write the notes:", { docString: "press Escape" }).keys, []); // a doc string is a value, never a key
+});

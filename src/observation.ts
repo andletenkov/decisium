@@ -135,62 +135,6 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
 /** A value cut to 60 characters for an element's line. */
 const clip = (value: string) => value.length > 60 ? value.slice(0, 60) + "…" : value;
 
-/** Double-quoted strings in a Step. Single quotes are left alone so apostrophes ("campaign's") don't open a quote. */
-export const quoted = (step: string): string[] => [...step.matchAll(/["“]([^"”]+)["”]/g)].map(m => m[1]);
-
-/** A quoted `"$NAME"` is a secret placeholder (task 0030): the variable's name, else undefined. */
-export const placeholder = (value: string) => /^\$([A-Za-z_]\w*)$/.exec(value)?.[1];
-
-/** Candidate values a Step can supply: quoted strings and numbers with an optional unit word. */
-export function stepValues(step: string): string[] {
-  const numbers = [...step.matchAll(/\b\d+(?:[.,]\d+)?(?:\s+[a-z]+)?/gi)].map(m => m[0]);
-  return [...new Set([...quoted(step), ...numbers])];
-}
-
-/** Key names a Step can press (task 0039): Playwright's, lower-cased, plus aliases. */
-const KEYS = new Map<string, string>([
-  ..."Escape Tab Enter Backspace Delete Insert Home End PageUp PageDown ArrowUp ArrowDown ArrowLeft ArrowRight Space Control Shift Alt Meta"
-    .split(" "), ...Array.from({ length: 12 }, (_, i) => `F${i + 1}`)].map(k => [k.toLowerCase(), k]));
-for (const [alias, key] of Object.entries({ esc: "Escape", return: "Enter", del: "Delete", ctrl: "Control", cmd: "Meta", command: "Meta",
-  option: "Alt", "page up": "PageUp", "page down": "PageDown", "up arrow": "ArrowUp", "down arrow": "ArrowDown",
-  "left arrow": "ArrowLeft", "right arrow": "ArrowRight", "arrow up": "ArrowUp", "arrow down": "ArrowDown",
-  "arrow left": "ArrowLeft", "arrow right": "ArrowRight" })) KEYS.set(alias, key);
-
-/** `Ctrl+K`, `down arrow` -> Playwright's `Control+K`, `ArrowDown`; undefined if a part is no key. A letter or digit alone only quoted. */
-function keyName(expr: string, quoted: boolean): string | undefined {
-  const parts = expr.trim().split(/\s*\+\s*/);
-  const named = parts.map(p => KEYS.get(p.toLowerCase()) ?? (/^[a-z0-9]$/i.test(p) && (quoted || parts.length > 1) ? p : undefined));
-  return named.every(k => k !== undefined) ? named.join("+") : undefined;
-}
-
-const ELEMENT_NOUN = /^(button|link|tab|icon|item|option|menu|card|row|toggle|checkbox|control)s?$/i;
-const PRESS = /\b(?:press(?:es|ed|ing)?|hit(?:s|ting)?)\s+(?:the\s+)?(?:["“]([^"”]+)["”]|([\w+]+(?:\s*\+\s*\w+)*)(?=((?:\s+\w+){0,2})))/gi; // the words after: lookahead, so a next "press" is still found
-
-/**
- * Keys a Step names after "press" or "hit", one per verb, as Playwright names. `unknown`: what the Step means as a key
- * (a `+` combination, or "the X key") but is not a key name; never pressed.
- */
-export function stepKeys(step: string): { keys: string[]; unknown: string[] } {
-  const keys: string[] = [], unknown: string[] = [];
-  // Quoted text (a value to type, a doc string) names no key, unless it is the quoted key itself: press "Tab".
-  const said = step.replace(/(\b(?:press(?:es|ed|ing)?|hit(?:s|ting)?)\s+(?:the\s+)?["“][^"”]+["”])|["“][^"”]*["”]/gi, (m, key?: string) => key ?? '""');
-  for (const [, quotedKey, first, rest] of said.matchAll(PRESS)) {
-    const [next = ""] = rest?.trim().split(/\s+/) ?? [];
-    // "press the Delete button" clicks a button named like a key.
-    const key = quotedKey !== undefined ? keyName(quotedKey, true)
-      : keyName(`${first} ${next}`, false) ?? (ELEMENT_NOUN.test(next) ? undefined : keyName(first, false));
-    if (key) keys.push(key);
-    else if (first && (first.includes("+") || next.toLowerCase() === "key")) unknown.push(first);
-  }
-  return { keys, unknown };
-}
-
-/** The key a Step that is only "press X" names (`I press Escape`, `hit the "Tab" key`), else undefined. */
-export function pressOnly(step: string): string | undefined {
-  const m = /^(?:I\s+)?(?:press|hit)(?:es|s)?\s+(?:the\s+)?(?:["“]([^"”]+)["”]|(.+?))(?:\s+key)?[.!]?$/i.exec(step.trim());
-  return m ? keyName(m[1] ?? m[2], m[1] !== undefined) : undefined;
-}
-
 /**
  * Text an Assertion step compares against, or undefined when the element's text is only its label.
  * Value-bearing controls compare their value (empty counts); other controls (buttons, checkboxes) only

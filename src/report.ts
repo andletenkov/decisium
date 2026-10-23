@@ -1,6 +1,6 @@
 // How Step outcomes are worded for people (console) and for Qase, whose reporter picks `failed` vs `invalid`
 // from keywords in the error message (qase-javascript-commons determineTestStatus).
-import type { StepKind } from "./feature.ts";
+import type { StepKind } from "./step.ts";
 
 /** Outcomes that mean the app is wrong (Qase `failed`); every other non-passing outcome is `invalid` (the test could not decide). */
 const FAILED = ["ASSERTION_FAILED", "JUDGED_FAILED", "BLOCKED", "ACTION_FAILED"];

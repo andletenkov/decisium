@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { Browser } from "../src/browser.ts";
 import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, JevDecider, type Assessment, type Decider, type Pick } from "../src/jev.ts";
-import { MASK, parseSnapshot, stepValues, type Observation } from "../src/observation.ts";
+import { MASK, parseSnapshot, type Observation } from "../src/observation.ts";
 import { containsValue, runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
 
@@ -155,11 +155,6 @@ test("Browser: SELECT and TYPE check their effect on the control the app re-rend
   } finally {
     await b.close();
   }
-});
-
-test("stepValues pulls quoted strings and numbers with units", () => {
-  assert.deepEqual(stepValues(`Create a campaign called "Autumn Sale" for 2 weeks`), ["Autumn Sale", "2 weeks"]);
-  assert.deepEqual(stepValues(`Set the campaign's name to "Autumn Sale"`), ["Autumn Sale"]);
 });
 
 test("containsValue matches whole words only", () => {
@@ -903,8 +898,6 @@ test("doctor: Node needs type stripping on by default (22.18+)", async () => {
 });
 
 test("check/uncheck steps: code reads the box after the click, Jev's done is not needed", async () => {
-  const { toggleGoal } = await import("../src/runner.ts");
-  assert.deepEqual(["I check \"A\"", "I uncheck checkbox 2", "I check \"A\" and submit", "I open the page"].map(toggleGoal), [true, false, undefined, undefined]);
   for (const [step, start] of [["I check \"Weekly digest\"", false], ["I uncheck \"Newsletter\"", true]] as const) {
     let on = start, clicks = 0;
     const rt: Runtime = {
@@ -919,7 +912,6 @@ test("check/uncheck steps: code reads the box after the click, Jev's done is not
 });
 
 test("parseFeature: data tables and doc strings ride on their Step (task 0038)", async () => {
-  const { stepLabel, tableSteps } = await import("../src/feature.ts");
   const [s] = parseFeature(`Feature: f\n  Scenario: s\n    When I fill in the form:\n      | First name | Ada |\n      | Last name | Lovelace |\n`
     + `    And I write the notes:\n      """\n      Line one.\n      Line "two".\n      """\n    Then the cart should list:\n      | Product | Qty |\n      | Backpack | 2 |\n    When I go back\n`);
   assert.deepEqual(s.steps.map(({ line, ...st }) => st), [
@@ -928,19 +920,6 @@ test("parseFeature: data tables and doc strings ride on their Step (task 0038)",
     { text: "the cart should list:", kind: "assertion", table: [["Product", "Qty"], ["Backpack", "2"]] },
     { text: "I go back", kind: "action" },
   ]);
-  // Reports and cassette keys: the table compactly; 2 columns are label/value pairs for an action, a header for a check.
-  assert.deepEqual(s.steps.map(stepLabel), [
-    "I fill in the form: [First name=Ada, Last name=Lovelace]", `I write the notes: "Line one.\\nLine \\"two\\"."`,
-    "the cart should list: [Product=Backpack, Qty=2]", "I go back",
-  ]);
-  assert.equal(stepLabel({ text: "I add these:", kind: "action", table: [["Backpack"], ["Bike Light"]] }), "I add these: [Backpack, Bike Light]");
-  // An action's table runs as one Step per row.
-  assert.deepEqual(tableSteps("I fill in the form:", [["First name", "Ada"], ["Last name", "Lovelace"]]),
-    [`I enter "Ada" as First name`, `I enter "Lovelace" as Last name`]);
-  assert.deepEqual(tableSteps("I add these products to the cart:", [["Backpack"], ["Bike Light"]]),
-    [`I add these products to the cart "Backpack"`, `I add these products to the cart "Bike Light"`]);
-  assert.deepEqual(tableSteps("I order:", [["Product", "Quantity", "Gift"], ["Backpack", "2", "no"]]),
-    [`I order Product "Backpack", Quantity "2", Gift "no"`]);
 });
 
 test("runAssertion: a check's table is matched row by row under the page table's column headers (task 0038)", async () => {
@@ -1023,10 +1002,7 @@ test("lint: a check's table with only a header row compares nothing (task 0038)"
 });
 
 test("secret placeholders: a doc string or table cell \"$NAME\" is one too, at run time and in lint (task 0038)", async () => {
-  const { placeholders } = await import("../src/feature.ts");
   const { warnings, lint } = await import("../src/lint.ts");
-  assert.deepEqual(placeholders({ text: `I log in as "$USER"`, docString: "$NOTE" }), ["$USER", "$NOTE"]);
-  assert.deepEqual(placeholders({ text: "I fill in the form:", table: [["Password", "$PW"], ["Name", "Ada"]] }), ["$PW"]);
   assert.match(warnings({ text: "I fill in the form:", kind: "action", table: [["Password", "$PW"]] }, [], {}).join(), /\$PW is not set/);
   assert.match(warnings({ text: "I write the notes:", kind: "action", docString: "$NOTE" }, [], {}).join(), /\$NOTE is not set/);
   const { mkdtempSync, writeFileSync } = await import("node:fs");
@@ -1034,33 +1010,6 @@ test("secret placeholders: a doc string or table cell \"$NAME\" is one too, at r
   const path = `${mkdtempSync(`${tmpdir()}/lint-`)}/s.feature`;
   writeFileSync(path, `Feature: f\n  Scenario: s\n    When I fill in the form:\n      | Password | $PW |\n`);
   assert.match(lint(path, { PW: "x" }), /secrets \(from the environment, never sent to Jev\): \$PW\n[\s\S]*No warnings\./);
-});
-
-test("keys: a Step names keys after press/hit, as Playwright names (task 0039)", async () => {
-  const { pressOnly, stepKeys } = await import("../src/observation.ts");
-  const keys = (s: string) => stepKeys(s).keys;
-  assert.deepEqual(keys("I press Escape"), ["Escape"]);
-  assert.deepEqual(keys(`I press "Escape"`), ["Escape"]);
-  assert.deepEqual(keys("I hit the Esc key"), ["Escape"]);
-  assert.deepEqual(keys("I press Ctrl+K and hit Shift + Tab"), ["Control+K", "Shift+Tab"]);
-  assert.deepEqual(keys("I press Cmd+K"), ["Meta+K"]); // as written: no Mod mapping
-  assert.deepEqual(keys("I press the down arrow twice"), ["ArrowDown"]);
-  assert.deepEqual(keys("I hit PageDown, then F2, then Return, Space, Backspace and Delete"), ["PageDown"]); // one key per press/hit
-  assert.deepEqual(["F2", "Return", "Space", "Backspace", "Delete", "Home", "page up", "arrow left", "Tab"].map(k => keys(`press ${k}`)[0]),
-    ["F2", "Enter", "Space", "Backspace", "Delete", "Home", "PageUp", "ArrowLeft", "Tab"]);
-  // Not keys: clicking a button by its name, words that are not after press/hit.
-  for (const s of [`I press the "Save" button`, "I press Save", "I delete the campaign", "I open the Settings tab"]) assert.deepEqual(stepKeys(s), { keys: [], unknown: [] }, s);
-  // A key the Step means but that is not a key name.
-  assert.deepEqual(stepKeys("I press the Foo key").unknown, ["Foo"]);
-  assert.deepEqual(stepKeys("I press Ctrl+Kay").unknown, ["Ctrl+Kay"]);
-  // A Step that is only "press X": code presses it.
-  assert.deepEqual(["I press Escape", `press "Tab"`, "I hit the down arrow.", "I press Ctrl+K", "I press Escape to close the dialog", "I press the Save button"].map(pressOnly),
-    ["Escape", "Tab", "ArrowDown", "Control+K", undefined, undefined]);
-  // A button or link named like a key is clicked, not pressed; quoted text to type names no key.
-  for (const s of ["I press the Delete button", "I hit the Home link", `I type "press Escape to quit" in the note`, `I write the notes: "hit Tab"`])
-    assert.deepEqual(stepKeys(s), { keys: [], unknown: [] }, s);
-  assert.deepEqual(keys(`I type "Ada" and press "Tab"`), ["Tab"]);
-  assert.deepEqual(keys("I press the Delete key"), ["Delete"]);
 });
 
 test("keys: a press-only Step is pressed by code; other Steps offer only the keys they name (task 0039)", async () => {
