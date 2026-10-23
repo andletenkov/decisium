@@ -5,7 +5,8 @@ import { Browser, type Action } from "../src/browser.ts";
 import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, type Assessment, type Decider, type Pick } from "../src/decision.ts";
 import { JevDecider } from "../src/jev.ts";
 import { MASK, parseSnapshot, withDialog, type Observation } from "../src/observation.ts";
-import { containsValue, runAssertion, runStep, type Runtime } from "../src/runner.ts";
+import { runAssertion, runStep, type Runtime } from "../src/runner.ts";
+import { containsValue } from "../src/check.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
 
 const APP = pathToFileURL("examples/campaign-app/index.html").href;
@@ -288,7 +289,7 @@ test("runAssertion: a subject showing part of the quoted text is read with the c
   - generic [ref=e5]:
     - strong [ref=e6]: "2"
     - text: items left`;
-  const rt: Runtime = { observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
   const run = (s: string, ref: string) => runAssertion(s, rt, assessing("value", () => ({ subject: sure(ref) })), () => {}).then(r => r.outcome);
   assert.equal(await run(`I should see "britische Mathematikerin"`, "e3"), "PASSED");
   assert.equal(await run(`the counter should show "2 items left"`, "e6"), "PASSED");
@@ -301,7 +302,7 @@ test("runAssertion: a pass resting on a barely-confident answer is marked margin
   const snap = `- main [ref=e1]:
   - paragraph [ref=e2]: "Status: Draft"
   - paragraph [ref=e3]: Draft saved`;
-  const rt: Runtime = { observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
   const run = (probabilities: Record<string, number>) =>
     runAssertion(`the status should be "Draft"`, rt, assessing("value", () => ({ subject: { choice: "e2", probabilities } })), () => {});
   const marginal = await run({ e2: 0.84, e3: 0.02, none: 0.14 });
@@ -441,6 +442,7 @@ test("runStep: nothing left to do after an action that changed the page, plus a 
   // Fake page: clicking "Add to cart" turns it into "Remove" (like SauceDemo).
   let added = false;
   const rt: Runtime = {
+    actionStep: run => run(),
     observe: async () => parseSnapshot(`- button "${added ? "Remove" : "Add to cart"}" [ref=e1]`),
     execute: async () => { added = true; },
     waitForChange: async () => false,
@@ -502,7 +504,7 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   const go = async (cassette: InstanceType<typeof Cassette>, obs: Observation) => {
     const clicked: string[] = [];
     let after = false;
-    const rt: Runtime = { observe: async () => after ? { ...obs, text: obs.text + "\nclicked" } : obs, execute: async a => { clicked.push(a.ref!); after = true; }, waitForChange: async () => false };
+    const rt: Runtime = { actionStep: run => run(), observe: async () => after ? { ...obs, text: obs.text + "\nclicked" } : obs, execute: async a => { clicked.push(a.ref!); after = true; }, waitForChange: async () => false };
     const d = cassette.step("S #1: open the Bug issue", live);
     const r = await runStep("open the Bug issue", rt, d, () => {});
     d.done(r.outcome === "DONE");
@@ -527,7 +529,7 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   {
     const pages = [parseSnapshot(`- generic [ref=e1]: loading`), page("3")];
     let loaded = 0, clicked = "";
-    const rt: Runtime = { observe: async () => clicked ? { ...pages[1], text: "clicked" } : pages[loaded], execute: async a => { clicked = a.ref!; }, waitForChange: async () => { loaded = 1; return true; } };
+    const rt: Runtime = { actionStep: run => run(), observe: async () => clicked ? { ...pages[1], text: "clicked" } : pages[loaded], execute: async a => { clicked = a.ref!; }, waitForChange: async () => { loaded = 1; return true; } };
     const r = await runStep("open the Bug issue", rt, new Cassette(path, "m1", "none").step("S #1: open the Bug issue", live), () => {});
     assert.deepEqual([r.outcome, clicked, calls], ["DONE", "e3", 0]);
   }
@@ -595,7 +597,7 @@ test("scoped presence: code looks for the quoted text inside the area Jev names"
     `- status [ref=e4]: Campaign "Summer Sale" saved`,
   ].join("\n"));
   assert.deepEqual(obs.areas.map(e => e.ref), ["e2"]);
-  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
   const run = (s: string, kind: string, area: string) =>
     runAssertion(s, rt, assessing(kind, () => ({ area: sure(area) })), () => {}).then(r => r.outcome);
   assert.equal(await run(`"Winter Sale" should appear in the calendar`, "presence", "e2"), "PASSED");
@@ -612,7 +614,7 @@ test("scoped presence: code looks for the quoted text inside the area Jev names"
 
 test("memory: a check that quotes nothing uses the value an earlier Step named", async () => {
   const obs = parseSnapshot(`- list "Scheduled campaigns" [ref=e2]:\n  - listitem [ref=e3]: "2026-12-01: Winter Sale"`);
-  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
   const d = assessing("presence", () => ({ area: sure("e2") }));
   const run = (earlier: Record<string, string>) => runAssertion(`the campaign should appear in the calendar`, rt, d, () => {}, false, earlier).then(r => r.outcome);
   assert.equal(await run({}), "UNVERIFIABLE");
@@ -846,7 +848,7 @@ test("subject: when Jev is unsure which element a check is about, every plausibl
     `- button "Save" [disabled] [ref=e5]`,
     `- button "Delete" [ref=e6]`,
   ].join("\n"));
-  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
   const split = (kind: string, probabilities: Record<string, number>, state = "disabled") =>
     runAssertion(kind === "value" ? `the repository name should be "playwright"` : `the button should be ${state}`, rt,
       assessing(kind, () => ({ subject: { choice: "", probabilities }, state: sure(state) })), () => {}).then(r => r.outcome);
@@ -902,6 +904,7 @@ test("check/uncheck steps: code reads the box after the click, Jev's done is not
   for (const [step, start] of [["I check \"Weekly digest\"", false], ["I uncheck \"Newsletter\"", true]] as const) {
     let on = start, clicks = 0;
     const rt: Runtime = {
+      actionStep: run => run(),
       observe: async () => parseSnapshot(`- checkbox "Box"${on ? " [checked]" : ""} [ref=e1]`),
       execute: async () => { on = !on; clicks++; },
       waitForChange: async () => true,
@@ -941,7 +944,7 @@ test("runAssertion: a check's table is matched row by row under the page table's
       - cell [ref=e17]:
         - button "Remove" [ref=e18]
 - paragraph [ref=e19]: Onesie 3`);
-  const rt: Runtime = { observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
   // Jev's kind is not used: the table's shape decides; Jev only names the area.
   const run = (s: string, table: string[][], area = "e3") =>
     runAssertion(s, rt, assessing("value", () => ({ area: sure(area) })), () => {}, false, {}, { table });
@@ -1218,7 +1221,7 @@ test("executeStep: table rows, UI_CHANGED, PAGE_TOO_LARGE, setup errors, --stric
   const { mkdtempSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const page = parseSnapshot(`- textbox "First name" [ref=e1]\n- textbox "Last name" [ref=e2]\n- paragraph [ref=e3]: Hello Ada`);
-  const rt: Runtime = { observe: async () => page, execute: async () => {}, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => page, execute: async () => {}, waitForChange: async () => false };
   const table = [["First name", "Ada"], ["Last name", "Lovelace"]];
   const base = { rt, live: oracle, key: "S: I fill in", kind: "action" as const, arg: { table }, log: () => {} };
 
@@ -1255,7 +1258,7 @@ test("executeStep: table rows, UI_CHANGED, PAGE_TOO_LARGE, setup errors, --stric
 test("keys: Jev is offered only the keys the Step text names, never one inside its doc string (task 0053)", async () => {
   const done: Action[] = [];
   const seen: unknown[] = [];
-  const rt: Runtime = { observe: async () => parseSnapshot(`- textbox "Notes" [ref=e1]`), execute: async a => { done.push(a); }, waitForChange: async () => false };
+  const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(`- textbox "Notes" [ref=e1]`), execute: async a => { done.push(a); }, waitForChange: async () => false };
   const pressing: Decider = { ...oracle, turn: async (...args) => { seen.push(args[4]); return { done: 0, target: sure("press Escape") }; } };
   const r = await runStep("I write the notes:", rt, pressing, () => {}, false, "He said “hi” — press Escape");
   assert.deepEqual(seen, [[]]);

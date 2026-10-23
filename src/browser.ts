@@ -85,15 +85,18 @@ export class Browser {
     return Promise.race([p, this.opened]);
   }
 
-  /** An action Step starts: the last dialog's message is no longer readable (unless it is still open). */
-  forgetDialog() { if (!this.open) this.dialog = undefined; }
-
-  /** An action Step ends: a dialog it left open is dismissed (Cancel); returns it, for the log. */
-  async dismissDialog(): Promise<Dialog | undefined> {
-    if (!this.open) return;
-    const d = this.dialog;
-    await this.execute({ verb: "DISMISS" });
-    return d;
+  /** Owns per-Action-step cleanup, including thrown errors. `execute` keeps cleanup actions in the runtime's trace. */
+  async actionStep<T>(run: () => Promise<T>, log = console.log, execute = (a: Action) => this.execute(a)): Promise<T> {
+    if (!this.open) this.dialog = undefined;
+    try {
+      return await run();
+    } finally {
+      while (this.open) {
+        const d = this.dialog!;
+        await execute({ verb: "DISMISS" });
+        log(`  Dialog: ${d.type} "${d.message}" was still open when the Step ended: dismissed`);
+      }
+    }
   }
 
   /** `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. */

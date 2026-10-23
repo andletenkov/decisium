@@ -72,7 +72,7 @@ export class RunDir {
 
   /** Every Observation is a Turn: screenshot it and log the Observation text. */
   runtime(b: Browser): Runtime {
-    return {
+    const rt: Runtime = {
       observe: async () => {
         const obs = await b.observe();
         const screenshot = `${String(++this.#shot).padStart(3, "0")}.png`;
@@ -86,13 +86,9 @@ export class RunDir {
         await b.execute(a);
       },
       waitForChange: (since, ms) => b.waitForChange(since, ms),
-      forgetDialog: () => b.forgetDialog(),
-      dismissDialog: async () => {
-        const d = await b.dismissDialog();
-        if (d) this.event("execute", { verb: "DISMISS", dialog: d.type });
-        return d;
-      },
+      actionStep: (run, log) => b.actionStep(run, log, rt.execute),
     };
+    return rt;
   }
 
   /** Jev's answers with their probabilities, one event per question. Values chosen for secret fields are masked. */

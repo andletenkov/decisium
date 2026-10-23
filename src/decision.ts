@@ -58,6 +58,21 @@ export interface Assessment {
 export const AREA_PAGE = "page";
 export const AREA_MISSING = "missing";
 
+const SPECIAL: Record<string, string> = {
+  none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
+  scroll: "scroll down", wait: "wait for loading", enter: "press Enter",
+};
+/** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
+export const named = (p: Pick, obs?: Observation) =>
+  Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => {
+    const el = obs && [...obs.readable, ...obs.areas, ...obs.elements].find(e => e.ref === k);
+    return `${el ? el.line : SPECIAL[k] ?? k} ${Math.round(v * 100)}%`;
+  }).join(", ");
+
+export const fmt = (p: Pick) =>
+  Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([k, v]) => `${k}=${v.toFixed(2)}`).join(" ");
+
 /** The seam to the decision model: Jev implements it (jev.ts); tests use a scripted fake. */
 export interface Decider {
   /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
