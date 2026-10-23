@@ -1,6 +1,6 @@
 @url:https://github.com/microsoft/playwright
 Feature: GitHub, a real site (public pages, no login)
-  Live site: run with `--record all` (live Jev, nothing replayed); cassettes go stale and are not committed.
+  Live site: cassettes replay while the recorded controls still match; changed ones heal with `--record new`.
 
   Scenario: Find the latest release of a repository
     When I open the releases page

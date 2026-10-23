@@ -47,7 +47,7 @@ setParallelCanAssign((pickle, running) => !running.some(p => p.uri === pickle.ur
 BeforeAll(function () {
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
   if (!RECORD_MODES.includes(record)) throw new Error(`DESCISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
-  if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP"))) throw new Error("TYPESAFE_API_KEY is not set.");
+  if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED"))) throw new Error("TYPESAFE_API_KEY is not set.");
   run = new RunDir("runs", env.DESCISIUM_RUN_DIR || undefined);
   if (!cliOwnsRun) console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
@@ -110,11 +110,11 @@ defineStep(/^(.*)$/, async function (this: Scenario, text: string) {
       r = { outcome: "UI_CHANGED", reason: err.reason };
     } else throw infra(err);
   }
-  step?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome));
+  const cassette = step?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome));
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   const cost = { seconds: (Date.now() - start) / 1000, jevCalls: jevUsage.calls - before.calls,
     inputTokens: jevUsage.inputTokens - before.inputTokens, outputTokens: jevUsage.outputTokens - before.outputTokens };
-  run.event("step", { kind: this.kind, step: text, at: this.at, ...r, ...cost });
+  run.event("step", { kind: this.kind, step: text, at: this.at, ...r, ...cost, cassette });
   for (const v of quoted(text)) this.earlier[v] = text;
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   if ("marginal" in r && r.marginal) {

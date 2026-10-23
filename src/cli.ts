@@ -102,7 +102,7 @@ async function main(): Promise<number> {
   if (!RECORD_MODES.includes(values.record as RecordMode)) { console.error(`--record must be one of ${RECORD_MODES.join(", ")}\n\n${USAGE}`); return 2; }
   const missingUrl = scenarios.find(s => !(values.url ?? s.url));
   if (missingUrl) { console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${USAGE}`); return 2; }
-  if (!process.env.TYPESAFE_API_KEY && (cmd === "step" || values.record !== "none")) { console.error("TYPESAFE_API_KEY is not set."); return 2; }
+  if (!process.env.TYPESAFE_API_KEY && (cmd === "step" || values.record !== "none" || values.judged)) { console.error("TYPESAFE_API_KEY is not set."); return 2; }
   const reporters = values.reporter.map(r => /^(junit|json)(?::(.+))?$/.exec(r));
   if (reporters.some(r => !r)) { console.error(`--reporter must be junit or json, optionally :path\n\n${USAGE}`); return 2; }
   // Opt-in: features sharing one stateful app (campaign-manager) break each other's state when run side by side.

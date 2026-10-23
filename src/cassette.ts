@@ -96,7 +96,7 @@ export class Cassette {
     this.#run = run;
     const { file: old, thisRun } = this.#read();
     this.#file = { model, run, entries: this.#keep(old, thisRun) ?? {} };
-    if (old && !this.#keep(old, thisRun)) this.#dirty = true;
+    if (old && !this.#keep(old, thisRun) && mode !== "none") this.#dirty = true; // replay-only never rewrites
   }
 
   #read(): { file?: File; thisRun: boolean } {
@@ -118,7 +118,7 @@ export class Cassette {
    * The Decider for one Step: replays its recorded resolutions while each still matches exactly one element, else
    * (from the first that does not) asks `live`. Call `done` when the Step ends.
    */
-  step(key: string, live: Decider, log: (line: string) => void = () => {}): Decider & { done(keep: boolean): void } {
+  step(key: string, live: Decider, log: (line: string) => void = () => {}): Decider & { done(keep: boolean): "replayed" | "recorded" | "healed" | undefined } {
     const old = this.mode === "all" ? undefined : this.#file.entries[key];
     const now: Entry = {};
     let broken: string | undefined; // why replay stopped
@@ -151,7 +151,8 @@ export class Cassette {
         const r = replay(e => {
           const v = e.turns?.[i]?.value;
           const gone = v?.find(([k]) => k !== "none" && !candidates.includes(k as string));
-          if (!v || gone) throw `recorded value "${gone?.[0]}" is not offered now`;
+          if (!v) throw "no recorded value";
+          if (gone) throw `recorded value "${gone[0]}" is not offered now`;
           return load(v);
         });
         const a = r ?? await live.value(step, obs, el, candidates);
@@ -181,11 +182,13 @@ export class Cassette {
       },
       /** `keep`: the Step reached an outcome from its answers (not an error), so they are written back. */
       done: (keep: boolean) => {
-        if (!broken && old) { this.replayed++; return; }
+        if (!broken && old) { this.replayed++; return "replayed"; }
         if (!keep || broken === "judged") return;
         this.#file.entries[key] = now;
         this.#dirty = true;
-        if (old) { this.healed++; log(`  (cassette: healed, written back)`); } else this.recorded++;
+        if (old) { this.healed++; log(`  (cassette: healed, written back)`); return "healed"; }
+        this.recorded++;
+        return "recorded";
       },
     };
   }
