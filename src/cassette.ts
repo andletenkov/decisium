@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { NotYet, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { NotYet, pageActions, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
@@ -165,6 +165,9 @@ export class Cassette {
           const t = e.turns?.[i];
           if (!t) throw `recorded ${e.turns?.length ?? 0} turns, this is turn ${i + 1}`;
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
+          // A page action (scroll, enter, press X) is only an answer while this Step and page offer it.
+          const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && !(k in pageActions(obs, keys ?? [])));
+          if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
           return { done: t.done, target: load(t.target, obs.elements) };
         }, true);
         turn = i + 1;

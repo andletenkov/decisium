@@ -1262,3 +1262,30 @@ test("keys: Jev is offered only the keys the Step text names, never one inside i
   assert.deepEqual(done, []); // "press Escape" is no answer this Step was offered
   assert.equal(r.outcome, "ELEMENT_NOT_FOUND");
 });
+
+test("cassette: a recorded page action this Step no longer offers is healed, or UI_CHANGED in replay-only mode", async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { Cassette, UiChanged } = await import("../src/cassette.ts");
+  const { NotYet } = await import("../src/decision.ts");
+  const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
+  const obs = parseSnapshot(`- button "Go" [ref=e1]`);
+  const rec = new Cassette(path, "m1", "new");
+  const d = rec.step("S: I close it", { ...oracle, turn: async () => ({ done: 0, target: sure("press Escape") }) });
+  await d.turn("I close it", obs, [], false, ["Escape"]);
+  d.done(true);
+  rec.save();
+
+  // Offered again: replayed without Jev.
+  const noJev: Decider = { ...oracle, turn: async () => { throw new Error("Jev asked"); } };
+  assert.equal((await new Cassette(path, "m1", "none").step("S: I close it", noJev).turn("I close it", obs, [], false, ["Escape"])).target.choice, "press Escape");
+  // Not offered any more: asked live and written back...
+  let asked = 0;
+  const heal = new Cassette(path, "m1", "new").step("S: I close it", { ...oracle, turn: async () => { asked++; return { done: 1, target: sure("none") }; } });
+  assert.equal((await heal.turn("I close it", obs, [], false, [])).target.choice, "none");
+  assert.equal(asked, 1);
+  assert.equal(heal.done(true), "healed");
+  // ...or, replay-only, UI_CHANGED naming the answer.
+  await assert.rejects(new Cassette(path, "m1", "none").step("S: I close it", noJev).turn("I close it", obs, [], false, []),
+    (e: unknown) => e instanceof NotYet && e.final instanceof UiChanged && /"press Escape" is not offered now/.test(e.final.message));
+});
