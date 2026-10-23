@@ -15,24 +15,16 @@ export const RECORD_MODES: RecordMode[] = ["none", "new", "all"];
  * `of`): a reorder of them is invisible, but so is any difference between them.
  */
 export interface Resolution { role: string; name: string; container: string; near?: string; nth?: number; of?: number }
-export type Target = Resolution | string; // a string: a non-element answer (scroll, wait, enter, none, page, missing)
+type Target = Resolution | string; // a string: a non-element answer (scroll, wait, enter, none, page, missing)
 /**
  * A Jev answer with element refs as Resolutions, only its plausible part (most likely first, until together 0.8):
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
-export type Answer = [Target, number][];
-export interface Turn { done: number; target: Answer; value?: Answer }
-export interface Check { kind: Pick; state: Pick; subject: Answer; area: Answer }
-export interface Entry { turns?: Turn[]; check?: Check; recall?: Answer }
+type Answer = [Target, number][];
+interface Turn { done: number; target: Answer; value?: Answer }
+interface Check { kind: Pick; state: Pick; subject: Answer; area: Answer }
+interface Entry { turns?: Turn[]; check?: Check; recall?: Answer }
 interface File { model: string; run?: string; entries: Record<string, Entry> } // run: id of the run that last saved it
-
-/** A Step's key in its cassette: scenario name, 1-based position (Background steps included), text. */
-export const stepKey = (scenario: string, index: number, text: string) => `${scenario} #${index + 1}: ${text}`;
-
-/** A cassette file's entries without opening it for a run (`descisium explain`); `{}` when there is none. */
-export function readEntries(json: string | undefined): Record<string, Entry> {
-  return json ? (JSON.parse(json) as File).entries : {};
-}
 
 /** Replay-only mode and a Step whose recorded resolution is missing or no longer holds. */
 export class UiChanged extends Error {

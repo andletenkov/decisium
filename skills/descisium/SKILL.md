@@ -21,8 +21,6 @@ the rules; this skill is the procedure.
 ## Run and repair
 
 3. Run `node src/cli.ts run <file.feature>` (live Jev the first time; it records a cassette next to the feature).
-   Then `node src/cli.ts explain <file.feature>` shows which element each Step acted on and what each check compared:
-   confirm they are the ones you meant. On a PR, `explain <file.feature> --diff main` lists only the Steps that changed.
 4. On a failure, read `runs/<id>/report.md`: the Step at `file:line`, Jev's answers with probabilities, the page
    text around the element, and a rerun command for that scenario. Classify each failure:
    - **The app is wrong** (ASSERTION_FAILED, BLOCKED with the expected control truly missing): keep the Step, and
