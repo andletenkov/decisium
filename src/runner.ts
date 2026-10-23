@@ -1,7 +1,7 @@
 import type { Action } from "./browser.ts";
 import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
-import { stepLabel, type StepArgument } from "./feature.ts";
-import { assertableText, MASK, pressOnly, quoted, stepValues, type Dialog, type Element, type Observation } from "./observation.ts";
+import { hasHeader, quotedValues, stepLabel, type StepArgument } from "./feature.ts";
+import { assertableText, MASK, pressOnly, stepValues, type Dialog, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
   | "DONE" | "BLOCKED" | "AMBIGUOUS" | "ELEMENT_NOT_FOUND" | "ACTION_FAILED" | "STEP_TIMEOUT" // Action steps
@@ -128,8 +128,8 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   log(`\nAssert: ${said}`);
   const end = finish(log);
   const { table, docString } = arg;
-  const list = table?.[0].length === 1;
-  const values = [...quoted(step), ...docString === undefined ? [] : [docString], ...list ? table!.map(r => r[0]) : []];
+  const list = !!table && !hasHeader("assertion", table);
+  const values = [...quotedValues({ text: step, docString }), ...list ? table.map(r => r[0]) : []];
   if (table && !list && table.length < 2) return end("UNVERIFIABLE", "the table has only its header row (a check's first row names the columns), so there is no row to compare");
   const exact = /\b(exactly|in this order)\b/i.test(step);
   let recallNote = "";
@@ -423,8 +423,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     // An open dialog blocks the page: this Turn answers it, nothing else.
     if (obs.dialog?.state === "open") {
-      const values = [...quoted(step), ...docString === undefined ? [] : [docString]];
-      const action = await answerDialog(obs.dialog, said, values, obs, decider, log);
+      const action = await answerDialog(obs.dialog, said, quotedValues({ text: step, docString }), obs, decider, log);
       const described = `${action.verb} ${obs.dialog.type} "${obs.dialog.message}"${action.value === undefined ? "" : ` <- "${action.value}"`}`;
       log(`  Execute: ${described}`);
       try {

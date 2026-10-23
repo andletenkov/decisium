@@ -155,6 +155,7 @@ export class Browser {
       throw new Error(`Cannot open ${url}: ${why}. Is the app running and the URL right?`);
     }
     await b.settle();
+    while (b.open) await b.execute({ verb: "DISMISS" }); // opened by a timer after the load: no Step answers it either
     return b;
   }
 
@@ -259,7 +260,8 @@ export class Browser {
       this.open = undefined;
       this.dialog = { ...this.dialog!, state: verb === "ACCEPT" ? "accepted" : "dismissed" };
       this.rearm(); // before answering: the next dialog may open at once
-      await (verb === "ACCEPT" ? d.accept(value) : d.dismiss());
+      if (value in this.secrets) this.typedSecret = true;
+      await (verb === "ACCEPT" ? d.accept(this.secrets[value] ?? value) : d.dismiss());
     } else await this.unblocked(this.perform(action));
     await this.settle();
   }

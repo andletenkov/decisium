@@ -1001,6 +1001,21 @@ test("lint: a check's table with only a header row compares nothing (task 0038)"
   assert.deepEqual(warnings({ text: "the cart should list:", kind: "assertion", table: [["Product", "Qty"], ["Backpack", "2"]] }, []), []);
   assert.deepEqual(warnings({ text: "the notes should say:", kind: "assertion", docString: "Hello" }, []), []);
   assert.deepEqual(warnings({ text: "I fill in the form:", kind: "action", table: [["First name", "Ada"]] }, []), []);
+  assert.match(warnings({ text: "I order:", kind: "action", table: [["Product", "Quantity", "Gift"]] }, []).join(), /no row to act on: AMBIGUOUS/);
+});
+
+test("secret placeholders: a doc string or table cell \"$NAME\" is one too, at run time and in lint (task 0038)", async () => {
+  const { placeholders } = await import("../src/feature.ts");
+  const { warnings, lint } = await import("../src/lint.ts");
+  assert.deepEqual(placeholders({ text: `I log in as "$USER"`, docString: "$NOTE" }), ["$USER", "$NOTE"]);
+  assert.deepEqual(placeholders({ text: "I fill in the form:", table: [["Password", "$PW"], ["Name", "Ada"]] }), ["$PW"]);
+  assert.match(warnings({ text: "I fill in the form:", kind: "action", table: [["Password", "$PW"]] }, [], {}).join(), /\$PW is not set/);
+  assert.match(warnings({ text: "I write the notes:", kind: "action", docString: "$NOTE" }, [], {}).join(), /\$NOTE is not set/);
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const path = `${mkdtempSync(`${tmpdir()}/lint-`)}/s.feature`;
+  writeFileSync(path, `Feature: f\n  Scenario: s\n    When I fill in the form:\n      | Password | $PW |\n`);
+  assert.match(lint(path, { PW: "x" }), /secrets \(from the environment, never sent to Jev\): \$PW\n[\s\S]*No warnings\./);
 });
 
 test("keys: a Step names keys after press/hit, as Playwright names (task 0039)", async () => {
@@ -1023,6 +1038,11 @@ test("keys: a Step names keys after press/hit, as Playwright names (task 0039)",
   // A Step that is only "press X": code presses it.
   assert.deepEqual(["I press Escape", `press "Tab"`, "I hit the down arrow.", "I press Ctrl+K", "I press Escape to close the dialog", "I press the Save button"].map(pressOnly),
     ["Escape", "Tab", "ArrowDown", "Control+K", undefined, undefined]);
+  // A button or link named like a key is clicked, not pressed; quoted text to type names no key.
+  for (const s of ["I press the Delete button", "I hit the Home link", `I type "press Escape to quit" in the note`, `I write the notes: "hit Tab"`])
+    assert.deepEqual(stepKeys(s), { keys: [], unknown: [] }, s);
+  assert.deepEqual(keys(`I type "Ada" and press "Tab"`), ["Tab"]);
+  assert.deepEqual(keys("I press the Delete key"), ["Delete"]);
 });
 
 test("keys: a press-only Step is pressed by code; other Steps offer only the keys they name (task 0039)", async () => {
@@ -1152,6 +1172,25 @@ test("dialogs: the Step that opened a dialog answers it; unsure or alert = dismi
     assert.match((await onLoad.observe()).pageText, /^no$/m);
   } finally {
     await onLoad.close();
+  }
+  // Nor one a timer opens just after the load, while the page settles.
+  const afterLoad = await Browser.open(`data:text/html,<p id=o>-</p><script>setTimeout(()=>o.textContent=confirm('Later?')?'yes':'no',50)</script>`);
+  try {
+    const obs = await afterLoad.observe();
+    assert.equal(obs.dialog?.state, "dismissed");
+    assert.match(obs.pageText, /^no$/m);
+  } finally {
+    await afterLoad.close();
+  }
+  // A prompt answered with a secret placeholder gets the secret's value.
+  const secret = await Browser.open(`data:text/html,<p id=o>-</p><button onclick="o.textContent=prompt('PIN?')==='4321'?'right':'wrong'">Unlock</button>`, false, false, { "$PIN": "4321" });
+  try {
+    const unlock: Decider = { ...oracle, turn: async (_s, obs, recent) => recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(obs.elements[0].ref) }, dialog: async () => sure("$PIN") };
+    assert.equal((await runStep(`I unlock it with "$PIN"`, secret, unlock, () => {})).outcome, "DONE");
+    assert.match((await secret.observe()).pageText, /^right$/m);
+    assert.ok(secret.typedSecret, "no trace is kept: it would store the answer");
+  } finally {
+    await secret.close();
   }
 });
 

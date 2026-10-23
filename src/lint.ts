@@ -2,7 +2,7 @@
 // Per Step: its kind, the quoted values Jev can pick from, the keys it presses, secret placeholders, and warnings for wordings that
 // docs/cookbook.md shows failing.
 import { readFileSync } from "node:fs";
-import { parseFeature, stepLabel, tableSteps, type ParsedStep } from "./feature.ts";
+import { hasHeader, parseFeature, placeholders, quotedValues, stepLabel, tableSteps, type ParsedStep } from "./feature.ts";
 import { KIND } from "./report.ts";
 import { placeholder, quoted, stepKeys, stepValues } from "./observation.ts";
 
@@ -12,9 +12,9 @@ const SEE = "see docs/cookbook.md";
 export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<string, string | undefined> = process.env): string[] {
   const t = step.text;
   const earlier = before.flatMap(s => quoted(s.text)).filter(v => !placeholder(v));
-  const values = [...quoted(t), ...step.docString === undefined ? [] : [step.docString]];
+  const values = quotedValues(step);
   const out: string[] = [];
-  for (const name of values.map(placeholder).filter(n => n !== undefined)) {
+  for (const name of new Set(placeholders(step).map(v => placeholder(v)!))) {
     if (!env[name]) out.push(`$${name} is not set in this environment: the run stops before it starts (exit 2)`);
   }
   const secret = /\b(?:password|passcode|token|secret|api key)\b[^"“]*["“]([^"”]+)["”]/i.exec(t)?.[1];
@@ -29,11 +29,12 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
     for (const name of stepKeys(t).unknown) out.push(`"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}, Keys)`);
     if (!/\b(press(es|ed|ing)?|hit(s|ting)?)\b/i.test(t) && /\b(Esc|Escape)\b|\b(Tab|Enter|Return|Space|Backspace|Delete|Home|End|arrow|F\d+) key\b|\b(Ctrl|Control|Shift|Alt|Cmd|Meta)\s*\+\s*\w/i.test(t)) out.push(`names a key without "press" or "hit", so no key is offered: say "press Escape" (${SEE}, Keys)`);
     if (/^(I\s+)?(accept|dismiss|cancel|answer|confirm)\s+(the\s+)?(alert|confirm|confirmation|prompt|browser dialog)\b/i.test(t)) out.push(`a browser dialog is answered by the Step that opens it and dismissed when that Step ends, so this Step finds none open; say the intent in the Step that opens it ("I delete the note", "I start deleting the note but cancel") (${SEE}, Browser dialogs)`);
+    if (step.table && hasHeader("action", step.table) && step.table.length < 2) out.push(`an action's table with 3+ columns starts with its header row, so this one has no row to act on: AMBIGUOUS; add one row per entry under the header (${SEE}, Data tables)`);
     return out;
   }
   // Checks. A table is matched by code, row by row under its header; a header alone compares nothing.
   if (step.table) {
-    if (step.table[0].length > 1 && step.table.length < 2) out.push(`a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`);
+    if (hasHeader("assertion", step.table) && step.table.length < 2) out.push(`a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`);
     return out;
   }
   // Checks. A state check ("should be disabled") needs no quoted value.
@@ -74,7 +75,7 @@ export function lint(path: string, env: Record<string, string | undefined> = pro
     const before: ParsedStep[] = [];
     for (const step of s.steps) {
       const values = step.kind === "assertion" ? quoted(step.text) : stepValues(step.text);
-      const secrets = values.filter(v => placeholder(v));
+      const secrets = [...new Set(placeholders(step))];
       out.push(`  ${String(step.line ?? "").padStart(4)}  ${KIND[step.kind].padEnd(7)} ${stepLabel(step)}`);
       if (step.table && step.kind !== "assertion") for (const row of tableSteps(step.text, step.table)) out.push(`${" ".repeat(15)}row: ${row}`);
       const shown = values.filter(v => !placeholder(v));

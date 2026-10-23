@@ -6,7 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.ts";
-import { stepArgument, stepKind, stepLabel, tableSteps, toUrl, urlFromTags, type StepArgument, type StepKind } from "./feature.ts";
+import { placeholders, stepArgument, stepKind, stepLabel, tableSteps, toUrl, urlFromTags, type StepArgument, type StepKind } from "./feature.ts";
 import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
 import { placeholder, quoted } from "./observation.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
@@ -68,9 +68,8 @@ Before(async function (this: Scenario, { pickle }) {
   ({ cassette: this.cassette, live: this.live } = deciders.get(pickle.uri)!);
   // Secret placeholders ("$NAME"): a missing variable is a setup error, not a failed Step (task 0030).
   const secrets: Record<string, string> = {};
-  for (const token of pickle.steps.flatMap(s => [...quoted(s.text), ...stepArgument(s).table?.flat() ?? []])) {
-    const name = placeholder(token);
-    if (!name) continue;
+  for (const token of pickle.steps.flatMap(s => placeholders({ text: s.text, ...stepArgument(s) }))) {
+    const name = placeholder(token)!;
     if (!env[name]) throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
   }
@@ -97,13 +96,14 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
 // the argument is read from the pickle step in BeforeStep instead, so the arity follows the Step (set there).
 async function step(this: Scenario, text: string) {
   const log = (line: string) => { run.log(line); if (opt("VERBOSE")) console.log(line); };
-  // A header row alone (an action table with 3+ columns) leaves no row to act on.
-  let r: StepResult | { outcome: "UI_CHANGED" | "PAGE_TOO_LARGE"; reason: string } = { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
   const start = Date.now(), before = { ...jevUsage };
   // An Action step's table runs as one Step per row, each with its own cassette entry; the first failing row stops it.
   const { table, docString } = this.arg;
   const perRow = !!table && this.kind !== "assertion";
   const rows = perRow ? tableSteps(text, table) : [text];
+  // A header row alone (an action table with 3+ columns) leaves no row to act on; otherwise the rows decide.
+  let r: StepResult | { outcome: "UI_CHANGED" | "PAGE_TOO_LARGE"; reason: string } = rows.length ? { outcome: "DONE" }
+    : { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
   const cassettes: ("replayed" | "recorded" | "healed" | undefined)[] = [];
   for (const [i, row] of rows.entries()) {
     const entry = this.cassette?.step(perRow ? `${this.key} (row ${i + 1})` : this.key, this.live, log);

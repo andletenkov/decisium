@@ -126,11 +126,14 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
   for (const el of [...readable, ...areas]) {
     if (el.options.length) el.verb = "SELECT";
     // A long value (a whole file in a code view) would bury the description; the full value stays in `value`.
-    const value = el.value.length > 60 ? el.value.slice(0, 60) + "…" : el.value;
+    const value = clip(el.value);
     el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.state ? " " + el.state : ""}`;
   }
   return { text: kept.filter(l => l !== undefined).join("\n"), elements, readable, areas: [...areas], pageText };
 }
+
+/** A value cut to 60 characters for an element's line. */
+const clip = (value: string) => value.length > 60 ? value.slice(0, 60) + "…" : value;
 
 /** Double-quoted strings in a Step. Single quotes are left alone so apostrophes ("campaign's") don't open a quote. */
 export const quoted = (step: string): string[] => [...step.matchAll(/["“]([^"”]+)["”]/g)].map(m => m[1]);
@@ -160,6 +163,7 @@ function keyName(expr: string, quoted: boolean): string | undefined {
   return named.every(k => k !== undefined) ? named.join("+") : undefined;
 }
 
+const ELEMENT_NOUN = /^(button|link|tab|icon|item|option|menu|card|row|toggle|checkbox|control)s?$/i;
 const PRESS = /\b(?:press(?:es|ed|ing)?|hit(?:s|ting)?)\s+(?:the\s+)?(?:["“]([^"”]+)["”]|([\w+]+(?:\s*\+\s*\w+)*)(?=((?:\s+\w+){0,2})))/gi; // the words after: lookahead, so a next "press" is still found
 
 /**
@@ -168,9 +172,13 @@ const PRESS = /\b(?:press(?:es|ed|ing)?|hit(?:s|ting)?)\s+(?:the\s+)?(?:["“]([
  */
 export function stepKeys(step: string): { keys: string[]; unknown: string[] } {
   const keys: string[] = [], unknown: string[] = [];
-  for (const [, quotedKey, first, rest] of step.matchAll(PRESS)) {
+  // Quoted text (a value to type, a doc string) names no key, unless it is the quoted key itself: press "Tab".
+  const said = step.replace(/(\b(?:press(?:es|ed|ing)?|hit(?:s|ting)?)\s+(?:the\s+)?["“][^"”]+["”])|["“][^"”]*["”]/gi, (m, key?: string) => key ?? '""');
+  for (const [, quotedKey, first, rest] of said.matchAll(PRESS)) {
     const [next = ""] = rest?.trim().split(/\s+/) ?? [];
-    const key = quotedKey !== undefined ? keyName(quotedKey, true) : keyName(`${first} ${next}`, false) ?? keyName(first, false);
+    // "press the Delete button" clicks a button named like a key.
+    const key = quotedKey !== undefined ? keyName(quotedKey, true)
+      : keyName(`${first} ${next}`, false) ?? (ELEMENT_NOUN.test(next) ? undefined : keyName(first, false));
     if (key) keys.push(key);
     else if (first && (first.includes("+") || next.toLowerCase() === "key")) unknown.push(first);
   }
@@ -202,7 +210,7 @@ export function assertableText(el: Element): string | undefined {
 export function withPage(obs: Observation, url: string, title: string): Observation {
   const page = ([["url", url], ["title", title]] as const).map(([role, value]): Element => ({
     ref: role, role, name: "", value, state: "", secret: false, verb: "CLICK", options: [], text: value,
-    line: `${role} value="${value.length > 60 ? value.slice(0, 60) + "…" : value}"`,
+    line: `${role} value="${clip(value)}"`,
   }));
   const top = page.map(e => cap(`- ${e.role}: ${e.value}`)).join("\n");
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [...page, ...obs.readable] };
@@ -219,7 +227,7 @@ export function withDialog(obs: Observation, dialog?: Dialog): Observation {
   const { type, message, state } = dialog;
   const el: Element = {
     ref: "dialog", role: type, name: "browser dialog", value: message, state: `[${state}]`, secret: false, verb: "CLICK", options: [],
-    text: message, line: `${type} "browser dialog" value="${message.length > 60 ? message.slice(0, 60) + "…" : message}" [${state}]`,
+    text: message, line: `${type} "browser dialog" value="${clip(message)}" [${state}]`,
   };
   const top = cap(`- ${type} "browser dialog" [${state}]: ${message}`);
   return { ...obs, dialog, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };

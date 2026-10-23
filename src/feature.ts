@@ -4,6 +4,7 @@ import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumb
 import { IdGenerator, PickleStepType, type PickleStepArgument } from "@cucumber/messages";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { placeholder, quoted } from "./observation.ts";
 
 export type StepKind = "action" | "attempt" | "assertion";
 
@@ -45,7 +46,15 @@ export const stepArgument = ({ argument }: { argument?: PickleStepArgument }): S
  * A table's first row is a header for a check with 2+ columns and an action with 3+; 1 column is a list, and an
  * action's 2 columns are label/value pairs (Cucumber `rowsHash`).
  */
-const hasHeader = (kind: StepKind, table: string[][]) => table[0].length > (kind === "assertion" ? 1 : 2);
+export const hasHeader = (kind: StepKind, table: string[][]) => table[0].length > (kind === "assertion" ? 1 : 2);
+
+/** A Step's quoted values; its doc string is one more. */
+export const quotedValues = ({ text, docString }: { text: string; docString?: string }) =>
+  docString === undefined ? quoted(text) : [...quoted(text), docString];
+
+/** The `"$NAME"` Secret placeholders a Step names: quoted, as its doc string, or as a table cell. */
+export const placeholders = (step: { text: string } & StepArgument) =>
+  [...quotedValues(step), ...step.table?.flat() ?? []].filter(v => placeholder(v));
 
 /** The Step as reports and cassette keys show it: the table compactly, e.g. `[First name=Ada, Last name=Lovelace]`. */
 export function stepLabel(step: ParsedStep): string {
