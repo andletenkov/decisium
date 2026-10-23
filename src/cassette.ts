@@ -75,12 +75,15 @@ const store = (p: Pick, among: Element[] = []): Answer => plausible(p).map(k => 
   const el = among.find(e => e.ref === k);
   return [el ? resolve(el, among) : k, p.probabilities[k]];
 });
-/** A recorded answer on this Observation; throws (a string, why) when a Resolution no longer names exactly one element. */
+/** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
+class NotOnPage { why: string; constructor(why: string) { this.why = why; } }
+
+/** A recorded answer on this Observation; throws NotOnPage when a Resolution no longer names exactly one element. */
 const load = (a: Answer, among: Element[] = []): Pick => {
   const probabilities = Object.fromEntries(a.map(([t, v]) => {
     if (typeof t === "string") return [t, v];
     const el = find(t, among);
-    if (typeof el === "string") throw el;
+    if (typeof el === "string") throw new NotOnPage(el);
     return [el.ref, v];
   }));
   return { choice: Object.keys(probabilities)[0], probabilities };
@@ -146,16 +149,25 @@ export class Cassette {
     let broken: string | undefined; // why replay stopped
     let turn = 0;
     const replayOnly = this.mode === "none";
-    /** `wait`: replay-only waits for a loading page to show the control (NotYet); live mode just asks Jev, who can answer "wait". */
+    /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
     const fail = (why: string, wait = false) => {
       if (replayOnly && old && wait) throw new NotYet(new UiChanged(`the recorded resolution no longer holds: ${why}`));
       if (replayOnly) throw new UiChanged(old ? `the recorded resolution no longer holds: ${why}` : "this step has no recorded resolution: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev");
       if (old && !broken) log(`  (cassette: healing, ${why})`);
       broken ??= why;
     };
-    const replay = <T>(get: (e: Entry) => T, wait = false): T | undefined => {
+    /**
+     * Replay is the live question without Jev: a recorded answer is used only while the question would offer it now
+     * (`get` throws why not). Only an element not on the page yet is waited for; any other miss is final.
+     */
+    const replay = <T>(get: (e: Entry) => T): T | undefined => {
       if (broken || !old) { if (!broken) fail("missing"); return undefined; }
-      try { return get(old); } catch (why) { if (typeof why !== "string") throw why; fail(why, wait); return undefined; }
+      try { return get(old); } catch (why) {
+        if (why instanceof NotOnPage) fail(why.why, true);
+        else if (typeof why === "string") fail(why);
+        else throw why;
+        return undefined;
+      }
     };
 
     return {
@@ -165,11 +177,10 @@ export class Cassette {
           const t = e.turns?.[i];
           if (!t) throw `recorded ${e.turns?.length ?? 0} turns, this is turn ${i + 1}`;
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
-          // A page action (scroll, enter, press X) is only an answer while this Step and page offer it.
           const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && !(k in pageActions(obs, keys ?? [])));
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
           return { done: t.done, target: load(t.target, obs.elements) };
-        }, true);
+        });
         turn = i + 1;
         const a = r ?? await live.turn(step, obs, recent, attempt, keys);
         (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements) };
@@ -209,15 +220,16 @@ export class Cassette {
         const r = replay((e): Assessment => {
           if (!e.check) throw "no recorded check";
           return { kind: e.check.kind, state: e.check.state, subject: load(e.check.subject, obs.readable), area: load(e.check.area, obs.areas) };
-        }, true);
+        });
         const a = r ?? await live.assess(step, obs, judged);
         now.check = { kind: a.kind, state: a.state, subject: store(a.subject, obs.readable), area: store(a.area, obs.areas) };
         return a;
       },
       recall: async (step, earlier) => {
         const r = replay(e => {
-          const gone = e.recall?.find(([k]) => k !== "none" && !(k as string in earlier));
-          if (!e.recall || gone) throw `recorded earlier value "${gone?.[0]}" is not in this scenario now`;
+          if (!e.recall) throw "no recorded recall";
+          const gone = e.recall.find(([k]) => k !== "none" && !(k as string in earlier));
+          if (gone) throw `recorded earlier value "${gone[0]}" is not in this scenario now`;
           return load(e.recall);
         });
         const a = r ?? await live.recall(step, earlier);

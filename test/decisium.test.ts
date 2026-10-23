@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { Browser, type Action } from "../src/browser.ts";
 import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, type Assessment, type Decider, type Pick } from "../src/decision.ts";
 import { JevDecider } from "../src/jev.ts";
-import { MASK, parseSnapshot, type Observation } from "../src/observation.ts";
+import { MASK, parseSnapshot, withDialog, type Observation } from "../src/observation.ts";
 import { containsValue, runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
 
@@ -1263,29 +1263,36 @@ test("keys: Jev is offered only the keys the Step text names, never one inside i
   assert.equal(r.outcome, "ELEMENT_NOT_FOUND");
 });
 
-test("cassette: a recorded page action this Step no longer offers is healed, or UI_CHANGED in replay-only mode", async () => {
+test("cassette: replay is the live question without Jev, so an answer it no longer offers heals, or is UI_CHANGED at once", async () => {
   const { mkdtempSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { Cassette, UiChanged } = await import("../src/cassette.ts");
-  const { NotYet } = await import("../src/decision.ts");
-  const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
-  const obs = parseSnapshot(`- button "Go" [ref=e1]`);
-  const rec = new Cassette(path, "m1", "new");
-  const d = rec.step("S: I close it", { ...oracle, turn: async () => ({ done: 0, target: sure("press Escape") }) });
-  await d.turn("I close it", obs, [], false, ["Escape"]);
-  d.done(true);
-  rec.save();
-
-  // Offered again: replayed without Jev.
-  const noJev: Decider = { ...oracle, turn: async () => { throw new Error("Jev asked"); } };
-  assert.equal((await new Cassette(path, "m1", "none").step("S: I close it", noJev).turn("I close it", obs, [], false, ["Escape"])).target.choice, "press Escape");
-  // Not offered any more: asked live and written back...
-  let asked = 0;
-  const heal = new Cassette(path, "m1", "new").step("S: I close it", { ...oracle, turn: async () => { asked++; return { done: 1, target: sure("none") }; } });
-  assert.equal((await heal.turn("I close it", obs, [], false, [])).target.choice, "none");
-  assert.equal(asked, 1);
-  assert.equal(heal.done(true), "healed");
-  // ...or, replay-only, UI_CHANGED naming the answer.
-  await assert.rejects(new Cassette(path, "m1", "none").step("S: I close it", noJev).turn("I close it", obs, [], false, []),
-    (e: unknown) => e instanceof NotYet && e.final instanceof UiChanged && /"press Escape" is not offered now/.test(e.final.message));
+  const obs = withDialog(parseSnapshot(`- textbox "Name" [ref=e1]`), { type: "prompt", message: "Name?", state: "open" });
+  const el = obs.elements[0];
+  // Per question: ask it with what is offered (as recorded, then no longer), the live answer, and why replay stops.
+  const questions: [string, (d: Decider, offered: boolean) => Promise<unknown>, Partial<Decider>, RegExp][] = [
+    ["turn", (d, on) => d.turn("I close it", obs, [], false, on ? ["Escape"] : []), { turn: async () => ({ done: 0, target: sure("press Escape") }) }, /recorded answer "press Escape" is not offered now/],
+    ["value", async (d, on) => { await d.turn("I name it", obs, []); return d.value("I name it", obs, el, on ? ["Ada"] : ["Bob"]); },
+      { turn: async () => ({ done: 0, target: sure("e1") }), value: async () => sure("Ada") }, /recorded value "Ada" is not offered now/],
+    ["dialog", (d, on) => d.dialog("I name it", obs, on ? ["Ada", "dismiss"] : ["Bob", "dismiss"]), { dialog: async () => sure("Ada") }, /recorded dialog answer "Ada" is not offered now/],
+    ["recall", (d, on) => d.recall("it should be shown", on ? { Ada: "I add Ada" } : { Bob: "I add Bob" }), { recall: async () => sure("Ada") }, /recorded earlier value "Ada" is not in this scenario now/],
+  ];
+  for (const [name, ask, answers, why] of questions) {
+    const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
+    const rec = new Cassette(path, "m1", "new");
+    const d = rec.step("S", { ...oracle, ...answers });
+    await ask(d, true);
+    d.done(true);
+    rec.save();
+    const noJev: Decider = { ...oracle, turn: async () => { throw new Error("Jev asked"); }, value: async () => { throw new Error("Jev asked"); },
+      dialog: async () => { throw new Error("Jev asked"); }, recall: async () => { throw new Error("Jev asked"); } };
+    await ask(new Cassette(path, "m1", "none").step("S", noJev), true); // still offered: replayed without Jev
+    let asked = 0;
+    const counting = Object.fromEntries(Object.entries({ ...oracle, ...answers }).map(([k, f]) => [k, async (...a: unknown[]) => { asked++; return (f as Function)(...a); }])) as unknown as Decider;
+    const heal = new Cassette(path, "m1", "new").step("S", counting);
+    await ask(heal, false);
+    assert.ok(asked > 0, `${name}: asked live`);
+    assert.equal(heal.done(true), "healed", name);
+    await assert.rejects(ask(new Cassette(path, "m1", "none").step("S", noJev), false), (e: unknown) => e instanceof UiChanged && why.test(e.message), name);
+  }
 });
