@@ -206,7 +206,7 @@ export class Cassette {
       /** `keep`: the Step reached an outcome from its answers (not an error), so they are written back. */
       done: (keep: boolean) => {
         if (!broken && old) { this.replayed++; return "replayed"; }
-        if (!keep || broken === "judged") return;
+        if (!keep || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
         this.#file.entries[key] = now;
         this.#dirty = true;
         if (old) { this.healed++; log(`  (cassette: healed, written back)`); return "healed"; }

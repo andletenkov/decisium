@@ -1,5 +1,5 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import type { Element, Observation } from "./observation.ts";
+import { stepKeys, type Element, type Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
 
@@ -20,9 +20,15 @@ const PAGE_ACTIONS = {
 } as const;
 const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. run a search).";
 
-/** Page actions for this Observation: Enter only while a text field has focus, so it is not offered on every Turn. */
-export const pageActions = (obs: Observation): Record<string, string> =>
-  obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : PAGE_ACTIONS;
+/**
+ * Page actions for this Observation and Step: Enter only while a text field has focus, so it is not offered on every
+ * Turn; other keys only when the Step names them ("press Escape"), pressed wherever the focus is (task 0039).
+ */
+export function pageActions(obs: Observation, step: string): Record<string, string> {
+  const out: Record<string, string> = obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : { ...PAGE_ACTIONS };
+  for (const key of stepKeys(step).keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
+  return out;
+}
 
 export const ASSERTION_KINDS = {
   value: "Checks that some element shows a specific text or value.",
@@ -168,7 +174,7 @@ export class JevDecider implements Decider {
   async turn(step: string, obs: Observation, recent: string[], attempt = false): Promise<TurnAnswer> {
     const state = { step, ui: await this.#ui(obs, "step", step), actions_taken_for_step: recent.length ? recent : "none yet" };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
-    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs) },
+    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs, step) },
       this.#choose(state, question));
     const res = await this.#ask({
       state,

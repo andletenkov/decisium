@@ -783,7 +783,7 @@ test("Enter: offered only while a text field has focus; submits what was typed",
     + `<input id=q aria-label="Search"></form><p id=o></p>`;
   const b = await Browser.open(page);
   try {
-    assert.ok(!("enter" in pageActions(await b.observe())), "no field has focus yet");
+    assert.ok(!("enter" in pageActions(await b.observe(), "search")), "no field has focus yet");
     // Scripted Jev: type into the search box, press Enter, then done once results show.
     const decider: Decider = {
       ...oracle,
@@ -791,7 +791,7 @@ test("Enter: offered only while a text field has focus; submits what was typed",
         if (/Results for/.test(obs.pageText)) return { done: 1, target: sure("none") };
         const box = obs.elements.find(e => e.name === "Search")!;
         if (!box.value) return { done: 0, target: sure(box.ref) };
-        assert.ok("enter" in pageActions(obs), "field focused after typing");
+        assert.ok("enter" in pageActions(obs, "search"), "field focused after typing");
         return { done: 0, target: sure("enter") };
       },
       async value() { return sure("playwright"); },
@@ -998,4 +998,68 @@ test("lint: a check's table with only a header row compares nothing (task 0038)"
   assert.deepEqual(warnings({ text: "the cart should list:", kind: "assertion", table: [["Product", "Qty"], ["Backpack", "2"]] }, []), []);
   assert.deepEqual(warnings({ text: "the notes should say:", kind: "assertion", docString: "Hello" }, []), []);
   assert.deepEqual(warnings({ text: "I fill in the form:", kind: "action", table: [["First name", "Ada"]] }, []), []);
+});
+
+test("keys: a Step names keys after press/hit, as Playwright names (task 0039)", async () => {
+  const { pressOnly, stepKeys } = await import("../src/observation.ts");
+  const keys = (s: string) => stepKeys(s).keys;
+  assert.deepEqual(keys("I press Escape"), ["Escape"]);
+  assert.deepEqual(keys(`I press "Escape"`), ["Escape"]);
+  assert.deepEqual(keys("I hit the Esc key"), ["Escape"]);
+  assert.deepEqual(keys("I press Ctrl+K and hit Shift + Tab"), ["Control+K", "Shift+Tab"]);
+  assert.deepEqual(keys("I press Cmd+K"), ["Meta+K"]); // as written: no Mod mapping
+  assert.deepEqual(keys("I press the down arrow twice"), ["ArrowDown"]);
+  assert.deepEqual(keys("I hit PageDown, then F2, then Return, Space, Backspace and Delete"), ["PageDown"]); // one key per press/hit
+  assert.deepEqual(["F2", "Return", "Space", "Backspace", "Delete", "Home", "page up", "arrow left", "Tab"].map(k => keys(`press ${k}`)[0]),
+    ["F2", "Enter", "Space", "Backspace", "Delete", "Home", "PageUp", "ArrowLeft", "Tab"]);
+  // Not keys: clicking a button by its name, words that are not after press/hit.
+  for (const s of [`I press the "Save" button`, "I press Save", "I delete the campaign", "I open the Settings tab"]) assert.deepEqual(stepKeys(s), { keys: [], unknown: [] }, s);
+  // A key the Step means but that is not a key name.
+  assert.deepEqual(stepKeys("I press the Foo key").unknown, ["Foo"]);
+  assert.deepEqual(stepKeys("I press Ctrl+Kay").unknown, ["Ctrl+Kay"]);
+  // A Step that is only "press X": code presses it.
+  assert.deepEqual(["I press Escape", `press "Tab"`, "I hit the down arrow.", "I press Ctrl+K", "I press Escape to close the dialog", "I press the Save button"].map(pressOnly),
+    ["Escape", "Tab", "ArrowDown", "Control+K", undefined, undefined]);
+});
+
+test("keys: a press-only Step is pressed by code; other Steps offer only the keys they name (task 0039)", async () => {
+  const { pageActions } = await import("../src/jev.ts");
+  const b = await Browser.open(`data:text/html,<p id=o>none</p><input aria-label=Note autofocus>`
+    + `<script>addEventListener('keydown',e=>o.textContent=(e.ctrlKey?'Ctrl+':'')+e.key)</script>`);
+  try {
+    const noJev: Decider = { ...oracle, turn: async () => { throw new Error("Jev asked"); } };
+    assert.equal((await runStep("I press Escape", b, noJev, () => {})).outcome, "DONE");
+    assert.match((await b.observe()).pageText, /^Escape$/m);
+    assert.equal((await runStep("I press Ctrl+K", b, noJev, () => {})).outcome, "DONE");
+    assert.match((await b.observe()).pageText, /^Ctrl\+K$/m);
+    // It asks Jev nothing, so replay-only mode runs it without a recording and writes none.
+    const { mkdtempSync, existsSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { Cassette } = await import("../src/cassette.ts");
+    const cassette = new Cassette(`${mkdtempSync(`${tmpdir()}/cas-`)}/k.cassette.json`, "m", "none");
+    const entry = cassette.step("s #1: I press Escape", noJev);
+    assert.equal((await runStep("I press Escape", b, entry, () => {})).outcome, "DONE");
+    assert.equal(entry.done(true), undefined);
+    cassette.save();
+    assert.ok(!existsSync(cassette.path));
+    // Only the named keys are offered; Enter keeps its own action.
+    const obs = await b.observe();
+    assert.deepEqual(Object.keys(pageActions(obs, "I open the palette by pressing Ctrl+K")).filter(k => k.startsWith("press")), ["press Control+K"]);
+    assert.deepEqual(Object.keys(pageActions(obs, "I type it and press Enter")).filter(k => k.startsWith("press")), []);
+    assert.deepEqual(Object.keys(pageActions(obs, "I open the palette")).filter(k => k.startsWith("press")), []);
+    const picker: Decider = { ...oracle, turn: async (_s, o) => /Tab/.test(o.pageText) ? { done: 1, target: sure("none") } : { done: 0, target: sure("press Tab") } };
+    assert.equal((await runStep("I move on by pressing Tab", b, picker, () => {})).outcome, "DONE");
+    assert.match((await b.observe()).pageText, /^Tab$/m);
+  } finally {
+    await b.close();
+  }
+});
+
+test("lint: a key that is not a key name, or named without press/hit, is never pressed (task 0039)", async () => {
+  const { warnings } = await import("../src/lint.ts");
+  const w = (text: string) => warnings({ text, kind: "action" }, []).join(" | ");
+  for (const ok of ["I press Escape", "I press Ctrl+K", `I press the "Save" button`, "I open the Settings tab", `I enter "abc" as the API key`]) assert.equal(w(ok), "", ok);
+  assert.match(w("I open the palette with Ctrl+K"), /without "press"/);
+  assert.match(w("I press the Foo key"), /"Foo" is not a key name/);
+  assert.match(w("I close the dialog with the Escape key"), /without "press"/);
 });

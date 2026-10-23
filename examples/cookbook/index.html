@@ -2,7 +2,8 @@
 <html lang="en">
 <head><meta charset="utf-8"><title>Cookbook lab</title></head>
 <!-- Fixture for docs/cookbook.md (task 0031): an article search, settings with labelled and unlabelled checkboxes,
-     and (?contacts, task 0038) a contact form and table for data tables and doc strings. -->
+     (?contacts, task 0038) a contact form and table for data tables and doc strings, and (?keys, task 0039) a page
+     driven by keys: Escape closes the help, Ctrl+K opens the command palette, arrows move through a list. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -62,9 +63,36 @@ function contacts() {
   draw();
 }
 
+function keys() {
+  main.innerHTML = `<h1>Keys</h1>
+    <button id="help">Keyboard help</button>
+    <div role="dialog" aria-label="Keyboard help" hidden><p>Close it with Escape.</p></div>
+    <div role="dialog" aria-label="Command palette" hidden><h2>Commands</h2><ul><li>Go to settings</li><li>Go to search</li></ul></div>
+    <ul role="listbox" aria-label="Fruits" tabindex="0">${["Apple", "Banana", "Cherry"].map((f, i) =>
+      `<li role="option" aria-selected="${i === 0}">${f}</li>`).join("")}</ul>
+    <label>Note <input></label>
+    <p role="status"></p>`;
+  const [help, palette] = main.querySelectorAll("[role=dialog]");
+  const list = main.querySelector("[role=listbox]");
+  document.getElementById("help").onclick = () => { help.hidden = false; };
+  // The focused control, so a check can read where Tab moved it.
+  main.addEventListener("focusin", e => { main.querySelector("[role=status]").textContent = `Focus: ${e.target.getAttribute("aria-label") ?? e.target.closest("label")?.textContent.trim() ?? e.target.textContent}`; });
+  list.onkeydown = e => {
+    const opts = [...list.children], at = opts.findIndex(o => o.getAttribute("aria-selected") === "true");
+    const to = e.key === "ArrowDown" ? Math.min(at + 1, opts.length - 1) : e.key === "ArrowUp" ? Math.max(at - 1, 0) : at;
+    opts.forEach((o, i) => o.setAttribute("aria-selected", String(i === to)));
+  };
+  document.onkeydown = e => {
+    if (e.key === "Escape") help.hidden = palette.hidden = true;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); palette.hidden = false; }
+  };
+  list.focus();
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
-location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts() : search();
+location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
+  : location.search.includes("keys") ? keys() : search();
 </script>
 </body>
 </html>

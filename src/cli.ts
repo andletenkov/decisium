@@ -31,7 +31,7 @@ the scenario (or Examples row) at that line.
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
 doctor: checks Node, Chromium, TYPESAFE_API_KEY (one tiny Jev call) and Qase if enabled; given features, also opens
   every start URL.
-lint: no browser, no Jev. Per Step: its kind, the quoted values, secret placeholders, and warnings for wordings
+lint: no browser, no Jev. Per Step: its kind, the quoted values, keys, secret placeholders, and warnings for wordings
   docs/cookbook.md shows failing.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.

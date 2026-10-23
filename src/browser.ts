@@ -3,9 +3,9 @@ import { chromium, type Browser as PwBrowser, type Page } from "playwright";
 import { parseSnapshot, withPage, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
-  verb: Verb | "SCROLL" | "WAIT" | "ENTER";
+  verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS";
   ref?: string; // element actions only
-  value?: string;
+  value?: string; // PRESS: the key, as Playwright names it
 }
 
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
@@ -207,6 +207,7 @@ export class Browser {
     const opts = { timeout: 5000 };
     if (verb === "SCROLL") await this.page.mouse.wheel(0, 600);
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
+    else if (verb === "PRESS") await this.page.keyboard.press(value); // to whatever has focus
     else if (verb === "WAIT") await this.waitForChange((await this.observe()).text, WAIT_CAP_MS);
     else {
       const target = this.page.locator(`aria-ref=${ref}`);

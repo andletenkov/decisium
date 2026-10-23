@@ -1,0 +1,459 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-23T15-35-14-779Z",
+  "entries": {
+    "Close a dialog with Escape #1: I open the keyboard help": {
+      "turns": [
+        {
+          "done": 0.25,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Keyboard help",
+                "container": ""
+              },
+              0.76
+            ],
+            [
+              "none",
+              0.24
+            ]
+          ]
+        },
+        {
+          "done": 0.86,
+          "target": [
+            [
+              "none",
+              0.57
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Keyboard help",
+                "container": ""
+              },
+              0.41
+            ]
+          ]
+        }
+      ]
+    },
+    "Close a dialog with Escape #2: \"Close it with Escape.\" should appear": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.9,
+          "probabilities": {
+            "value": 0.92,
+            "presence": 0.08,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "expanded",
+          "confidence": 0.74,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.07,
+            "checked": 0.02,
+            "unchecked": 0,
+            "expanded": 0.77,
+            "collapsed": 0.05,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0.09,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "paragraph",
+              "name": "",
+              "container": "dialog \"Keyboard help\""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "dialog",
+              "name": "Keyboard help",
+              "container": ""
+            },
+            0.68
+          ],
+          [
+            "page",
+            0.31
+          ]
+        ]
+      }
+    },
+    "Close a dialog with Escape #3: I press Escape": {},
+    "Close a dialog with Escape #4: \"Close it with Escape.\" should not appear": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "absence",
+          "confidence": 0.99,
+          "probabilities": {
+            "value": 0.01,
+            "presence": 0,
+            "absence": 0.99,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "collapsed",
+          "confidence": 0.64,
+          "probabilities": {
+            "disabled": 0.03,
+            "enabled": 0.02,
+            "checked": 0.01,
+            "unchecked": 0.04,
+            "expanded": 0.05,
+            "collapsed": 0.68,
+            "selected": 0,
+            "unselected": 0.01,
+            "pressed": 0.05,
+            "unpressed": 0.11
+          }
+        },
+        "subject": [
+          [
+            "none",
+            0.75
+          ],
+          [
+            {
+              "role": "button",
+              "name": "Keyboard help",
+              "container": ""
+            },
+            0.18
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.95
+          ]
+        ]
+      }
+    },
+    "Open the command palette with a shortcut #1: I open the command palette by pressing Ctrl+K": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              "press Control+K",
+              0.96
+            ]
+          ]
+        },
+        {
+          "done": 0.94,
+          "target": [
+            [
+              "press Control+K",
+              0.56
+            ],
+            [
+              "none",
+              0.4
+            ]
+          ]
+        }
+      ]
+    },
+    "Open the command palette with a shortcut #2: \"Go to settings\" should appear in the command palette": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "presence",
+          "confidence": 0.52,
+          "probabilities": {
+            "value": 0.38,
+            "presence": 0.62,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "expanded",
+          "confidence": 0.4,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.35,
+            "checked": 0.04,
+            "unchecked": 0,
+            "expanded": 0.46,
+            "collapsed": 0,
+            "selected": 0.08,
+            "unselected": 0.07,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "dialog \"Command palette\"",
+              "near": "Go to settings"
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "dialog",
+              "name": "Command palette",
+              "container": ""
+            },
+            0.92
+          ]
+        ]
+      }
+    },
+    "Move through a list with the arrow keys #1: I press the down arrow": {},
+    "Move through a list with the arrow keys #2: \"Banana\" should be selected": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 0.99,
+          "probabilities": {
+            "value": 0.01,
+            "presence": 0,
+            "absence": 0,
+            "state": 0.99,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "selected",
+          "confidence": 1,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 1,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "option",
+              "name": "Banana",
+              "container": "listbox \"Fruits\""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "listbox",
+              "name": "Fruits",
+              "container": ""
+            },
+            0.51
+          ],
+          [
+            "page",
+            0.48
+          ]
+        ]
+      }
+    },
+    "Move through a list with the arrow keys #3: \"Apple\" should be unselected": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "unselected",
+          "confidence": 1,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 1,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "option",
+              "name": "Apple",
+              "container": "listbox \"Fruits\""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "listbox",
+              "name": "Fruits",
+              "container": ""
+            },
+            0.7
+          ],
+          [
+            "page",
+            0.29
+          ]
+        ]
+      }
+    },
+    "Move the focus with Tab #1: I press \"Tab\"": {},
+    "Move the focus with Tab #2: the status should be \"Focus: Note\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.49,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.54,
+            "checked": 0.06,
+            "unchecked": 0,
+            "expanded": 0.03,
+            "collapsed": 0,
+            "selected": 0.34,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.81
+          ]
+        ]
+      }
+    },
+    "A key named without press #1: I open the keyboard help": {
+      "turns": [
+        {
+          "done": 0.32,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Keyboard help",
+                "container": ""
+              },
+              0.73
+            ],
+            [
+              "none",
+              0.27
+            ]
+          ]
+        },
+        {
+          "done": 0.79,
+          "target": [
+            [
+              "none",
+              0.61
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Keyboard help",
+                "container": ""
+              },
+              0.37
+            ]
+          ]
+        }
+      ]
+    },
+    "A key named without press #2: I close the help with the Escape key": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              "none",
+              0.58
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Keyboard help",
+                "container": ""
+              },
+              0.42
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

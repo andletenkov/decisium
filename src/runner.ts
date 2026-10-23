@@ -1,7 +1,7 @@
 import type { Action } from "./browser.ts";
 import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
 import { stepLabel, type StepArgument } from "./feature.ts";
-import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
+import { assertableText, MASK, pressOnly, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
   | "DONE" | "BLOCKED" | "AMBIGUOUS" | "ELEMENT_NOT_FOUND" | "ACTION_FAILED" | "STEP_TIMEOUT" // Action steps
@@ -377,6 +377,17 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
   const said = stepLabel({ text: step, kind: "action", docString });
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
+  // Only "press X": nothing to choose, so code presses it and the following checks verify the effect (task 0039).
+  const key = pressOnly(step);
+  if (key) {
+    log(`  Execute: PRESS ${key}`);
+    try {
+      await rt.execute({ verb: "PRESS", value: key });
+    } catch (err) {
+      return end("ACTION_FAILED", `PRESS ${key} failed: ${(err as Error).message.split("\n")[0]}`);
+    }
+    return end("DONE");
+  }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
   let obs = await rt.observe();
@@ -395,9 +406,10 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
 
     let action: Action;
     let described: string;
-    if (t.target.choice in pageActions(obs)) {
-      action = { verb: PAGE_VERBS[t.target.choice] };
-      described = action.verb;
+    if (t.target.choice in pageActions(obs, said)) {
+      const key = /^press (.+)$/.exec(t.target.choice)?.[1];
+      action = key ? { verb: "PRESS", value: key } : { verb: PAGE_VERBS[t.target.choice] };
+      described = key ? `PRESS ${key}` : action.verb;
     } else {
       const el = obs.elements.find(e => e.ref === t.target.choice);
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
