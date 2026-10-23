@@ -5,7 +5,7 @@ import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHe
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Browser } from "./browser.ts";
-import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.ts";
+import { Cassette, RECORD_MODES, stepKey, UiChanged, type RecordMode } from "./cassette.ts";
 import { stepKind, toUrl, urlFromTags, type StepKind } from "./feature.ts";
 import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
 import { placeholder, quoted } from "./observation.ts";
@@ -87,7 +87,7 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[pickleStep.astNodeIds[0]]?.location.line;
   this.at = `${pickle.uri}:${line}`;
   this.kind = stepKind(pickleStep);
-  this.key = `${pickle.name} #${pickle.steps.findIndex(s => s.id === pickleStep.id) + 1}: ${pickleStep.text}`;
+  this.key = stepKey(pickle.name, pickle.steps.findIndex(s => s.id === pickleStep.id), pickleStep.text);
 });
 
 defineStep(/^(.*)$/, async function (this: Scenario, text: string) {

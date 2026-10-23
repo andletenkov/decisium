@@ -10,6 +10,7 @@ import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { qaseOn, qasePreflight } from "./qase.ts";
 import { doctor } from "./doctor.ts";
 import { lint } from "./lint.ts";
+import { explain } from "./explain.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 
@@ -19,6 +20,7 @@ const USAGE = `Usage:
                 [--parallel <n|auto>] [--no-agent-report] [-v] [--debug]
   descisium doctor [<file.feature>...]
   descisium lint <file.feature>...
+  descisium explain <file.feature>... [--diff <git-ref>]
 
 The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
@@ -31,6 +33,8 @@ the scenario (or Examples row) at that line.
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
 doctor: checks Node, Chromium, TYPESAFE_API_KEY (one tiny Jev call) and Qase if enabled; given features, also opens
   every start URL.
+explain: no browser, no Jev. What each Step resolved to in its cassette: elements acted on, values, what each check
+  compares. --diff <git-ref>: only Steps whose resolution changed since that commit (for PR review).
 lint: no browser, no Jev. Per Step: its kind, the quoted values, secret placeholders, and warnings for wordings
   docs/cookbook.md shows failing.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
@@ -62,15 +66,15 @@ async function main(): Promise<number> {
     allowNegative: true,
     options: { url: { type: "string" }, headed: { type: "boolean", default: false }, judged: { type: "boolean", default: false },
       strict: { type: "boolean", default: false }, "agent-report": { type: "boolean", default: true },
-      record: { type: "string", default: "new" },
+      record: { type: "string", default: "new" }, diff: { type: "string" },
       reporter: { type: "string", multiple: true, default: [] }, parallel: { type: "string" },
       verbose: { type: "boolean", short: "v", default: false }, debug: { type: "boolean", default: false } },
   });
   const [cmd, arg] = positionals;
   if (cmd === "doctor") return doctor(positionals.slice(1));
-  if (cmd === "lint" && arg) {
+  if ((cmd === "lint" || cmd === "explain") && arg) {
     try {
-      console.log(positionals.slice(1).map(f => lint(f)).join("\n\n"));
+      console.log(positionals.slice(1).map(f => cmd === "lint" ? lint(f) : explain(f, values.diff)).join("\n\n"));
       return 0;
     } catch (err) {
       console.error((err as Error).message);

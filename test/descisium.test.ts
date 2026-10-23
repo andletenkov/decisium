@@ -886,3 +886,20 @@ test("doctor: Node needs type stripping on by default (22.18+)", async () => {
   const { nodeOk } = await import("../src/doctor.ts");
   assert.deepEqual(["22.17.0", "22.18.0", "23.0.0", "23.6.0", "24.1.0", "20.9.0"].map(v => nodeOk(v)), [false, true, false, true, true, false]);
 });
+
+test("explain: what each Step resolved to, from the cassette alone", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { explain } = await import("../src/explain.ts");
+  const dir = mkdtempSync(`${tmpdir()}/exp-`);
+  writeFileSync(`${dir}/t.feature`, `Feature: f\n  Scenario: S\n    When I open the Bug issue\n    Then the counter shows "3 open"\n    And it is new\n`);
+  const link = { role: "link", name: "Bug", container: 'list "Issues"' };
+  writeFileSync(`${dir}/t.cassette.json`, JSON.stringify({ model: "m", entries: {
+    "S #1: I open the Bug issue": { turns: [{ done: 0, target: [[link, 1]] }, { done: 1, target: [["none", 1]] }] },
+    'S #2: the counter shows "3 open"': { check: { kind: { choice: "value", probabilities: { value: 1 } }, state: { choice: "disabled", probabilities: { disabled: 1 } }, subject: [[{ role: "generic", name: "", container: "" }, 1]], area: [["page", 1]] } },
+  } }));
+  const out = explain(`${dir}/t.feature`);
+  assert.match(out, /1\. link "Bug" in list "Issues"\n\s+done/);
+  assert.match(out, /value: "3 open" in generic/);
+  assert.match(out, /it is new\n\s+not resolved yet: the next run asks Jev/);
+});
