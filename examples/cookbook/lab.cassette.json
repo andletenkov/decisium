@@ -11,9 +11,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.98
             ]
@@ -32,9 +30,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.8
             ]
@@ -47,9 +43,7 @@
               {
                 "role": "link",
                 "name": "Ada Lovelace",
-                "container": "region \"Results\"",
-                "nth": 0,
-                "of": 1
+                "container": "region \"Results\""
               },
               1
             ]
@@ -102,9 +96,7 @@
             {
               "role": "heading",
               "name": "Ada Lovelace",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -114,9 +106,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.72
           ],
@@ -163,9 +153,7 @@
             {
               "role": "paragraph",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -179,9 +167,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.46
           ]
@@ -197,9 +183,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.98
             ]
@@ -218,9 +202,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.8200000000000001
             ]
@@ -233,9 +215,7 @@
               {
                 "role": "link",
                 "name": "Ada Lovelace",
-                "container": "region \"Results\"",
-                "nth": 0,
-                "of": 1
+                "container": "region \"Results\""
               },
               1
             ]
@@ -288,9 +268,7 @@
             {
               "role": "heading",
               "name": "Ada Lovelace",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.72
           ],
@@ -298,9 +276,7 @@
             {
               "role": "title",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.27
           ]
@@ -314,9 +290,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.43
           ]
@@ -332,9 +306,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -353,9 +325,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.82
             ]
@@ -368,9 +338,7 @@
               {
                 "role": "link",
                 "name": "Ada Lovelace",
-                "container": "region \"Results\"",
-                "nth": 0,
-                "of": 1
+                "container": "region \"Results\""
               },
               0.54
             ],
@@ -418,9 +386,7 @@
             {
               "role": "heading",
               "name": "Search",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.65
           ],
@@ -428,9 +394,7 @@
             {
               "role": "link",
               "name": "Ada Lovelace",
-              "container": "region \"Results\"",
-              "nth": 0,
-              "of": 1
+              "container": "region \"Results\""
             },
             0.3
           ]
@@ -444,9 +408,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.32
           ]
@@ -462,9 +424,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.95
             ]
@@ -483,9 +443,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.89
             ]
@@ -542,9 +500,7 @@
             {
               "role": "link",
               "name": "Ada (programming language)",
-              "container": "region \"Results\"",
-              "nth": 0,
-              "of": 1
+              "container": "region \"Results\""
             },
             1
           ]
@@ -554,9 +510,7 @@
             {
               "role": "region",
               "name": "Results",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.62
           ],
@@ -603,9 +557,7 @@
             {
               "role": "region",
               "name": "Results",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.52
           ],
@@ -619,9 +571,7 @@
             {
               "role": "region",
               "name": "Results",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.38
           ],
@@ -633,9 +583,7 @@
             {
               "role": "list",
               "name": "",
-              "container": "region \"Results\"",
-              "nth": 0,
-              "of": 1
+              "container": "region \"Results\""
             },
             0.29
           ]
@@ -651,9 +599,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.96
             ]
@@ -672,9 +618,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.87
             ]
@@ -691,9 +635,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.07
             ]
@@ -743,9 +685,7 @@
             {
               "role": "region",
               "name": "Results",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.96
           ]
@@ -755,9 +695,7 @@
             {
               "role": "region",
               "name": "Results",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.76
           ],
@@ -777,9 +715,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.98
             ]
@@ -798,9 +734,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.81
             ]
@@ -813,9 +747,7 @@
               {
                 "role": "link",
                 "name": "Ada Lovelace",
-                "container": "region \"Results\"",
-                "nth": 0,
-                "of": 1
+                "container": "region \"Results\""
               },
               1
             ]
@@ -868,9 +800,7 @@
             {
               "role": "heading",
               "name": "Ada Lovelace",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.65
           ],
@@ -878,9 +808,7 @@
             {
               "role": "title",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.34
           ]
@@ -894,9 +822,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.42
           ]
@@ -912,9 +838,7 @@
               {
                 "role": "textbox",
                 "name": "Search articles",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.99
             ]
@@ -933,9 +857,7 @@
               {
                 "role": "button",
                 "name": "Search",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.81
             ]
@@ -948,9 +870,7 @@
               {
                 "role": "link",
                 "name": "Ada Lovelace",
-                "container": "region \"Results\"",
-                "nth": 0,
-                "of": 1
+                "container": "region \"Results\""
               },
               1
             ]
@@ -1013,9 +933,7 @@
             {
               "role": "paragraph",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.85
           ]
@@ -1029,9 +947,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.21
           ]
@@ -1047,9 +963,7 @@
               {
                 "role": "checkbox",
                 "name": "Newsletter",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -1102,9 +1016,7 @@
             {
               "role": "checkbox",
               "name": "Newsletter",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -1118,9 +1030,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.29
           ]
@@ -1163,9 +1073,7 @@
             {
               "role": "checkbox",
               "name": "Weekly digest",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -1179,9 +1087,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.37
           ]

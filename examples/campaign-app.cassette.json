@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T09-41-39-733Z",
+  "run": "runs/2026-10-23T11-08-13-401Z",
   "entries": {
     "Schedule a campaign #1: I enter \"Autumn Sale\" as the campaign name": {
       "turns": [
@@ -11,9 +11,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -36,9 +34,7 @@
               {
                 "role": "button",
                 "name": "Schedule",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.2
             ]
@@ -55,9 +51,7 @@
               {
                 "role": "combobox",
                 "name": "Activation period",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -80,9 +74,7 @@
               {
                 "role": "button",
                 "name": "Schedule",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.24
             ]
@@ -99,9 +91,7 @@
               {
                 "role": "button",
                 "name": "Schedule",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -154,9 +144,7 @@
             {
               "role": "paragraph",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -178,9 +166,7 @@
               {
                 "role": "combobox",
                 "name": "Activation period",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -203,9 +189,7 @@
               {
                 "role": "combobox",
                 "name": "Activation period",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.25
             ]
@@ -218,12 +202,12 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.51,
+          "confidence": 0.52,
           "probabilities": {
-            "value": 0.61,
-            "presence": 0,
+            "value": 0.62,
+            "presence": 0.01,
             "absence": 0,
-            "state": 0.39,
+            "state": 0.37,
             "fuzzy": 0
           }
         },
@@ -249,9 +233,7 @@
             {
               "role": "combobox",
               "name": "Activation period",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -259,11 +241,7 @@
         "area": [
           [
             "page",
-            0.53
-          ],
-          [
-            "missing",
-            0.12
+            0.44
           ],
           [
             {
@@ -273,7 +251,11 @@
               "nth": 1,
               "of": 4
             },
-            0.11
+            0.14
+          ],
+          [
+            "missing",
+            0.14
           ],
           [
             {
@@ -283,7 +265,7 @@
               "nth": 0,
               "of": 4
             },
-            0.09
+            0.12
           ]
         ]
       }
@@ -305,17 +287,17 @@
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 0.83,
+          "confidence": 0.82,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.04,
+            "enabled": 0.03,
             "checked": 0.03,
             "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.85,
-            "unselected": 0.06,
-            "pressed": 0,
+            "selected": 0.84,
+            "unselected": 0.07,
+            "pressed": 0.01,
             "unpressed": 0
           }
         },
@@ -324,27 +306,24 @@
             {
               "role": "paragraph",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
-            0.99
+            0.97
           ]
         ],
         "area": [
           [
             "page",
-            0.72
+            0.76
           ],
           [
             {
               "role": "generic",
               "name": "",
               "container": "",
-              "nth": 4,
-              "of": 5
+              "near": "Show campaigns Show campaigns"
             },
-            0.12
+            0.08
           ]
         ]
       }

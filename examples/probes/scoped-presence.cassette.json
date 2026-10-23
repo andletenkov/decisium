@@ -11,9 +11,7 @@
               {
                 "role": "button",
                 "name": "New campaign",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -26,9 +24,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.54
             ],
@@ -49,9 +45,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -74,9 +68,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.22
             ]
@@ -93,9 +85,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -121,9 +111,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               1
             ]
@@ -140,9 +128,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               0.23
             ]
@@ -186,9 +172,7 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.6900000000000001
           ],
@@ -196,9 +180,7 @@
             {
               "role": "listitem",
               "name": "",
-              "container": "list \"Scheduled campaigns\"",
-              "nth": 0,
-              "of": 1
+              "container": "list \"Scheduled campaigns\""
             },
             0.21
           ]
@@ -208,9 +190,7 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.9
           ]
@@ -226,9 +206,7 @@
               {
                 "role": "link",
                 "name": "Spring Sale",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -281,9 +259,7 @@
             {
               "role": "heading",
               "name": "Spring Sale",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.83
           ]
@@ -301,9 +277,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.12
           ]
@@ -319,9 +293,7 @@
               {
                 "role": "button",
                 "name": "New campaign",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -338,9 +310,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.46
             ]
@@ -357,9 +327,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -382,9 +350,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.28
             ]
@@ -401,9 +367,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -429,9 +393,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               1
             ]
@@ -448,9 +410,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               0.24
             ]
@@ -494,9 +454,7 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.93
           ]
@@ -506,9 +464,7 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -524,9 +480,7 @@
               {
                 "role": "link",
                 "name": "Spring Sale",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -579,9 +533,7 @@
             {
               "role": "heading",
               "name": "Spring Sale",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.9400000000000001
           ]
@@ -599,9 +551,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.24
           ]
@@ -617,9 +567,7 @@
               {
                 "role": "link",
                 "name": "Spring Sale",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -672,9 +620,7 @@
             {
               "role": "heading",
               "name": "Spring Sale",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.93
           ]
@@ -688,9 +634,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.28
           ],

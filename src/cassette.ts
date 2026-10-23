@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import type { Assessment, Decider, Pick, TurnAnswer } from "./jev.ts";
 import type { Element, Observation } from "./observation.ts";
@@ -9,9 +10,11 @@ export const RECORD_MODES: RecordMode[] = ["none", "new", "all"];
 
 /**
  * What a Step resolved to (ADR 0002, reopened by task 0032): the element by role, name, its nearest named container,
- * and its position among same-named elements there (`nth` of `of`). Replayed only while exactly that still holds.
+ * and, when it has same-named peers there, `near`: the text of its closest own-or-ancestor node that no peer shares
+ * (the product card "Backpack $29.99 Add to cart"). Only twins no text tells apart fall back to a position (`nth` of
+ * `of`): a reorder of them is invisible, but so is any difference between them.
  */
-export interface Resolution { role: string; name: string; container: string; nth: number; of: number }
+export interface Resolution { role: string; name: string; container: string; near?: string; nth?: number; of?: number }
 type Target = Resolution | string; // a string: a non-element answer (scroll, wait, enter, none, page, missing)
 /**
  * A Jev answer with element refs as Resolutions, only its plausible part (most likely first, until together 0.8):
@@ -36,21 +39,37 @@ const containerOf = (el: Element) => {
 };
 const same = (el: Element, r: Omit<Resolution, "nth" | "of">) => el.role === r.role && el.name === r.name && containerOf(el) === r.container;
 
+const NEAR_MAX = 200; // a longer text is kept as its start and a hash, so the cassette stays readable
+/** `el`'s and its ancestors' texts, closest first. */
+const texts = (el: Element) => {
+  const out: string[] = [];
+  for (let p: Element | undefined = el; p; p = p.parent) {
+    const t = p.text.trim().replace(/\s+/g, " ");
+    if (t) out.push(t.length <= NEAR_MAX ? t : `${t.slice(0, 80)}… [${createHash("sha256").update(t).digest("hex").slice(0, 8)}]`);
+  }
+  return out;
+};
+
 export function resolve(el: Element, among: Element[]): Resolution {
   const r = { role: el.role, name: el.name, container: containerOf(el) };
-  const peers = among.filter(e => same(e, r));
-  return { ...r, nth: peers.indexOf(el), of: peers.length };
+  const peers = among.filter(e => e !== el && same(e, r));
+  if (!peers.length) return r;
+  const near = texts(el).find(t => !peers.some(p => texts(p).includes(t)));
+  if (near) return { ...r, near };
+  const all = among.filter(e => same(e, r));
+  return { ...r, nth: all.indexOf(el), of: all.length };
 }
 
 /** The element a Resolution names on this Observation, or why none does: exactly one must match all of it. */
 export function find(r: Resolution, among: Element[]): Element | string {
-  const peers = among.filter(e => same(e, r));
-  if (peers.length === r.of) return peers[r.nth];
-  return `${describe(r)} matches ${peers.length} element${peers.length === 1 ? "" : "s"} like it now, recorded ${r.of}`;
+  const peers = among.filter(e => same(e, r) && (r.near === undefined || texts(e).includes(r.near)));
+  if (r.of !== undefined && peers.length === r.of) return peers[r.nth!];
+  if (r.of === undefined && peers.length === 1) return peers[0];
+  return `${describe(r)} matches ${peers.length} elements now, needs ${r.of ?? "exactly 1"}`;
 }
 
 export const describe = (t: Target) => typeof t === "string" ? t
-  : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.of > 1 ? ` (#${t.nth + 1} of ${t.of})` : ""}`;
+  : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.near ? ` near "${t.near}"` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
 
 const plausible = (p: Pick) => {
   const out: [string, number][] = [];

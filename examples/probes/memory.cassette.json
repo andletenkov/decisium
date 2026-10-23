@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T09-42-20-824Z",
+  "run": "runs/2026-10-23T10-59-18-178Z",
   "entries": {
     "The scheduled campaign appears in the calendar #1: I start a new campaign": {
       "turns": [
@@ -11,9 +11,7 @@
               {
                 "role": "button",
                 "name": "New campaign",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -26,9 +24,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.51
             ],
@@ -49,9 +45,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -74,9 +68,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.36
             ]
@@ -93,9 +85,7 @@
               {
                 "role": "textbox",
                 "name": "Activation date",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -118,9 +108,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.31
             ]
@@ -137,9 +125,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -165,9 +151,7 @@
               {
                 "role": "button",
                 "name": "Schedule",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.99
             ]
@@ -193,9 +177,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               1
             ]
@@ -212,9 +194,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               0.26
             ]
@@ -233,27 +213,27 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.95,
+          "confidence": 0.94,
           "probabilities": {
             "value": 0.01,
-            "presence": 0.96,
+            "presence": 0.95,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.03
+            "fuzzy": 0.04
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.46,
+          "confidence": 0.47,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.18,
-            "checked": 0.51,
-            "unchecked": 0.02,
-            "expanded": 0.08,
+            "enabled": 0.15,
+            "checked": 0.52,
+            "unchecked": 0.01,
+            "expanded": 0.09,
             "collapsed": 0,
-            "selected": 0.19,
+            "selected": 0.21,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0
@@ -264,21 +244,18 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
-            0.55
+            0.6
           ],
           [
             {
               "role": "listitem",
               "name": "",
               "container": "list \"Scheduled campaigns\"",
-              "nth": 0,
-              "of": 2
+              "near": "2026-10-20: Autumn Sale (1 week)"
             },
-            0.19
+            0.14
           ],
           [
             "none",
@@ -290,15 +267,13 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
-            0.71
+            0.76
           ],
           [
             "page",
-            0.23
+            0.17
           ]
         ]
       }
@@ -312,9 +287,7 @@
               {
                 "role": "button",
                 "name": "New campaign",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -327,9 +300,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.55
             ],
@@ -350,9 +321,7 @@
               {
                 "role": "textbox",
                 "name": "Campaign name",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -375,9 +344,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.28
             ]
@@ -394,9 +361,7 @@
               {
                 "role": "button",
                 "name": "Save draft",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -422,9 +387,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               1
             ]
@@ -441,9 +404,7 @@
               {
                 "role": "link",
                 "name": "Calendar",
-                "container": "navigation \"Main\"",
-                "nth": 0,
-                "of": 1
+                "container": "navigation \"Main\""
               },
               0.32
             ]
@@ -497,9 +458,7 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.86
           ]
@@ -509,9 +468,7 @@
             {
               "role": "list",
               "name": "Scheduled campaigns",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.9
           ]
@@ -527,9 +484,7 @@
               {
                 "role": "link",
                 "name": "Spring Sale",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               1
             ]
@@ -546,9 +501,7 @@
               {
                 "role": "button",
                 "name": "Schedule",
-                "container": "",
-                "nth": 0,
-                "of": 1
+                "container": ""
               },
               0.16
             ]
@@ -598,9 +551,7 @@
             {
               "role": "button",
               "name": "Schedule",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             1
           ]
@@ -614,9 +565,7 @@
             {
               "role": "main",
               "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 1
+              "container": ""
             },
             0.34
           ]

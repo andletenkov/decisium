@@ -523,7 +523,7 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
 
   // A second "Bug" in the list: the recorded control no longer names one element. Never acted on silently.
   const two = page("3", `  - link "Bug" [ref=e9]`);
-  await assert.rejects(go(new Cassette(path, "m1", "none"), two), (e: Error) => e instanceof UiChanged && /link "Bug" in list "Issues" matches 2 elements like it now, recorded 1/.test(e.reason));
+  await assert.rejects(go(new Cassette(path, "m1", "none"), two), (e: Error) => e instanceof UiChanged && /link "Bug" in list "Issues" matches 2 elements now, needs exactly 1/.test(e.reason));
   assert.equal(calls, 0);
   const heal = new Cassette(path, "m1", "new");
   assert.deepEqual(await go(heal, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
@@ -532,6 +532,20 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   // Missing step in replay-only mode; a different model discards the cassette.
   await assert.rejects(async () => { const d = new Cassette(path, "m1", "none").step("new step", live); await d.turn("x", two, []); }, UiChanged);
   await assert.rejects(go(new Cassette(path, "m2", "none"), page("3")), UiChanged);
+});
+
+test("resolution: look-alikes are told apart by nearby text, never by position", async () => {
+  const { resolve, find } = await import("../src/cassette.ts");
+  const cards = (order: string[]) => parseSnapshot(order.map((n, i) => `- listitem [ref=c${i}]:\n  - text: ${n}\n  - button "Add to cart" [ref=b${i}]`).join("\n"));
+  const before = cards(["Backpack", "Bike Light"]);
+  const r = resolve(before.elements[1], before.elements);
+  assert.equal(r.near, "Bike Light Add to cart");
+  const after = cards(["Bike Light", "Backpack"]); // reordered: still the Bike Light's button
+  assert.equal((find(r, after.elements) as { ref: string }).ref, "b0");
+  const twins = cards(["Backpack", "Backpack"]); // nothing tells them apart: by position, while their count holds
+  const t = resolve(twins.elements[1], twins.elements);
+  assert.deepEqual([t.nth, t.of, (find(t, twins.elements) as { ref: string }).ref], [1, 2, "b1"]);
+  assert.equal(typeof find(t, cards(["Backpack", "Backpack", "Backpack"]).elements), "string");
 });
 
 test("cassette: scenarios of one feature on different workers share it; the run id decides what is old", async () => {
