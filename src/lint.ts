@@ -1,4 +1,4 @@
-// `descisium explain <file.feature>`: what each Step will be taken as, read without a browser or Jev (task 0031).
+// `descisium lint <file.feature>`: what each Step will be taken as, read without a browser or Jev (task 0031).
 // Per Step: its kind, the quoted values Jev can pick from, secret placeholders, and warnings for wordings that
 // docs/cookbook.md shows failing.
 import { readFileSync } from "node:fs";
@@ -58,7 +58,7 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
 }
 
 /** The explanation of one feature file, for people. */
-export function explain(path: string, env: Record<string, string | undefined> = process.env): string {
+export function lint(path: string, env: Record<string, string | undefined> = process.env): string {
   const out = [path];
   let flagged = 0;
   for (const s of parseFeature(readFileSync(path, "utf8"), path)) {

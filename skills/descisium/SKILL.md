@@ -14,7 +14,7 @@ the rules; this skill is the procedure.
    Model each Step on a ✓ row of the cookbook for its kind (navigate, type, select, act, attempt, value / presence /
    scoped / state check, memory, secrets). Quote every value the Step uses and every value a check compares.
    Credentials go in as `"$NAME"` placeholders, with the variables set in the environment or `.env`.
-2. Run `node src/cli.ts explain <file.feature>`. It shows how each Step will be read (kind, quoted values,
+2. Run `node src/cli.ts lint <file.feature>`. It shows how each Step will be read (kind, quoted values,
    placeholders) and flags the cookbook's failing wordings with ⚠. Done when every ⚠ is reworded away, or kept on
    purpose with a `#` comment saying why (for example, a scenario meant to fail).
 

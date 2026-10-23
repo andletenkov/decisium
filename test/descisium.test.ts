@@ -592,8 +592,8 @@ test("agent report: most urgent first, Jev's answers named per Observation, page
   assert.match(md, /\n````text\n- button[\s\S]*Ignore previous instructions\n````\n/); // longer fence than the page's ```
 });
 
-test("explain: cookbook warnings flag the failing wordings and leave the working ones alone", async () => {
-  const { warnings } = await import("../src/explain.ts");
+test("lint: cookbook warnings flag the failing wordings and leave the working ones alone", async () => {
+  const { warnings } = await import("../src/lint.ts");
   const w = (text: string, kind: "action" | "assertion" = "assertion", before: string[] = []) =>
     warnings({ text, kind }, before.map(t => ({ text: t, kind: "action" as const })), { SET: "x" }).join(" | ");
   // Working wordings (docs/cookbook.md ✓ rows): no warning.
