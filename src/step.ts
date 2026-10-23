@@ -43,6 +43,8 @@ export interface StepReading {
   list: boolean;
   /** The `"$NAME"` Secret placeholders: quoted, as the Doc string, or as a table cell. */
   placeholders: string[];
+  /** An action's table cell that cannot become a quoted value (rows): empty gives none, a `"` splits it in two. */
+  badCell?: string;
 }
 
 export function readStep(step: ParsedStep): StepReading {
@@ -68,6 +70,7 @@ export function readStep(step: ParsedStep): StepReading {
     header,
     list,
     placeholders: [...withDoc, ...table?.flat() ?? []].filter(v => placeholder(v)),
+    badCell: isCheck ? undefined : table?.flat().find(c => !c.trim() || /["“”]/.test(c)),
   };
 }
 

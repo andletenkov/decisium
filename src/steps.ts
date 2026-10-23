@@ -7,11 +7,11 @@ import { join } from "node:path";
 import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts";
 import { executeStep, type StepReport } from "./execute.ts";
-import { stepArgument, toUrl, urlFromTags } from "./feature.ts";
+import { fromPickle, toUrl, urlFromTags } from "./feature.ts";
 import { JevDecider, MODEL, type Decider } from "./jev.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import { type Runtime } from "./runner.ts";
-import { placeholder, readStep, stepKind, type StepArgument, type StepKind } from "./step.ts";
+import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 
 const env = process.env;
@@ -69,7 +69,7 @@ Before(async function (this: Scenario, { pickle }) {
   ({ cassette: this.cassette, live: this.live } = deciders.get(pickle.uri)!);
   // Secret placeholders ("$NAME"): a missing variable is a setup error, not a failed Step (task 0030).
   const secrets: Record<string, string> = {};
-  for (const token of pickle.steps.flatMap(s => readStep({ text: s.text, kind: stepKind(s), ...stepArgument(s) }).placeholders)) {
+  for (const token of pickle.steps.flatMap(s => readStep(fromPickle(s)).placeholders)) {
     const name = placeholder(token)!;
     if (!env[name]) throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
@@ -87,9 +87,10 @@ Before(async function (this: Scenario, { pickle }) {
 BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[pickleStep.astNodeIds[0]]?.location.line;
   this.at = `${pickle.uri}:${line}`;
-  this.kind = stepKind(pickleStep);
-  this.arg = stepArgument(pickleStep);
-  const labels = pickle.steps.map(s => readStep({ text: s.text, kind: stepKind(s), ...stepArgument(s) }).label);
+  const { kind, text: _, ...arg } = fromPickle(pickleStep);
+  this.kind = kind;
+  this.arg = arg;
+  const labels = pickle.steps.map(s => readStep(fromPickle(s)).label);
   this.key = stepKey(pickle.name, labels, pickle.steps.findIndex(s => s.id === pickleStep.id));
   Object.defineProperty(step, "length", { value: pickleStep.argument ? 2 : 1 });
 });

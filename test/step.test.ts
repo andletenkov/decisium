@@ -73,3 +73,10 @@ test("readStep: Named keys after press/hit, as Playwright names them (task 0039)
   assert.deepEqual(keys("I press the Delete key"), ["Delete"]);
   assert.deepEqual(action("I write the notes:", { docString: "press Escape" }).keys, []); // a doc string is a value, never a key
 });
+
+test("readStep: an action's table cell that cannot become a quoted value", () => {
+  assert.equal(action("I fill in:", { table: [["Name", ""]] }).badCell, "");
+  assert.equal(action("I fill in:", { table: [["Name", `say "hi"`]] }).badCell, `say "hi"`);
+  assert.equal(action("I fill in:", { table: [["Name", "Ada"]] }).badCell, undefined);
+  assert.equal(check("the form should show:", { table: [["Name", ""], ["", "x"]] }).badCell, undefined); // a check's table is compared, not quoted
+});

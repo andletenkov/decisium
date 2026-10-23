@@ -77,7 +77,7 @@ export function lint(path: string, env: Record<string, string | undefined> = pro
     const before: ParsedStep[] = [];
     for (const step of s.steps) {
       const read = readStep(step);
-      const values = step.kind === "assertion" ? read.values : read.candidates;
+      const values = step.kind === "assertion" ? read.quoted : step.docString === undefined ? read.candidates : read.candidates.slice(0, -1);
       const secrets = [...new Set(read.placeholders)];
       out.push(`  ${String(step.line ?? "").padStart(4)}  ${KIND[step.kind].padEnd(7)} ${read.label}`);
       if (step.table && step.kind !== "assertion") for (const row of read.rows) out.push(`${" ".repeat(15)}row: ${row}`);

@@ -4,8 +4,8 @@ import type { Envelope } from "@cucumber/messages";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { stepArgument, urlFromTags } from "./feature.ts";
-import { readStep, stepKind } from "./step.ts";
+import { fromPickle, urlFromTags } from "./feature.ts";
+import { readStep } from "./step.ts";
 import { agentReport, failureReport, KIND, MARGINAL, MARGINAL_HINT, NO_TRACE, parseOutcome, stepEvents, type AgentFailure, type TraceEvent } from "./report.ts";
 
 const env = process.env;
@@ -40,8 +40,9 @@ export default class DecisiumFormatter extends Formatter {
           return;
         }
         if (![Status.PASSED, Status.FAILED].includes(result.status)) return; // skipped after a failure
-        const kind = stepKind(step);
-        const label = readStep({ text: step.text, kind, ...stepArgument(step) }).label; // with its table or doc string
+        const parsed = fromPickle(step);
+        const { kind } = parsed;
+        const label = readStep(parsed).label; // with its table or doc string
         const attachments = stepAttachments[testStepId] ?? [];
         const judged = attachments.some(a => a.body.startsWith("JUDGED_PASSED"));
         this.log(`  ${failed ? "✗" : "✓"} ${KIND[kind]}: ${label}${judged ? "  (judged by Jev)" : ""}\n`);

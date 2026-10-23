@@ -1,10 +1,10 @@
 // Gherkin `.feature` files -> runnable Scenarios. The official parser expands Background steps and Scenario
 // Outline rows ("pickles"), so the runner only sees flat Step lists.
 import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
-import { IdGenerator, type PickleStepArgument } from "@cucumber/messages";
+import { IdGenerator, type PickleStepArgument, type PickleStepType } from "@cucumber/messages";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { stepKind, type ParsedStep, type StepArgument } from "./step.ts";
+import { readStep, stepKind, type ParsedStep, type StepArgument } from "./step.ts";
 
 export interface Scenario {
   name: string;
@@ -18,9 +18,13 @@ export const urlFromTags = (tags: readonly { name: string }[]) =>
   tags.map(t => /^@url:(.+)$/.exec(t.name)?.[1]).filter(Boolean).at(-1);
 
 /** A pickle step's data table or doc string, only the one it has. */
-export const stepArgument = ({ argument }: { argument?: PickleStepArgument }): StepArgument =>
+const stepArgument = ({ argument }: { argument?: PickleStepArgument }): StepArgument =>
   argument?.dataTable ? { table: argument.dataTable.rows.map(r => r.cells.map(c => c.value)) }
   : argument?.docString ? { docString: argument.docString.content } : {};
+
+/** A pickle step as a Step: its text, kind and Data table or Doc string. */
+export const fromPickle = (step: { text: string; type?: PickleStepType; argument?: PickleStepArgument }): ParsedStep =>
+  ({ text: step.text, kind: stepKind(step), ...stepArgument(step) });
 
 /** Parses a `.feature` source. Throws on Gherkin syntax errors. */
 export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
@@ -33,16 +37,15 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   if (!pickles.length) throw new Error("No scenarios found");
   const lines = new Map((doc.feature?.children ?? []).flatMap(c => c.rule ? c.rule.children : [c])
     .flatMap(c => (c.background ?? c.scenario)?.steps ?? []).map(s => [s.id, s.location.line]));
-  // An action table's rows become quoted values (readStep().rows): an empty cell gives none, a `"` splits one in two.
   for (const p of pickles) for (const s of p.steps) {
-    const cell = stepKind(s) !== "assertion" && s.argument?.dataTable?.rows.flatMap(r => r.cells).find(c => !c.value.trim() || /["“”]/.test(c.value));
-    if (cell) throw new Error(`Line ${lines.get(s.astNodeIds[0])}: an action's table cannot have ${cell.value.trim() ? `a cell with a double quote (${cell.value})` : "an empty cell"}; it becomes a quoted value`);
+    const cell = readStep(fromPickle(s)).badCell;
+    if (cell !== undefined) throw new Error(`Line ${lines.get(s.astNodeIds[0])}: an action's table cannot have ${cell.trim() ? `a cell with a double quote (${cell})` : "an empty cell"}; it becomes a quoted value`);
   }
   return pickles.map(pickle => ({
     name: pickle.name,
     tags: pickle.tags.map(t => t.name),
     url: urlFromTags(pickle.tags),
-    steps: pickle.steps.map(step => ({ text: step.text, kind: stepKind(step), line: lines.get(step.astNodeIds[0]), ...stepArgument(step) })),
+    steps: pickle.steps.map(step => ({ ...fromPickle(step), line: lines.get(step.astNodeIds[0]) })),
   }));
 }
 
