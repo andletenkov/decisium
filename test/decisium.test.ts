@@ -1261,3 +1261,43 @@ test("decisium run: cassette replay through cucumber (table rows, cassette keys)
   assert.equal(strict.code, 1);
   assert.equal(marginal(strict), "AMBIGUOUS");
 });
+
+test("executeStep: table rows, UI_CHANGED, PAGE_TOO_LARGE, setup errors, --strict and memory, without cucumber", async () => {
+  const { executeStep } = await import("../src/execute.ts");
+  const { Cassette } = await import("../src/cassette.ts");
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const page = parseSnapshot(`- textbox "First name" [ref=e1]\n- textbox "Last name" [ref=e2]\n- paragraph [ref=e3]: Hello Ada`);
+  const rt: Runtime = { observe: async () => page, execute: async () => {}, waitForChange: async () => false };
+  const table = [["First name", "Ada"], ["Last name", "Lovelace"]];
+  const base = { rt, live: oracle, key: "S: I fill in", kind: "action" as const, arg: { table }, log: () => {} };
+
+  // Replay-only with no recording: the first row is UI_CHANGED, named by its row, and the second never runs.
+  const none = new Cassette(`${mkdtempSync(`${tmpdir()}/decisium-`)}/c.json`, "m1", "none");
+  const changed = await executeStep("I fill in:", { ...base, cassette: none, earlier: {} });
+  assert.equal(changed.outcome, "UI_CHANGED");
+  assert.match(changed.reason!, /^row 1 \(I enter "Ada" as First name\): this step has no recorded resolution/);
+  assert.equal(changed.cassette, undefined);
+  assert.equal(changed.jevCalls, 0);
+
+  // Jev's request limit on the second row is a Step outcome; both rows' values are remembered.
+  let turns = 0;
+  const tooBig: Decider = { ...oracle, turn: async () => { if (turns++) throw new Error("400 max_tokens_exceeded"); return { done: 1, target: sure("none") }; } };
+  const earlier: Record<string, string> = {};
+  const large = await executeStep("I fill in:", { ...base, live: tooBig, earlier });
+  assert.equal(large.outcome, "PAGE_TOO_LARGE");
+  assert.match(large.reason!, /^row 2 \(I enter "Lovelace" as Last name\)/);
+  assert.deepEqual(Object.keys(earlier), ["Ada", "Lovelace"]);
+
+  // Anything else is a setup error, thrown.
+  const down: Decider = { ...oracle, turn: async () => { throw new Error("ECONNREFUSED"); } };
+  await assert.rejects(executeStep("I fill in:", { ...base, live: down, earlier: {} }), /ECONNREFUSED/);
+
+  // A Marginal pass passes, and is AMBIGUOUS with strict.
+  const barely = assessing("presence", () => ({ kind: { choice: "presence", probabilities: { presence: 0.85, absence: 0.15 } } }));
+  const check = { ...base, live: barely, key: "S: Ada", kind: "assertion" as const, arg: {}, earlier: {} };
+  const lax = await executeStep(`"Ada" should be shown`, check);
+  assert.equal(lax.outcome, "PASSED");
+  assert.match(lax.marginal!, /kind/);
+  assert.equal((await executeStep(`"Ada" should be shown`, { ...check, strict: true })).outcome, "AMBIGUOUS");
+});

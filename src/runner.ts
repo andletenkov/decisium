@@ -6,7 +6,8 @@ import { assertableText, MASK, pressOnly, stepValues, type Dialog, type Element,
 export type StepOutcome =
   | "DONE" | "BLOCKED" | "AMBIGUOUS" | "ELEMENT_NOT_FOUND" | "ACTION_FAILED" | "STEP_TIMEOUT" // Action steps
   | "PASSED" | "ASSERTION_FAILED" | "UNVERIFIABLE" // Assertion steps (AMBIGUOUS too)
-  | "JUDGED_PASSED" | "JUDGED_FAILED"; // opt-in fuzzy Assertion steps
+  | "JUDGED_PASSED" | "JUDGED_FAILED" // opt-in fuzzy Assertion steps
+  | "UI_CHANGED" | "PAGE_TOO_LARGE"; // either kind: a replay-only Resolution broke, the page is over Jev's request limit
 
 export interface Runtime {
   observe(): Promise<Observation>;

@@ -5,12 +5,13 @@ import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHe
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Browser } from "./browser.ts";
-import { Cassette, RECORD_MODES, stepKey, UiChanged, type RecordMode } from "./cassette.ts";
-import { placeholders, stepArgument, stepKind, stepLabel, tableSteps, toUrl, urlFromTags, type StepArgument, type StepKind } from "./feature.ts";
-import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
-import { placeholder, quoted } from "./observation.ts";
+import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts";
+import { executeStep, type StepReport } from "./execute.ts";
+import { placeholders, stepArgument, stepKind, stepLabel, toUrl, urlFromTags, type StepArgument, type StepKind } from "./feature.ts";
+import { JevDecider, MODEL, type Decider } from "./jev.ts";
+import { placeholder } from "./observation.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
-import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
+import { type Runtime } from "./runner.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 
 const env = process.env;
@@ -97,45 +98,16 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
 // the argument is read from the pickle step in BeforeStep instead, so the arity follows the Step (set there).
 async function step(this: Scenario, text: string) {
   const log = (line: string) => { run.log(line); if (opt("VERBOSE")) console.log(line); };
-  const start = Date.now(), before = { ...jevUsage };
-  // An Action step's table runs as one Step per row, each with its own cassette entry; the first failing row stops it.
-  const { table, docString } = this.arg;
-  const perRow = !!table && this.kind !== "assertion";
-  const rows = perRow ? tableSteps(text, table) : [text];
-  // A header row alone (an action table with 3+ columns) leaves no row to act on; otherwise the rows decide.
-  let r: StepResult | { outcome: "UI_CHANGED" | "PAGE_TOO_LARGE"; reason: string } = rows.length ? { outcome: "DONE" }
-    : { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
-  const cassettes: ("replayed" | "recorded" | "healed" | undefined)[] = [];
-  for (const [i, row] of rows.entries()) {
-    const entry = this.cassette?.step(perRow ? `${this.key} (row ${i + 1})` : this.key, this.live, log);
-    const decider = run.decider(entry ?? this.live);
-    try {
-      r = this.kind === "assertion"
-        ? await runAssertion(text, this.rt, decider, log, opt("JUDGED"), { ...this.earlier }, this.arg)
-        : await runStep(row, this.rt, decider, log, this.kind === "attempt", docString);
-    } catch (err) {
-      if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
-        // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).
-        log(`  => PAGE_TOO_LARGE`);
-        r = { outcome: "PAGE_TOO_LARGE", reason: "the page is too large for one Jev request, even reduced to the sections that matter" };
-      } else if (err instanceof UiChanged) {
-        log(`  => UI_CHANGED`);
-        r = { outcome: "UI_CHANGED", reason: err.reason };
-      } else throw infra(err);
-    }
-    cassettes.push(entry?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome)));
-    if (r.outcome !== "DONE" && perRow) r = { ...r, reason: `row ${i + 1} (${row})${r.reason ? `: ${r.reason}` : ""}` };
-    if (r.outcome !== "DONE") break;
+  let r: StepReport;
+  try {
+    r = await executeStep(text, { rt: this.rt, live: this.live, cassette: this.cassette, key: this.key, kind: this.kind, arg: this.arg,
+      earlier: this.earlier, log, trace: d => run.decider(d), judged: opt("JUDGED"), strict: opt("STRICT") });
+  } catch (err) {
+    throw infra(err);
   }
-  const cassette = cassettes.find(c => c !== "replayed") ?? cassettes[0];
-  // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
-  const cost = { seconds: (Date.now() - start) / 1000, jevCalls: jevUsage.calls - before.calls,
-    inputTokens: jevUsage.inputTokens - before.inputTokens, outputTokens: jevUsage.outputTokens - before.outputTokens };
-  if ("marginal" in r && r.marginal && opt("STRICT")) r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
-  run.event("step", { kind: this.kind, step: stepLabel({ text, kind: this.kind, ...this.arg }), at: this.at, ...r, ...cost, cassette });
-  for (const row of rows) for (const v of quoted(row)) this.earlier[v] = row;
+  run.event("step", { kind: this.kind, step: stepLabel({ text, kind: this.kind, ...this.arg }), at: this.at, ...r });
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
-  if ("marginal" in r && r.marginal) this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
+  if (r.marginal) this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
     // Failed Step only; fileName carries the path to the console formatter.
     const shot = run.lastScreenshot;
