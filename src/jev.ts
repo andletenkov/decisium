@@ -154,7 +154,7 @@ export const jevUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
 
 /** Every question sends the Step text as-is, so a value quoted in a Step (a password included) reaches the API. */
 export class JevDecider implements Decider {
-  #client = new TypeSafeClient({ defaultModel: MODEL }); // reads TYPESAFE_API_KEY
+  #client?: TypeSafeClient; // created on the first live call: replay-only runs need no TYPESAFE_API_KEY
   #reduced = new WeakMap<Observation, Map<string, Promise<string>>>(); // per Observation and Step: asked once per Turn
 
   /** `ui` for `step` on this Observation, reduced to the sections that matter when the page is over budget. */
@@ -173,7 +173,7 @@ export class JevDecider implements Decider {
   }
 
   async #ask<Q extends Parameters<TypeSafeClient["systemOne"]>[0]>(request: Q) {
-    const res = await this.#client.systemOne(request);
+    const res = await (this.#client ??= new TypeSafeClient({ defaultModel: MODEL })).systemOne(request); // reads TYPESAFE_API_KEY
     jevUsage.calls++;
     jevUsage.inputTokens += res.usage?.input_tokens ?? 0;
     jevUsage.outputTokens += res.usage?.output_tokens ?? 0;
@@ -248,11 +248,13 @@ export class JevDecider implements Decider {
     const state = { check: step, ui: await this.#ui(obs, "check", step) };
     const subjectQ = "Which element in `ui` is the one `check` is about, regardless of whether the check passes?";
     const areaQ = "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.";
-    const subjects = await narrow(refs(obs.readable), { none: "No element in `ui` is the one `check` is about." }, this.#choose(state, subjectQ));
-    const areas = await narrow(refs(obs.areas), {
-      [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
-      [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
-    }, this.#choose(state, areaQ));
+    const [subjects, areas] = await Promise.all([
+      narrow(refs(obs.readable), { none: "No element in `ui` is the one `check` is about." }, this.#choose(state, subjectQ)),
+      narrow(refs(obs.areas), {
+        [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
+        [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
+      }, this.#choose(state, areaQ)),
+    ]);
     const res = await this.#ask({
       state,
       questions: {

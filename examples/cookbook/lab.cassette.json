@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T14-23-34-442Z",
   "entries": {
-    "Open an article through the search #1: I open the \"Ada Lovelace\" article through the search": {
+    "Open an article through the search: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
         {
           "done": 0.01,
@@ -60,7 +60,7 @@
         }
       ]
     },
-    "Open an article through the search #2: the article heading should be \"Ada Lovelace\"": {
+    "Open an article through the search: the article heading should be \"Ada Lovelace\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -117,7 +117,7 @@
         ]
       }
     },
-    "Open an article through the search #3: the article should say \"born 10 December 1815\"": {
+    "Open an article through the search: the article should say \"born 10 December 1815\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -174,7 +174,7 @@
         ]
       }
     },
-    "A check on the article title #1: I open the \"Ada Lovelace\" article through the search": {
+    "A check on the article title: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
         {
           "done": 0.01,
@@ -232,7 +232,7 @@
         }
       ]
     },
-    "A check on the article title #2: the article title should be \"Ada Lovelace\"": {
+    "A check on the article title: the article title should be \"Ada Lovelace\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -297,7 +297,7 @@
         ]
       }
     },
-    "Searching does not open the article #1: I search for \"Ada Lovelace\"": {
+    "Searching does not open the article: I search for \"Ada Lovelace\"": {
       "turns": [
         {
           "done": 0.01,
@@ -350,7 +350,7 @@
         }
       ]
     },
-    "Searching does not open the article #2: the article heading should be \"Ada Lovelace\"": {
+    "Searching does not open the article: the article heading should be \"Ada Lovelace\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -415,7 +415,7 @@
         ]
       }
     },
-    "Results are checked by quoting what should be listed #1: I search for \"Ada\" and submit the search": {
+    "Results are checked by quoting what should be listed: I search for \"Ada\" and submit the search": {
       "turns": [
         {
           "done": 0.01,
@@ -464,7 +464,7 @@
         }
       ]
     },
-    "Results are checked by quoting what should be listed #2: \"Ada (programming language)\" should appear in the results": {
+    "Results are checked by quoting what should be listed: \"Ada (programming language)\" should appear in the results": {
       "check": {
         "kind": {
           "type": "choice",
@@ -521,7 +521,7 @@
         ]
       }
     },
-    "Results are checked by quoting what should be listed #3: \"Charles Babbage\" should not appear in the results": {
+    "Results are checked by quoting what should be listed: \"Charles Babbage\" should not appear in the results": {
       "check": {
         "kind": {
           "type": "choice",
@@ -590,7 +590,7 @@
         ]
       }
     },
-    "A check that quotes nothing #1: I search for \"Ada\" and submit the search": {
+    "A check that quotes nothing: I search for \"Ada\" and submit the search": {
       "turns": [
         {
           "done": 0.01,
@@ -643,7 +643,7 @@
         }
       ]
     },
-    "A check that quotes nothing #2: the results should be shown": {
+    "A check that quotes nothing: the results should be shown": {
       "recall": [
         [
           "none",
@@ -706,7 +706,7 @@
         ]
       }
     },
-    "A value check with two values #1: I open the \"Ada Lovelace\" article through the search": {
+    "A value check with two values: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
         {
           "done": 0.01,
@@ -764,7 +764,7 @@
         }
       ]
     },
-    "A value check with two values #2: the article title should be \"Ada\" or \"Ada Lovelace\"": {
+    "A value check with two values: the article title should be \"Ada\" or \"Ada Lovelace\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -829,7 +829,7 @@
         ]
       }
     },
-    "A subjective check #1: I open the \"Ada Lovelace\" article through the search": {
+    "A subjective check: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
         {
           "done": 0.01,
@@ -887,7 +887,7 @@
         }
       ]
     },
-    "A subjective check #2: the article should be well written": {
+    "A subjective check: the article should be well written": {
       "recall": [
         [
           "Ada Lovelace",
@@ -954,7 +954,7 @@
         ]
       }
     },
-    "Uncheck a labelled checkbox #1: I uncheck \"Newsletter\"": {
+    "Uncheck a labelled checkbox: I uncheck \"Newsletter\"": {
       "turns": [
         {
           "done": 0.01,
@@ -980,7 +980,7 @@
         }
       ]
     },
-    "Uncheck a labelled checkbox #2: \"Newsletter\" should be unchecked": {
+    "Uncheck a labelled checkbox: \"Newsletter\" should be unchecked": {
       "check": {
         "kind": {
           "type": "choice",
@@ -1037,7 +1037,7 @@
         ]
       }
     },
-    "Uncheck a labelled checkbox #3: \"Weekly digest\" should be unchecked": {
+    "Uncheck a labelled checkbox: \"Weekly digest\" should be unchecked": {
       "check": {
         "kind": {
           "type": "choice",
@@ -1094,7 +1094,7 @@
         ]
       }
     },
-    "Check a labelled checkbox #1: I check \"Weekly digest\"": {
+    "Check a labelled checkbox: I check \"Weekly digest\"": {
       "turns": [
         {
           "done": 0.04,
@@ -1111,7 +1111,7 @@
         }
       ]
     },
-    "Check a labelled checkbox #2: \"Weekly digest\" should be checked": {
+    "Check a labelled checkbox: \"Weekly digest\" should be checked": {
       "check": {
         "kind": {
           "type": "choice",

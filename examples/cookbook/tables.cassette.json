@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T15-27-05-882Z",
   "entries": {
-    "Fill a form from a table and check the table on the page #1: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 1)": {
+    "Fill a form from a table and check the table on the page: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 1)": {
       "turns": [
         {
           "done": 0.01,
@@ -50,7 +50,7 @@
         }
       ]
     },
-    "Fill a form from a table and check the table on the page #1: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 2)": {
+    "Fill a form from a table and check the table on the page: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 2)": {
       "turns": [
         {
           "done": 0.01,
@@ -90,7 +90,7 @@
         }
       ]
     },
-    "Fill a form from a table and check the table on the page #2: I check these roles: [Mathematician] (row 1)": {
+    "Fill a form from a table and check the table on the page: I check these roles: [Mathematician] (row 1)": {
       "turns": [
         {
           "done": 0.01,
@@ -107,7 +107,7 @@
         }
       ]
     },
-    "Fill a form from a table and check the table on the page #3: I write the notes: \"Wrote the first program.\\nBorn in London.\"": {
+    "Fill a form from a table and check the table on the page: I write the notes: \"Wrote the first program.\\nBorn in London.\"": {
       "turns": [
         {
           "done": 0.01,
@@ -147,7 +147,7 @@
         }
       ]
     },
-    "Fill a form from a table and check the table on the page #4: the notes should say: \"Wrote the first program.\\nBorn in London.\"": {
+    "Fill a form from a table and check the table on the page: the notes should say: \"Wrote the first program.\\nBorn in London.\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -204,7 +204,7 @@
         ]
       }
     },
-    "Fill a form from a table and check the table on the page #5: I add the contact": {
+    "Fill a form from a table and check the table on the page: I add the contact": {
       "turns": [
         {
           "done": 0.01,
@@ -238,7 +238,7 @@
         }
       ]
     },
-    "Fill a form from a table and check the table on the page #6: the contacts table should list: [First name=Ada, Roles=Mathematician; First name=Charles, Roles=Inventor]": {
+    "Fill a form from a table and check the table on the page: the contacts table should list: [First name=Ada, Roles=Mathematician; First name=Charles, Roles=Inventor]": {
       "check": {
         "kind": {
           "type": "choice",
@@ -291,7 +291,7 @@
         ]
       }
     },
-    "Fill a form from a table and check the table on the page #7: the contacts table should show: [Lovelace, Babbage]": {
+    "Fill a form from a table and check the table on the page: the contacts table should show: [Lovelace, Babbage]": {
       "check": {
         "kind": {
           "type": "choice",
@@ -344,7 +344,7 @@
         ]
       }
     },
-    "Add contacts from a table with a header row #1: I add these contacts: [First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician] (row 1)": {
+    "Add contacts from a table with a header row: I add these contacts: [First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician] (row 1)": {
       "turns": [
         {
           "done": 0.01,
@@ -421,7 +421,7 @@
         }
       ]
     },
-    "Add contacts from a table with a header row #1: I add these contacts: [First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician] (row 2)": {
+    "Add contacts from a table with a header row: I add these contacts: [First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician] (row 2)": {
       "turns": [
         {
           "done": 0.01,
@@ -498,7 +498,7 @@
         }
       ]
     },
-    "Add contacts from a table with a header row #2: the contacts table should list exactly: [First name=Charles, Last name=Babbage, Roles=Inventor; First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician]": {
+    "Add contacts from a table with a header row: the contacts table should list exactly: [First name=Charles, Last name=Babbage, Roles=Inventor; First name=Grace, Last name=Hopper, Roles=Inventor; First name=Alan, Last name=Turing, Roles=Mathematician]": {
       "check": {
         "kind": {
           "type": "choice",
@@ -551,7 +551,7 @@
         ]
       }
     },
-    "A check table with only one row #1: I fill in the new contact: [First name=Ada] (row 1)": {
+    "A check table with only one row: I fill in the new contact: [First name=Ada] (row 1)": {
       "turns": [
         {
           "done": 0.01,
@@ -599,6 +599,6 @@
         }
       ]
     },
-    "A check table with only one row #2: the new contact should show: []": {}
+    "A check table with only one row: the new contact should show: []": {}
   }
 }

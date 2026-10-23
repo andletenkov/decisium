@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T11-08-13-401Z",
   "entries": {
-    "Schedule a campaign #1: I enter \"Autumn Sale\" as the campaign name": {
+    "Schedule a campaign: I enter \"Autumn Sale\" as the campaign name": {
       "turns": [
         {
           "done": 0.01,
@@ -42,7 +42,7 @@
         }
       ]
     },
-    "Schedule a campaign #2: I set the activation period to 2 weeks": {
+    "Schedule a campaign: I set the activation period to 2 weeks": {
       "turns": [
         {
           "done": 0.01,
@@ -82,7 +82,7 @@
         }
       ]
     },
-    "Schedule a campaign #3: I schedule the campaign": {
+    "Schedule a campaign: I schedule the campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -108,7 +108,7 @@
         }
       ]
     },
-    "Schedule a campaign #4: the campaign status should be \"Scheduled\"": {
+    "Schedule a campaign: the campaign status should be \"Scheduled\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -157,7 +157,7 @@
         ]
       }
     },
-    "Set the activation period #1: I set the activation period to 2 weeks": {
+    "Set the activation period: I set the activation period to 2 weeks": {
       "turns": [
         {
           "done": 0.01,
@@ -197,7 +197,7 @@
         }
       ]
     },
-    "Set the activation period #2: the activation period should be \"2 weeks\"": {
+    "Set the activation period: the activation period should be \"2 weeks\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -270,7 +270,7 @@
         ]
       }
     },
-    "Status assertion ignores a decoy #1: the campaign status should be \"Scheduled\"": {
+    "Status assertion ignores a decoy: the campaign status should be \"Scheduled\"": {
       "check": {
         "kind": {
           "type": "choice",

@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T10-59-18-178Z",
   "entries": {
-    "The scheduled campaign appears in the calendar #1: I start a new campaign": {
+    "The scheduled campaign appears in the calendar: I start a new campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -36,7 +36,7 @@
         }
       ]
     },
-    "The scheduled campaign appears in the calendar #2: I enter \"Winter Sale\" as the campaign name": {
+    "The scheduled campaign appears in the calendar: I enter \"Winter Sale\" as the campaign name": {
       "turns": [
         {
           "done": 0.01,
@@ -76,7 +76,7 @@
         }
       ]
     },
-    "The scheduled campaign appears in the calendar #3: I set the activation date to \"2026-12-01\"": {
+    "The scheduled campaign appears in the calendar: I set the activation date to \"2026-12-01\"": {
       "turns": [
         {
           "done": 0.02,
@@ -116,7 +116,7 @@
         }
       ]
     },
-    "The scheduled campaign appears in the calendar #4: I save the draft": {
+    "The scheduled campaign appears in the calendar: I save the draft": {
       "turns": [
         {
           "done": 0.03,
@@ -142,7 +142,7 @@
         }
       ]
     },
-    "The scheduled campaign appears in the calendar #5: I schedule the campaign": {
+    "The scheduled campaign appears in the calendar: I schedule the campaign": {
       "turns": [
         {
           "done": 0.09,
@@ -168,7 +168,7 @@
         }
       ]
     },
-    "The scheduled campaign appears in the calendar #6: I open the calendar": {
+    "The scheduled campaign appears in the calendar: I open the calendar": {
       "turns": [
         {
           "done": 0.02,
@@ -202,7 +202,7 @@
         }
       ]
     },
-    "The scheduled campaign appears in the calendar #7: the campaign should appear in the calendar": {
+    "The scheduled campaign appears in the calendar: the campaign should appear in the calendar": {
       "recall": [
         [
           "Winter Sale",
@@ -278,7 +278,7 @@
         ]
       }
     },
-    "An unscheduled draft does not appear in the calendar #1: I start a new campaign": {
+    "An unscheduled draft does not appear in the calendar: I start a new campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -312,7 +312,7 @@
         }
       ]
     },
-    "An unscheduled draft does not appear in the calendar #2: I enter \"Summer Sale\" as the campaign name": {
+    "An unscheduled draft does not appear in the calendar: I enter \"Summer Sale\" as the campaign name": {
       "turns": [
         {
           "done": 0.01,
@@ -352,7 +352,7 @@
         }
       ]
     },
-    "An unscheduled draft does not appear in the calendar #3: I save the draft": {
+    "An unscheduled draft does not appear in the calendar: I save the draft": {
       "turns": [
         {
           "done": 0.03,
@@ -378,7 +378,7 @@
         }
       ]
     },
-    "An unscheduled draft does not appear in the calendar #4: I open the calendar": {
+    "An unscheduled draft does not appear in the calendar: I open the calendar": {
       "turns": [
         {
           "done": 0.02,
@@ -412,7 +412,7 @@
         }
       ]
     },
-    "An unscheduled draft does not appear in the calendar #5: the campaign should appear in the calendar": {
+    "An unscheduled draft does not appear in the calendar: the campaign should appear in the calendar": {
       "recall": [
         [
           "Summer Sale",
@@ -475,7 +475,7 @@
         ]
       }
     },
-    "A check without a reference is unaffected #1: I open the \"Spring Sale\" campaign": {
+    "A check without a reference is unaffected: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
           "done": 0.02,
@@ -509,7 +509,7 @@
         }
       ]
     },
-    "A check without a reference is unaffected #2: the schedule button should be enabled": {
+    "A check without a reference is unaffected: the schedule button should be enabled": {
       "recall": [
         [
           "none",

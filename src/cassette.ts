@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import type { Assessment, Decider, Pick, TurnAnswer } from "./jev.ts";
 import type { Element, Observation } from "./observation.ts";
-import { NotYet } from "./runner.ts";
+import { NotYet, plausible } from "./runner.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -71,16 +71,10 @@ export function find(r: Resolution, among: Element[]): Element | string {
 export const describe = (t: Target) => typeof t === "string" ? t
   : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.near ? ` near "${t.near}"` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
 
-const plausible = (p: Pick) => {
-  const out: [string, number][] = [];
-  let covered = 0;
-  for (const kv of Object.entries(p.probabilities).sort((x, y) => y[1] - x[1])) { if (covered >= 0.8) break; out.push(kv); covered += kv[1]; }
-  return out;
-};
 /** A live answer for the cassette: refs (looked up in `among`) become Resolutions. */
-const store = (p: Pick, among: Element[] = []): Answer => plausible(p).map(([k, v]) => {
+const store = (p: Pick, among: Element[] = []): Answer => plausible(p).map(k => {
   const el = among.find(e => e.ref === k);
-  return [el ? resolve(el, among) : k, v];
+  return [el ? resolve(el, among) : k, p.probabilities[k]];
 });
 /** A recorded answer on this Observation; throws (a string, why) when a Resolution no longer names exactly one element. */
 const load = (a: Answer, among: Element[] = []): Pick => {
@@ -93,7 +87,16 @@ const load = (a: Answer, among: Element[] = []): Pick => {
   return { choice: Object.keys(probabilities)[0], probabilities };
 };
 
-/** Recorded resolutions per Step, in `<test>.cassette.json`. Steps are keyed by scenario, position and text. */
+/**
+ * A Step's cassette key: scenario and label, plus which occurrence of that label it is in the scenario, so adding or
+ * removing other Steps keeps every other key.
+ */
+export function stepKey(scenario: string, labels: string[], i: number): string {
+  const n = labels.slice(0, i).filter(l => l === labels[i]).length + 1;
+  return `${scenario}: ${labels[i]}${n > 1 ? ` (#${n})` : ""}`;
+}
+
+/** Recorded resolutions per Step, in `<test>.cassette.json`. Steps are keyed by scenario, text and occurrence (stepKey). */
 export class Cassette {
   #file: File;
   #dirty = false;

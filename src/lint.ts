@@ -35,6 +35,7 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
   // Checks. A table is matched by code, row by row under its header; a header alone compares nothing.
   if (step.table) {
     if (hasHeader("assertion", step.table) && step.table.length < 2) out.push(`a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`);
+    if (hasHeader("assertion", step.table) && /\b(not|no longer|never)\b/i.test(t)) out.push(`code can check that table rows are shown, not that they are absent: UNVERIFIABLE; check each row's absence in its own Step (${SEE}, Data tables)`);
     return out;
   }
   // Checks. A state check ("should be disabled") needs no quoted value.

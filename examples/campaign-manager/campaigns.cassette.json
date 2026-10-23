@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T10-59-08-933Z",
   "entries": {
-    "Create, schedule and find a campaign in the calendar #1: I start a new campaign": {
+    "Create, schedule and find a campaign in the calendar: I start a new campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -36,7 +36,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #2: I enter \"Winter Sale\" as the campaign name": {
+    "Create, schedule and find a campaign in the calendar: I enter \"Winter Sale\" as the campaign name": {
       "turns": [
         {
           "done": 0.01,
@@ -76,7 +76,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #3: I set the activation date to \"2026-12-01\"": {
+    "Create, schedule and find a campaign in the calendar: I set the activation date to \"2026-12-01\"": {
       "turns": [
         {
           "done": 0.02,
@@ -116,7 +116,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #4: I set the activation period to 2 weeks": {
+    "Create, schedule and find a campaign in the calendar: I set the activation period to 2 weeks": {
       "turns": [
         {
           "done": 0.01,
@@ -164,7 +164,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #5: I save the draft": {
+    "Create, schedule and find a campaign in the calendar: I save the draft": {
       "turns": [
         {
           "done": 0.02,
@@ -190,7 +190,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #6: the campaign status should be \"Draft\"": {
+    "Create, schedule and find a campaign in the calendar: the campaign status should be \"Draft\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -248,7 +248,7 @@
         ]
       }
     },
-    "Create, schedule and find a campaign in the calendar #7: I schedule the campaign": {
+    "Create, schedule and find a campaign in the calendar: I schedule the campaign": {
       "turns": [
         {
           "done": 0.06,
@@ -274,7 +274,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #8: the campaign status should be \"Scheduled\"": {
+    "Create, schedule and find a campaign in the calendar: the campaign status should be \"Scheduled\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -332,7 +332,7 @@
         ]
       }
     },
-    "Create, schedule and find a campaign in the calendar #9: the \"Schedule\" button should be disabled": {
+    "Create, schedule and find a campaign in the calendar: the \"Schedule\" button should be disabled": {
       "check": {
         "kind": {
           "type": "choice",
@@ -389,7 +389,7 @@
         ]
       }
     },
-    "Create, schedule and find a campaign in the calendar #10: I open the calendar": {
+    "Create, schedule and find a campaign in the calendar: I open the calendar": {
       "turns": [
         {
           "done": 0.02,
@@ -423,7 +423,7 @@
         }
       ]
     },
-    "Create, schedule and find a campaign in the calendar #11: \"Winter Sale\" should appear in the calendar": {
+    "Create, schedule and find a campaign in the calendar: \"Winter Sale\" should appear in the calendar": {
       "check": {
         "kind": {
           "type": "choice",
@@ -481,7 +481,7 @@
         ]
       }
     },
-    "Scheduling needs an activation date #1: I open the \"Spring Sale\" campaign": {
+    "Scheduling needs an activation date: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
           "done": 0.03,
@@ -507,7 +507,7 @@
         }
       ]
     },
-    "Scheduling needs an activation date #2: I try to schedule the campaign": {
+    "Scheduling needs an activation date: I try to schedule the campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -545,7 +545,7 @@
         }
       ]
     },
-    "Scheduling needs an activation date #3: the error should say \"Set an activation date before scheduling\"": {
+    "Scheduling needs an activation date: the error should say \"Set an activation date before scheduling\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -602,7 +602,7 @@
         ]
       }
     },
-    "Scheduling needs an activation date #4: the campaign status should be \"Draft\"": {
+    "Scheduling needs an activation date: the campaign status should be \"Draft\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -660,7 +660,7 @@
         ]
       }
     },
-    "Delete a campaign from its actions menu #1: I open the \"Spring Sale\" campaign": {
+    "Delete a campaign from its actions menu: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
           "done": 0.02,
@@ -694,7 +694,7 @@
         }
       ]
     },
-    "Delete a campaign from its actions menu #2: I delete the campaign": {
+    "Delete a campaign from its actions menu: I delete the campaign": {
       "turns": [
         {
           "done": 0.02,
@@ -733,7 +733,7 @@
         }
       ]
     },
-    "Delete a campaign from its actions menu #3: \"Spring Sale\" should not appear in the campaign list": {
+    "Delete a campaign from its actions menu: \"Spring Sale\" should not appear in the campaign list": {
       "check": {
         "kind": {
           "type": "choice",

@@ -59,6 +59,8 @@ export class Browser {
   private secrets: Record<string, string> = {};
   /** A secret was typed: the Playwright trace stores typed text unmasked, so close() keeps none. */
   typedSecret = false;
+  private mask(s: string) { return Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s); }
+
   private constructor(browser: PwBrowser, page: Page) {
     this.browser = browser;
     this.page = page;
@@ -70,7 +72,7 @@ export class Browser {
     this.rearm();
     page.on("dialog", d => {
       this.open = d;
-      this.dialog = { type: d.type() as Dialog["type"], message: d.message() || (d.type() === "beforeunload" ? LEAVE : ""), state: "open" };
+      this.dialog = { type: d.type() as Dialog["type"], message: this.mask(d.message()) || (d.type() === "beforeunload" ? LEAVE : ""), state: "open" };
       this.signal();
     });
   }
@@ -202,10 +204,9 @@ export class Browser {
     }
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
-    const mask = (s: string) => Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s);
-    const marked = mask(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()));
-    const title = mask(await this.page.title().catch(() => "")); // mid-navigation
-    return withPage(parseSnapshot(marked, secret, editable), mask(this.page.url()), title);
+    const marked = this.mask(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()));
+    const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
+    return withPage(parseSnapshot(marked, secret, editable), this.mask(this.page.url()), title);
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */

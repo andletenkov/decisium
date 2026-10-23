@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T09-42-35-858Z",
   "entries": {
-    "Draft is not in the calendar, toast mentions it #1: I start a new campaign": {
+    "Draft is not in the calendar, toast mentions it: I start a new campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -36,7 +36,7 @@
         }
       ]
     },
-    "Draft is not in the calendar, toast mentions it #2: I enter \"Summer Sale\" as the campaign name": {
+    "Draft is not in the calendar, toast mentions it: I enter \"Summer Sale\" as the campaign name": {
       "turns": [
         {
           "done": 0.01,
@@ -76,7 +76,7 @@
         }
       ]
     },
-    "Draft is not in the calendar, toast mentions it #3: I save the draft": {
+    "Draft is not in the calendar, toast mentions it: I save the draft": {
       "turns": [
         {
           "done": 0.02,
@@ -102,7 +102,7 @@
         }
       ]
     },
-    "Draft is not in the calendar, toast mentions it #4: I open the calendar": {
+    "Draft is not in the calendar, toast mentions it: I open the calendar": {
       "turns": [
         {
           "done": 0.03,
@@ -136,7 +136,7 @@
         }
       ]
     },
-    "Draft is not in the calendar, toast mentions it #5: \"Summer Sale\" should appear in the calendar": {
+    "Draft is not in the calendar, toast mentions it: \"Summer Sale\" should appear in the calendar": {
       "check": {
         "kind": {
           "type": "choice",
@@ -197,7 +197,7 @@
         ]
       }
     },
-    "Detail heading is not the campaign list #1: I open the \"Spring Sale\" campaign": {
+    "Detail heading is not the campaign list: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
           "done": 0.02,
@@ -223,7 +223,7 @@
         }
       ]
     },
-    "Detail heading is not the campaign list #2: \"Spring Sale\" should appear in the campaign list": {
+    "Detail heading is not the campaign list: \"Spring Sale\" should appear in the campaign list": {
       "check": {
         "kind": {
           "type": "choice",
@@ -284,7 +284,7 @@
         ]
       }
     },
-    "Draft is not in the scheduled list, toast mentions it #1: I start a new campaign": {
+    "Draft is not in the scheduled list, toast mentions it: I start a new campaign": {
       "turns": [
         {
           "done": 0.01,
@@ -318,7 +318,7 @@
         }
       ]
     },
-    "Draft is not in the scheduled list, toast mentions it #2: I enter \"Summer Sale\" as the campaign name": {
+    "Draft is not in the scheduled list, toast mentions it: I enter \"Summer Sale\" as the campaign name": {
       "turns": [
         {
           "done": 0.01,
@@ -358,7 +358,7 @@
         }
       ]
     },
-    "Draft is not in the scheduled list, toast mentions it #3: I save the draft": {
+    "Draft is not in the scheduled list, toast mentions it: I save the draft": {
       "turns": [
         {
           "done": 0.03,
@@ -384,7 +384,7 @@
         }
       ]
     },
-    "Draft is not in the scheduled list, toast mentions it #4: I open the calendar": {
+    "Draft is not in the scheduled list, toast mentions it: I open the calendar": {
       "turns": [
         {
           "done": 0.02,
@@ -418,7 +418,7 @@
         }
       ]
     },
-    "Draft is not in the scheduled list, toast mentions it #5: \"Summer Sale\" should be listed among the scheduled campaigns": {
+    "Draft is not in the scheduled list, toast mentions it: \"Summer Sale\" should be listed among the scheduled campaigns": {
       "check": {
         "kind": {
           "type": "choice",
@@ -471,7 +471,7 @@
         ]
       }
     },
-    "List check on the detail screen #1: I open the \"Spring Sale\" campaign": {
+    "List check on the detail screen: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
           "done": 0.02,
@@ -497,7 +497,7 @@
         }
       ]
     },
-    "List check on the detail screen #2: the campaign list should contain \"Spring Sale\"": {
+    "List check on the detail screen: the campaign list should contain \"Spring Sale\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -558,7 +558,7 @@
         ]
       }
     },
-    "\"I should see\" wording on the detail screen #1: I open the \"Spring Sale\" campaign": {
+    "\"I should see\" wording on the detail screen: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
           "done": 0.02,
@@ -584,7 +584,7 @@
         }
       ]
     },
-    "\"I should see\" wording on the detail screen #2: I should see \"Spring Sale\" in the list of campaigns": {
+    "\"I should see\" wording on the detail screen: I should see \"Spring Sale\" in the list of campaigns": {
       "check": {
         "kind": {
           "type": "choice",

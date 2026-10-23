@@ -84,6 +84,11 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   if (!pickles.length) throw new Error("No scenarios found");
   const lines = new Map((doc.feature?.children ?? []).flatMap(c => c.rule ? c.rule.children : [c])
     .flatMap(c => (c.background ?? c.scenario)?.steps ?? []).map(s => [s.id, s.location.line]));
+  // An action table's rows become quoted values (tableSteps): an empty cell gives none, a `"` splits one in two.
+  for (const p of pickles) for (const s of p.steps) {
+    const cell = stepKind(s) !== "assertion" && s.argument?.dataTable?.rows.flatMap(r => r.cells).find(c => !c.value.trim() || /["“”]/.test(c.value));
+    if (cell) throw new Error(`Line ${lines.get(s.astNodeIds[0])}: an action's table cannot have ${cell.value.trim() ? `a cell with a double quote (${cell.value})` : "an empty cell"}; it becomes a quoted value`);
+  }
   return pickles.map(pickle => ({
     name: pickle.name,
     tags: pickle.tags.map(t => t.name),

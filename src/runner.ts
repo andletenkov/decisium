@@ -164,8 +164,10 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
     // Gate on the result, not the label: evaluate every plausible kind (most likely first, until they
     // cover the gate's confidence) and accept only if they all reach the same outcome.
     // A reading that does not apply to the element Jev picked (e.g. "selected" on a combobox) carries no evidence.
-    // A table's shape decides the kind; Jev only names the area.
-    const kinds = table ? [list ? "presence" : "rows"] : plausible(a.kind);
+    // A table's shape decides the kind, except that Jev's absence reading must not be lost ("should not show:").
+    const negated = plausible(a.kind).includes("absence");
+    if (table && !list && negated) return { outcome: "UNVERIFIABLE", reason: "a check that table rows are not shown is not supported; check each row's absence in its own Step" };
+    const kinds = !table ? plausible(a.kind) : list ? [...new Set(plausible(a.kind).map(k => k === "absence" ? k : "presence"))] : ["rows"];
     const all = kinds.map(kind => ({ kind, ...kind === "rows" ? matchRows(a, obs, table!, exact, log) : evaluate(kind, a, obs, values, log) }));
     const results = all.filter(r => !r.inapplicable);
     if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map(r => r.reason).join("; ") };
@@ -179,8 +181,8 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   }
 }
 
-/** Most likely answers first, until together they cover the gate's confidence. */
-function plausible(pick: Pick): string[] {
+/** Most likely answers first, until together they cover the gate's confidence (cassette.ts stores exactly these). */
+export function plausible(pick: Pick): string[] {
   const out: string[] = [];
   let covered = 0;
   for (const [k, p] of Object.entries(pick.probabilities).sort((x, y) => y[1] - x[1])) {

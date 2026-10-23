@@ -216,6 +216,19 @@ test("parseFeature rejects what it cannot run faithfully", () => {
   // A keyword-less line is Gherkin "description": without the guard the scenario would pass with no steps.
   assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    Attempt to schedule\n`), /has no steps/);
   assert.throws(() => parseFeature(`Feature: f\n  Scenario: s\n    When x\n  Scenario s2\n`), /Parser errors|expected/i);
+  // An action table's cells become quoted values: an empty one gives none, a quote splits it.
+  const form = (cell: string) => () => parseFeature(`Feature: f\n  Scenario: s\n    When I fill in the form:\n      | Note | ${cell} |\n`);
+  assert.throws(form(""), /Line 3: .*empty cell/);
+  assert.throws(form(`say "hi"`), /double quote/);
+  assert.doesNotThrow(() => parseFeature(`Feature: f\n  Scenario: s\n    Then the cart should list:\n      | Product | Note |\n      | Backpack |  |\n`)); // a check's empty cell is an empty cell
+});
+
+test("cassette keys: adding or removing a Step keeps the other Steps' keys", async () => {
+  const { stepKey } = await import("../src/cassette.ts");
+  const keys = (labels: string[]) => labels.map((_, i) => stepKey("S", labels, i));
+  const before = keys(["I open the cart", "I save", "I save"]);
+  assert.deepEqual(before, ["S: I open the cart", "S: I save", "S: I save (#2)"]);
+  assert.deepEqual(keys(["I log in", "I open the cart", "I save", "I save"]).slice(1), before);
 });
 
 // Scripted stand-in for Jev: exercises the browser runtime and loop without the API.
@@ -971,6 +984,11 @@ test("runAssertion: a check's table is matched row by row under the page table's
   // One column: a list of values that must all be shown in the area.
   assert.equal(await outcome("the cart should show:", [["Backpack"], ["Bike Light"]]), "PASSED");
   assert.equal(await outcome("the cart should show:", [["Backpack"], ["Onesie"]]), "ASSERTION_FAILED"); // outside the table
+  // Jev reads "should not": a list is checked for absence, never as presence (that passed while the items were shown).
+  const absent = (s: string, table: string[][]) => runAssertion(s, rt, assessing("absence", () => ({ area: sure("e3") })), () => {}, false, {}, { table });
+  assert.equal((await absent("the cart should not show:", [["Backpack"]])).outcome, "ASSERTION_FAILED");
+  assert.equal((await absent("the cart should not show:", [["Onesie"]])).outcome, "PASSED");
+  assert.equal((await absent("the cart should not contain:", [["Product", "Quantity"], pack])).outcome, "UNVERIFIABLE");
 });
 
 test("doc strings: one more quoted value, to type or to compare (task 0038)", async () => {
@@ -1192,6 +1210,16 @@ test("dialogs: the Step that opened a dialog answers it; unsure or alert = dismi
   } finally {
     await secret.close();
   }
+  // A dialog showing a secret's value is masked back to its token, like the page.
+  const echo = await Browser.open(`data:text/html,<button onclick="alert('Your PIN is 4321')">Show</button>`, false, false, { "$PIN": "4321" });
+  try {
+    await echo.execute({ verb: "CLICK", ref: (await echo.observe()).elements[0].ref });
+    const obs = await echo.observe();
+    assert.equal(obs.dialog?.message, "Your PIN is $PIN");
+    assert.doesNotMatch(obs.text, /4321/);
+  } finally {
+    await echo.close();
+  }
 });
 
 test("lint: a Step that only answers a dialog comes too late: the Step that opened it answers it (task 0040)", async () => {
@@ -1200,4 +1228,36 @@ test("lint: a Step that only answers a dialog comes too late: the Step that open
   for (const ok of ["I delete the note", "I open the dialog", `the alert should say "Saved"`, "I close the dialog"]) assert.equal(w(ok, ok.startsWith("the") ? "assertion" : "action"), "", ok);
   assert.match(w("I accept the confirm"), /Step that opens it/);
   assert.match(w("I dismiss the alert"), /Step that opens it/);
+});
+
+test("lint: a check that table rows are absent is UNVERIFIABLE", async () => {
+  const { warnings } = await import("../src/lint.ts");
+  const rows = [["Product", "Qty"], ["Backpack", "2"]];
+  assert.match(warnings({ text: "the cart should not contain:", kind: "assertion", table: rows }, []).join(), /not that they are absent/);
+  assert.deepEqual(warnings({ text: "the cart should not show:", kind: "assertion", table: [["Backpack"]] }, []), []);
+});
+
+test("decisium run: cassette replay through cucumber (table rows, cassette keys) and --strict, with no Jev call", async () => {
+  const { execFile } = await import("node:child_process");
+  const { readFileSync } = await import("node:fs");
+  const { promisify } = await import("node:util");
+  const run = async (...args: string[]) => {
+    const r = await promisify(execFile)("node", ["src/cli.ts", "run", ...args, "--record", "none", "--no-agent-report"], { env: { ...process.env, TYPESAFE_API_KEY: "" } })
+      .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
+    const dir = /Run directory: (\S+)/.exec(r.stdout)![1];
+    const steps = readFileSync(`${dir}/trace.jsonl`, "utf8").trim().split("\n").map(l => JSON.parse(l)).filter(e => e.type === "step");
+    return { code: r.code, steps };
+  };
+  const tables = await run("examples/cookbook/tables.feature:5", "examples/cookbook/tables.feature:30");
+  assert.equal(tables.code, 0);
+  assert.deepEqual([...new Set(tables.steps.map(s => s.cassette))], ["replayed"]);
+  assert.equal(tables.steps.reduce((n, s) => n + s.jevCalls, 0), 0);
+  // A marginal pass is a pass, and AMBIGUOUS with --strict.
+  const marginal = (r: Awaited<ReturnType<typeof run>>) => r.steps.find(s => s.at === "examples/cookbook/lab.feature:22").outcome;
+  const lax = await run("examples/cookbook/lab.feature:20");
+  assert.equal(lax.code, 0);
+  assert.equal(marginal(lax), "PASSED");
+  const strict = await run("examples/cookbook/lab.feature:20", "--strict");
+  assert.equal(strict.code, 1);
+  assert.equal(marginal(strict), "AMBIGUOUS");
 });

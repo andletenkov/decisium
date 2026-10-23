@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T15-51-59-361Z",
   "entries": {
-    "Confirm a deletion #1: I delete the \"Groceries\" note": {
+    "Confirm a deletion: I delete the \"Groceries\" note": {
       "turns": [
         {
           "done": 0.01,
@@ -36,7 +36,7 @@
         }
       ]
     },
-    "Confirm a deletion #2: \"Groceries\" should not appear in the notes": {
+    "Confirm a deletion: \"Groceries\" should not appear in the notes": {
       "check": {
         "kind": {
           "type": "choice",
@@ -97,7 +97,7 @@
         ]
       }
     },
-    "Confirm a deletion #3: the confirm should say \"Delete the Groceries note?\"": {
+    "Confirm a deletion: the confirm should say \"Delete the Groceries note?\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -150,7 +150,7 @@
         ]
       }
     },
-    "Cancel a confirm #1: I start deleting the \"Ideas\" note but cancel": {
+    "Cancel a confirm: I start deleting the \"Ideas\" note but cancel": {
       "turns": [
         {
           "done": 0.03,
@@ -192,7 +192,7 @@
         }
       ]
     },
-    "Cancel a confirm #2: \"Ideas\" should still appear in the notes list": {
+    "Cancel a confirm: \"Ideas\" should still appear in the notes list": {
       "check": {
         "kind": {
           "type": "choice",
@@ -246,7 +246,7 @@
         ]
       }
     },
-    "Read an alert #1: I save the settings": {
+    "Read an alert: I save the settings": {
       "turns": [
         {
           "done": 0.03,
@@ -272,7 +272,7 @@
         }
       ]
     },
-    "Read an alert #2: the alert should say \"Settings saved\"": {
+    "Read an alert: the alert should say \"Settings saved\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -335,7 +335,7 @@
         ]
       }
     },
-    "Answer a prompt #1: I rename the list to \"Errands\"": {
+    "Answer a prompt: I rename the list to \"Errands\"": {
       "turns": [
         {
           "done": 0.01,
@@ -377,7 +377,7 @@
         }
       ]
     },
-    "Answer a prompt #2: the list heading should be \"Errands\"": {
+    "Answer a prompt: the list heading should be \"Errands\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -442,7 +442,7 @@
         ]
       }
     },
-    "Leave a page with unsaved changes #1: I write \"half done\" as the draft": {
+    "Leave a page with unsaved changes: I write \"half done\" as the draft": {
       "turns": [
         {
           "done": 0.03,
@@ -482,7 +482,7 @@
         }
       ]
     },
-    "Leave a page with unsaved changes #2: I leave for the search page": {
+    "Leave a page with unsaved changes: I leave for the search page": {
       "turns": [
         {
           "done": 0.04,
@@ -524,7 +524,7 @@
         }
       ]
     },
-    "Leave a page with unsaved changes #3: the page heading should be \"Search\"": {
+    "Leave a page with unsaved changes: the page heading should be \"Search\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -577,7 +577,7 @@
         ]
       }
     },
-    "A Step that only answers the dialog #1: I click the delete button of \"Groceries\"": {
+    "A Step that only answers the dialog: I click the delete button of \"Groceries\"": {
       "turns": [
         {
           "done": 0.02,
@@ -611,7 +611,7 @@
         }
       ]
     },
-    "A Step that only answers the dialog #2: I accept the confirm": {
+    "A Step that only answers the dialog: I accept the confirm": {
       "turns": [
         {
           "done": 0.02,

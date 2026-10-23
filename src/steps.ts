@@ -2,10 +2,10 @@
 // scenario a fresh browser, its run-directory folder, the feature's cassette and an empty memory.
 // Options come from DECISIUM_* env (set by `decisium run`), so raw `npx cucumber-js` works too.
 import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Browser } from "./browser.ts";
-import { Cassette, RECORD_MODES, UiChanged, type RecordMode } from "./cassette.ts";
+import { Cassette, RECORD_MODES, stepKey, UiChanged, type RecordMode } from "./cassette.ts";
 import { placeholders, stepArgument, stepKind, stepLabel, tableSteps, toUrl, urlFromTags, type StepArgument, type StepKind } from "./feature.ts";
 import { JevDecider, jevUsage, MODEL, type Decider } from "./jev.ts";
 import { placeholder, quoted } from "./observation.ts";
@@ -88,7 +88,8 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   this.at = `${pickle.uri}:${line}`;
   this.kind = stepKind(pickleStep);
   this.arg = stepArgument(pickleStep);
-  this.key = `${pickle.name} #${pickle.steps.findIndex(s => s.id === pickleStep.id) + 1}: ${stepLabel({ text: pickleStep.text, kind: this.kind, ...this.arg })}`;
+  const labels = pickle.steps.map(s => stepLabel({ text: s.text, kind: stepKind(s), ...stepArgument(s) }));
+  this.key = stepKey(pickle.name, labels, pickle.steps.findIndex(s => s.id === pickleStep.id));
   Object.defineProperty(step, "length", { value: pickleStep.argument ? 2 : 1 });
 });
 
@@ -130,15 +131,13 @@ async function step(this: Scenario, text: string) {
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   const cost = { seconds: (Date.now() - start) / 1000, jevCalls: jevUsage.calls - before.calls,
     inputTokens: jevUsage.inputTokens - before.inputTokens, outputTokens: jevUsage.outputTokens - before.outputTokens };
+  if ("marginal" in r && r.marginal && opt("STRICT")) r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
   run.event("step", { kind: this.kind, step: stepLabel({ text, kind: this.kind, ...this.arg }), at: this.at, ...r, ...cost, cassette });
   for (const row of rows) for (const v of quoted(row)) this.earlier[v] = row;
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
-  if ("marginal" in r && r.marginal) {
-    if (opt("STRICT")) r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
-    else this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
-  }
+  if ("marginal" in r && r.marginal) this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
-    // Failed Step only (passed ones keep theirs in the run directory); fileName carries the path to the console formatter.
+    // Failed Step only; fileName carries the path to the console formatter.
     const shot = run.lastScreenshot;
     if (shot && existsSync(shot)) this.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
     const err = new Error(outcomeMessage(r));
@@ -153,6 +152,8 @@ After(async function (this: Scenario, { result }) {
   if (!this.browser) return;
   const ok = result?.status === Status.PASSED;
   if (!ok) run.failure(this.browser.consoleErrors);
+  // A passed scenario keeps its trace events but not its screenshots: a screenshot per Turn filled runs/ (2 GB).
+  else for (const f of readdirSync(this.dir)) if (f.endsWith(".png")) rmSync(join(this.dir, f));
   if (!ok && this.browser.typedSecret) writeFileSync(join(this.dir, NO_TRACE), "The scenario typed a secret value; Playwright traces store typed text unmasked, so none is kept.\n");
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
   run.event("result", { passed: ok });

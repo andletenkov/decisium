@@ -2,7 +2,7 @@
   "model": "jev-1.14.0",
   "run": "runs/2026-10-23T15-35-14-779Z",
   "entries": {
-    "Close a dialog with Escape #1: I open the keyboard help": {
+    "Close a dialog with Escape: I open the keyboard help": {
       "turns": [
         {
           "done": 0.25,
@@ -40,7 +40,7 @@
         }
       ]
     },
-    "Close a dialog with Escape #2: \"Close it with Escape.\" should appear": {
+    "Close a dialog with Escape: \"Close it with Escape.\" should appear": {
       "check": {
         "kind": {
           "type": "choice",
@@ -97,8 +97,8 @@
         ]
       }
     },
-    "Close a dialog with Escape #3: I press Escape": {},
-    "Close a dialog with Escape #4: \"Close it with Escape.\" should not appear": {
+    "Close a dialog with Escape: I press Escape": {},
+    "Close a dialog with Escape: \"Close it with Escape.\" should not appear": {
       "check": {
         "kind": {
           "type": "choice",
@@ -151,7 +151,7 @@
         ]
       }
     },
-    "Open the command palette with a shortcut #1: I open the command palette by pressing Ctrl+K": {
+    "Open the command palette with a shortcut: I open the command palette by pressing Ctrl+K": {
       "turns": [
         {
           "done": 0.02,
@@ -177,7 +177,7 @@
         }
       ]
     },
-    "Open the command palette with a shortcut #2: \"Go to settings\" should appear in the command palette": {
+    "Open the command palette with a shortcut: \"Go to settings\" should appear in the command palette": {
       "check": {
         "kind": {
           "type": "choice",
@@ -231,8 +231,8 @@
         ]
       }
     },
-    "Move through a list with the arrow keys #1: I press the down arrow": {},
-    "Move through a list with the arrow keys #2: \"Banana\" should be selected": {
+    "Move through a list with the arrow keys: I press the down arrow": {},
+    "Move through a list with the arrow keys: \"Banana\" should be selected": {
       "check": {
         "kind": {
           "type": "choice",
@@ -289,7 +289,7 @@
         ]
       }
     },
-    "Move through a list with the arrow keys #3: \"Apple\" should be unselected": {
+    "Move through a list with the arrow keys: \"Apple\" should be unselected": {
       "check": {
         "kind": {
           "type": "choice",
@@ -346,8 +346,8 @@
         ]
       }
     },
-    "Move the focus with Tab #1: I press \"Tab\"": {},
-    "Move the focus with Tab #2: the status should be \"Focus: Note\"": {
+    "Move the focus with Tab: I press \"Tab\"": {},
+    "Move the focus with Tab: the status should be \"Focus: Note\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -396,7 +396,7 @@
         ]
       }
     },
-    "A key named without press #1: I open the keyboard help": {
+    "A key named without press: I open the keyboard help": {
       "turns": [
         {
           "done": 0.32,
@@ -434,7 +434,7 @@
         }
       ]
     },
-    "A key named without press #2: I close the help with the Escape key": {
+    "A key named without press: I close the help with the Escape key": {
       "turns": [
         {
           "done": 0.02,

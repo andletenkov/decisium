@@ -37,8 +37,8 @@ lint: no browser, no Jev. Per Step: its kind, the quoted values, keys, secret pl
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 --strict: a check that passes on a barely-confident Jev answer (shown as "marginal pass") fails as AMBIGUOUS.
 
-Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes) and per scenario a
-screenshot per Turn; failed scenarios also get playwright-trace.zip, console-errors.txt and ui.txt (the page text).
+Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes) and per failed scenario a
+screenshot per Turn, playwright-trace.zip, console-errors.txt and ui.txt (the page text). Passed scenarios keep none.
 A run with a failure writes report.md: every failure with Jev's answers, the page text around it and a rerun command,
 for a coding agent (--no-agent-report: off).
 
