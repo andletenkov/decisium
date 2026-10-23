@@ -129,6 +129,7 @@ function failureSection(f: AgentFailure, n: number): string[] {
     if (e.type === "execute") return [`- Executed: ${e.verb}${e.ref ? ` ${e.ref}${name(e.ref) ? ` (${name(e.ref)})` : ""}` : ""}`];
     if (e.type === "value") return [`- Value for ${e.element}: ${typeof a === "string" ? a : pick(a)}`];
     if (e.type === "recall") return [`- Earlier value the check refers to: ${pick(a)}`];
+    if (e.type === "dialog") return [`- Answer to the browser ${e.dialog.type} "${e.dialog.message}": ${pick(a)}`];
     if (e.type === "assess") return [
       ["Kind of check", a.kind], ["Subject (element the check is about)", a.subject], ["Area (where to look)", a.area], ["State", a.state],
     ].filter(([, p]) => Object.keys(p?.probabilities ?? {}).length).map(([what, p]) => `- ${what}: ${pick(p)}`)

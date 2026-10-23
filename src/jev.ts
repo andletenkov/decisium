@@ -68,7 +68,22 @@ export interface Decider {
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;
+  /** The open browser dialog (`obs.dialog`): "accept", "dismiss", or for a prompt one of the Step's quoted values. */
+  dialog(step: string, obs: Observation, answers: string[]): Promise<Pick>;
 }
+
+/** What answering each kind of browser dialog means, for Jev (task 0040). */
+const DIALOG_ANSWERS = {
+  accept: {
+    confirm: "Click OK: `step` clearly asks for what `dialog` asks to confirm.",
+    beforeunload: "Leave the page: `step` clearly intends to leave this page, even if changes are lost.",
+  },
+  dismiss: {
+    confirm: "Click Cancel: `step` does not clearly ask for what `dialog` asks to confirm, or says to cancel.",
+    beforeunload: "Stay on the page: `step` does not clearly intend to leave this page.",
+    prompt: "Click Cancel: none of the other answers is what `step` asks to enter, or `step` says to cancel.",
+  },
+} as Record<string, Record<string, string>>;
 
 const refs = (els: Element[]): Record<string, string> => Object.fromEntries(els.map(e => [e.ref, e.line]));
 
@@ -198,6 +213,19 @@ export class JevDecider implements Decider {
     });
     const a: Pick = res.answers.value;
     const name = (k: string) => k === "none" ? k : values[Number(k.slice(1))] ?? k;
+    return { choice: name(a.choice), probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])) };
+  }
+
+  async dialog(step: string, obs: Observation, answers: string[]): Promise<Pick> {
+    const { type, message } = obs.dialog!;
+    const criteria = Object.fromEntries(answers.map((a, i) => a === "accept" || a === "dismiss"
+      ? [a, DIALOG_ANSWERS[a][type]] : [`v${i}`, `Enter "${a}" and click OK.`]));
+    const res = await this.#ask({
+      state: { step, dialog: message },
+      questions: { answer: choice(`A browser ${type === "beforeunload" ? "\"Leave site?\"" : type} dialog is open, saying \`dialog\`. How should it be answered to accomplish \`step\`?`, criteria) },
+    });
+    const a: Pick = res.answers.answer;
+    const name = (k: string) => /^v\d+$/.test(k) ? answers[Number(k.slice(1))] : k;
     return { choice: name(a.choice), probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])) };
   }
 

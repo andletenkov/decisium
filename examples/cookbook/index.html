@@ -3,7 +3,8 @@
 <head><meta charset="utf-8"><title>Cookbook lab</title></head>
 <!-- Fixture for docs/cookbook.md (task 0031): an article search, settings with labelled and unlabelled checkboxes,
      (?contacts, task 0038) a contact form and table for data tables and doc strings, and (?keys, task 0039) a page
-     driven by keys: Escape closes the help, Ctrl+K opens the command palette, arrows move through a list. -->
+     driven by keys: Escape closes the help, Ctrl+K opens the command palette, arrows move through a list, and (?dialogs,
+     task 0040) browser dialogs: a confirm before deleting a note, an alert, a prompt, and "Leave site?" with a draft. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -89,10 +90,28 @@ function keys() {
   list.focus();
 }
 
+function dialogs() {
+  let notes = ["Groceries", "Ideas"];
+  main.innerHTML = `<h1>Notes</h1><ul aria-label="Notes"></ul>
+    <button id="rename">Rename list</button> <button id="save">Save settings</button>
+    <label>Draft <textarea id="draft"></textarea></label> <a href="?search">Search page</a>`;
+  const list = main.querySelector("ul");
+  const draw = () => {
+    list.innerHTML = notes.map(n => `<li>${esc(n)} <button aria-label="Delete ${esc(n)}">Delete</button></li>`).join("");
+    list.querySelectorAll("button").forEach((b, i) => b.onclick = () => {
+      if (confirm(`Delete the ${notes[i]} note?`)) { notes.splice(i, 1); draw(); }
+    });
+  };
+  document.getElementById("rename").onclick = () => { const name = prompt("New name for the list"); if (name) main.querySelector("h1").textContent = name; };
+  document.getElementById("save").onclick = () => alert("Settings saved");
+  addEventListener("beforeunload", e => { if (document.getElementById("draft").value) { e.preventDefault(); e.returnValue = ""; } });
+  draw();
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
-  : location.search.includes("keys") ? keys() : search();
+  : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs() : search();
 </script>
 </body>
 </html>

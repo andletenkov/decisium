@@ -23,7 +23,11 @@ export interface Observation {
   readable: Element[]; // every ref'd node with text, for Assertion steps
   areas: Element[]; // ref'd nodes with children (lists, tables, regions): where a presence check can look
   pageText: string; // all visible names and values
+  dialog?: Dialog; // a browser dialog, open or the last one shown (task 0040)
 }
+
+/** A browser dialog: open, or the last one shown, readable until the next action Step (task 0040). */
+export interface Dialog { type: "alert" | "confirm" | "prompt" | "beforeunload"; message: string; state: "open" | "accepted" | "dismissed" }
 
 const ACTIONABLE = new Set([
   "button", "link", "textbox", "searchbox", "spinbutton", "combobox", "option",
@@ -202,4 +206,21 @@ export function withPage(obs: Observation, url: string, title: string): Observat
   }));
   const top = page.map(e => cap(`- ${e.role}: ${e.value}`)).join("\n");
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [...page, ...obs.readable] };
+}
+
+/**
+ * Adds a browser dialog as a readable pseudo-element (ref `dialog`) on top of `ui`, named "browser dialog" so it is not
+ * taken for an ARIA alert, with its state (open, accepted, dismissed: Jev read a check about the page after a closed
+ * "Delete the Ideas note?" as an absence check). Its message is information for Jev and what a value check compares,
+ * never something to click. Like the URL it is not an area or page text: a check about the page must not read it.
+ */
+export function withDialog(obs: Observation, dialog?: Dialog): Observation {
+  if (!dialog) return obs;
+  const { type, message, state } = dialog;
+  const el: Element = {
+    ref: "dialog", role: type, name: "browser dialog", value: message, state: `[${state}]`, secret: false, verb: "CLICK", options: [],
+    text: message, line: `${type} "browser dialog" value="${message.length > 60 ? message.slice(0, 60) + "…" : message}" [${state}]`,
+  };
+  const top = cap(`- ${type} "browser dialog" [${state}]: ${message}`);
+  return { ...obs, dialog, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
 }

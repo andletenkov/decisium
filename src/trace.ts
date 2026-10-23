@@ -87,6 +87,12 @@ export class RunDir {
         await b.execute(a);
       },
       waitForChange: (since, ms) => b.waitForChange(since, ms),
+      forgetDialog: () => b.forgetDialog(),
+      dismissDialog: async () => {
+        const d = await b.dismissDialog();
+        if (d) this.event("execute", { verb: "DISMISS", dialog: d.type });
+        return d;
+      },
     };
   }
 
@@ -101,6 +107,7 @@ export class RunDir {
       },
       assess: async (step, obs, judged) => { const a = await d.assess(step, obs, judged); this.event("assess", { step, answer: a }); return a; },
       recall: async (step, earlier) => { const a = await d.recall(step, earlier); this.event("recall", { step, answer: a }); return a; },
+      dialog: async (step, obs, answers) => { const a = await d.dialog(step, obs, answers); this.event("dialog", { step, dialog: obs.dialog, answer: a }); return a; },
     };
   }
 

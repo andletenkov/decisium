@@ -1,7 +1,7 @@
 import type { Action } from "./browser.ts";
 import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
 import { stepLabel, type StepArgument } from "./feature.ts";
-import { assertableText, MASK, pressOnly, quoted, stepValues, type Element, type Observation } from "./observation.ts";
+import { assertableText, MASK, pressOnly, quoted, stepValues, type Dialog, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
   | "DONE" | "BLOCKED" | "AMBIGUOUS" | "ELEMENT_NOT_FOUND" | "ACTION_FAILED" | "STEP_TIMEOUT" // Action steps
@@ -13,6 +13,10 @@ export interface Runtime {
   execute(action: Action): Promise<void>;
   /** Resolves true once the Observation differs from `since`, false on timeout. */
   waitForChange(since: string, timeoutMs?: number): Promise<boolean>;
+  /** Browser dialogs (task 0040): an action Step forgets the last dialog's message when it starts... */
+  forgetDialog?(): void;
+  /** ...and dismisses a dialog still open when it ends; returns that dialog, for the log. */
+  dismissDialog?(): Promise<Dialog | undefined>;
 }
 
 export interface StepResult {
@@ -374,6 +378,27 @@ const fmt = (p: Pick) =>
  * `docString`: one more value to type, read by Jev with the Step.
  */
 export async function runStep(step: string, rt: Runtime, decider: Decider, log = console.log, attempt = false, docString?: string): Promise<StepResult> {
+  rt.forgetDialog?.();
+  const r = await act(step, rt, decider, log, attempt, docString);
+  const open = await rt.dismissDialog?.();
+  if (open) log(`  Dialog: ${open.type} "${open.message}" was still open when the Step ended: dismissed`);
+  return r;
+}
+
+/**
+ * How to answer the open dialog: Cancel unless Jev is sure the Step means OK (or one of its quoted values, for a
+ * prompt). An alert, or a prompt the Step quotes nothing for, has no other answer, so Jev is not asked.
+ */
+async function answerDialog(dialog: Dialog, said: string, values: string[], obs: Observation, decider: Decider, log: typeof console.log): Promise<Action> {
+  const answers = dialog.type === "alert" ? [] : dialog.type === "prompt" ? values : ["accept"];
+  if (!answers.length) return { verb: "DISMISS" };
+  const p = await decider.dialog(said, obs, [...answers, "dismiss"]);
+  log(`  Dialog answer: ${fmt(p)}`);
+  if (!gate(p) || p.choice === "dismiss") return { verb: "DISMISS" };
+  return dialog.type === "prompt" ? { verb: "ACCEPT", value: p.choice } : { verb: "ACCEPT" };
+}
+
+async function act(step: string, rt: Runtime, decider: Decider, log: typeof console.log, attempt: boolean, docString?: string): Promise<StepResult> {
   const said = stepLabel({ text: step, kind: "action", docString });
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
@@ -395,6 +420,23 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
   for (let turn = 1; turn <= MAX_TURNS; turn++) {
     log(`\n  Observation #${turn}:`);
     for (const e of obs.elements) log(`    [${e.ref}] ${e.line}`);
+
+    // An open dialog blocks the page: this Turn answers it, nothing else.
+    if (obs.dialog?.state === "open") {
+      const values = [...quoted(step), ...docString === undefined ? [] : [docString]];
+      const action = await answerDialog(obs.dialog, said, values, obs, decider, log);
+      const described = `${action.verb} ${obs.dialog.type} "${obs.dialog.message}"${action.value === undefined ? "" : ` <- "${action.value}"`}`;
+      log(`  Execute: ${described}`);
+      try {
+        await rt.execute(action);
+      } catch (err) {
+        return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
+      }
+      recent.push(described);
+      obs = await rt.observe();
+      unchanged = 0;
+      continue;
+    }
 
     let t: TurnAnswer;
     [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt));

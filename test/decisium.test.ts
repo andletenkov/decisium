@@ -236,6 +236,9 @@ const oracle: Decider = {
   async assess() {
     throw new Error("not used");
   },
+  async dialog() {
+    throw new Error("not used");
+  },
   async recall(_s, earlier) {
     return sure(Object.keys(earlier)[0] ?? "none");
   },
@@ -1062,4 +1065,100 @@ test("lint: a key that is not a key name, or named without press/hit, is never p
   assert.match(w("I open the palette with Ctrl+K"), /without "press"/);
   assert.match(w("I press the Foo key"), /"Foo" is not a key name/);
   assert.match(w("I close the dialog with the Escape key"), /without "press"/);
+});
+
+test("dialogs: the Step that opened a dialog answers it; unsure or alert = dismiss; message readable until the next action Step (task 0040)", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { Cassette } = await import("../src/cassette.ts");
+  const dir = mkdtempSync(`${tmpdir()}/dlg-`);
+  writeFileSync(`${dir}/b.html`, `<h1>Left</h1>`);
+  writeFileSync(`${dir}/a.html`, `<p id=o>-</p>`
+    + `<button autofocus onclick="o.textContent=confirm('Delete the note?')?'deleted':'kept'">Delete</button>`
+    + `<button onclick="alert('Saved');o.textContent='saved'">Save</button>`
+    + `<button onclick="o.textContent=prompt('New name?')??'no name'">Rename</button>`
+    + `<a href="b.html">Leave</a><script>onbeforeunload=e=>{e.preventDefault();e.returnValue=''}</script>`);
+  const b = await Browser.open(pathToFileURL(`${dir}/a.html`).href);
+  const asked: string[][] = [];
+  // Scripted Jev: clicks the control the Step names, done after any action; answers a dialog with `answer`.
+  const clicking = (name: string, answer?: Pick): Decider => ({
+    ...oracle,
+    turn: async (_s, obs, recent) => recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(obs.elements.find(e => e.name === name)!.ref) },
+    dialog: async (_s, obs, answers) => {
+      asked.push([obs.text.split("\n")[0], ...answers]);
+      if (!answer) throw new Error("Jev asked");
+      return answer;
+    },
+  });
+  const shown = async () => (await b.observe()).pageText.split("\n").find(l => /^(-|deleted|kept|saved|Ada|no name)$/.test(l));
+  const dialogLine = async () => (await b.observe()).readable.find(e => e.ref === "dialog")?.line;
+  try {
+    // Confirm: Jev sure -> OK; the message stays readable for checks; the Step's actions include the answer.
+    assert.equal((await runStep("I delete the note", b, clicking("Delete", sure("accept")), () => {})).outcome, "DONE");
+    assert.deepEqual(asked.pop(), [`- confirm "browser dialog" [open]: Delete the note?`, "accept", "dismiss"]);
+    assert.equal(await shown(), "deleted");
+    assert.equal(await dialogLine(), `confirm "browser dialog" value="Delete the note?" [accepted]`);
+    const check = (s: string) => runAssertion(s, b, assessing("value", () => ({ subject: sure("dialog") })), () => {}).then(r => r.outcome);
+    assert.equal(await check(`the confirm should say "Delete the note?"`), "PASSED");
+    assert.equal(await dialogLine(), `confirm "browser dialog" value="Delete the note?" [accepted]`, "a check does not forget it");
+
+    // Unsure -> Cancel: accepting needs the full gate.
+    assert.equal((await runStep("I click Delete", b, clicking("Delete", { choice: "accept", probabilities: { accept: 0.7, dismiss: 0.3 } }), () => {})).outcome, "DONE");
+    assert.equal(await shown(), "kept");
+
+    // Alert: dismissed by code, Jev is not asked; the next action Step forgets the message.
+    assert.equal((await runStep("I save", b, clicking("Save"), () => {})).outcome, "DONE");
+    assert.equal(await shown(), "saved");
+    assert.equal(await dialogLine(), `alert "browser dialog" value="Saved" [dismissed]`);
+    assert.equal((await runStep("I press Shift", b, clicking("Save"), () => {})).outcome, "DONE");
+    assert.equal(await dialogLine(), undefined);
+
+    // Prompt: only the Step's quoted values (and Cancel) are offered.
+    assert.equal((await runStep(`I rename it to "Ada"`, b, clicking("Rename", sure("Ada")), () => {})).outcome, "DONE");
+    assert.deepEqual(asked.pop(), [`- prompt "browser dialog" [open]: New name?`, "Ada", "dismiss"]);
+    assert.equal(await shown(), "Ada");
+    assert.equal((await runStep("I rename it", b, clicking("Rename"), () => {})).outcome, "DONE"); // nothing quoted: Cancel, no Jev
+    assert.equal(await shown(), "no name");
+
+    // A Step that ends with the dialog still open dismisses it (Enter on the focused Delete button opens the confirm).
+    await b.execute({ verb: "PRESS", value: "Shift+Tab" }); // from Rename, clicked last
+    await b.execute({ verb: "PRESS", value: "Shift+Tab" });
+    assert.equal((await runStep("I press Enter", b, clicking("Delete"), () => {})).outcome, "DONE");
+    assert.equal(await shown(), "kept");
+
+    // Recorded once, replayed without Jev.
+    const path = `${dir}/d.cassette.json`;
+    const rec = new Cassette(path, "m", "new");
+    const d = rec.step("S #1: I delete the note", clicking("Delete", sure("accept")));
+    assert.equal((await runStep("I delete the note", b, d, () => {})).outcome, "DONE");
+    d.done(true);
+    rec.save();
+    const replay = new Cassette(path, "m", "none").step("S #1: I delete the note", { ...oracle, turn: async () => { throw new Error("Jev asked"); } });
+    assert.equal((await runStep("I delete the note", b, replay, () => {})).outcome, "DONE");
+    assert.equal(await shown(), "deleted");
+
+    // beforeunload: leaving only when Jev is sure the Step means to.
+    assert.equal((await runStep("I click Leave", b, clicking("Leave", { choice: "accept", probabilities: { accept: 0.6, dismiss: 0.4 } }), () => {})).outcome, "DONE");
+    assert.match(asked.pop()![0], /^- beforeunload "browser dialog" \[open\]: Leave site\?/);
+    assert.equal(await shown(), "deleted");
+    assert.equal((await runStep("I leave the page", b, clicking("Leave", sure("accept")), () => {})).outcome, "DONE");
+    assert.match((await b.observe()).pageText, /^Left$/m);
+  } finally {
+    await b.close();
+  }
+  // A dialog while the page loads: no Step answers it, so it is dismissed.
+  const onLoad = await Browser.open(`data:text/html,<p id=o>-</p><script>o.textContent=confirm('Load?')?'yes':'no'</script>`);
+  try {
+    assert.match((await onLoad.observe()).pageText, /^no$/m);
+  } finally {
+    await onLoad.close();
+  }
+});
+
+test("lint: a Step that only answers a dialog comes too late: the Step that opened it answers it (task 0040)", async () => {
+  const { warnings } = await import("../src/lint.ts");
+  const w = (text: string, kind: "action" | "assertion" = "action") => warnings({ text, kind }, []).join(" | ");
+  for (const ok of ["I delete the note", "I open the dialog", `the alert should say "Saved"`, "I close the dialog"]) assert.equal(w(ok, ok.startsWith("the") ? "assertion" : "action"), "", ok);
+  assert.match(w("I accept the confirm"), /Step that opens it/);
+  assert.match(w("I dismiss the alert"), /Step that opens it/);
 });

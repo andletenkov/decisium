@@ -1,0 +1,644 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-23T15-51-59-361Z",
+  "entries": {
+    "Confirm a deletion #1: I delete the \"Groceries\" note": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Delete Groceries",
+                "container": "list \"Notes\""
+              },
+              1
+            ]
+          ]
+        },
+        {
+          "dialog": [
+            [
+              "accept",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.97,
+          "target": [
+            [
+              "none",
+              0.95
+            ]
+          ]
+        }
+      ]
+    },
+    "Confirm a deletion #2: \"Groceries\" should not appear in the notes": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "absence",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 1,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "collapsed",
+          "confidence": 0.4,
+          "probabilities": {
+            "disabled": 0.02,
+            "enabled": 0.06,
+            "checked": 0.05,
+            "unchecked": 0.16,
+            "expanded": 0.03,
+            "collapsed": 0.46,
+            "selected": 0.02,
+            "unselected": 0.15,
+            "pressed": 0.01,
+            "unpressed": 0.04
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "confirm",
+              "name": "browser dialog",
+              "container": ""
+            },
+            0.9
+          ]
+        ],
+        "area": [
+          [
+            "missing",
+            0.41
+          ],
+          [
+            "page",
+            0.28
+          ],
+          [
+            {
+              "role": "list",
+              "name": "Notes",
+              "container": ""
+            },
+            0.2
+          ]
+        ]
+      }
+    },
+    "Confirm a deletion #3: the confirm should say \"Delete the Groceries note?\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "expanded",
+          "confidence": 0.27,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.33,
+            "checked": 0.21,
+            "unchecked": 0.01,
+            "expanded": 0.34,
+            "collapsed": 0.05,
+            "selected": 0.03,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "confirm",
+              "name": "browser dialog",
+              "container": ""
+            },
+            0.98
+          ]
+        ],
+        "area": [
+          [
+            "missing",
+            0.58
+          ],
+          [
+            "page",
+            0.32
+          ]
+        ]
+      }
+    },
+    "Cancel a confirm #1: I start deleting the \"Ideas\" note but cancel": {
+      "turns": [
+        {
+          "done": 0.03,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Delete Ideas",
+                "container": "list \"Notes\""
+              },
+              0.86
+            ]
+          ]
+        },
+        {
+          "dialog": [
+            [
+              "dismiss",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.96,
+          "target": [
+            [
+              "none",
+              0.58
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Delete Ideas",
+                "container": "list \"Notes\""
+              },
+              0.38
+            ]
+          ]
+        }
+      ]
+    },
+    "Cancel a confirm #2: \"Ideas\" should still appear in the notes list": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "presence",
+          "confidence": 0.9,
+          "probabilities": {
+            "value": 0.04,
+            "presence": 0.92,
+            "absence": 0.03,
+            "state": 0,
+            "fuzzy": 0.01
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.2,
+          "probabilities": {
+            "disabled": 0.27,
+            "enabled": 0.27999999999999997,
+            "checked": 0.04,
+            "unchecked": 0.02,
+            "expanded": 0.01,
+            "collapsed": 0.01,
+            "selected": 0.11,
+            "unselected": 0.04,
+            "pressed": 0.13,
+            "unpressed": 0.09
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Notes\"",
+              "near": "Ideas Delete Ideas Delete"
+            },
+            0.97
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Notes",
+              "container": ""
+            },
+            0.9400000000000001
+          ]
+        ]
+      }
+    },
+    "Read an alert #1: I save the settings": {
+      "turns": [
+        {
+          "done": 0.03,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Save settings",
+                "container": ""
+              },
+              0.97
+            ]
+          ]
+        },
+        {
+          "done": 0.93,
+          "target": [
+            [
+              "none",
+              0.89
+            ]
+          ]
+        }
+      ]
+    },
+    "Read an alert #2: the alert should say \"Settings saved\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.89,
+          "probabilities": {
+            "value": 0.91,
+            "presence": 0.05,
+            "absence": 0.02,
+            "state": 0,
+            "fuzzy": 0.02
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.53,
+          "probabilities": {
+            "disabled": 0.08,
+            "enabled": 0.58,
+            "checked": 0.08,
+            "unchecked": 0,
+            "expanded": 0.04,
+            "collapsed": 0.06,
+            "selected": 0.01,
+            "unselected": 0,
+            "pressed": 0.14,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "alert",
+              "name": "browser dialog",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.46
+          ],
+          [
+            "missing",
+            0.31
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "nth": 0,
+              "of": 2
+            },
+            0.19
+          ]
+        ]
+      }
+    },
+    "Answer a prompt #1: I rename the list to \"Errands\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Rename list",
+                "container": ""
+              },
+              0.99
+            ]
+          ]
+        },
+        {
+          "dialog": [
+            [
+              "Errands",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.96,
+          "target": [
+            [
+              "none",
+              0.68
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Save settings",
+                "container": ""
+              },
+              0.27
+            ]
+          ]
+        }
+      ]
+    },
+    "Answer a prompt #2: the list heading should be \"Errands\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.38,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.44,
+            "checked": 0.27999999999999997,
+            "unchecked": 0.02,
+            "expanded": 0.03,
+            "collapsed": 0.01,
+            "selected": 0.12,
+            "unselected": 0.01,
+            "pressed": 0.07,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Errands",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.52
+          ],
+          [
+            {
+              "role": "list",
+              "name": "Notes",
+              "container": ""
+            },
+            0.24
+          ],
+          [
+            "page",
+            0.17
+          ]
+        ]
+      }
+    },
+    "Leave a page with unsaved changes #1: I write \"half done\" as the draft": {
+      "turns": [
+        {
+          "done": 0.03,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Draft",
+                "container": ""
+              },
+              0.98
+            ]
+          ],
+          "value": [
+            [
+              "half done",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Save settings",
+                "container": ""
+              },
+              0.55
+            ],
+            [
+              "none",
+              0.35
+            ]
+          ]
+        }
+      ]
+    },
+    "Leave a page with unsaved changes #2: I leave for the search page": {
+      "turns": [
+        {
+          "done": 0.04,
+          "target": [
+            [
+              {
+                "role": "link",
+                "name": "Search page",
+                "container": ""
+              },
+              0.6900000000000001
+            ],
+            [
+              {
+                "role": "link",
+                "name": "Search",
+                "container": "navigation \"Main\""
+              },
+              0.31
+            ]
+          ]
+        },
+        {
+          "dialog": [
+            [
+              "accept",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.94,
+          "target": [
+            [
+              "none",
+              0.8200000000000001
+            ]
+          ]
+        }
+      ]
+    },
+    "Leave a page with unsaved changes #3: the page heading should be \"Search\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.5,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.55,
+            "checked": 0.11,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.3,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Search",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.8
+          ]
+        ]
+      }
+    },
+    "A Step that only answers the dialog #1: I click the delete button of \"Groceries\"": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Delete Groceries",
+                "container": "list \"Notes\""
+              },
+              0.99
+            ]
+          ]
+        },
+        {
+          "dialog": [
+            [
+              "accept",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.97,
+          "target": [
+            [
+              "none",
+              0.93
+            ]
+          ]
+        }
+      ]
+    },
+    "A Step that only answers the dialog #2: I accept the confirm": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              "none",
+              0.59
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Delete Ideas",
+                "container": "list \"Notes\""
+              },
+              0.19
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Save settings",
+                "container": ""
+              },
+              0.09
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

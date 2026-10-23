@@ -28,6 +28,7 @@ export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<str
     if (/^(I\s+)?(un)?(check|tick)\b/i.test(t) && /\b(and|then)\b|,/i.test(t)) out.push(`checking a box is decided by code only when the Step does nothing else; split "and ..." into its own Step (${SEE}, Submit and act)`);
     for (const name of stepKeys(t).unknown) out.push(`"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}, Keys)`);
     if (!/\b(press(es|ed|ing)?|hit(s|ting)?)\b/i.test(t) && /\b(Esc|Escape)\b|\b(Tab|Enter|Return|Space|Backspace|Delete|Home|End|arrow|F\d+) key\b|\b(Ctrl|Control|Shift|Alt|Cmd|Meta)\s*\+\s*\w/i.test(t)) out.push(`names a key without "press" or "hit", so no key is offered: say "press Escape" (${SEE}, Keys)`);
+    if (/^(I\s+)?(accept|dismiss|cancel|answer|confirm)\s+(the\s+)?(alert|confirm|confirmation|prompt|browser dialog)\b/i.test(t)) out.push(`a browser dialog is answered by the Step that opens it and dismissed when that Step ends, so this Step finds none open; say the intent in the Step that opens it ("I delete the note", "I start deleting the note but cancel") (${SEE}, Browser dialogs)`);
     return out;
   }
   // Checks. A table is matched by code, row by row under its header; a header alone compares nothing.

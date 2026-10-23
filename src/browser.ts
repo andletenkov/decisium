@@ -1,12 +1,15 @@
 // Browser runtime: the only module that knows about Playwright. Swap for CDP behind the same surface.
-import { chromium, type Browser as PwBrowser, type Page } from "playwright";
-import { parseSnapshot, withPage, type Observation, type Verb } from "./observation.ts";
+import { chromium, type Browser as PwBrowser, type Dialog as PwDialog, type Page } from "playwright";
+import { parseSnapshot, withDialog, withPage, type Dialog, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
-  verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS";
+  verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS"; // ACCEPT/DISMISS: the open browser dialog
   ref?: string; // element actions only
-  value?: string; // PRESS: the key, as Playwright names it
+  value?: string; // PRESS: the key, as Playwright names it; ACCEPT: a prompt's text
 }
+
+/** Chrome shows this for beforeunload; the page cannot set its own text. */
+const LEAVE = "Leave site? Changes you made may not be saved.";
 
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
@@ -42,6 +45,15 @@ export class Browser {
   private page: Page;
   private inflight = 0;
   private last?: Observation; // refs are valid for the latest Observation only
+  /**
+   * Browser dialogs (task 0040). While one is open the page is blocked (snapshots, evaluate, screenshots and clicks
+   * hang), so the Observation is the page as it was under it; `opened` resolves when one opens.
+   */
+  private open?: PwDialog;
+  private dialog?: Dialog; // open, or the last one shown until the next action Step
+  private under?: Observation; // the page under the dialog
+  private opened!: Promise<undefined>;
+  private signal!: () => void;
   readonly consoleErrors: string[] = [];
   /** Secret placeholders (`$NAME` -> value): typed for the token, masked back to it in every Observation (task 0030). */
   private secrets: Record<string, string> = {};
@@ -55,6 +67,31 @@ export class Browser {
     page.on("request", () => this.inflight++);
     page.on("requestfinished", () => this.inflight--);
     page.on("requestfailed", () => this.inflight--);
+    this.rearm();
+    page.on("dialog", d => {
+      this.open = d;
+      this.dialog = { type: d.type() as Dialog["type"], message: d.message() || (d.type() === "beforeunload" ? LEAVE : ""), state: "open" };
+      this.signal();
+    });
+  }
+
+  private rearm() { this.opened = new Promise(r => { this.signal = () => r(undefined); }); }
+
+  /** `p`, or undefined once a dialog is open: the page is blocked until it is answered. */
+  private unblocked<T>(p: Promise<T>): Promise<T | undefined> {
+    p.catch(() => {}); // finishes once the dialog is answered; nobody waits for it then
+    return Promise.race([p, this.opened]);
+  }
+
+  /** An action Step starts: the last dialog's message is no longer readable (unless it is still open). */
+  forgetDialog() { if (!this.open) this.dialog = undefined; }
+
+  /** An action Step ends: a dialog it left open is dismissed (Cancel); returns it, for the log. */
+  async dismissDialog(): Promise<Dialog | undefined> {
+    if (!this.open) return;
+    const d = this.dialog;
+    await this.execute({ verb: "DISMISS" });
+    return d;
   }
 
   /** `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. */
@@ -110,7 +147,8 @@ export class Browser {
     const b = new Browser(browser, page);
     b.secrets = secrets;
     try {
-      await page.goto(url);
+      const loading = page.goto(url);
+      while ((await b.unblocked(loading)) === undefined) await b.execute({ verb: "DISMISS" }); // no Step answers it
     } catch (err) {
       await browser.close();
       const why = (err as Error).message.split("\n")[0].replace(/^page\.goto:\s*/, "");
@@ -127,12 +165,13 @@ export class Browser {
   private async settle(): Promise<void> {
     const start = Date.now();
     while (Date.now() < start + SETTLE_CAP_MS) {
-      const [sinceMutation, soon] = await this.page
+      if (this.open) return; // nothing changes until it is answered
+      const [sinceMutation, soon] = await this.unblocked(this.page
         .evaluate(() => {
           const w = window as unknown as { __lastMutation: number; __soon?: () => number };
           return [performance.now() - w.__lastMutation, w.__soon?.() ?? 0];
         })
-        .catch(() => [0, 1]); // mid-navigation: not settled yet
+        .catch(() => [0, 1])) ?? [0, 1]; // mid-navigation: not settled yet
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
       if (this.inflight === 0 && soon === 0 && quiet >= QUIET_MS) return;
@@ -141,6 +180,12 @@ export class Browser {
   }
 
   async observe(): Promise<Observation> {
+    const page = this.open ? undefined : await this.unblocked(this.read());
+    if (page) this.under = page;
+    return (this.last = withDialog(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.dialog));
+  }
+
+  private async read(): Promise<Observation> {
     const snapshot = await this.page.ariaSnapshot({ mode: "ai" });
     // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
     // from a button-like one; ask the DOM.
@@ -159,7 +204,7 @@ export class Browser {
     const mask = (s: string) => Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s);
     const marked = mask(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()));
     const title = mask(await this.page.title().catch(() => "")); // mid-navigation
-    return (this.last = withPage(parseSnapshot(marked, secret, editable), mask(this.page.url()), title));
+    return withPage(parseSnapshot(marked, secret, editable), mask(this.page.url()), title);
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -202,8 +247,24 @@ export class Browser {
     return current;
   }
 
-  /** Executes one action and checks its effect where the effect is deterministic (TYPE/SELECT). */
-  async execute({ verb, ref, value = "" }: Action): Promise<void> {
+  /**
+   * Executes one action and checks its effect where the effect is deterministic (TYPE/SELECT). An action that opens a
+   * dialog returns once it is open (its effect check is skipped); ACCEPT/DISMISS answer it.
+   */
+  async execute(action: Action): Promise<void> {
+    const { verb, value = "" } = action;
+    if (verb === "ACCEPT" || verb === "DISMISS") {
+      const d = this.open;
+      if (!d) throw new Error("no browser dialog is open");
+      this.open = undefined;
+      this.dialog = { ...this.dialog!, state: verb === "ACCEPT" ? "accepted" : "dismissed" };
+      this.rearm(); // before answering: the next dialog may open at once
+      await (verb === "ACCEPT" ? d.accept(value) : d.dismiss());
+    } else await this.unblocked(this.perform(action));
+    await this.settle();
+  }
+
+  private async perform({ verb, ref, value = "" }: Action): Promise<void> {
     const opts = { timeout: 5000 };
     if (verb === "SCROLL") await this.page.mouse.wheel(0, 600);
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
@@ -231,7 +292,6 @@ export class Browser {
         }
       }
     }
-    await this.settle();
   }
 
 
@@ -245,7 +305,7 @@ export class Browser {
     let seen: number | undefined; // __lastMutation at the last snapshot: no DOM mutation since means no new snapshot
     while (Date.now() < deadline) {
       await this.page.waitForTimeout(100);
-      const stamp = await this.page.evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation).catch(() => undefined);
+      const stamp = await this.unblocked(this.page.evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation).catch(() => undefined));
       const moved = stamp === undefined || stamp !== seen;
       seen = stamp;
       if (moved && (await this.observe()).text !== since) {
@@ -262,15 +322,16 @@ export class Browser {
 
   /** True when nothing pending in the page can change it without user input. */
   private async idle(): Promise<boolean> {
+    if (this.open) return true; // blocked until answered
     if (this.inflight > 0) return false;
-    const pending = await this.page
+    const pending = await this.unblocked(this.page
       .evaluate(() => (window as unknown as { __pending?: () => number }).__pending?.() ?? 1)
-      .catch(() => 1); // mid-navigation: not idle
+      .catch(() => 1)) ?? 1; // mid-navigation, or a dialog opened: not idle
     return pending === 0;
   }
 
   screenshot(path: string): Promise<unknown> {
-    return this.page.screenshot({ path }).catch(() => undefined); // a missing screenshot must not fail the test
+    return this.unblocked(this.page.screenshot({ path }).catch(() => undefined)); // a missing screenshot must not fail the test
   }
 
   /** `tracePath`: where to save the Playwright trace started by open(..., trace); omitted, or a secret typed = discard it. */

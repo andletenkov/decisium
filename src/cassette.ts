@@ -21,7 +21,7 @@ type Target = Resolution | string; // a string: a non-element answer (scroll, wa
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
 type Answer = [Target, number][];
-interface Turn { done: number; target: Answer; value?: Answer }
+type Turn = { done: number; target: Answer; value?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check { kind: Pick; state: Pick; subject: Answer; area: Answer }
 interface Entry { turns?: Turn[]; check?: Check; recall?: Answer }
 interface File { model: string; run?: string; entries: Record<string, Entry> } // run: id of the run that last saved it
@@ -162,6 +162,7 @@ export class Cassette {
         const r = replay(e => {
           const t = e.turns?.[i];
           if (!t) throw `recorded ${e.turns?.length ?? 0} turns, this is turn ${i + 1}`;
+          if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
           return { done: t.done, target: load(t.target, obs.elements) };
         }, true);
         turn = i + 1;
@@ -172,14 +173,29 @@ export class Cassette {
       value: async (step, obs, el, candidates) => {
         const i = turn - 1;
         const r = replay(e => {
-          const v = e.turns?.[i]?.value;
+          const t = e.turns?.[i];
+          const v = t && "value" in t ? t.value : undefined;
           const gone = v?.find(([k]) => k !== "none" && !candidates.includes(k as string));
           if (!v) throw "no recorded value";
           if (gone) throw `recorded value "${gone[0]}" is not offered now`;
           return load(v);
         });
         const a = r ?? await live.value(step, obs, el, candidates);
-        now.turns![i].value = store(a);
+        (now.turns![i] as { value?: Answer }).value = store(a);
+        return a;
+      },
+      dialog: async (step, obs, answers) => {
+        const i = turn;
+        const r = replay(e => {
+          const t = e.turns?.[i];
+          if (!t || !("dialog" in t)) throw `turn ${i + 1} did not answer a browser dialog when recorded`;
+          const gone = t.dialog.find(([k]) => !answers.includes(k as string));
+          if (gone) throw `recorded dialog answer "${gone[0]}" is not offered now`;
+          return load(t.dialog);
+        });
+        turn = i + 1;
+        const a = r ?? await live.dialog(step, obs, answers);
+        (now.turns ??= [])[i] = { dialog: store(a) };
         return a;
       },
       assess: async (step, obs, judged) => {
