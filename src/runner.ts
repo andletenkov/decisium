@@ -1,5 +1,5 @@
 import type { Action } from "./browser.ts";
-import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick } from "./jev.ts";
+import { AREA_MISSING, AREA_PAGE, gate, GATE_MARGIN, GATE_TARGET_MARGIN, GATE_TARGET_TOP, GATE_TOP, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./jev.ts";
 import { assertableText, MASK, quoted, stepValues, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -19,6 +19,28 @@ export interface StepResult {
   reason?: string;
   /** PASSED resting on a barely-confident Jev answer: which answers, for the warning (task 0027). */
   marginal?: string;
+}
+
+/**
+ * Thrown by a Decider that needs a later Observation (a replayed control not on a still-loading page): the runner
+ * waits for the page to change and asks again, and throws `final` once ASSERT_TIMEOUT_MS has passed.
+ */
+export class NotYet extends Error {
+  final: Error;
+  constructor(final: Error) { super(final.message); this.final = final; }
+}
+
+/** `ask` on `obs`, re-observing after each change while it throws NotYet. */
+async function settled<T>(rt: Runtime, obs: Observation, ask: (obs: Observation) => Promise<T>): Promise<[Observation, T]> {
+  const deadline = Date.now() + ASSERT_TIMEOUT_MS;
+  for (;;) {
+    try { return [obs, await ask(obs)]; } catch (err) {
+      if (!(err instanceof NotYet)) throw err;
+      const left = deadline - Date.now();
+      if (left <= 0 || !(await rt.waitForChange(obs.text, left))) throw err.final;
+      obs = await rt.observe();
+    }
+  }
 }
 
 const MAX_TURNS = 8;
@@ -97,7 +119,8 @@ export async function runAssertion(step: string, rt: Runtime, decider: Decider, 
   const deadline = Date.now() + ASSERT_TIMEOUT_MS;
   let obs = await rt.observe();
   for (;;) {
-    const verdict = await check(obs);
+    let verdict: Verdict;
+    [obs, verdict] = await settled(rt, obs, check);
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
     if (verdict.outcome === "UNVERIFIABLE") verdict.reason += recallNote;
@@ -275,7 +298,8 @@ export async function runStep(step: string, rt: Runtime, decider: Decider, log =
     log(`\n  Observation #${turn}:`);
     for (const e of obs.elements) log(`    [${e.ref}] ${e.line}`);
 
-    const t = await decider.turn(step, obs, recent, attempt);
+    let t: TurnAnswer;
+    [obs, t] = await settled(rt, obs, o => decider.turn(step, o, recent, attempt));
     log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");

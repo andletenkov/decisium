@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import type { Assessment, Decider, Pick, TurnAnswer } from "./jev.ts";
 import type { Element, Observation } from "./observation.ts";
+import { NotYet } from "./runner.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -124,24 +125,27 @@ export class Cassette {
     let broken: string | undefined; // why replay stopped
     let turn = 0;
     const replayOnly = this.mode === "none";
-    const fail = (why: string) => {
+    /** `wait`: replay-only waits for a loading page to show the control (runner.ts NotYet); live mode just asks Jev, who can answer "wait". */
+    const fail = (why: string, wait = false) => {
+      if (replayOnly && old && wait) throw new NotYet(new UiChanged(`the recorded resolution no longer holds: ${why}`));
       if (replayOnly) throw new UiChanged(old ? `the recorded resolution no longer holds: ${why}` : "this step has no recorded resolution: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev");
       if (old && !broken) log(`  (cassette: healing, ${why})`);
       broken ??= why;
     };
-    const replay = <T>(get: (e: Entry) => T): T | undefined => {
+    const replay = <T>(get: (e: Entry) => T, wait = false): T | undefined => {
       if (broken || !old) { if (!broken) fail("missing"); return undefined; }
-      try { return get(old); } catch (why) { if (typeof why !== "string") throw why; fail(why); return undefined; }
+      try { return get(old); } catch (why) { if (typeof why !== "string") throw why; fail(why, wait); return undefined; }
     };
 
     return {
       turn: async (step, obs, recent, attempt) => {
-        const i = turn++;
+        const i = turn; // advanced only once answered: a NotYet retries the same recorded turn
         const r = replay(e => {
           const t = e.turns?.[i];
           if (!t) throw `recorded ${e.turns?.length ?? 0} turns, this is turn ${i + 1}`;
           return { done: t.done, target: load(t.target, obs.elements) };
-        });
+        }, true);
+        turn = i + 1;
         const a = r ?? await live.turn(step, obs, recent, attempt);
         (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements) };
         return a;
@@ -165,7 +169,7 @@ export class Cassette {
         const r = replay((e): Assessment => {
           if (!e.check) throw "no recorded check";
           return { kind: e.check.kind, state: e.check.state, subject: load(e.check.subject, obs.readable), area: load(e.check.area, obs.areas) };
-        });
+        }, true);
         const a = r ?? await live.assess(step, obs, judged);
         now.check = { kind: a.kind, state: a.state, subject: store(a.subject, obs.readable), area: store(a.area, obs.areas) };
         return a;

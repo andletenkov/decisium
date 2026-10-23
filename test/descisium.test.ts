@@ -512,6 +512,15 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   assert.deepEqual(await go(new Cassette(path, "m1", "none"), shifted), { outcome: "DONE", check: "ASSERTION_FAILED", clicked: ["f3"] });
   assert.equal(calls, 0);
 
+  // Replay-only on a page still loading: waits for the control to appear, then replays (no Jev, no failure).
+  {
+    const pages = [parseSnapshot(`- generic [ref=e1]: loading`), page("3")];
+    let loaded = 0, clicked = "";
+    const rt: Runtime = { observe: async () => clicked ? { ...pages[1], text: "clicked" } : pages[loaded], execute: async a => { clicked = a.ref!; }, waitForChange: async () => { loaded = 1; return true; } };
+    const r = await runStep("open the Bug issue", rt, new Cassette(path, "m1", "none").step("S #1: open the Bug issue", live), () => {});
+    assert.deepEqual([r.outcome, clicked, calls], ["DONE", "e3", 0]);
+  }
+
   // A second "Bug" in the list: the recorded control no longer names one element. Never acted on silently.
   const two = page("3", `  - link "Bug" [ref=e9]`);
   await assert.rejects(go(new Cassette(path, "m1", "none"), two), (e: Error) => e instanceof UiChanged && /link "Bug" in list "Issues" matches 2 elements like it now, recorded 1/.test(e.reason));
