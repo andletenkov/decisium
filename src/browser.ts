@@ -272,7 +272,8 @@ export class Browser {
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
   private async collapsed(): Promise<Map<string, string[]>> {
-    const found = await this.page.evaluate(() => {
+    // Every frame (iframes are in the snapshot); shortcut: open shadow roots are not searched, walk them if a page needs it.
+    const found = (await Promise.all(this.page.frames().map(f => f.evaluate(() => {
       // Accessible-name approximation: aria-label, else text without aria-hidden parts (Wikipedia's "1.1" numbers).
       const text = (n: Node): string => n.nodeType === Node.TEXT_NODE ? n.textContent ?? ""
         : (n as Element).getAttribute?.("aria-hidden") === "true" ? "" : [...n.childNodes].map(text).join(" ");
@@ -285,7 +286,7 @@ export class Browser {
           .filter(e => !e.checkVisibility()).map(name).filter(Boolean))];
         return [name(c), entries.slice(0, 10).map(e => (e.length > 60 ? e.slice(0, 60) + "…" : e).replace(/["\]]/g, "'"))] as const;
       }).filter(([n, entries]) => n && entries.length);
-    }).catch(() => [] as (readonly [string, string[]])[]); // mid-navigation: no hints this time
+    }).catch(() => [] as (readonly [string, string[]])[])))).flat(); // mid-navigation: no hints this time
     // shortcut: matched by name, so two collapsed controls with the same name and different entries get the first
     // one's; resolve by ref (one locator call per candidate) if a page shows that.
     const out = new Map<string, string[]>();
@@ -295,11 +296,11 @@ export class Browser {
 
   /** `title` attributes of visible elements by name, where the title says more than the name. */
   private async titles(): Promise<Map<string, string>> {
-    const found = await this.page.locator("[title]").evaluateAll(els => els.filter(e => e.checkVisibility()).map(e => {
+    const found = (await Promise.all(this.page.frames().map(f => f.locator("[title]").evaluateAll(els => els.filter(e => e.checkVisibility()).map(e => {
       const name = (e.getAttribute("aria-label") || (e as HTMLElement).innerText || "").replace(/\s+/g, " ").trim();
       const title = e.getAttribute("title")!.replace(/\s+/g, " ").trim();
       return [name, (title.length > 60 ? title.slice(0, 60) + "…" : title).replace(/["\]]/g, "'")] as const;
-    }).filter(([n, t]) => n && t && n !== t)).catch(() => [] as (readonly [string, string])[]); // mid-navigation
+    }).filter(([n, t]) => n && t && n !== t)).catch(() => [] as (readonly [string, string])[])))).flat(); // mid-navigation
     // shortcut: matched by name, so two same-named elements with different titles get the first one's.
     const out = new Map<string, string>();
     for (const [n, t] of found) if (!out.has(n)) out.set(n, t);
@@ -309,7 +310,7 @@ export class Browser {
   /** Refs of ref'd elements with `draggable=true`; one DOM read when the page has none. */
   private async draggable(snapshot: string): Promise<Set<string>> {
     const out = new Set<string>();
-    const n = await this.page.locator("[draggable=true]").count().catch(() => 0);
+    const n = (await Promise.all(this.page.frames().map(f => f.locator("[draggable=true]").count().catch(() => 0)))).reduce((a, b) => a + b, 0);
     for (const [, ref] of snapshot.matchAll(/\[ref=(\w+)\]/g)) {
       if (out.size >= n) break; // shortcut: one DOM read per ref until all are found; slow on a big page with a draggable near the end
       const d = await this.page.locator(`aria-ref=${ref}`).getAttribute("draggable", { timeout: 1000 }).catch(() => null);
@@ -323,9 +324,9 @@ export class Browser {
    * the candidates; each candidate is then read by ref, since links that share an href ("#") can differ.
    */
   private async currentLinks(snapshot: string): Promise<Set<string>> {
-    const hrefs = await this.page.locator('a[aria-current]:not([aria-current="false"])')
+    const hrefs = (await Promise.all(this.page.frames().map(f => f.locator('a[aria-current]:not([aria-current="false"])')
       .evaluateAll(els => els.map(e => e.getAttribute("href") ?? ""))
-      .catch(() => [] as string[]);
+      .catch(() => [] as string[])))).flat();
     const current = new Set<string>();
     for (const [ref, url] of links(snapshot)) {
       if (!hrefs.includes(url)) continue;

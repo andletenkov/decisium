@@ -1503,3 +1503,22 @@ test("Browser: TYPE blur does not refocus hidden or disabled fields", async () =
     } finally { await b.close(); }
   }
 });
+
+test("Browser: secrets, titles, draggable, current links and collapsed entries are read inside iframes and open shadow roots (task 0047)", async () => {
+  const inner = `<label>Password <input type=password value=hunter2></label><button title="Saved two minutes ago">Saved</button>
+    <li draggable=true>Card</li><a href=/x aria-current=page>Inbox</a><details><summary>Assets</summary><a href=/zip>Source</a></details>`;
+  const b = await Browser.open(`data:text/html,<iframe srcdoc='${inner}'></iframe><div id=h></div>
+    <script>h.attachShadow({mode:"open"}).innerHTML='<label>PIN <input type=password value=s3cret></label><a href=/y aria-current=page>Home</a>'</script>`);
+  try {
+    const obs = await b.observe();
+    const line = (name: string) => obs.readable.find(e => e.name === name || e.value === name)!.line;
+    assert.ok(!obs.text.split("\n").slice(1).join("\n").includes("hunter2") && !obs.text.includes("s3cret"));
+    assert.match(line("Saved"), /Saved two minutes ago/);
+    assert.match(line("Card"), /\[draggable\]/);
+    assert.match(line("Inbox"), /\[current\]/);
+    assert.match(line("Home"), /\[current\]/);
+    assert.match(line("Assets"), /hidden entries: "Source"/);
+  } finally {
+    await b.close();
+  }
+});

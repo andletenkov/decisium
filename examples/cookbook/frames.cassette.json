@@ -1,0 +1,387 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T17-05-18-967Z",
+  "entries": {
+    "A form inside an iframe: I enter \"ada@example.com\" in Email": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "container": ""
+              },
+              0.97
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ],
+          "value": [
+            [
+              "ada@example.com",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Subscribe",
+                "container": ""
+              },
+              0.5
+            ],
+            [
+              "none",
+              0.36
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "A form inside an iframe: I click Subscribe": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Subscribe",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.99,
+          "target": [
+            [
+              "none",
+              0.77
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Subscribe",
+                "container": ""
+              },
+              0.21
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "A form inside an iframe: the newsletter status should be \"Subscribed ada@example.com\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.46,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.51,
+            "checked": 0.22,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0.16,
+            "unselected": 0,
+            "pressed": 0.09,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": "",
+              "near": "Subscribed ada@example.com"
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "iframe",
+              "name": "",
+              "container": ""
+            },
+            0.39
+          ],
+          [
+            "page",
+            0.33
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.22
+          ]
+        ]
+      }
+    },
+    "A form inside an iframe: the Email field should be \"ada@example.com\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.78,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.8,
+            "checked": 0.16,
+            "unchecked": 0.01,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0.03,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "textbox",
+              "name": "Email",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "iframe",
+              "name": "",
+              "container": ""
+            },
+            0.78
+          ],
+          [
+            "page",
+            0.15
+          ]
+        ]
+      }
+    },
+    "A button inside a web component: I click Like": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Like",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.94,
+          "target": [
+            [
+              "none",
+              0.6900000000000001
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Like",
+                "container": ""
+              },
+              0.31
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "A button inside a web component: the Like button should be pressed": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "pressed",
+          "confidence": 0.98,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0.98,
+            "unpressed": 0.02
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "button",
+              "name": "Like",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.76
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.2
+          ]
+        ]
+      }
+    },
+    "A button inside a web component: \"1 like\" should be shown": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.99,
+          "probabilities": {
+            "value": 0.99,
+            "presence": 0.01,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "pressed",
+          "confidence": 0.94,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.03,
+            "checked": 0.01,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0.95,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.72
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.22
+          ]
+        ]
+      }
+    }
+  }
+}

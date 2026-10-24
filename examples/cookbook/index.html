@@ -9,7 +9,8 @@
      (?hover, task 0042) a menu that opens only on mouse-over (a click closes it), a tooltip, and a title, and
      (?files, task 0044) a hidden file input behind an "Attach file" button, and an "Export CSV" download, and
      (?gestures, task 0045) a title edited on double-click, a file with a right-click menu, two lists whose items are
-     dragged between them, and a volume slider. -->
+     dragged between them, and a volume slider, and (?frames, task 0047) a newsletter form inside a same-origin iframe
+     and a like button inside a web component's open shadow root. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -189,13 +190,29 @@ function gestures() {
   slider.oninput = () => status.textContent = `Volume ${slider.value}`;
 }
 
+function frames() {
+  main.innerHTML = `<h1>Frames</h1>
+    <iframe title="Newsletter" srcdoc='<form><label>Email <input id="email"></label> <button>Subscribe</button></form>
+      <p role="status"></p><script>document.forms[0].onsubmit = e => { e.preventDefault();
+      document.querySelector("[role=status]").textContent = "Subscribed " + document.querySelector("#email").value; };<\/script>'></iframe>
+    <like-button></like-button>`;
+  customElements.define("like-button", class extends HTMLElement {
+    connectedCallback() {
+      const root = this.attachShadow({ mode: "open" });
+      root.innerHTML = `<button aria-pressed="false">Like</button> <span role="status">0 likes</span>`;
+      const button = root.querySelector("button");
+      button.onclick = () => { button.setAttribute("aria-pressed", "true"); root.querySelector("span").textContent = "1 like"; };
+    }
+  });
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
   : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs()
   : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover()
   : location.search.includes("toggles") ? toggles() : location.search.includes("files") ? files()
-  : location.search.includes("gestures") ? gestures() : search();
+  : location.search.includes("gestures") ? gestures() : location.search.includes("frames") ? frames() : search();
 </script>
 </body>
 </html>
