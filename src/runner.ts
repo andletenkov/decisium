@@ -46,6 +46,7 @@ const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WA
   reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
+const HOVER_THRESHOLD = 0.5; // Jev's `hover` answer: above it the chosen element is hovered instead of its own verb (task 0042)
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
@@ -171,7 +172,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     let t: TurnAnswer;
     [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt, read.keys));
-    log(`  Decision: done=${t.done.toFixed(2)} target: ${fmt(t.target)}`);
+    log(`  Decision: done=${t.done.toFixed(2)}${t.hover === undefined ? "" : ` hover=${t.hover.toFixed(2)}`} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
     if (!gate(t.target, GATE_TARGET_TOP, GATE_TARGET_MARGIN)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
@@ -186,8 +187,8 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     } else {
       const el = obs.elements.find(e => e.ref === t.target.choice);
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
-      action = { verb: el.verb, ref: el.ref };
-      if (el.verb !== "CLICK") {
+      action = { verb: (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : el.verb, ref: el.ref };
+      if (action.verb === "TYPE" || action.verb === "SELECT") {
         const candidates = el.verb === "SELECT" ? el.options : read.candidates;
         if (!candidates.length) return end("AMBIGUOUS", `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`);
         const v = await decider.value(said, obs, el, candidates);

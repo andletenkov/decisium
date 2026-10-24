@@ -4,7 +4,8 @@ import { parseSnapshot, withDialog, withPage, type Dialog, type Observation, typ
 
 export interface Action {
   verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
-    | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB"; // task 0041
+    | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB" // task 0041
+    | "HOVER"; // task 0042
   ref?: string; // element actions only
   value?: string; // PRESS: the key, as Playwright names it; ACCEPT: a prompt's text; GOTO: URL or path, resolved against the start URL
 }
@@ -40,6 +41,20 @@ const markCollapsed = (snapshot: string, hidden: ReadonlyMap<string, string[]>) 
     const entries = m && !/\[expanded\]/.test(line) ? hidden.get(m[1].replace(/\\(.)/g, "$1")) : undefined;
     return entries ? line.replace(m![2], ` [collapsed; hidden entries: ${entries.map(e => `"${e}"`).join(", ")}]${m![2]}`) : line;
   }).join("\n") : snapshot;
+
+/**
+ * Adds `[description="..."]` to the lines of elements whose `title` differs from their name: the snapshot drops `title`
+ * (task 0042). Matched by name, like markCollapsed.
+ */
+const markTitles = (snapshot: string, titles: ReadonlyMap<string, string>) =>
+  titles.size ? snapshot.split("\n").map(line => {
+    const m = /^\s*- \w+ "((?:[^"\\]|\\.)*)"[^\n]*?( \[ref=\w+\])/.exec(line);
+    const title = m && titles.get(m[1].replace(/\\(.)/g, "$1"));
+    return title ? line.replace(m![2], ` [description="${title}"]${m![2]}`) : line;
+  }).join("\n") : snapshot;
+
+/** Hover moves the mouse only; an element that never stops moving (a tooltip shifting the layout) fails fast (task 0042). */
+const HOVER_TIMEOUT_MS = 2000;
 
 export class Browser {
   private browser: PwBrowser;
@@ -215,7 +230,7 @@ export class Browser {
     }
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
-    const marked = this.mask(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()));
+    const marked = this.mask(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()));
     const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
@@ -242,6 +257,19 @@ export class Browser {
     // one's; resolve by ref (one locator call per candidate) if a page shows that.
     const out = new Map<string, string[]>();
     for (const [n, entries] of found) if (!out.has(n)) out.set(n, entries);
+    return out;
+  }
+
+  /** `title` attributes of visible elements by name, where the title says more than the name. */
+  private async titles(): Promise<Map<string, string>> {
+    const found = await this.page.locator("[title]").evaluateAll(els => els.filter(e => e.checkVisibility()).map(e => {
+      const name = (e.getAttribute("aria-label") || (e as HTMLElement).innerText || "").replace(/\s+/g, " ").trim();
+      const title = e.getAttribute("title")!.replace(/\s+/g, " ").trim();
+      return [name, (title.length > 60 ? title.slice(0, 60) + "…" : title).replace(/["\]]/g, "'")] as const;
+    }).filter(([n, t]) => n && t && n !== t)).catch(() => [] as (readonly [string, string])[]); // mid-navigation
+    // shortcut: matched by name, so two same-named elements with different titles get the first one's.
+    const out = new Map<string, string>();
+    for (const [n, t] of found) if (!out.has(n)) out.set(n, t);
     return out;
   }
 
@@ -301,6 +329,7 @@ export class Browser {
     else {
       const target = this.page.locator(`aria-ref=${ref}`);
       if (verb === "CLICK") await target.click(opts);
+      else if (verb === "HOVER") await target.hover({ timeout: HOVER_TIMEOUT_MS });
       else {
         // The app may replace the control while re-rendering (a sorted list redrawn on change): the effect is then
         // read from the control with the same role and name.

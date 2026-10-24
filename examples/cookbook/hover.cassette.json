@@ -1,0 +1,285 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T11-40-57-236Z",
+  "entries": {
+    "A menu that opens only on mouse-over: I open the Products menu": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Products",
+                "container": ""
+              },
+              0.99
+            ]
+          ],
+          "hover": 0.68
+        },
+        {
+          "done": 0.92,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Products",
+                "container": ""
+              },
+              0.62
+            ],
+            [
+              "none",
+              0.32
+            ]
+          ],
+          "hover": 0.44
+        }
+      ]
+    },
+    "A menu that opens only on mouse-over: I choose \"Pricing\" in it": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "menuitem",
+                "name": "Pricing",
+                "container": ""
+              },
+              0.98
+            ]
+          ],
+          "hover": 0.17
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              {
+                "role": "menuitem",
+                "name": "Pricing",
+                "container": ""
+              },
+              0.56
+            ],
+            [
+              "none",
+              0.44
+            ]
+          ],
+          "hover": 0.08
+        }
+      ]
+    },
+    "A menu that opens only on mouse-over: the status should be \"Opened Pricing\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "expanded",
+          "confidence": 0.68,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.07,
+            "checked": 0.03,
+            "unchecked": 0,
+            "expanded": 0.71,
+            "collapsed": 0.01,
+            "selected": 0.16,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.7
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.21000000000000002
+          ]
+        ]
+      }
+    },
+    "A tooltip shown on hover: I hover over the help button": {
+      "turns": [
+        {
+          "done": 0.03,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "?",
+                "container": ""
+              },
+              0.99
+            ]
+          ],
+          "hover": 0.75
+        },
+        {
+          "done": 0.95,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "?",
+                "container": ""
+              },
+              0.61
+            ],
+            [
+              "none",
+              0.38
+            ]
+          ],
+          "hover": 0.75
+        }
+      ]
+    },
+    "A tooltip shown on hover: the tooltip should say \"Opens the docs\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.48,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.53,
+            "checked": 0.01,
+            "unchecked": 0,
+            "expanded": 0.4,
+            "collapsed": 0.03,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0.02
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "tooltip",
+              "name": "Opens the docs",
+              "container": ""
+            },
+            0.93
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.67
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.27
+          ]
+        ]
+      }
+    },
+    "A title attribute: the Save button's tooltip should be \"Save your work\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.96,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.96,
+            "checked": 0,
+            "unchecked": 0,
+            "expanded": 0.02,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "button",
+              "name": "Save",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.6
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.38
+          ]
+        ]
+      }
+    }
+  }
+}

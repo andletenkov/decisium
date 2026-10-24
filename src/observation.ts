@@ -7,6 +7,7 @@ export interface Element {
   role: string;
   name: string;
   value: string;
+  description?: string; // its `title` attribute, when that says more than the name (task 0042)
   state: string; // e.g. "[checked] [expanded]"
   secret: boolean; // password field: the value the page shows is masked (not the value quoted in the Step)
   line: string; // compact one-line description shown to Jev
@@ -98,9 +99,10 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       if (words && host) bare.set(host, [...(bare.get(host) ?? []), words]);
       continue;
     }
-    const state = attrs.replace(/\s*\[ref=\w+\]/, "").trim();
+    const description = /\[description="([^"]*)"\]/.exec(attrs)?.[1];
+    const state = attrs.replace(/\s*\[ref=\w+\]/, "").replace(/\s*\[description="[^"]*"\]/, "").trim();
     const el: Element = {
-      ref, role, name, value, state, secret,
+      ref, role, name, value, description, state, secret,
       line: "", // set below, once native select options have filled in the value
       verb: TYPEABLE.has(role) || editableRefs.has(ref) ? "TYPE" : "CLICK",
       options: [],
@@ -127,7 +129,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     if (el.options.length) el.verb = "SELECT";
     // A long value (a whole file in a code view) would bury the description; the full value stays in `value`.
     const value = clip(el.value);
-    el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.state ? " " + el.state : ""}`;
+    el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.description ? ` description="${el.description}"` : ""}${el.state ? " " + el.state : ""}`;
   }
   return { text: kept.filter(l => l !== undefined).join("\n"), elements, readable, areas: [...areas], pageText };
 }
@@ -143,7 +145,7 @@ const clip = (value: string) => value.length > 60 ? value.slice(0, 60) + "…" :
  */
 export function assertableText(el: Element): string | undefined {
   if (TYPEABLE.has(el.role) || el.role === "combobox") return el.value;
-  if (ACTIONABLE.has(el.role) && el.role !== "link") return el.value || undefined; // a link's text is what it shows
+  if (ACTIONABLE.has(el.role) && el.role !== "link") return el.value || el.description || undefined; // a link's text is what it shows
   return el.value || el.name;
 }
 

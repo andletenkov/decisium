@@ -130,9 +130,11 @@ export class JevDecider implements Decider {
           ? noul("Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?")
           : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
         target: choice(question, targets),
+        // Same request as target: HOVER on any element without doubling the choices (task 0042).
+        hover: noul("Should the element chosen to interact with next only be hovered with the mouse pointer (e.g. to open a menu or show a tooltip), rather than clicked, typed into or selected?"),
       },
     });
-    return { done: res.answers.done.noul, target: res.answers.target };
+    return { done: res.answers.done.noul, target: res.answers.target, hover: res.answers.hover.noul };
   }
 
   async recall(step: string, earlier: Record<string, string>): Promise<Pick> {

@@ -10,6 +10,8 @@ export interface Pick {
 export interface TurnAnswer {
   done: number; // P(step already accomplished)
   target: Pick; // element ref, a pageActions() key, or "none"
+  /** P(the target element is only to be hovered, not clicked/typed into/selected) (task 0042); absent in older cassettes. */
+  hover?: number;
 }
 
 // The answers a question can have besides element refs: Jev is offered them, code reads them.

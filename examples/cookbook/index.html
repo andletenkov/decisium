@@ -5,7 +5,8 @@
      (?contacts, task 0038) a contact form and table for data tables and doc strings, and (?keys, task 0039) a page
      driven by keys: Escape closes the help, Ctrl+K opens the command palette, arrows move through a list, and (?dialogs,
      task 0040) browser dialogs: a confirm before deleting a note, an alert, a prompt, and "Leave site?" with a draft, and
-     (?nav, task 0041) navigation: links to other pages, one opening a new tab, and a load counter that shows reloads. -->
+     (?nav, task 0041) navigation: links to other pages, one opening a new tab, and a load counter that shows reloads, and
+     (?hover, task 0042) a menu that opens only on mouse-over (a click closes it), a tooltip, and a title. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -116,11 +117,29 @@ function nav() {
     <ul><li><a href="?keys">Keys page</a></li><li><a href="?contacts" target="_blank">Contacts (opens a new tab)</a></li></ul>`;
 }
 
+function hover() {
+  main.innerHTML = `<h1>Hover</h1>
+    <div id="menu" style="display:inline-block"><button>Products</button><ul role="menu" hidden>
+      <li role="menuitem">Pricing</li><li role="menuitem">Features</li></ul></div>
+    <span id="help" style="position:relative"><button aria-describedby="tip">?</button>
+      <span role="tooltip" id="tip" hidden>Opens the docs</span></span>
+    <button title="Save your work">Save</button>
+    <p role="status"></p>`;
+  const [menu, list] = [main.querySelector("#menu"), main.querySelector("[role=menu]")];
+  menu.onmouseenter = () => list.hidden = false;
+  menu.onmouseleave = () => list.hidden = true;
+  menu.querySelector("button").onclick = () => list.hidden = true;
+  list.querySelectorAll("li").forEach(li => li.onclick = () => { main.querySelector("[role=status]").textContent = `Opened ${li.textContent}`; });
+  const [help, tip] = [main.querySelector("#help"), main.querySelector("#tip")];
+  help.onmouseenter = () => tip.hidden = false;
+  help.onmouseleave = () => tip.hidden = true;
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
   : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs()
-  : location.search.includes("nav") ? nav() : search();
+  : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover() : search();
 </script>
 </body>
 </html>

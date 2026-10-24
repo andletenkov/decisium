@@ -1094,6 +1094,34 @@ test("navigation: back/forward/reload/go to by code, new tabs switched to and cl
   }
 });
 
+test("hover: Jev's hover answer hovers the element; titles are descriptions; a moving element fails fast (task 0042)", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { assertableText } = await import("../src/observation.ts");
+  const dir = mkdtempSync(`${tmpdir()}/hover-`);
+  writeFileSync(`${dir}/a.html`, `<div id=m><button>Products</button><ul role=menu hidden><li role=menuitem>Pricing</li></ul></div>
+    <button title="Save your work">Save</button><button title="Same">Same</button>
+    <style>@keyframes s { to { transform: translateX(300px) } }</style><button style="animation: s .2s infinite alternate">Moving</button>
+    <script>const m = document.getElementById("m"); m.onmouseenter = () => m.querySelector("ul").hidden = false; m.querySelector("button").onclick = () => m.querySelector("ul").hidden = true;</script>`);
+  const b = await Browser.open(pathToFileURL(`${dir}/a.html`).href);
+  const hover = (name: string): Decider => ({ ...oracle, turn: async (_s, o, recent) => recent.length ? { done: 1, target: sure("none") }
+    : { done: 0, hover: 0.9, target: sure(o.elements.find(e => e.name === name)!.ref) } });
+  try {
+    const obs = await b.observe();
+    const save = obs.elements.find(e => e.name === "Save")!;
+    assert.equal(save.line, `button "Save" description="Save your work"`);
+    assert.equal(assertableText(save), "Save your work");
+    assert.equal(obs.elements.find(e => e.name === "Same")!.description, undefined, "a title that is the name adds nothing");
+    assert.equal((await runStep("I open the Products menu", b, hover("Products"), () => {})).outcome, "DONE");
+    assert.ok((await b.observe()).elements.some(e => e.name === "Pricing"), "hovered, not clicked: the menu is open");
+    const started = Date.now();
+    assert.equal((await runStep("I hover over Moving", b, hover("Moving"), () => {})).outcome, "ACTION_FAILED");
+    assert.ok(Date.now() - started < 4000);
+  } finally {
+    await b.close();
+  }
+});
+
 test("lint: a key that is not a key name, or named without press/hit, is never pressed (task 0039)", async () => {
   const { warnings } = await import("../src/lint.ts");
   const w = (text: string) => warnings({ text, kind: "action" }, []).join(" | ");

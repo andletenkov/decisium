@@ -20,7 +20,7 @@ type Target = Resolution | string; // a string: a non-element answer (scroll, wa
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
 type Answer = [Target, number][];
-type Turn = { done: number; target: Answer; value?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
+type Turn = { done: number; target: Answer; hover?: number; value?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check { kind: Pick; state: Pick; subject: Answer; area: Answer }
 interface Entry { turns?: Turn[]; check?: Check; recall?: Answer }
 interface File { model: string; run?: string; entries: Record<string, Entry> } // run: id of the run that last saved it
@@ -179,11 +179,11 @@ export class Cassette {
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
           const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && !(k in pageActions(obs, keys ?? [])));
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
-          return { done: t.done, target: load(t.target, obs.elements) };
+          return { done: t.done, target: load(t.target, obs.elements), hover: t.hover };
         });
         turn = i + 1;
         const a = r ?? await live.turn(step, obs, recent, attempt, keys);
-        (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements) };
+        (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements), hover: a.hover };
         return a;
       },
       value: async (step, obs, el, candidates) => {
