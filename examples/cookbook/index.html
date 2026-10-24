@@ -7,7 +7,9 @@
      task 0040) browser dialogs: a confirm before deleting a note, an alert, a prompt, and "Leave site?" with a draft, and
      (?nav, task 0041) navigation: links to other pages, one opening a new tab, and a load counter that shows reloads, and
      (?hover, task 0042) a menu that opens only on mouse-over (a click closes it), a tooltip, and a title, and
-     (?files, task 0044) a hidden file input behind an "Attach file" button, and an "Export CSV" download. -->
+     (?files, task 0044) a hidden file input behind an "Attach file" button, and an "Export CSV" download, and
+     (?gestures, task 0045) a title edited on double-click, a file with a right-click menu, two lists whose items are
+     dragged between them, and a volume slider. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -156,12 +158,44 @@ function files() {
   input.onchange = () => main.querySelector("[role=status]").textContent = `Attached ${input.files[0].name}`;
 }
 
+function gestures() {
+  main.innerHTML = `<h1>Gestures</h1>
+    <h2 id="title" style="cursor:pointer">Untitled note</h2>
+    <ul aria-label="Files"><li id="file" style="cursor:pointer">report.pdf</li></ul>
+    <ul role="menu" hidden><li role="menuitem">Rename</li><li role="menuitem">Delete</li></ul>
+    <ul aria-label="To do" style="min-height:2em"><li draggable="true">Write docs</li><li draggable="true">Fix bug</li></ul>
+    <ul aria-label="Done" style="min-height:2em"><li draggable="true">Ship release</li></ul>
+    <p><label>Volume <input type="range" min="0" max="100" value="20"></label></p>
+    <p role="status"></p>`;
+  const status = main.querySelector("[role=status]");
+  const title = main.querySelector("#title");
+  title.ondblclick = () => {
+    const input = Object.assign(document.createElement("input"), { value: title.textContent });
+    input.setAttribute("aria-label", "Note title");
+    input.oninput = () => status.textContent = `Title: ${input.value}`;
+    title.replaceChildren(input);
+    input.focus();
+  };
+  const menu = main.querySelector("[role=menu]");
+  main.querySelector("#file").oncontextmenu = e => { e.preventDefault(); menu.hidden = false; };
+  menu.querySelectorAll("li").forEach(li => li.onclick = () => { menu.hidden = true; status.textContent = `${li.textContent} report.pdf`; });
+  let dragged;
+  main.querySelectorAll("[draggable]").forEach(li => li.ondragstart = () => dragged = li);
+  main.querySelectorAll("ul[aria-label]").forEach(ul => {
+    ul.ondragover = e => e.preventDefault();
+    ul.ondrop = e => { e.preventDefault(); const at = e.target.closest("li"); at && at !== dragged ? ul.insertBefore(dragged, at) : ul.append(dragged); };
+  });
+  const slider = main.querySelector("[type=range]");
+  slider.oninput = () => status.textContent = `Volume ${slider.value}`;
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
   : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs()
   : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover()
-  : location.search.includes("toggles") ? toggles() : location.search.includes("files") ? files() : search();
+  : location.search.includes("toggles") ? toggles() : location.search.includes("files") ? files()
+  : location.search.includes("gestures") ? gestures() : search();
 </script>
 </body>
 </html>

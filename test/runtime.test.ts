@@ -41,7 +41,7 @@ test("traced Runtime brackets named-key steps and records cleanup without exposi
   try {
     const rt = dir.runtime(b);
     const result = await runStep("I press Enter", rt, {
-      turn: unexpected, value: unexpected, assess: unexpected, recall: unexpected, dialog: unexpected,
+      turn: unexpected, value: unexpected, assess: unexpected, recall: unexpected, dialog: unexpected, drop: unexpected,
     }, line => dir.log(line));
     assert.equal(result.outcome, "DONE");
     assert.equal((await rt.observe()).dialog?.state, "dismissed", "cleanup also dismisses a dialog opened by cancelling the first");

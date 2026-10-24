@@ -8,8 +8,10 @@ export interface Action {
   verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
     | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB" // task 0041
     | "HOVER" // task 0042
-    | "UPLOAD"; // task 0044: click `ref`, give the file chooser the file `value`
+    | "UPLOAD" // task 0044: click `ref`, give the file chooser the file `value`
+    | "DBLCLICK" | "RIGHTCLICK" | "DRAG"; // task 0045
   ref?: string; // element actions only
+  to?: string; // DRAG: ref of the element to drop onto
   value?: string; // UPLOAD: a path relative to the feature file; PRESS: the key, as Playwright names it; ACCEPT: a prompt's text; GOTO: URL or path, resolved against the start URL
 }
 
@@ -55,6 +57,10 @@ const markTitles = (snapshot: string, titles: ReadonlyMap<string, string>) =>
     const title = m && titles.get(m[1].replace(/\\(.)/g, "$1"));
     return title ? line.replace(m![2], ` [description="${title}"]${m![2]}`) : line;
   }).join("\n") : snapshot;
+
+/** Adds `[draggable]` after the ref of each element in `refs`: parseSnapshot offers it as a target (task 0045). */
+const markDraggable = (snapshot: string, refs: ReadonlySet<string>) =>
+  refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => refs.has(ref) ? `${m} [draggable]` : m) : snapshot;
 
 /** Hover moves the mouse only; an element that never stops moving (a tooltip shifting the layout) fails fast (task 0042). */
 const HOVER_TIMEOUT_MS = 2000;
@@ -257,7 +263,7 @@ export class Browser {
     }
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
-    const marked = this.mask(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()));
+    const marked = this.mask(markDraggable(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()), await this.draggable(snapshot)));
     const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
@@ -300,6 +306,18 @@ export class Browser {
     return out;
   }
 
+  /** Refs of ref'd elements with `draggable=true`; one DOM read when the page has none. */
+  private async draggable(snapshot: string): Promise<Set<string>> {
+    const out = new Set<string>();
+    const n = await this.page.locator("[draggable=true]").count().catch(() => 0);
+    for (const [, ref] of snapshot.matchAll(/\[ref=(\w+)\]/g)) {
+      if (out.size >= n) break; // shortcut: one DOM read per ref until all are found; slow on a big page with a draggable near the end
+      const d = await this.page.locator(`aria-ref=${ref}`).getAttribute("draggable", { timeout: 1000 }).catch(() => null);
+      if (d === "true") out.add(ref);
+    }
+    return out;
+  }
+
   /**
    * Refs of links marked aria-current (the current page or tab in a navigation). The hrefs of aria-current links pick
    * the candidates; each candidate is then read by ref, since links that share an href ("#") can differ.
@@ -335,7 +353,7 @@ export class Browser {
     await this.settle();
   }
 
-  private async perform({ verb, ref, value = "" }: Action): Promise<void> {
+  private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
     const opts = { timeout: 5000 };
     if (verb === "SCROLL") await this.page.mouse.wheel(0, 600);
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
@@ -357,6 +375,9 @@ export class Browser {
       const target = this.page.locator(`aria-ref=${ref}`);
       if (verb === "CLICK") await target.click(opts);
       else if (verb === "HOVER") await target.hover({ timeout: HOVER_TIMEOUT_MS });
+      else if (verb === "DBLCLICK") await target.dblclick(opts);
+      else if (verb === "RIGHTCLICK") await target.click({ ...opts, button: "right" });
+      else if (verb === "DRAG") await target.dragTo(this.page.locator(`aria-ref=${to}`), opts);
       else if (verb === "UPLOAD") {
         const path = resolve(this.files, value);
         if (!existsSync(path) || !statSync(path).isFile()) throw new Error(`no file "${value}" next to the feature file`);

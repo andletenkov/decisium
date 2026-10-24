@@ -14,6 +14,7 @@ test("traced: one event per question with the Step and the answer; a secret valu
     async assess() { return { kind: sure("value"), subject: sure("e1"), area: sure("page"), state: sure("disabled") }; }
     async recall() { return sure("Ada"); }
     async dialog() { return sure("accept"); }
+    async drop() { return sure("e1"); }
     get asked() { return this.#asked; }
   }
   const events: [string, Record<string, unknown>][] = [];

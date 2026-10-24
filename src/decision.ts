@@ -12,7 +12,18 @@ export interface TurnAnswer {
   target: Pick; // element ref, a pageActions() key, or "none"
   /** P(the target element is only to be hovered, not clicked/typed into/selected) (task 0042); absent in older cassettes. */
   hover?: number;
+  /** How to use the target element, a GESTURES key (task 0045); absent in older cassettes, which have `hover`. */
+  gesture?: Pick;
 }
+
+/** Ways to use a Turn's target element, asked in the same request as the target (task 0045). */
+export const GESTURES = {
+  default: "Click it, type into it or select from it, as usual.",
+  hover: "Only hover over it with the mouse pointer (e.g. to open a menu or show a tooltip).",
+  "double click": "Double-click it (e.g. to edit it inline).",
+  "right click": "Right-click it (e.g. to open its context menu).",
+  drag: "Drag it with the mouse and drop it onto another element (e.g. to reorder it or move it to another list).",
+} as const;
 
 // The answers a question can have besides element refs: Jev is offered them, code reads them.
 /** Non-element moves offered next to the element refs. */
@@ -91,6 +102,8 @@ export interface Decider {
   /** `keys`: the Named keys the Step's text names (readStep), offered as `press <key>` next to the elements. */
   turn(step: string, obs: Observation, recent: string[], attempt?: boolean, keys?: string[]): Promise<TurnAnswer>;
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
+  /** Drag: the readable element or area to drop `source` onto, or "none" (task 0045). */
+  drop(step: string, obs: Observation, source: Element): Promise<Pick>;
   /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */

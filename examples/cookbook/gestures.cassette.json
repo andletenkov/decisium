@@ -1,0 +1,539 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T12-12-20-104Z",
+  "entries": {
+    "Edit a title inline: I double-click the note title and change it to \"Groceries\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "heading",
+                "name": "Untitled note",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "double click",
+              0.99
+            ]
+          ]
+        },
+        {
+          "done": 0.04,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Note title",
+                "container": ""
+              },
+              0.96
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.8200000000000001
+            ]
+          ],
+          "value": [
+            [
+              "Groceries",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "enter",
+              0.54
+            ],
+            [
+              "none",
+              0.32
+            ]
+          ],
+          "gesture": [
+            [
+              "double click",
+              0.77
+            ],
+            [
+              "default",
+              0.23
+            ]
+          ]
+        }
+      ]
+    },
+    "Edit a title inline: the status should be \"Title: Groceries\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.59,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.63,
+            "checked": 0.2,
+            "unchecked": 0.01,
+            "expanded": 0.02,
+            "collapsed": 0.01,
+            "selected": 0.09,
+            "unselected": 0.02,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.62
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.26
+          ]
+        ]
+      }
+    },
+    "A custom context menu: I right-click report.pdf and choose \"Delete\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "listitem",
+                "name": "",
+                "container": "list \"Files\""
+              },
+              0.97
+            ]
+          ],
+          "gesture": [
+            [
+              "right click",
+              0.99
+            ]
+          ]
+        },
+        {
+          "done": 0.05,
+          "target": [
+            [
+              {
+                "role": "menuitem",
+                "name": "Delete",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.99
+            ]
+          ]
+        },
+        {
+          "done": 0.75,
+          "target": [
+            [
+              "none",
+              0.74
+            ],
+            [
+              {
+                "role": "listitem",
+                "name": "",
+                "container": "list \"Files\""
+              },
+              0.15
+            ]
+          ],
+          "gesture": [
+            [
+              "right click",
+              0.77
+            ],
+            [
+              "default",
+              0.22
+            ]
+          ]
+        }
+      ]
+    },
+    "A custom context menu: the status should be \"Delete report.pdf\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.59,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.63,
+            "checked": 0.17,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.14,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.59
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.23
+          ]
+        ]
+      }
+    },
+    "Move a list item to another list: I drag \"Fix bug\" to the Done list": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "listitem",
+                "name": "",
+                "container": "list \"To do\"",
+                "near": "Fix bug"
+              },
+              0.98
+            ]
+          ],
+          "gesture": [
+            [
+              "drag",
+              1
+            ]
+          ],
+          "drop": [
+            [
+              {
+                "role": "list",
+                "name": "Done",
+                "container": ""
+              },
+              0.98
+            ]
+          ]
+        },
+        {
+          "done": 0.74,
+          "target": [
+            [
+              "none",
+              0.5
+            ],
+            [
+              {
+                "role": "listitem",
+                "name": "",
+                "container": "list \"Done\"",
+                "near": "Fix bug"
+              },
+              0.48
+            ]
+          ],
+          "gesture": [
+            [
+              "drag",
+              0.99
+            ]
+          ]
+        }
+      ]
+    },
+    "Move a list item to another list: \"Fix bug\" should appear in the Done list": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.37,
+          "probabilities": {
+            "value": 0.5,
+            "presence": 0.49,
+            "absence": 0,
+            "state": 0.01,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.53,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.15,
+            "checked": 0.58,
+            "unchecked": 0.01,
+            "expanded": 0.1,
+            "collapsed": 0.01,
+            "selected": 0.13,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Done\"",
+              "near": "Fix bug"
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Done",
+              "container": ""
+            },
+            1
+          ]
+        ]
+      }
+    },
+    "Move a list item to another list: \"Fix bug\" should not appear in the To do list": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "absence",
+          "confidence": 0.97,
+          "probabilities": {
+            "value": 0.01,
+            "presence": 0.01,
+            "absence": 0.98,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.38,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.01,
+            "checked": 0.44,
+            "unchecked": 0.26,
+            "expanded": 0.02,
+            "collapsed": 0.04,
+            "selected": 0.01,
+            "unselected": 0.2,
+            "pressed": 0,
+            "unpressed": 0.02
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Done\"",
+              "near": "Fix bug"
+            },
+            0.89
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "To do",
+              "container": ""
+            },
+            1
+          ]
+        ]
+      }
+    },
+    "A slider: I set the volume to \"75\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "slider",
+                "name": "Volume",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.73
+            ],
+            [
+              "drag",
+              0.26
+            ]
+          ],
+          "value": [
+            [
+              "75",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.97,
+          "target": [
+            [
+              "none",
+              0.51
+            ],
+            [
+              {
+                "role": "slider",
+                "name": "Volume",
+                "container": ""
+              },
+              0.42
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.95
+            ]
+          ]
+        }
+      ]
+    },
+    "A slider: the status should be \"Volume 75\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.64,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.6799999999999999,
+            "checked": 0.18,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.04,
+            "unselected": 0,
+            "pressed": 0.07,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.67
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.17
+          ]
+        ]
+      }
+    }
+  }
+}

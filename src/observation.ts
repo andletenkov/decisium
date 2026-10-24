@@ -32,10 +32,10 @@ export interface Dialog { type: "alert" | "confirm" | "prompt" | "beforeunload";
 
 const ACTIONABLE = new Set([
   "button", "link", "textbox", "searchbox", "spinbutton", "combobox", "option",
-  "checkbox", "radio", "switch", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "treeitem",
+  "checkbox", "radio", "switch", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "treeitem", "slider",
 ]);
 const CELLS = new Set(["cell", "gridcell", "columnheader", "rowheader"]);
-const TYPEABLE = new Set(["textbox", "searchbox", "spinbutton"]);
+const TYPEABLE = new Set(["textbox", "searchbox", "spinbutton", "slider"]); // slider: fill sets a range input (task 0045)
 
 const LINE = /^(\s*)- (\w+)(?: "((?:[^"\\]|\\.)*)")?((?: \[[^\]]+\])*)(?::\s*(.*))?$/;
 
@@ -114,7 +114,8 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     if (role === "generic" && !name && !value) wrappers.set(el, at);
     if (!(ACTIONABLE.has(role) || name || value)) continue;
     readable.push(el);
-    if (ACTIONABLE.has(role) && !/\[disabled\]/.test(attrs)) elements.push(el);
+    // A pointer cursor or draggable marks a custom control: a dblclick/right-click/drag target (task 0045).
+    if ((ACTIONABLE.has(role) || /\[cursor=pointer\]|\[draggable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
   for (const [el, texts] of bare) {

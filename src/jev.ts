@@ -1,5 +1,5 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { AREA_MISSING, AREA_PAGE, ASSERTION_KINDS, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { AREA_MISSING, AREA_PAGE, ASSERTION_KINDS, GESTURES, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
@@ -130,11 +130,19 @@ export class JevDecider implements Decider {
           ? noul("Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?")
           : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
         target: choice(question, targets),
-        // Same request as target: HOVER on any element without doubling the choices (task 0042).
-        hover: noul("Should the element chosen to interact with next only be hovered with the mouse pointer (e.g. to open a menu or show a tooltip), rather than clicked, typed into or selected?"),
+        // Same request as target: a gesture on any element without multiplying the choices (tasks 0042, 0045).
+        gesture: choice("How should the element chosen to interact with next be used to accomplish `step`?", GESTURES),
       },
     });
-    return { done: res.answers.done.noul, target: res.answers.target, hover: res.answers.hover.noul };
+    return { done: res.answers.done.noul, target: res.answers.target, gesture: res.answers.gesture };
+  }
+
+  async drop(step: string, obs: Observation, source: Element): Promise<Pick> {
+    const state = { step, ui: await this.#ui(obs, "step", step), dragged: source.line };
+    const question = "`dragged` is being dragged with the mouse to accomplish `step`. Onto which element in `ui` should it be dropped?";
+    const among = [...new Set([...obs.readable, ...obs.areas])].filter(e => e !== source);
+    const targets = await narrow(refs(among), { none: "No element in `ui` is where `step` says to drop it." }, this.#choose(state, question));
+    return (await this.#ask({ state, questions: { target: choice(question, targets) } })).answers.target;
   }
 
   async recall(step: string, earlier: Record<string, string>): Promise<Pick> {

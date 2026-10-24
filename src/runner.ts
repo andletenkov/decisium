@@ -59,7 +59,8 @@ const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WA
   reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
-const HOVER_THRESHOLD = 0.5; // Jev's `hover` answer: above it the chosen element is hovered instead of its own verb (task 0042)
+const HOVER_THRESHOLD = 0.5; // a recorded `hover` answer (task 0042): above it the chosen element is hovered instead of its own verb
+const GESTURE_VERBS: Record<string, Action["verb"]> = { hover: "HOVER", "double click": "DBLCLICK", "right click": "RIGHTCLICK", drag: "DRAG" };
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
@@ -185,7 +186,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     let t: TurnAnswer;
     [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt, read.keys));
-    log(`  Decision: done=${t.done.toFixed(2)}${t.hover === undefined ? "" : ` hover=${t.hover.toFixed(2)}`} target: ${fmt(t.target)}`);
+    log(`  Decision: done=${t.done.toFixed(2)}${t.hover === undefined ? "" : ` hover=${t.hover.toFixed(2)}`}${t.gesture ? ` gesture: ${fmt(t.gesture)}` : ""} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
     if (alreadyToggled(t.target, obs, read.toggle)) { log("  Toggle: already done"); return end("DONE"); }
@@ -202,7 +203,17 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
       const el = obs.elements.find(e => e.ref === t.target.choice);
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       if (el.verb === "CLICK" && toggled(el, read.toggle)) { log(`  Toggle: already ${el.line}`); return end("DONE"); }
-      action = { verb: (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : read.upload && el.verb === "CLICK" ? "UPLOAD" : el.verb, ref: el.ref };
+      const gesture = t.gesture ? GESTURE_VERBS[t.gesture.choice] : (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : undefined;
+      action = { verb: gesture ?? (read.upload && el.verb === "CLICK" ? "UPLOAD" : el.verb), ref: el.ref };
+      let onto = "";
+      if (action.verb === "DRAG") {
+        const d = await decider.drop(said, obs, el);
+        log(`  Drop: ${fmt(d)}`);
+        if (!gate(d, GATE_TARGET_TOP, GATE_TARGET_MARGIN) || d.choice === "none") return end("AMBIGUOUS", `Jev is unsure where to drop ${el.line}: ${named(d, obs)}`);
+        action.to = d.choice;
+        const to = [...obs.readable, ...obs.areas].find(e => e.ref === d.choice)!;
+        onto = ` onto ${to.role} "${to.name || to.value.slice(0, 60)}"`;
+      }
       if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
         // A file to upload is only ever one the Step quotes (task 0044).
         const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
@@ -213,7 +224,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
         action.value = v.choice;
       }
       const shown = action.value === undefined ? "" : ` <- "${el.secret ? MASK : action.value}"`;
-      described = `${action.verb} ${el.role} "${el.name}"${shown}`;
+      described = `${action.verb} ${el.role} "${el.name || el.value.slice(0, 60)}"${shown}${onto}`;
     }
     log(`  Execute: ${described}`);
     try {

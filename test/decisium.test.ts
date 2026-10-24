@@ -249,6 +249,9 @@ const oracle: Decider = {
   async dialog() {
     throw new Error("not used");
   },
+  async drop() {
+    throw new Error("not used");
+  },
   async recall(_s, earlier) {
     return sure(Object.keys(earlier)[0] ?? "none");
   },
@@ -1140,6 +1143,31 @@ test("hover: Jev's hover answer hovers the element; titles are descriptions; a m
     const started = Date.now();
     assert.equal((await runStep("I hover over Moving", b, hover("Moving"), () => {})).outcome, "ACTION_FAILED");
     assert.ok(Date.now() - started < 4000);
+  } finally {
+    await b.close();
+  }
+});
+
+test("gestures: double-click, right-click and drag by Jev's gesture answer; draggable and pointer elements offered; sliders filled (task 0045)", async () => {
+  const b = await Browser.open(pathToFileURL("examples/cookbook/index.html").href + "?gestures");
+  const by = (o: Observation, text: string) => o.elements.find(e => e.name === text || e.value === text)!;
+  const once = (text: string, gesture: string, drop?: string): Decider => ({ ...oracle,
+    turn: async (_s, o, recent) => recent.length ? { done: 1, target: sure("none") } : { done: 0, gesture: sure(gesture), target: sure(by(o, text).ref) },
+    drop: async (_s, o) => sure([...o.readable, ...o.areas].find(e => e.name === drop)!.ref) });
+  const status = async () => (await b.observe()).readable.find(e => e.role === "status")?.value;
+  try {
+    const obs = await b.observe();
+    assert.equal(by(obs, "Fix bug").line, `listitem value="Fix bug" [draggable]`);
+    assert.equal(by(obs, "report.pdf").line, `listitem value="report.pdf" [cursor=pointer]`);
+    assert.equal(by(obs, "Volume").verb, "TYPE");
+    assert.equal((await runStep("I double-click the title", b, once("Untitled note", "double click"), () => {})).outcome, "DONE");
+    assert.ok((await b.observe()).elements.some(e => e.name === "Note title"));
+    await runStep("I right-click report.pdf", b, once("report.pdf", "right click"), () => {});
+    assert.ok((await b.observe()).elements.some(e => e.name === "Delete"), "the custom context menu is open");
+    assert.equal((await runStep("I drag Fix bug to Done", b, once("Fix bug", "drag", "Done"), () => {})).outcome, "DONE");
+    assert.match((await b.observe()).areas.find(e => e.name === "Done")!.text, /Fix bug/);
+    await b.execute({ verb: "TYPE", ref: by(await b.observe(), "Volume").ref, value: "75" });
+    assert.equal(await status(), "Volume 75");
   } finally {
     await b.close();
   }
