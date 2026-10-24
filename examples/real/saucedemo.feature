@@ -14,7 +14,7 @@ Feature: Sauce Demo shop (login, sorting, cart, checkout validation)
   Scenario: The cart counts added products
     When I log in as "standard_user" with password "secret_sauce"
     And I add "Sauce Labs Backpack" to the cart
-    And I add "Sauce Labs Bike Light" to the cart
+    And I put "Sauce Labs Bike Light" in the cart
     Then the cart badge should show "2"
 
   Scenario: Checkout requires a first name, then completes

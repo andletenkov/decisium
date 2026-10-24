@@ -14,7 +14,7 @@ Feature: The Internet (classic widgets)
 
   @url:https://the-internet.herokuapp.com/dynamic_loading/2
   Scenario: Content that loads after a delay
-    When I click Start
+    When I load the example until the greeting is shown
     Then I should see "Hello World!"
 
   @url:https://the-internet.herokuapp.com/login
@@ -31,5 +31,5 @@ Feature: The Internet (classic widgets)
 
   @url:https://the-internet.herokuapp.com/javascript_alerts
   Scenario: A confirm dialog reports the choice
-    When I click the button for a JS confirm
+    When I open the JS confirm and cancel it
     Then the result should say "You clicked: Cancel"
