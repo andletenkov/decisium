@@ -64,9 +64,9 @@ const markTitles = (snapshot: string, titles: ReadonlyMap<string, string>) =>
 const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
   refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => refs.has(ref) ? `${m} [${flag}]` : m) : snapshot;
 
-/** A list or panel that scrolls on its own: a target for the scroll gestures (task 0061). */
-const isScrollable = (e: Element) => /auto|scroll/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight
-  && e !== document.scrollingElement;
+/** Elements to mark: draggable ones (task 0045), and lists or panels that scroll on their own (task 0061). Runs in the page. */
+const marks = (els: Element[], flag: string) => els.flatMap((e, i) => (flag === "draggable" ? e.getAttribute("draggable") === "true"
+  : /auto|scroll/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement) ? [i] : []);
 
 /** Hover moves the mouse only; an element that never stops moving (a tooltip shifting the layout) fails fast (task 0042). */
 const HOVER_TIMEOUT_MS = 2000;
@@ -274,6 +274,8 @@ export class Browser {
   }
 
   private async read(): Promise<Observation> {
+    const draggable = await this.refsOf("draggable");
+    const scrollable = await this.refsOf("scrollable");
     const snapshot = await this.page.ariaSnapshot({ mode: "ai" });
     // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
     // from a button-like one; ask the DOM.
@@ -290,7 +292,7 @@ export class Browser {
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(markRefs(markRefs(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()),
-      await this.draggable(snapshot), "draggable"), await this.scrollable(snapshot), "scrollable"));
+      draggable, "draggable"), scrollable, "scrollable"));
     const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
@@ -334,26 +336,21 @@ export class Browser {
     return out;
   }
 
-  /** Refs of ref'd elements with `draggable=true`; one DOM read when the page has none. */
-  private async draggable(snapshot: string): Promise<Set<string>> {
+  /**
+   * Refs of the elements `marks` picks in any frame (open shadow roots included): one DOM read per frame, then one
+   * element snapshot per match. Run before the page snapshot: an element snapshot invalidates older refs, and the page
+   * snapshot after it reuses the refs it gave. Reading per ref instead took ~2 s per Observation on Wikipedia.
+   */
+  private async refsOf(flag: "draggable" | "scrollable"): Promise<Set<string>> {
     const out = new Set<string>();
-    const n = (await Promise.all(this.page.frames().map(f => f.locator("[draggable=true]").count().catch(() => 0)))).reduce((a, b) => a + b, 0);
-    for (const [, ref] of snapshot.matchAll(/\[ref=(\w+)\]/g)) {
-      if (out.size >= n) break; // shortcut: one DOM read per ref until all are found; slow on a big page with a draggable near the end
-      const d = await this.page.locator(`aria-ref=${ref}`).getAttribute("draggable", { timeout: 1000 }).catch(() => null);
-      if (d === "true") out.add(ref);
-    }
-    return out;
-  }
-
-  /** Refs of ref'd scrollable containers (isScrollable); one DOM read per frame when the page has none. */
-  private async scrollable(snapshot: string): Promise<Set<string>> {
-    const out = new Set<string>();
-    const n = (await Promise.all(this.page.frames().map(f => f.evaluate(`[...document.querySelectorAll("body *")].filter(${isScrollable}).length`)
-      .catch(() => 0) as Promise<number>))).reduce((a, b) => a + b, 0);
-    for (const [, ref] of snapshot.matchAll(/\[ref=(\w+)\]/g)) {
-      if (out.size >= n) break; // shortcut: one DOM read per ref until all are found, like draggable
-      if (await this.page.locator(`aria-ref=${ref}`).evaluate(isScrollable, undefined, { timeout: 1000 }).catch(() => false)) out.add(ref);
+    for (const f of this.page.frames()) {
+      const all = f.locator("body *");
+      const hits = await all.evaluateAll(marks, flag).catch(() => [] as number[]);
+      for (const i of hits) {
+        const line = await all.nth(i).ariaSnapshot({ mode: "ai", depth: 0, timeout: 1000 }).catch(() => "");
+        const ref = /\[ref=(\w+)\]/.exec(line)?.[1];
+        if (ref) out.add(ref);
+      }
     }
     return out;
   }
