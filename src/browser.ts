@@ -65,12 +65,12 @@ const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
   refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => refs.has(ref) ? `${m} [${flag}]` : m) : snapshot;
 
 /** Facts the snapshot lacks, per element (tasks 0045, 0061, 0064); each stays separate for track B. */
-type Fact = "draggable" | "scrollable" | "pointer" | "tabindex" | "listener";
+type Fact = "draggable" | "scrollable" | "pointer" | "tabindex";
 
 /**
  * `factsIn`: indexes of `els` with a fact, and which. Runs in the page. Native controls are skipped for the target facts: their
  * role already makes them targets. `pointer`: own cursor, not inherited from the parent (OrangeHRM's select wrapper,
- * not the text inside it). `listener`: own click/mousedown/pointerdown listener, marked by `markListeners`.
+ * not the text inside it).
  */
 const factsIn = (els: Element[]) => els.flatMap((e, i) => {
   const out: string[] = [];
@@ -80,7 +80,6 @@ const factsIn = (els: Element[]) => els.flatMap((e, i) => {
   if (!e.matches("a[href], button, input, select, textarea, summary, label, option, iframe") && e.checkVisibility()) {
     if (style.cursor === "pointer" && (!e.parentElement || getComputedStyle(e.parentElement).cursor !== "pointer")) out.push("pointer");
     if (e.hasAttribute("tabindex") && (e as HTMLElement).tabIndex >= 0) out.push("tabindex");
-    if ((e as unknown as { __decisiumClick?: boolean }).__decisiumClick) out.push("listener");
   }
   return out.length ? [[i, out] as [number, string[]]] : [];
 });
@@ -293,7 +292,7 @@ export class Browser {
   private async read(): Promise<Observation> {
     const found = await this.facts();
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
-    const targets = new Set([...refs("pointer"), ...refs("tabindex"), ...refs("listener")]);
+    const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
     const snapshot = renderSnapshot(await this.page.ariaSnapshotJSON({ mode: "ai" }) as AriaNode[]);
     // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
     // from a button-like one; ask the DOM.
@@ -360,7 +359,6 @@ export class Browser {
    * page snapshot after it reuses the refs it gave. Reading per ref instead took ~2 s per Observation on Wikipedia.
    */
   private async facts(): Promise<Map<string, Fact[]>> {
-    await this.markListeners();
     const out = new Map<string, Fact[]>();
     for (const f of this.page.frames()) {
       const all = f.locator("body *");
@@ -372,27 +370,6 @@ export class Browser {
       }
     }
     return out;
-  }
-
-  /**
-   * Marks elements with their own click/mousedown/pointerdown listener (an expando, so no DOM mutation): a sortable
-   * table header has no other sign (task 0064). One CDP call for the whole document (~1-20 ms measured). Chromium only;
-   * listeners delegated to the document root (React) stay invisible.
-   * shortcut: out-of-process (cross-site) iframes are not searched; open a session per frame if a page needs it.
-   */
-  private async markListeners(): Promise<void> {
-    const cdp = await this.context.newCDPSession(this.page).catch(() => undefined);
-    if (!cdp) return;
-    try {
-      const { result } = await cdp.send("Runtime.evaluate", { expression: "document" });
-      const { listeners } = await cdp.send("DOMDebugger.getEventListeners", { objectId: result.objectId!, depth: -1, pierce: true });
-      const nodes = new Set(listeners.filter(l => /^(click|mousedown|pointerdown)$/.test(l.type) && l.backendNodeId).map(l => l.backendNodeId!));
-      // In parallel: one at a time took ~40 ms for Wikipedia's 131 listener nodes, ~13 ms pipelined.
-      await Promise.all([...nodes].map(async backendNodeId => {
-        const { object } = await cdp.send("DOM.resolveNode", { backendNodeId }).catch(() => ({ object: undefined }));
-        if (object?.objectId) await cdp.send("Runtime.callFunctionOn", { objectId: object.objectId, functionDeclaration: "function () { this.__decisiumClick = true; }" }).catch(() => {});
-      }));
-    } catch { /* mid-navigation: no listener facts this time */ } finally { await cdp.detach().catch(() => {}); }
   }
 
   /**

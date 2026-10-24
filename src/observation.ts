@@ -71,7 +71,7 @@ const cap = (line: string) => line.length > MAX_LINE ? line.slice(0, MAX_LINE) +
 /**
  * `secretRefs`: refs of password fields (the snapshot itself shows them as plain textboxes with their value).
  * `editableRefs`: comboboxes you type into (search boxes with suggestions); other comboboxes are clicked open.
- * `targetRefs`: non-controls with their own pointer cursor, tabindex or click listener: Turn targets (task 0064).
+ * `targetRefs`: non-controls with their own pointer cursor or tabindex: Turn targets (task 0064).
  */
 export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set(), editableRefs: ReadonlySet<string> = new Set(),
   targetRefs: ReadonlySet<string> = new Set()): Observation {
@@ -140,9 +140,10 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     if (role === "generic" && !name && !value && !scrollable) wrappers.set(el, at);
     if (!(ACTIONABLE.has(role) || name || value || scrollable)) continue;
     readable.push(el);
-    // Draggable: a drag target (task 0045); scrollable: a scroll target (task 0061); own pointer cursor, tabindex or
-    // click listener: a custom control (task 0064; an inherited pointer cursor proves nothing).
-    if ((ACTIONABLE.has(role) || targetRefs.has(ref) || /\[draggable\]|\[scrollable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
+    // Draggable: a drag target (task 0045); scrollable: a scroll target (task 0061); own pointer cursor or tabindex:
+    // a custom control (task 0064; an inherited pointer cursor proves nothing). Column headers: often sort on click
+    // with no sign in the DOM but a click listener (the-internet); a CDP listener lookup found only that case.
+    if ((ACTIONABLE.has(role) || role === "columnheader" || targetRefs.has(ref) || /\[draggable\]|\[scrollable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
   for (const [el, texts] of bare) {

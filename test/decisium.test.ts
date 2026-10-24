@@ -1629,8 +1629,8 @@ test("renderSnapshot: names with colons and quotes survive as readable Subjects 
   assert.ok(!obs.text.includes("hunter2") && el("e7")?.value === MASK);
 });
 
-test("parseSnapshot: own pointer, tabindex or listener makes a target; an inherited pointer cursor does not (task 0064)", () => {
-  const snap = `- columnheader "Last Name" [ref=e1]\n- generic [ref=e2] [cursor=pointer]: -- Select --\n- columnheader "Due" [ref=e3]\n- button "Off" [disabled] [ref=e4]`;
-  const refs = parseSnapshot(snap, new Set(), new Set(), new Set(["e1", "e4"])).elements.map(e => e.ref);
-  assert.deepEqual(refs, ["e1"]); // e2 has only the cursor hint; e3 nothing; e4 disabled
+test("parseSnapshot: own pointer, tabindex or a column header makes a target; an inherited pointer cursor does not (task 0064)", () => {
+  const snap = `- columnheader "Last Name" [ref=e1]\n- generic [ref=e2] [cursor=pointer]: -- Select --\n- cell "Smith" [ref=e3]\n- button "Off" [disabled] [ref=e4]\n- generic [ref=e5]: Menu`;
+  const refs = parseSnapshot(snap, new Set(), new Set(), new Set(["e4", "e5"])).elements.map(e => e.ref);
+  assert.deepEqual(refs, ["e1", "e5"]); // e2 has only the cursor hint; e3 a plain cell; e4 disabled
 });
