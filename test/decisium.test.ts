@@ -1456,3 +1456,50 @@ test("upload through a hidden input behind a button, never a missing file; downl
     await b.close();
   }
 });
+
+test("Browser: TYPE native ISO dates, clear and blur validation", async () => {
+  const b = await Browser.open(pathToFileURL("examples/cookbook/form-details.html").href);
+  try {
+    for (const [name, value] of [["Search", ""], ["Start date", "2026-10-20"], ["Start time", "14:30"], ["Appointment", "2026-10-20T14:30"], ["Email", "invalid"]]) {
+      const el = (await b.observe()).elements.find(e => e.name === name)!;
+      assert.equal(el.verb, "TYPE");
+      await b.execute({ verb: "TYPE", ref: el.ref, value });
+      assert.equal((await b.observe()).elements.find(e => e.name === name)!.value, value);
+    }
+    assert.match((await b.observe()).pageText, /Search cleared/);
+    assert.match((await b.observe()).pageText, /Invalid email/);
+  } finally { await b.close(); }
+});
+
+test("Browser: TYPE blur preserves application-directed focus and validates changed values", async () => {
+  const b = await Browser.open('data:text/html,<input aria-label="First" onblur="document.querySelector(\'button\').focus()"><button>Next</button><input aria-label="Reset" onblur="this.value=\'\'">');
+  try {
+    const first = (await b.observe()).elements.find(e => e.name === "First")!;
+    await b.execute({ verb: "TYPE", ref: first.ref, value: "value" });
+    assert.match((await b.observe()).elements.find(e => e.name === "Next")!.state, /active/);
+    const reset = (await b.observe()).elements.find(e => e.name === "Reset")!;
+    await assert.rejects(b.execute({ verb: "TYPE", ref: reset.ref, value: "value" }), /does not hold the typed value/);
+  } finally { await b.close(); }
+});
+
+test("Browser: TYPE blur dialogs unblock without restoring focus", async () => {
+  const b = await Browser.open('data:text/html,<input aria-label="Note" onblur="alert(\'Check note\')">');
+  try {
+    const el = (await b.observe()).elements.find(e => e.name === "Note")!;
+    await b.execute({ verb: "TYPE", ref: el.ref, value: "value" });
+    assert.equal((await b.observe()).dialog?.state, "open");
+    await b.execute({ verb: "DISMISS" });
+    assert.doesNotMatch((await b.observe()).elements.find(e => e.name === "Note")!.state, /active/);
+  } finally { await b.close(); }
+});
+
+test("Browser: TYPE blur does not refocus hidden or disabled fields", async () => {
+  for (const change of ["this.hidden=true", "this.disabled=true"]) {
+    const b = await Browser.open(`data:text/html,<input aria-label="Note" onblur="${change}">`);
+    try {
+      const el = (await b.observe()).elements.find(e => e.name === "Note")!;
+      await b.execute({ verb: "TYPE", ref: el.ref, value: "value" });
+      assert.ok(!(await b.observe()).elements.some(e => e.name === "Note" && /active/.test(e.state)));
+    } finally { await b.close(); }
+  }
+});

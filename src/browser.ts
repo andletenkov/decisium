@@ -395,6 +395,18 @@ export class Browser {
           const typed = this.secrets[value] ?? value;
           if (value in this.secrets) this.typedSecret = true;
           await target.fill(typed, opts);
+          const field = await (await now()).elementHandle();
+          if (field) {
+            try {
+              const left = await this.unblocked(field.evaluate(el => { (el as HTMLElement).blur(); return true; }));
+              if (!left || this.open) return; // A blur dialog is answered in a later Turn; never refocus behind it.
+              await field.evaluate(el => {
+                // Keep TYPE → Enter working unless on-leave validation took focus or removed the field.
+                if (document.activeElement === document.body && el.isConnected && el.checkVisibility()
+                  && !el.matches(":disabled")) (el as HTMLElement).focus();
+              });
+            } finally { await field.dispose(); }
+          }
           // Message omits the values: the field may be a password.
           if ((await (await now()).inputValue(opts)) !== typed) throw new Error("field does not hold the typed value after TYPE");
         } else {

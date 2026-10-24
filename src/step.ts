@@ -25,7 +25,7 @@ export interface StepReading {
   quoted: string[];
   /** Quoted values and the Doc string; for a check also its one-column table: what it compares, or a prompt can answer. */
   values: string[];
-  /** Candidate values an Action step can type: quoted strings, numbers with an optional unit word, the Doc string. */
+  /** Candidate values an Action step can type: quoted strings, numbers with an optional unit word, the Doc string; clear/empty adds "". */
   candidates: string[];
   /** Named keys after "press" or "hit", as Playwright names them, one per verb. Actions only. */
   keys: string[];
@@ -60,12 +60,13 @@ export function readStep(step: ParsedStep): StepReading {
   const withDoc = docString === undefined ? quotedText : [...quotedText, docString];
   const numbers = [...text.matchAll(/\b\d+(?:[.,]\d+)?(?:\s+[a-z]+)?/gi)].map(m => m[0]);
   const { keys, unknown } = isCheck ? { keys: [], unknown: [] } : stepKeys(text);
+  const clear = !isCheck && /\b(clear|empty)\b/i.test(text.replace(/["“][^"”]*["”]/g, ""));
   return {
     label: label(text, table, docString, header),
     rows: table && !isCheck ? tableSteps(text, table, header) : [text],
     quoted: quotedText,
     values: list ? [...withDoc, ...table.map(r => r[0])] : withDoc,
-    candidates: [...new Set([...quotedText, ...numbers]), ...docString === undefined ? [] : [docString]],
+    candidates: [...new Set([...quotedText, ...numbers, ...clear ? [""] : []]), ...docString === undefined ? [] : [docString]],
     keys,
     unknownKeys: unknown,
     pressOnly: isCheck ? undefined : pressOnly(text),

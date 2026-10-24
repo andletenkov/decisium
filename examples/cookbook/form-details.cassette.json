@@ -1,0 +1,566 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T12-40-54-582Z",
+  "entries": {
+    "Clear a populated search field: I clear the Search field": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "searchbox",
+                "name": "Search",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.89
+            ]
+          ],
+          "value": [
+            [
+              "",
+              0.88
+            ]
+          ]
+        },
+        {
+          "done": 0.92,
+          "target": [
+            [
+              "none",
+              0.61
+            ],
+            [
+              {
+                "role": "searchbox",
+                "name": "Search",
+                "container": ""
+              },
+              0.38
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.97
+            ]
+          ]
+        }
+      ]
+    },
+    "Clear a populated search field: the search status should be \"Search cleared\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.97,
+          "probabilities": {
+            "value": 0.98,
+            "presence": 0.01,
+            "absence": 0,
+            "state": 0.01,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "unchecked",
+          "confidence": 0.23,
+          "probabilities": {
+            "disabled": 0.03,
+            "enabled": 0.25,
+            "checked": 0.03,
+            "unchecked": 0.31,
+            "expanded": 0.02,
+            "collapsed": 0.15,
+            "selected": 0.01,
+            "unselected": 0.12,
+            "pressed": 0.01,
+            "unpressed": 0.07
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": "",
+              "near": "Search cleared"
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.74
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "near": "Start date Start date"
+            },
+            0.09
+          ]
+        ]
+      }
+    },
+    "Native date and time fields: I set the Start date to \"2026-10-20\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Start date",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ],
+          "value": [
+            [
+              "2026-10-20",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.68
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Start date",
+                "container": ""
+              },
+              0.17
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "Native date and time fields: the Start date should be \"2026-10-20\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.6,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.64,
+            "checked": 0.07,
+            "unchecked": 0.06,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0.22,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "textbox",
+              "name": "Start date",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.54
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "near": "Start date Start date 2026-10-20"
+            },
+            0.22
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "near": "Start time Start time"
+            },
+            0.08
+          ]
+        ]
+      }
+    },
+    "Native date and time fields: I set the Start time to \"14:30\"": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Start time",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ],
+          "value": [
+            [
+              "14:30",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.7
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Start time",
+                "container": ""
+              },
+              0.18
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "Native date and time fields: the Start time should be \"14:30\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.84,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.86,
+            "checked": 0.04,
+            "unchecked": 0.05,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0.05,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "textbox",
+              "name": "Start time",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.48
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "near": "Start time Start time 14:30"
+            },
+            0.22
+          ],
+          [
+            "missing",
+            0.13
+          ]
+        ]
+      }
+    },
+    "Native date and time fields: I set the Appointment to \"2026-10-20T14:30\"": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Appointment",
+                "container": ""
+              },
+              0.93
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ],
+          "value": [
+            [
+              "2026-10-20T14:30",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.64
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Appointment",
+                "container": ""
+              },
+              0.23
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "Native date and time fields: the Appointment should be \"2026-10-20T14:30\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.54,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.59,
+            "checked": 0.16,
+            "unchecked": 0.1,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0.15,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "textbox",
+              "name": "Appointment",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.58
+          ],
+          [
+            "missing",
+            0.14
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "near": "Email Email"
+            },
+            0.1
+          ]
+        ]
+      }
+    },
+    "Validate when leaving a field: I enter \"invalid\" in Email": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ],
+          "value": [
+            [
+              "invalid",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.96,
+          "target": [
+            [
+              "none",
+              0.58
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Email",
+                "container": ""
+              },
+              0.27
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "Validate when leaving a field: the email status should be \"Invalid email\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.73,
+          "probabilities": {
+            "disabled": 0.06,
+            "enabled": 0.76,
+            "checked": 0.08,
+            "unchecked": 0.03,
+            "expanded": 0.02,
+            "collapsed": 0.01,
+            "selected": 0.01,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": "",
+              "near": "Invalid email"
+            },
+            0.92
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.81
+          ]
+        ]
+      }
+    }
+  }
+}

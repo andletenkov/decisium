@@ -181,7 +181,7 @@ export class JevDecider implements Decider {
     const res = await this.#ask({ state, questions: { value: choice(question, criteria) } });
     const a: Pick = res.answers.value;
     // Map label keys back to the values so traces and execution use real text.
-    const name = (k: string) => criteria[k] && k !== "none" ? criteria[k] : k;
+    const name = (k: string) => criteria[k] !== undefined && k !== "none" ? criteria[k] : k;
     return {
       choice: name(a.choice),
       probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),

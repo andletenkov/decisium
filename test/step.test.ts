@@ -100,3 +100,11 @@ test("readStep: a Step uploads only when it says upload or attach and quotes a f
   assert.equal(action(`I upload a file`).upload, false);
   assert.equal(action(`I enter "a.txt"`).upload, false);
 });
+
+test("readStep: clear/empty offers an empty TYPE candidate only in action wording", () => {
+  assert.deepEqual(action("I clear Search").candidates, [""]);
+  assert.deepEqual(action("I empty Search").candidates, [""]);
+  assert.deepEqual(action('I type "clear"').candidates, ["clear"]);
+  assert.deepEqual(action("I search").candidates, []);
+  assert.deepEqual(check("Search is empty").candidates, []);
+});
