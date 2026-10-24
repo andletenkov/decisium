@@ -11,7 +11,9 @@
      (?gestures, task 0045) a title edited on double-click, a file with a right-click menu, two lists whose items are
      dragged between them, and a volume slider, and (?frames, task 0047) a newsletter form inside a same-origin iframe
      and a like button inside a web component's open shadow root, and (?network, task 0048) the viewport and locale the
-     browser context has, and campaigns loaded from the campaign manager's API on 127.0.0.1:5173. -->
+     browser context has, and campaigns loaded from the campaign manager's API on 127.0.0.1:5173, and (?scroll, task
+     0061) an inbox panel that loads more messages when scrolled to its end, and a chat log that loads older messages
+     when scrolled to its top. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -221,6 +223,21 @@ function network() {
   };
 }
 
+function scroll() {
+  const items = (from, to, what) => Array.from({ length: to - from + 1 }, (_, i) => `<li>${what} ${from + i}</li>`).join("");
+  main.innerHTML = `<h1>Scroll</h1>
+    <ul aria-label="Inbox" style="height:120px;overflow:auto">${items(1, 10, "Message")}</ul>
+    <ul aria-label="Chat" style="height:120px;overflow:auto">${items(11, 20, "Chat line")}</ul>`;
+  const [inbox, chat] = main.querySelectorAll("ul");
+  inbox.onscroll = () => {
+    if (inbox.scrollTop + inbox.clientHeight >= inbox.scrollHeight - 5 && inbox.children.length < 20) inbox.insertAdjacentHTML("beforeend", items(11, 20, "Message"));
+  };
+  chat.scrollTop = chat.scrollHeight;
+  chat.onscroll = () => {
+    if (chat.scrollTop <= 5 && chat.children.length < 20) { chat.insertAdjacentHTML("afterbegin", items(1, 10, "Chat line")); chat.scrollTop = 1; }
+  };
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
@@ -228,7 +245,7 @@ location.search.includes("settings") ? settings() : location.search.includes("co
   : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover()
   : location.search.includes("toggles") ? toggles() : location.search.includes("files") ? files()
   : location.search.includes("gestures") ? gestures() : location.search.includes("frames") ? frames()
-  : location.search.includes("network") ? network() : search();
+  : location.search.includes("network") ? network() : location.search.includes("scroll") ? scroll() : search();
 </script>
 </body>
 </html>

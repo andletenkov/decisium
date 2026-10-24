@@ -1,0 +1,198 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T17-35-52-780Z",
+  "entries": {
+    "A panel that loads more when scrolled down: I scroll down the Inbox until \"Message 15\" is shown": {
+      "turns": [
+        {
+          "done": 0.21,
+          "target": [
+            [
+              {
+                "role": "list",
+                "name": "Inbox",
+                "container": ""
+              },
+              0.64
+            ],
+            [
+              "scroll",
+              0.24
+            ]
+          ],
+          "gesture": [
+            [
+              "scroll down",
+              0.97
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.84
+            ]
+          ],
+          "gesture": [
+            [
+              "scroll down",
+              0.91
+            ]
+          ]
+        }
+      ]
+    },
+    "A panel that loads more when scrolled down: \"Message 15\" should appear in the Inbox": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "presence",
+          "confidence": 0.59,
+          "probabilities": {
+            "value": 0.33,
+            "presence": 0.67,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "expanded",
+          "confidence": 0.57,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.18,
+            "checked": 0.12,
+            "unchecked": 0.01,
+            "expanded": 0.61,
+            "collapsed": 0.01,
+            "selected": 0.05,
+            "unselected": 0.02,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Inbox\"",
+              "near": "Message 15"
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Inbox",
+              "container": ""
+            },
+            1
+          ]
+        ]
+      }
+    },
+    "A chat log that loads older messages when scrolled up: I scroll up the Chat until \"Chat line 5\" is shown": {
+      "turns": [
+        {
+          "done": 0.07,
+          "target": [
+            [
+              {
+                "role": "list",
+                "name": "Chat",
+                "container": ""
+              },
+              0.56
+            ],
+            [
+              "scroll up",
+              0.29
+            ]
+          ],
+          "gesture": [
+            [
+              "scroll up",
+              0.87
+            ]
+          ]
+        },
+        {
+          "done": 0.8,
+          "target": [
+            [
+              "none",
+              0.83
+            ]
+          ],
+          "gesture": [
+            [
+              "scroll up",
+              0.9400000000000001
+            ]
+          ]
+        }
+      ]
+    },
+    "A chat log that loads older messages when scrolled up: \"Chat line 5\" should appear in the Chat": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "presence",
+          "confidence": 0.41,
+          "probabilities": {
+            "value": 0.47,
+            "presence": 0.53,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "expanded",
+          "confidence": 0.44,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.3,
+            "checked": 0.13,
+            "unchecked": 0.01,
+            "expanded": 0.5,
+            "collapsed": 0.02,
+            "selected": 0.02,
+            "unselected": 0.02,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Chat\"",
+              "near": "Chat line 5"
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Chat",
+              "container": ""
+            },
+            1
+          ]
+        ]
+      }
+    }
+  }
+}

@@ -1162,6 +1162,24 @@ test("gestures: double-click, right-click and drag by Jev's gesture answer; drag
   }
 });
 
+test("scroll: scrollable panels offered as targets and scrolled down or up by gesture; page scroll up (task 0061)", async () => {
+  const b = await Browser.open(pathToFileURL("examples/cookbook/index.html").href + "?scroll");
+  const has = async (text: string) => (await b.observe()).text.includes(text);
+  try {
+    const panel = (await b.observe()).elements.find(e => e.name === "Inbox")!;
+    assert.equal(panel.line, `list "Inbox" [scrollable]`);
+    assert.ok(!await has("Message 15"));
+    await b.execute({ verb: "SCROLL", ref: panel.ref });
+    assert.ok(await has("Message 15"), "scrolling the panel down loads more");
+    assert.ok(!await has("Chat line 5"));
+    await b.execute({ verb: "SCROLL_UP", ref: (await b.observe()).elements.find(e => e.name === "Chat")!.ref });
+    assert.ok(await has("Chat line 5"), "scrolling the chat up loads older lines");
+    await b.execute({ verb: "SCROLL_UP" }); // the page itself: nothing to scroll, must not throw
+  } finally {
+    await b.close();
+  }
+});
+
 test("lint: a key that is not a key name, or named without press/hit, is never pressed (task 0039)", async () => {
   const { warnings } = await import("../src/lint.ts");
   const w = (text: string) => warnings({ text, kind: "action" }, []).join(" | ");

@@ -111,11 +111,12 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     };
     open.push({ el, indent: indent.length });
     if (host?.role === "row" && CELLS.has(role)) (host.cells ??= []).push(el);
-    if (role === "generic" && !name && !value) wrappers.set(el, at);
-    if (!(ACTIONABLE.has(role) || name || value)) continue;
+    const scrollable = /\[scrollable\]/.test(attrs);
+    if (role === "generic" && !name && !value && !scrollable) wrappers.set(el, at);
+    if (!(ACTIONABLE.has(role) || name || value || scrollable)) continue;
     readable.push(el);
-    // A pointer cursor or draggable marks a custom control: a dblclick/right-click/drag target (task 0045).
-    if ((ACTIONABLE.has(role) || /\[cursor=pointer\]|\[draggable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
+    // A pointer cursor or draggable marks a custom control: a dblclick/right-click/drag target (task 0045); scrollable: a scroll target (task 0061).
+    if ((ACTIONABLE.has(role) || /\[cursor=pointer\]|\[draggable\]|\[scrollable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
   for (const [el, texts] of bare) {

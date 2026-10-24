@@ -22,6 +22,8 @@ export const GESTURES = {
   hover: "Only hover over it with the mouse pointer (e.g. to open a menu or show a tooltip).",
   "double click": "Double-click it (e.g. to edit it inline).",
   "right click": "Right-click it (e.g. to open its context menu).",
+  "scroll down": "Scroll inside it (a list or panel marked [scrollable]) to show or load more of its content further down.",
+  "scroll up": "Scroll inside it (a list or panel marked [scrollable]) to show or load more of its content further up.",
   drag: "Drag it with the mouse and drop it onto another element (e.g. to reorder it or move it to another list).",
 } as const;
 
@@ -29,6 +31,7 @@ export const GESTURES = {
 /** Non-element moves offered next to the element refs. */
 const PAGE_ACTIONS = {
   scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
+  "scroll up": "Scroll up: the needed element is not in `ui` yet and may be further up the page.",
   wait: "Wait: `ui` is still loading the needed element.",
   back: "Go back to the previous page in the browser history.",
   forward: "Go forward in the browser history.",
@@ -82,7 +85,7 @@ export const AREA_MISSING = "missing";
 
 const SPECIAL: Record<string, string> = {
   none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
-  scroll: "scroll down", wait: "wait for loading", enter: "press Enter", back: "go back", forward: "go forward", reload: "reload",
+  scroll: "scroll down", "scroll up": "scroll up", wait: "wait for loading", enter: "press Enter", back: "go back", forward: "go forward", reload: "reload",
 };
 /** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
 export const named = (p: Pick, obs?: Observation) =>

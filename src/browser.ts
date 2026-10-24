@@ -6,7 +6,7 @@ import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import { parseSnapshot, withDialog, withDownload, withPage, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
-  verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
+  verb: Verb | "SCROLL" | "SCROLL_UP" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
     | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB" // task 0041
     | "HOVER" // task 0042
     | "UPLOAD" // task 0044: click `ref`, give the file chooser the file `value`
@@ -59,9 +59,13 @@ const markTitles = (snapshot: string, titles: ReadonlyMap<string, string>) =>
     return title ? line.replace(m![2], ` [description="${title}"]${m![2]}`) : line;
   }).join("\n") : snapshot;
 
-/** Adds `[draggable]` after the ref of each element in `refs`: parseSnapshot offers it as a target (task 0045). */
-const markDraggable = (snapshot: string, refs: ReadonlySet<string>) =>
-  refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => refs.has(ref) ? `${m} [draggable]` : m) : snapshot;
+/** Adds `[flag]` after the ref of each element in `refs`: parseSnapshot offers it as a target (tasks 0045, 0061). */
+const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
+  refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => refs.has(ref) ? `${m} [${flag}]` : m) : snapshot;
+
+/** A list or panel that scrolls on its own: a target for the scroll gestures (task 0061). */
+const isScrollable = (e: Element) => /auto|scroll/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight
+  && e !== document.scrollingElement;
 
 /** Hover moves the mouse only; an element that never stops moving (a tooltip shifting the layout) fails fast (task 0042). */
 const HOVER_TIMEOUT_MS = 2000;
@@ -276,7 +280,8 @@ export class Browser {
     }
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
-    const marked = this.mask(markDraggable(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()), await this.draggable(snapshot)));
+    const marked = this.mask(markRefs(markRefs(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()),
+      await this.draggable(snapshot), "draggable"), await this.scrollable(snapshot), "scrollable"));
     const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
@@ -332,6 +337,18 @@ export class Browser {
     return out;
   }
 
+  /** Refs of ref'd scrollable containers (isScrollable); one DOM read per frame when the page has none. */
+  private async scrollable(snapshot: string): Promise<Set<string>> {
+    const out = new Set<string>();
+    const n = (await Promise.all(this.page.frames().map(f => f.evaluate(`[...document.querySelectorAll("body *")].filter(${isScrollable}).length`)
+      .catch(() => 0) as Promise<number>))).reduce((a, b) => a + b, 0);
+    for (const [, ref] of snapshot.matchAll(/\[ref=(\w+)\]/g)) {
+      if (out.size >= n) break; // shortcut: one DOM read per ref until all are found, like draggable
+      if (await this.page.locator(`aria-ref=${ref}`).evaluate(isScrollable, undefined, { timeout: 1000 }).catch(() => false)) out.add(ref);
+    }
+    return out;
+  }
+
   /**
    * Refs of links marked aria-current (the current page or tab in a navigation). The hrefs of aria-current links pick
    * the candidates; each candidate is then read by ref, since links that share an href ("#") can differ.
@@ -369,7 +386,8 @@ export class Browser {
 
   private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
     const opts = { timeout: 5000 };
-    if (verb === "SCROLL") await this.page.mouse.wheel(0, 600);
+    if ((verb === "SCROLL" || verb === "SCROLL_UP") && ref) await this.page.locator(`aria-ref=${ref}`).hover(opts); // the wheel scrolls what is under the mouse
+    if (verb === "SCROLL" || verb === "SCROLL_UP") await this.page.mouse.wheel(0, verb === "SCROLL" ? 600 : -600);
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
     else if (verb === "PRESS") await this.page.keyboard.press(value); // to whatever has focus
     else if (verb === "WAIT") await this.waitForChange((await this.observe()).text, WAIT_CAP_MS);

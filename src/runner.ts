@@ -55,12 +55,13 @@ function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined)
 /** The element is a toggle in the Step's wanted state, or a checked radio (radios cannot be unchecked). */
 const toggled = (e: { role: string; state: string }, goal: boolean | undefined) => goal !== undefined
   && (TOGGLES.has(e.role) || e.role === "radio" && goal) && /\[checked\]/.test(e.state) === goal;
-const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER", back: "BACK", forward: "FORWARD",
+const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", "scroll up": "SCROLL_UP", wait: "WAIT", enter: "ENTER", back: "BACK", forward: "FORWARD",
   reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
 const HOVER_THRESHOLD = 0.5; // a recorded `hover` answer (task 0042): above it the chosen element is hovered instead of its own verb
-const GESTURE_VERBS: Record<string, Action["verb"]> = { hover: "HOVER", "double click": "DBLCLICK", "right click": "RIGHTCLICK", drag: "DRAG" };
+const GESTURE_VERBS: Record<string, Action["verb"]> = { hover: "HOVER", "double click": "DBLCLICK", "right click": "RIGHTCLICK", drag: "DRAG",
+  "scroll down": "SCROLL", "scroll up": "SCROLL_UP" };
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
