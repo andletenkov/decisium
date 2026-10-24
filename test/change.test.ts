@@ -56,3 +56,18 @@ test("changes: a list item dragged to another list moved", () => {
   assert.equal(changes(board(["Fix bug", "Write docs"], ["Ship release"]), board(["Write docs"], ["Ship release", "Fix bug"]), "a0"),
     'changed: listitem "Fix bug" moved from list "To do" to list "Done"');
 });
+
+test("changes: a container's text is left out when a change inside it says more; kept when nothing inside changed", () => {
+  const page = (user: string, msg: string) => parseSnapshot(`- main [ref=m1]:\n  - text: Login page ${msg}\n  - textbox "Username" [ref=u1]: ${user}`);
+  assert.equal(changes(page("", "Hello"), page("tom", "Hello"), "u1"), 'changed: textbox "Username" value "" -> "tom"');
+  const card = (n: string) => parseSnapshot(`- generic [ref=g1]:\n  - strong [ref=s1]: ${n}\n  - text: items left`);
+  assert.equal(changes(card("2"), card("1")), 'changed: strong value "2" -> "1"');
+  const files = (shown: boolean) => parseSnapshot(`- main [ref=m1]:\n  - text: Files\n${shown ? '  - list "Files" [ref=l1]:\n    - listitem [ref=i1]: report.pdf\n' : ""}  - status [ref=s1]: ${shown ? "" : "Delete report.pdf"}`);
+  assert.equal(changes(files(true), files(false)), 'changed: appeared: status "Delete report.pdf"; gone: listitem "report.pdf"');
+});
+
+test("changes: what an action removed is listed where it was; the closing menu of the clicked item goes last", () => {
+  const before = parseSnapshot(`- list "Files" [ref=l1]:\n  - listitem [ref=i1]: report.pdf\n  - listitem [ref=i2]: notes.txt\n- menu [ref=m1]:\n  - menuitem "Rename" [ref=r1]\n  - menuitem "Delete" [ref=d1]\n- status [ref=s1]: Ready`);
+  const after = parseSnapshot(`- list "Files" [ref=l1]:\n  - listitem [ref=i2]: notes.txt\n- status [ref=s1]: Deleted report.pdf`);
+  assert.equal(changes(before, after, "d1"), 'changed: gone: listitem "report.pdf"; status value "Ready" -> "Deleted report.pdf"; gone: menuitem "Rename"; gone: menuitem "Delete"');
+});

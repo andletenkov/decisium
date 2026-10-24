@@ -8,8 +8,10 @@ const ITEMS = 5;
 /** Icon-font glyphs (private use) and zero-width characters print as nothing: `value "" -> ""` (OrangeHRM). */
 const clean = (s: string) => s.replace(/[\u200b-\u200d\ufeff\ue000-\uf8ff]/g, "").replace(/\s+/g, " ").trim();
 const short = (s: string, n = 40) => (s.length > n ? s.slice(0, n) + "…" : s);
+/** Containers (nodes with children): their value is their descendants' text, so it does not tell them apart. */
+const containers = new WeakSet<Element>();
 /** What tells a node apart: its name, or for a nameless one (a list item) its text. */
-const ident = (e: Element) => clean(e.name) || (e.secret ? "" : clean(e.value));
+const ident = (e: Element) => clean(e.name) || (e.secret || containers.has(e) ? "" : clean(e.value));
 const label = (e: Element) => `${e.role}${ident(e) ? ` "${short(ident(e))}"` : ""}`;
 const where = (e: Element) => { let p = e.parent; while (p && !p.name) p = p.parent; return p ? label(p) : "the page"; };
 /** Two long texts shown around where they first differ, so a clipped "A…" -> "A…" still says what changed. */
@@ -45,6 +47,7 @@ function sequences(obs: Observation, keyOf: Map<Element, string>) {
 }
 
 function keys(obs: Observation) {
+  for (const a of obs.areas) containers.add(a);
   const seen = new Map<string, number>();
   const keyOf = new Map<Element, string>();
   for (const e of all(obs)) {
@@ -63,7 +66,9 @@ function keys(obs: Observation) {
 export function changes(before: Observation, after: Observation, acted?: string): string {
   const kb = keys(before), ka = keys(after);
   const byKey = new Map([...kb].map(([e, k]) => [k, e]));
-  const entries: { at: number; text: string }[] = [];
+  // `keys`: match keys of the entry's node and its ancestors; `text` of a container: dropped when an entry inside it says more.
+  const entries: { at: number; text: string; keys: string[]; container?: string }[] = [];
+  const chain = (e: Element, keyOf: Map<Element, string>) => { const out: string[] = []; for (let p: Element | undefined = e; p; p = p.parent) out.push(keyOf.get(p) ?? ""); return out; };
   const order = all(after);
   // The page's own pseudo-elements (url, title, ...) come first: a navigation is the strongest evidence.
   const pos = (e: Element) => (PAGE.has(e.ref) ? -Infinity : order.indexOf(e));
@@ -76,7 +81,9 @@ export function changes(before: Observation, after: Observation, acted?: string)
     const what: string[] = [];
     if (clean(old.value) !== clean(e.value)) what.push(`value ${values(clean(old.value), clean(e.value))}`);
     if (state(old) !== state(e)) what.push(`${state(old) || "[no state]"} -> ${state(e) || "[no state]"}`);
-    if (what.length) entries.push({ at: pos(e), text: `${label(e)} ${what.join(", ")}` });
+    // A container whose own state did not change only repeats what changed inside it (whole-page text, task 0066).
+    const container = containers.has(e) && state(old) === state(e) ? k : undefined;
+    if (what.length) entries.push({ at: pos(e), text: `${label(e)} ${what.join(", ")}`, keys: chain(e, ka), container });
   }
   // Unmatched: the same node under another named ancestor moved (a drag between lists); a name change pairs by role,
   // ancestor and position among the unmatched; the rest appeared or went.
@@ -84,13 +91,17 @@ export function changes(before: Observation, after: Observation, acted?: string)
   const added = [...ka].filter(([e, k]) => told(e) && !byKey.has(k)).map(([e]) => e);
   for (const e of added) {
     const m = gone.findIndex(o => o.role === e.role && ident(o) === ident(e) && ident(e));
-    if (m >= 0) { entries.push({ at: pos(e), text: `${label(e)} moved from ${where(gone.splice(m, 1)[0])} to ${where(e)}` }); continue; }
+    if (m >= 0) { entries.push({ at: pos(e), text: `${label(e)} moved from ${where(gone.splice(m, 1)[0])} to ${where(e)}`, keys: chain(e, ka) }); continue; }
     const i = gone.findIndex(o => o.role === e.role && anc(o) === anc(e));
     const old = i >= 0 ? gone.splice(i, 1)[0] : undefined;
     entries.push({ at: pos(e), text: !old ? `appeared: ${label(e)}`
-      : clean(old.name) || clean(e.name) ? `${label(old)} -> "${short(ident(e))}"` : `${e.role} value ${values(ident(old), ident(e))}` });
+      : clean(old.name) || clean(e.name) ? `${label(old)} -> "${short(ident(e))}"` : `${e.role} value ${values(ident(old), ident(e))}`, keys: chain(e, ka) });
   }
-  for (const o of gone) entries.push({ at: Infinity, text: `gone: ${label(o)}` });
+  // Placed where they were: a deleted file listed last read as an afterthought (task 0066: done 0.55 -> 0.95 first).
+  // The acted-on control and its siblings going away (a menu closing after its item was clicked) go last.
+  const old = all(before);
+  const acting = old.find(e => e.ref === acted);
+  for (const o of gone) entries.push({ at: acting && (o === acting || o.parent === acting.parent) ? Infinity : old.indexOf(o), text: `gone: ${label(o)}`, keys: chain(o, kb), container: containers.has(o) ? kb.get(o) : undefined });
 
   // Reordered rows or items: same items, other order.
   const sb = sequences(before, kb), sa = sequences(after, ka);
@@ -98,12 +109,15 @@ export function changes(before: Observation, after: Observation, acted?: string)
     const was = sb.get(k)?.map(itemText), now = items.map(itemText);
     if (!was || was.join("\n") === now.join("\n") || [...was].sort().join("\n") !== [...now].sort().join("\n")) continue;
     const container = items[0].parent!;
-    entries.push({ at: pos(container), text: `${label(container)} reordered: ${was.slice(0, ITEMS).join(", ")} -> ${now.slice(0, ITEMS).join(", ")}` });
+    entries.push({ at: pos(container), text: `${label(container)} reordered: ${was.slice(0, ITEMS).join(", ")} -> ${now.slice(0, ITEMS).join(", ")}`, keys: chain(container, ka) });
   }
+  const said = entries.filter(x => !x.container || !entries.some(y => y !== x && y.keys.slice(1).includes(x.container!)));
+  entries.splice(0, entries.length, ...said);
 
   if (!entries.length) return "no visible change";
-  const near = before.elements.concat(before.readable).find(e => e.ref === acted);
-  const at = near ? pos(order.find(e => ka.get(e) === kb.get(near)) ?? near) : -1;
+  // shortcut: gone entries are placed by their index in `before`, the rest by `after`; close enough while most of
+  // the page stays, measure if a large insertion reorders entries badly.
+  const at = acting ? pos(order.find(e => ka.get(e) === kb.get(acting)) ?? acting) : -1;
   const dist = (x: number) => (x === -Infinity ? -1 : at < 0 ? x : Math.abs(x - at));
   entries.sort((a, b) => dist(a.at) - dist(b.at));
   let out = "";
