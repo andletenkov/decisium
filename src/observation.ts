@@ -1,4 +1,27 @@
-// Parses Playwright's `ariaSnapshot({ mode: "ai" })` text into an Observation.
+// Renders Playwright's `ariaSnapshotJSON({ mode: "ai" })` as compact text and parses that into an Observation.
+
+/** A node of `ariaSnapshotJSON`: free-form, states as extra keys (`checked`, `level`, ...); text nodes are strings. */
+export type AriaNode = string | { role: string; name?: string; ref?: string; cursor?: string; url?: string; text?: string; children?: AriaNode[]; [state: string]: unknown };
+
+const KEYS = new Set(["role", "name", "ref", "cursor", "url", "text", "children", "box"]);
+const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
+
+/**
+ * The snapshot's text form, one line per node, without YAML quoting: the YAML text quoted lines whose name held a colon
+ * (`- 'heading "Releases: x/y" [ref=e1]'`) and the line parser dropped them (task 0064). Names escape `\` and `"`.
+ */
+export function renderSnapshot(nodes: AriaNode[], indent = ""): string {
+  return nodes.map(n => {
+    if (typeof n === "string") return `${indent}- text: ${oneLine(n)}`;
+    const states = Object.entries(n).filter(([k, v]) => !KEYS.has(k) && v !== false && v !== undefined)
+      .map(([k, v]) => v === true ? ` [${k}]` : ` [${k}=${v}]`).join("");
+    const head = `${indent}- ${n.role}${n.name ? ` "${n.name.replace(/[\\"]/g, "\\$&")}"` : ""}${states}${n.ref ? ` [ref=${n.ref}]` : ""}${n.cursor ? ` [cursor=${n.cursor}]` : ""}`;
+    const kids = [...n.url !== undefined ? [`${indent}  - /url: ${n.url}`] : [], ...n.children?.length && n.text ? [`${indent}  - text: ${oneLine(n.text)}`] : [],
+      ...n.children?.length ? [renderSnapshot(n.children, indent + "  ")] : []];
+    if (kids.length) return `${head}:\n${kids.join("\n")}`;
+    return n.text ? `${head}: ${oneLine(n.text)}` : head;
+  }).join("\n");
+}
 
 export type Verb = "CLICK" | "TYPE" | "SELECT";
 
@@ -48,8 +71,10 @@ const cap = (line: string) => line.length > MAX_LINE ? line.slice(0, MAX_LINE) +
 /**
  * `secretRefs`: refs of password fields (the snapshot itself shows them as plain textboxes with their value).
  * `editableRefs`: comboboxes you type into (search boxes with suggestions); other comboboxes are clicked open.
+ * `targetRefs`: non-controls with their own pointer cursor, tabindex or click listener: Turn targets (task 0064).
  */
-export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set(), editableRefs: ReadonlySet<string> = new Set()): Observation {
+export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set(), editableRefs: ReadonlySet<string> = new Set(),
+  targetRefs: ReadonlySet<string> = new Set()): Observation {
   const elements: Element[] = [];
   const readable: Element[] = [];
   const kept: (string | undefined)[] = [];
@@ -71,7 +96,7 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     const [, indent, role, name = "", attrs = "", rest = ""] = m;
     const ref = /\[ref=(\w+)\]/.exec(attrs)?.[1];
     const secret = ref !== undefined && secretRefs.has(ref);
-    const value = secret && rest ? MASK : rest.replace(/^"(.*)"$/, "$1");
+    const value = secret && rest ? MASK : rest;
 
     // Option children of a native select: no ref, attach to the parent combobox.
     if (role === "option" && !ref && lastCombobox && indent.length > lastCombobox.indent) {
@@ -115,8 +140,9 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     if (role === "generic" && !name && !value && !scrollable) wrappers.set(el, at);
     if (!(ACTIONABLE.has(role) || name || value || scrollable)) continue;
     readable.push(el);
-    // A pointer cursor or draggable marks a custom control: a dblclick/right-click/drag target (task 0045); scrollable: a scroll target (task 0061).
-    if ((ACTIONABLE.has(role) || /\[cursor=pointer\]|\[draggable\]|\[scrollable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
+    // Draggable: a drag target (task 0045); scrollable: a scroll target (task 0061); own pointer cursor, tabindex or
+    // click listener: a custom control (task 0064; an inherited pointer cursor proves nothing).
+    if ((ACTIONABLE.has(role) || targetRefs.has(ref) || /\[draggable\]|\[scrollable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
   for (const [el, texts] of bare) {

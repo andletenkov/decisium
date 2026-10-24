@@ -3,7 +3,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium, type Browser as PwBrowser, type BrowserContext, type BrowserContextOptions, type Dialog as PwDialog, type Page } from "playwright";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
-import { parseSnapshot, withDialog, withClipboard, withDownload, withPage, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
+import { parseSnapshot, renderSnapshot, withDialog, withClipboard, withDownload, withPage, type AriaNode, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
   verb: Verb | "SCROLL" | "SCROLL_UP" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
@@ -64,9 +64,26 @@ const markTitles = (snapshot: string, titles: ReadonlyMap<string, string>) =>
 const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
   refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => refs.has(ref) ? `${m} [${flag}]` : m) : snapshot;
 
-/** Elements to mark: draggable ones (task 0045), and lists or panels that scroll on their own (task 0061). Runs in the page. */
-const marks = (els: Element[], flag: string) => els.flatMap((e, i) => (flag === "draggable" ? e.getAttribute("draggable") === "true"
-  : /auto|scroll/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement) ? [i] : []);
+/** Facts the snapshot lacks, per element (tasks 0045, 0061, 0064); each stays separate for track B. */
+type Fact = "draggable" | "scrollable" | "pointer" | "tabindex" | "listener";
+
+/**
+ * `factsIn`: indexes of `els` with a fact, and which. Runs in the page. Native controls are skipped for the target facts: their
+ * role already makes them targets. `pointer`: own cursor, not inherited from the parent (OrangeHRM's select wrapper,
+ * not the text inside it). `listener`: own click/mousedown/pointerdown listener, marked by `markListeners`.
+ */
+const factsIn = (els: Element[]) => els.flatMap((e, i) => {
+  const out: string[] = [];
+  const style = getComputedStyle(e);
+  if (e.getAttribute("draggable") === "true") out.push("draggable");
+  if (/auto|scroll/.test(style.overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement) out.push("scrollable");
+  if (!e.matches("a[href], button, input, select, textarea, summary, label, option, iframe") && e.checkVisibility()) {
+    if (style.cursor === "pointer" && (!e.parentElement || getComputedStyle(e.parentElement).cursor !== "pointer")) out.push("pointer");
+    if (e.hasAttribute("tabindex") && (e as HTMLElement).tabIndex >= 0) out.push("tabindex");
+    if ((e as unknown as { __decisiumClick?: boolean }).__decisiumClick) out.push("listener");
+  }
+  return out.length ? [[i, out] as [number, string[]]] : [];
+});
 
 /** Hover moves the mouse only; an element that never stops moving (a tooltip shifting the layout) fails fast (task 0042). */
 const HOVER_TIMEOUT_MS = 2000;
@@ -274,9 +291,10 @@ export class Browser {
   }
 
   private async read(): Promise<Observation> {
-    const draggable = await this.refsOf("draggable");
-    const scrollable = await this.refsOf("scrollable");
-    const snapshot = await this.page.ariaSnapshot({ mode: "ai" });
+    const found = await this.facts();
+    const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
+    const targets = new Set([...refs("pointer"), ...refs("tabindex"), ...refs("listener")]);
+    const snapshot = renderSnapshot(await this.page.ariaSnapshotJSON({ mode: "ai" }) as AriaNode[]);
     // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
     // from a button-like one; ask the DOM.
     const secret = new Set<string>(), editable = new Set<string>();
@@ -292,11 +310,11 @@ export class Browser {
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(markRefs(markRefs(markTitles(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()), await this.titles()),
-      draggable, "draggable"), scrollable, "scrollable"));
+      refs("draggable"), "draggable"), refs("scrollable"), "scrollable"));
     const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
-    return withPage(parseSnapshot(marked, secret, editable), this.mask(this.page.url()), title, where);
+    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), title, where);
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -337,22 +355,43 @@ export class Browser {
   }
 
   /**
-   * Refs of the elements `marks` picks in any frame (open shadow roots included): one DOM read per frame, then one
-   * element snapshot per match. Run before the page snapshot: an element snapshot invalidates older refs, and the page
-   * snapshot after it reuses the refs it gave. Reading per ref instead took ~2 s per Observation on Wikipedia.
+   * Facts by ref, for elements `factsIn` picks in any frame (open shadow roots included): one DOM read per frame, then
+   * one element snapshot per match. Run before the page snapshot: an element snapshot invalidates older refs, and the
+   * page snapshot after it reuses the refs it gave. Reading per ref instead took ~2 s per Observation on Wikipedia.
    */
-  private async refsOf(flag: "draggable" | "scrollable"): Promise<Set<string>> {
-    const out = new Set<string>();
+  private async facts(): Promise<Map<string, Fact[]>> {
+    await this.markListeners();
+    const out = new Map<string, Fact[]>();
     for (const f of this.page.frames()) {
       const all = f.locator("body *");
-      const hits = await all.evaluateAll(marks, flag).catch(() => [] as number[]);
-      for (const i of hits) {
+      const hits = await all.evaluateAll(factsIn).catch(() => [] as [number, string[]][]);
+      for (const [i, found] of hits) {
         const line = await all.nth(i).ariaSnapshot({ mode: "ai", depth: 0, timeout: 1000 }).catch(() => "");
         const ref = /\[ref=(\w+)\]/.exec(line)?.[1];
-        if (ref) out.add(ref);
+        if (ref) out.set(ref, found as Fact[]);
       }
     }
     return out;
+  }
+
+  /**
+   * Marks elements with their own click/mousedown/pointerdown listener (an expando, so no DOM mutation): a sortable
+   * table header has no other sign (task 0064). One CDP call for the whole document (~1-20 ms measured). Chromium only;
+   * listeners delegated to the document root (React) stay invisible.
+   * shortcut: out-of-process (cross-site) iframes are not searched; open a session per frame if a page needs it.
+   */
+  private async markListeners(): Promise<void> {
+    const cdp = await this.context.newCDPSession(this.page).catch(() => undefined);
+    if (!cdp) return;
+    try {
+      const { result } = await cdp.send("Runtime.evaluate", { expression: "document" });
+      const { listeners } = await cdp.send("DOMDebugger.getEventListeners", { objectId: result.objectId!, depth: -1, pierce: true });
+      const nodes = new Set(listeners.filter(l => /^(click|mousedown|pointerdown)$/.test(l.type) && l.backendNodeId).map(l => l.backendNodeId!));
+      for (const backendNodeId of nodes) {
+        const { object } = await cdp.send("DOM.resolveNode", { backendNodeId }).catch(() => ({ object: undefined }));
+        if (object?.objectId) await cdp.send("Runtime.callFunctionOn", { objectId: object.objectId, functionDeclaration: "function () { this.__decisiumClick = true; }" }).catch(() => {});
+      }
+    } catch { /* mid-navigation: no listener facts this time */ } finally { await cdp.detach().catch(() => {}); }
   }
 
   /**

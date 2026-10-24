@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { Browser, type Action } from "../src/browser.ts";
 import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, type Assessment, type Decider, type Pick } from "../src/decision.ts";
 import { JevDecider } from "../src/jev.ts";
-import { MASK, parseSnapshot, withDialog, type Observation } from "../src/observation.ts";
+import { MASK, parseSnapshot, renderSnapshot, withDialog, type AriaNode, type Observation } from "../src/observation.ts";
 import { runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { containsValue } from "../src/check.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
@@ -19,7 +19,7 @@ const NATIVE = `- generic [active] [ref=e1]:
       - option "2 weeks"
   - textbox "Campaign name" [ref=e5]: Autumn Sale
   - button "Schedule" [disabled] [ref=e9]
-  - paragraph [ref=e11]: "Status: Draft"`;
+  - paragraph [ref=e11]: Status: Draft`;
 
 test("parseSnapshot keeps actionable refs, attaches native options, drops wrappers", () => {
   const obs = parseSnapshot(NATIVE);
@@ -36,7 +36,7 @@ test("parseSnapshot: text with no element of its own is read from the container 
   const obs = parseSnapshot(`- generic [ref=e1]:
   - generic [ref=e2]: Deposit Successful
   - generic [ref=e3]:
-    - strong [ref=e4]: "2"
+    - strong [ref=e4]: 2
     - text: items left
   - generic [ref=e5]:
     - text: Your password is invalid!
@@ -290,7 +290,7 @@ test("runAssertion: a subject showing part of the quoted text is read with the c
     - text: und Gesellschaftsdame.
   - paragraph [ref=e4]: eine Mathematikerin aus England
   - generic [ref=e5]:
-    - strong [ref=e6]: "2"
+    - strong [ref=e6]: 2
     - text: items left`;
   const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
   const run = (s: string, ref: string) => runAssertion(s, rt, assessing("value", () => ({ subject: sure(ref) })), () => {}).then(r => r.outcome);
@@ -303,7 +303,7 @@ test("runAssertion: a subject showing part of the quoted text is read with the c
 
 test("runAssertion: a pass resting on a barely-confident answer is marked marginal (task 0027)", async () => {
   const snap = `- main [ref=e1]:
-  - paragraph [ref=e2]: "Status: Draft"
+  - paragraph [ref=e2]: Status: Draft
   - paragraph [ref=e3]: Draft saved`;
   const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(snap), execute: async () => {}, waitForChange: async () => false };
   const run = (probabilities: Record<string, number>) =>
@@ -596,7 +596,7 @@ test("scoped presence: code looks for the quoted text inside the area Jev names"
   const obs = parseSnapshot([
     `- heading "Spring Sale" [level=1] [ref=e1]`,
     `- list "Scheduled campaigns" [ref=e2]:`,
-    `  - listitem [ref=e3]: "2026-12-01: Winter Sale"`,
+    `  - listitem [ref=e3]: 2026-12-01: Winter Sale`,
     `- status [ref=e4]: Campaign "Summer Sale" saved`,
   ].join("\n"));
   assert.deepEqual(obs.areas.map(e => e.ref), ["e2"]);
@@ -616,7 +616,7 @@ test("scoped presence: code looks for the quoted text inside the area Jev names"
 });
 
 test("memory: a check that quotes nothing uses the value an earlier Step named", async () => {
-  const obs = parseSnapshot(`- list "Scheduled campaigns" [ref=e2]:\n  - listitem [ref=e3]: "2026-12-01: Winter Sale"`);
+  const obs = parseSnapshot(`- list "Scheduled campaigns" [ref=e2]:\n  - listitem [ref=e3]: 2026-12-01: Winter Sale`);
   const rt: Runtime = { actionStep: run => run(), observe: async () => obs, execute: async () => {}, waitForChange: async () => false };
   const d = assessing("presence", () => ({ area: sure("e2") }));
   const run = (earlier: Record<string, string>) => runAssertion(`the campaign should appear in the calendar`, rt, d, () => {}, false, earlier).then(r => r.outcome);
@@ -836,7 +836,7 @@ test("subject: when Jev is unsure which element a check is about, every plausibl
     `- navigation "Breadcrumbs" [ref=e1]:`,
     `  - link "playwright" [ref=e2]`,
     `- heading "playwright" [level=1] [ref=e3]`,
-    `- paragraph [ref=e4]: "Status: Draft"`,
+    `- paragraph [ref=e4]: Status: Draft`,
     `- button "Save" [disabled] [ref=e5]`,
     `- button "Delete" [ref=e6]`,
   ].join("\n"));
@@ -1595,4 +1595,42 @@ test("clipboard: copied text is readable and masked, and PASTE puts it into the 
   } finally {
     await b.close();
   }
+});
+
+test("renderSnapshot: names with colons and quotes survive as readable Subjects (task 0064)", () => {
+  const nodes: AriaNode[] = [{ role: "main", ref: "e1", children: [
+    { role: "heading", name: "Releases: microsoft/playwright", level: 1, ref: "e2" },
+    { role: "heading", name: `It's "new"`, level: 2, ref: "e3" },
+    { role: "link", name: "Docs", ref: "e4", cursor: "pointer", url: "/docs" },
+    { role: "paragraph", ref: "e5", children: ["Hello", { role: "strong", ref: "e6", text: "w: 'x'" }] },
+    { role: "textbox", name: "Password", ref: "e7", text: "hunter2" },
+    { role: "checkbox", checked: "mixed", disabled: false, ref: "e8" },
+  ] }];
+  const text = renderSnapshot(nodes);
+  assert.equal(text, [
+    "- main [ref=e1]:",
+    '  - heading "Releases: microsoft/playwright" [level=1] [ref=e2]',
+    '  - heading "It\'s \\"new\\"" [level=2] [ref=e3]',
+    '  - link "Docs" [ref=e4] [cursor=pointer]:',
+    "    - /url: /docs",
+    "  - paragraph [ref=e5]:",
+    "    - text: Hello",
+    "    - strong [ref=e6]: w: 'x'",
+    '  - textbox "Password" [ref=e7]: hunter2',
+    "  - checkbox [checked=mixed] [ref=e8]",
+  ].join("\n"));
+  const obs = parseSnapshot(text, new Set(["e7"]));
+  const el = (ref: string) => obs.readable.find(e => e.ref === ref);
+  assert.equal(el("e2")?.name, "Releases: microsoft/playwright");
+  assert.equal(el("e3")?.name, `It's \\"new\\"`); // escaped as in the line Jev reads
+  assert.equal(el("e6")?.value, "w: 'x'");
+  assert.equal(el("e5")?.value, "Hello w: 'x'"); // parent text
+  assert.ok(obs.areas.some(a => a.ref === "e5"));
+  assert.ok(!obs.text.includes("hunter2") && el("e7")?.value === MASK);
+});
+
+test("parseSnapshot: own pointer, tabindex or listener makes a target; an inherited pointer cursor does not (task 0064)", () => {
+  const snap = `- columnheader "Last Name" [ref=e1]\n- generic [ref=e2] [cursor=pointer]: -- Select --\n- columnheader "Due" [ref=e3]\n- button "Off" [disabled] [ref=e4]`;
+  const refs = parseSnapshot(snap, new Set(), new Set(), new Set(["e1", "e4"])).elements.map(e => e.ref);
+  assert.deepEqual(refs, ["e1"]); // e2 has only the cursor hint; e3 nothing; e4 disabled
 });
