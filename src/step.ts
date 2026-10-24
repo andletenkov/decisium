@@ -33,6 +33,8 @@ export interface StepReading {
   unknownKeys: string[];
   /** The key of a Step that is only "press X" (`I press Escape`, `hit the "Tab" key`). */
   pressOnly?: string;
+  /** A Step that is only "go back", "go forward", "reload the page" or "go to <URL or path>" (task 0041). */
+  navigation?: Navigation;
   /** A Step that only checks (true) or unchecks (false) one box; "and"/"then" mean more to do. */
   toggle?: boolean;
   /** A check of rows "exactly" or "in this order". */
@@ -65,6 +67,7 @@ export function readStep(step: ParsedStep): StepReading {
     keys,
     unknownKeys: unknown,
     pressOnly: isCheck ? undefined : pressOnly(text),
+    navigation: isCheck ? undefined : navigation(text),
     toggle: isCheck ? undefined : toggleGoal(text),
     exact: /\b(exactly|in this order)\b/i.test(text),
     header,
@@ -143,6 +146,27 @@ function stepKeys(text: string): { keys: string[]; unknown: string[] } {
     else if (first && (first.includes("+") || next.toLowerCase() === "key")) unknown.push(first);
   }
   return { keys, unknown };
+}
+
+export interface Navigation { verb: "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB"; value?: string }
+
+/**
+ * Code navigates without Jev only for these whole-Step forms; "go back to the list" and the like are left to Jev, which
+ * is offered back/forward/reload every Turn. GOTO needs something URL-like (a path, query, hash, or full URL), never a
+ * page name: "I go to the Settings page" is Jev's.
+ */
+function navigation(text: string): Navigation | undefined {
+  const t = text.trim().replace(/[.!]$/, "");
+  const go = /^(?:I\s+)?(?:go|goes|navigate|navigates|browse|browses)\s+/i.source;
+  if (new RegExp(`${go}back$`, "i").test(t)) return { verb: "BACK" };
+  if (new RegExp(`${go}forward$`, "i").test(t)) return { verb: "FORWARD" };
+  if (/^(?:I\s+)?(?:reload|reloads|refresh|refreshes)(?:\s+the)?(?:\s+page)?$/i.test(t)) return { verb: "RELOAD" };
+  // Jev picks "close tab" right (0.97) but then barely takes the Step as done (0.24-0.37): a closed tab leaves no trace.
+  if (/^(?:I\s+)?(?:close|closes)\s+(?:the|this)\s+(?:new\s+)?tab$/i.test(t)) return { verb: "CLOSE_TAB" };
+  if (/^(?:I\s+)?(?:switch|switches|go|goes)\s+back\s+to\s+the\s+(?:previous|first|other|original)\s+tab$/i.test(t)) return { verb: "SWITCH_TAB" };
+  const m = new RegExp(`(?:${go}to|^(?:I\\s+)?(?:open|opens|visit|visits))\\s+(?:["“]([^"”]+)["”]|(\\S+))$`, "i").exec(t);
+  const url = m?.[1] ?? m?.[2];
+  return url && /^(\/|\?|#|\.\.?\/|[a-z][a-z\d+.-]*:\/\/)/i.test(url) ? { verb: "GOTO", value: url } : undefined;
 }
 
 function pressOnly(text: string): string | undefined {

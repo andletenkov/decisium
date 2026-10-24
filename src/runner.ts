@@ -42,7 +42,8 @@ async function settled<T>(rt: Runtime, obs: Observation, ask: (obs: Observation)
 const MAX_TURNS = 8;
 
 const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
-const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER" };
+const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER", back: "BACK", forward: "FORWARD",
+  reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
 /**
@@ -131,14 +132,16 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
-  // Only "press X": nothing to choose, so code presses it and the following checks verify the effect (task 0039).
-  const key = read.pressOnly;
-  if (key) {
-    log(`  Execute: PRESS ${key}`);
+  // Only "press X" or "go back" / "go to /x": nothing to choose, so code does it and the following checks verify the
+  // effect (tasks 0039, 0041).
+  const only: Action | undefined = read.pressOnly ? { verb: "PRESS", value: read.pressOnly } : read.navigation;
+  if (only) {
+    const described = `${only.verb}${only.value === undefined ? "" : ` ${only.value}`}`;
+    log(`  Execute: ${described}`);
     try {
-      await rt.execute({ verb: "PRESS", value: key });
+      await rt.execute(only);
     } catch (err) {
-      return end("ACTION_FAILED", `PRESS ${key} failed: ${(err as Error).message.split("\n")[0]}`);
+      return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
     }
     return end("DONE");
   }

@@ -1,0 +1,513 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T11-31-46-824Z",
+  "entries": {
+    "Go to a page by its path: I go to \"?keys\"": {},
+    "Go to a page by its path: the heading should be \"Keys\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.42,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.25,
+            "checked": 0.48,
+            "unchecked": 0.02,
+            "expanded": 0.04,
+            "collapsed": 0.01,
+            "selected": 0.19,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Keys",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.51
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.45
+          ]
+        ]
+      }
+    },
+    "Go back: I open the Keys page": {
+      "turns": [
+        {
+          "done": 0.13,
+          "target": [
+            [
+              {
+                "role": "link",
+                "name": "Keys page",
+                "container": ""
+              },
+              0.95
+            ]
+          ]
+        },
+        {
+          "done": 0.85,
+          "target": [
+            [
+              "none",
+              0.83
+            ]
+          ]
+        }
+      ]
+    },
+    "Go back: I go back": {},
+    "Go back: the heading should be \"Navigation\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.51,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.29,
+            "checked": 0.56,
+            "unchecked": 0.09,
+            "expanded": 0.02,
+            "collapsed": 0.01,
+            "selected": 0.02,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Navigation",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.61
+          ],
+          [
+            "page",
+            0.36
+          ]
+        ]
+      }
+    },
+    "Go back in your own words: I open the Keys page": {
+      "turns": [
+        {
+          "done": 0.11,
+          "target": [
+            [
+              {
+                "role": "link",
+                "name": "Keys page",
+                "container": ""
+              },
+              0.88
+            ]
+          ]
+        },
+        {
+          "done": 0.87,
+          "target": [
+            [
+              "none",
+              0.89
+            ]
+          ]
+        }
+      ]
+    },
+    "Go back in your own words: I return to the previous page": {
+      "turns": [
+        {
+          "done": 0.5,
+          "target": [
+            [
+              "back",
+              0.92
+            ]
+          ]
+        },
+        {
+          "done": 0.87,
+          "target": [
+            [
+              "none",
+              0.64
+            ],
+            [
+              "back",
+              0.33
+            ]
+          ]
+        }
+      ]
+    },
+    "Go back in your own words: the heading should be \"Navigation\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.48,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.3,
+            "checked": 0.53,
+            "unchecked": 0.08,
+            "expanded": 0.03,
+            "collapsed": 0.01,
+            "selected": 0.04,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Navigation",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.56
+          ],
+          [
+            "page",
+            0.42
+          ]
+        ]
+      }
+    },
+    "Reload the page: the status should be \"Loaded 1 time\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.66,
+          "probabilities": {
+            "disabled": 0.03,
+            "enabled": 0.69,
+            "checked": 0.12,
+            "unchecked": 0.02,
+            "expanded": 0.03,
+            "collapsed": 0.04,
+            "selected": 0.02,
+            "unselected": 0.02,
+            "pressed": 0.01,
+            "unpressed": 0.02
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.6
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.33
+          ]
+        ]
+      }
+    },
+    "Reload the page: I reload the page": {},
+    "Reload the page: the status should be \"Loaded 2 times\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.69,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.72,
+            "checked": 0.17,
+            "unchecked": 0.01,
+            "expanded": 0.03,
+            "collapsed": 0.01,
+            "selected": 0.02,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.55
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.39
+          ]
+        ]
+      }
+    },
+    "A link that opens a new tab: I open the contacts": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "link",
+                "name": "Contacts (opens a new tab)",
+                "container": ""
+              },
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.87,
+          "target": [
+            [
+              "none",
+              0.92
+            ]
+          ]
+        }
+      ]
+    },
+    "A link that opens a new tab: the heading should be \"Contacts\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.3,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.37,
+            "checked": 0.35,
+            "unchecked": 0.05,
+            "expanded": 0.13,
+            "collapsed": 0.01,
+            "selected": 0.07,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Contacts",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.55
+          ],
+          [
+            "page",
+            0.4
+          ]
+        ]
+      }
+    },
+    "A link that opens a new tab: I close the tab": {},
+    "A link that opens a new tab: the heading should be \"Navigation\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.29,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.36,
+            "checked": 0.31,
+            "unchecked": 0.03,
+            "expanded": 0.05,
+            "collapsed": 0.02,
+            "selected": 0.19,
+            "unselected": 0.03,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "heading",
+              "name": "Navigation",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.53
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.44
+          ]
+        ]
+      }
+    }
+  }
+}

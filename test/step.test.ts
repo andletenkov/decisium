@@ -74,6 +74,18 @@ test("readStep: Named keys after press/hit, as Playwright names them (task 0039)
   assert.deepEqual(action("I write the notes:", { docString: "press Escape" }).keys, []); // a doc string is a value, never a key
 });
 
+test("readStep: whole-Step navigation runs by code; anything else is Jev's (task 0041)", () => {
+  const nav = (s: string) => action(s).navigation;
+  assert.deepEqual(["I go back", "I go forward.", "I reload the page", "Refresh"].map(s => nav(s)?.verb), ["BACK", "FORWARD", "RELOAD", "RELOAD"]);
+  assert.deepEqual(["I go to /settings", `I go to "?keys"`, `I open "https://example.com/a"`, "I navigate to #top", `I visit "./b.html"`].map(s => nav(s)?.value),
+    ["/settings", "?keys", "https://example.com/a", "#top", "./b.html"]);
+  assert.deepEqual(["I close the tab", "I close the new tab", "I switch back to the first tab", "I go back to the previous tab"].map(s => nav(s)?.verb),
+    ["CLOSE_TAB", "CLOSE_TAB", "SWITCH_TAB", "SWITCH_TAB"]);
+  // Page names, longer Steps and quoted non-URLs are Jev's.
+  for (const s of ["I go back to the list", "I open the Settings page", "I go to the Settings page", `I open "Spring Sale"`, "I go to b.html"]) assert.equal(nav(s), undefined, s);
+  assert.equal(check("I go back").navigation, undefined);
+});
+
 test("readStep: an action's table cell that cannot become a quoted value", () => {
   assert.equal(action("I fill in:", { table: [["Name", ""]] }).badCell, "");
   assert.equal(action("I fill in:", { table: [["Name", `say "hi"`]] }).badCell, `say "hi"`);

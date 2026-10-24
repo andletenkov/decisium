@@ -4,7 +4,8 @@
 <!-- Fixture for docs/cookbook.md (task 0031): an article search, settings with labelled and unlabelled checkboxes,
      (?contacts, task 0038) a contact form and table for data tables and doc strings, and (?keys, task 0039) a page
      driven by keys: Escape closes the help, Ctrl+K opens the command palette, arrows move through a list, and (?dialogs,
-     task 0040) browser dialogs: a confirm before deleting a note, an alert, a prompt, and "Leave site?" with a draft. -->
+     task 0040) browser dialogs: a confirm before deleting a note, an alert, a prompt, and "Leave site?" with a draft, and
+     (?nav, task 0041) navigation: links to other pages, one opening a new tab, and a load counter that shows reloads. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -108,10 +109,18 @@ function dialogs() {
   draw();
 }
 
+function nav() {
+  const loads = Number(sessionStorage.getItem("loads") ?? 0) + 1; // per tab, kept across reloads
+  sessionStorage.setItem("loads", loads);
+  main.innerHTML = `<h1>Navigation</h1><p role="status">Loaded ${loads} ${loads === 1 ? "time" : "times"}</p>
+    <ul><li><a href="?keys">Keys page</a></li><li><a href="?contacts" target="_blank">Contacts (opens a new tab)</a></li></ul>`;
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
-  : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs() : search();
+  : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs()
+  : location.search.includes("nav") ? nav() : search();
 </script>
 </body>
 </html>

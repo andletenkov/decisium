@@ -1049,6 +1049,51 @@ test("keys: a press-only Step is pressed by code; other Steps offer only the key
   }
 });
 
+test("navigation: back/forward/reload/go to by code, new tabs switched to and closed (task 0041)", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { pathToFileURL } = await import("node:url");
+  const dir = mkdtempSync(`${tmpdir()}/nav-`);
+  writeFileSync(`${dir}/a.html`, `<title>A</title><h1>Page A</h1><a href="b.html">B here</a> <a href="b.html" target="_blank">B in a new tab</a>`);
+  writeFileSync(`${dir}/b.html`, `<title>B</title><h1>Page B</h1>`);
+  const b = await Browser.open(pathToFileURL(`${dir}/a.html`).href);
+  const noJev: Decider = { ...oracle, turn: async () => { throw new Error("Jev asked"); } };
+  const heading = async () => (await b.observe()).pageText.split("\n").find(l => l.startsWith("Page "));
+  const click = (name: string): Decider => ({ ...oracle, turn: async (_s, o) => {
+    const el = o.elements.find(e => e.name === name);
+    return el ? { done: 0, target: sure(el.ref) } : { done: 1, target: sure("none") };
+  } });
+  try {
+    assert.equal((await runStep(`I go to "./b.html"`, b, noJev, () => {})).outcome, "DONE");
+    assert.equal(await heading(), "Page B");
+    assert.equal((await runStep("I go back", b, noJev, () => {})).outcome, "DONE");
+    assert.equal(await heading(), "Page A");
+    assert.equal((await runStep("I go forward", b, noJev, () => {})).outcome, "DONE");
+    assert.equal(await heading(), "Page B");
+    assert.equal((await runStep("I reload the page", b, noJev, () => {})).outcome, "DONE");
+    assert.equal((await runStep("I go to /", b, noJev, () => {})).outcome, "DONE", "a path resolves against the start URL");
+    assert.match((await b.observe()).readable.find(e => e.ref === "url")!.value, /^file:\/\/\/$/);
+    await runStep(`I go to "${pathToFileURL(`${dir}/a.html`).href}"`, b, noJev, () => {});
+    // A link that opens a new tab: Steps continue in it; tab actions are offered only while two are open.
+    const { pageActions } = await import("../src/decision.ts");
+    assert.ok(!("close tab" in pageActions(await b.observe(), [])));
+    await runStep("I open B in a new tab", b, click("B in a new tab"), () => {});
+    const obs = await b.observe();
+    assert.equal(obs.readable.find(e => e.ref === "tabs")?.value, "2 open, this is tab 2");
+    assert.equal(await heading(), "Page B");
+    assert.ok("close tab" in pageActions(obs, []) && "switch tab" in pageActions(obs, []));
+    await b.execute({ verb: "SWITCH_TAB" });
+    assert.equal(await heading(), "Page A");
+    await b.execute({ verb: "SWITCH_TAB" });
+    await b.execute({ verb: "CLOSE_TAB" });
+    assert.equal(await heading(), "Page A");
+    assert.equal((await b.observe()).readable.find(e => e.ref === "tabs"), undefined);
+    await assert.rejects(b.execute({ verb: "CLOSE_TAB" }), /only one tab/);
+  } finally {
+    await b.close();
+  }
+});
+
 test("lint: a key that is not a key name, or named without press/hit, is never pressed (task 0039)", async () => {
   const { warnings } = await import("../src/lint.ts");
   const w = (text: string) => warnings({ text, kind: "action" }, []).join(" | ");

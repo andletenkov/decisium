@@ -1,11 +1,12 @@
 // Browser runtime: the only module that knows about Playwright. Swap for CDP behind the same surface.
-import { chromium, type Browser as PwBrowser, type Dialog as PwDialog, type Page } from "playwright";
+import { chromium, type Browser as PwBrowser, type BrowserContext, type Dialog as PwDialog, type Page } from "playwright";
 import { parseSnapshot, withDialog, withPage, type Dialog, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
-  verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS"; // ACCEPT/DISMISS: the open browser dialog
+  verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
+    | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB"; // task 0041
   ref?: string; // element actions only
-  value?: string; // PRESS: the key, as Playwright names it; ACCEPT: a prompt's text
+  value?: string; // PRESS: the key, as Playwright names it; ACCEPT: a prompt's text; GOTO: URL or path, resolved against the start URL
 }
 
 /** Chrome shows this for beforeunload; the page cannot set its own text. */
@@ -42,7 +43,10 @@ const markCollapsed = (snapshot: string, hidden: ReadonlyMap<string, string[]>) 
 
 export class Browser {
   private browser: PwBrowser;
+  private context: BrowserContext;
+  /** The tab Steps act on. A tab the page opens (a popup, a target=_blank link) becomes it at once (task 0041). */
   private page: Page;
+  private start: string; // GOTO paths resolve against it
   private inflight = 0;
   private last?: Observation; // refs are valid for the latest Observation only
   /**
@@ -61,16 +65,20 @@ export class Browser {
   typedSecret = false;
   private mask(s: string) { return Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s); }
 
-  private constructor(browser: PwBrowser, page: Page) {
+  private constructor(browser: PwBrowser, page: Page, start: string) {
     this.browser = browser;
     this.page = page;
-    page.on("console", m => { if (m.type() === "error") this.consoleErrors.push(m.text()); });
-    page.on("pageerror", e => this.consoleErrors.push(`uncaught: ${e.message}`));
-    page.on("request", () => this.inflight++);
-    page.on("requestfinished", () => this.inflight--);
-    page.on("requestfailed", () => this.inflight--);
+    this.start = start;
+    // On the context, not the page: they must follow into tabs the page opens.
+    const context = this.context = page.context();
+    context.on("console", m => { if (m.type() === "error") this.consoleErrors.push(m.text()); });
+    context.on("weberror", e => this.consoleErrors.push(`uncaught: ${e.error().message}`));
+    context.on("request", () => this.inflight++);
+    context.on("requestfinished", () => this.inflight--);
+    context.on("requestfailed", () => this.inflight--);
+    context.on("page", p => { this.page = p; });
     this.rearm();
-    page.on("dialog", d => {
+    context.on("dialog", d => {
       this.open = d;
       this.dialog = { type: d.type() as Dialog["type"], message: this.mask(d.message()) || (d.type() === "beforeunload" ? LEAVE : ""), state: "open" };
       this.signal();
@@ -104,9 +112,9 @@ export class Browser {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
     const page = await browser.newPage();
     if (trace) await page.context().tracing.start({ screenshots: true, snapshots: true });
-    // In every document: the time of the last DOM mutation, and a count of work that can still change the page
-    // on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
-    await page.addInitScript(() => {
+    // In every document, new tabs included: the time of the last DOM mutation, and a count of work that can still change
+    // the page on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
+    await page.context().addInitScript(() => {
       const w = window as unknown as Window & { __lastMutation: number; __pending: () => number; __soon: () => number };
       w.__lastMutation = performance.now();
       new MutationObserver(() => { w.__lastMutation = performance.now(); })
@@ -149,7 +157,7 @@ export class Browser {
       // session refresh) or animation frames (endless animations), which would make every action wait the full cap.
       w.__soon = () => idles.size + [...timers.values()].filter(due => due - performance.now() <= 1000).length;
     });
-    const b = new Browser(browser, page);
+    const b = new Browser(browser, page, url);
     b.secrets = secrets;
     try {
       const loading = page.goto(url);
@@ -209,7 +217,9 @@ export class Browser {
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()));
     const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
-    return withPage(parseSnapshot(marked, secret, editable), this.mask(this.page.url()), title);
+    const tabs = this.context.pages();
+    const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
+    return withPage(parseSnapshot(marked, secret, editable), this.mask(this.page.url()), title, where);
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -276,6 +286,18 @@ export class Browser {
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
     else if (verb === "PRESS") await this.page.keyboard.press(value); // to whatever has focus
     else if (verb === "WAIT") await this.waitForChange((await this.observe()).text, WAIT_CAP_MS);
+    else if (verb === "GOTO") await this.page.goto(new URL(value, this.start).href);
+    else if (verb === "BACK") await this.page.goBack();
+    else if (verb === "FORWARD") await this.page.goForward();
+    else if (verb === "RELOAD") await this.page.reload();
+    else if (verb === "CLOSE_TAB" || verb === "SWITCH_TAB") {
+      const tabs = this.context.pages();
+      if (tabs.length < 2) throw new Error("only one tab is open");
+      const from = this.page;
+      this.page = tabs[(tabs.indexOf(from) + tabs.length - 1) % tabs.length]; // the previous tab
+      await this.page.bringToFront();
+      if (verb === "CLOSE_TAB") await from.close();
+    }
     else {
       const target = this.page.locator(`aria-ref=${ref}`);
       if (verb === "CLICK") await target.click(opts);

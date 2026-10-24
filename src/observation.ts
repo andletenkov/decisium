@@ -150,9 +150,11 @@ export function assertableText(el: Element): string | undefined {
 /**
  * Adds the page URL and title as two readable pseudo-elements (refs `url`, `title`) on top of `ui`, so a value check
  * can pick them as the subject (task 0025). Not actionable, and not in `pageText`: text only in the URL is not shown.
+ * `tabs` (task 0041): e.g. "2 open, this is tab 2", only while more than one is open, so one-tab pages read as before.
  */
-export function withPage(obs: Observation, url: string, title: string): Observation {
-  const page = ([["url", url], ["title", title]] as const).map(([role, value]): Element => ({
+export function withPage(obs: Observation, url: string, title: string, tabs?: string): Observation {
+  const fields: [string, string][] = [["url", url], ["title", title], ...tabs ? [["tabs", tabs] as [string, string]] : []];
+  const page = fields.map(([role, value]): Element => ({
     ref: role, role, name: "", value, state: "", secret: false, verb: "CLICK", options: [], text: value,
     line: `${role} value="${clip(value)}"`,
   }));

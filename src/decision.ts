@@ -17,6 +17,14 @@ export interface TurnAnswer {
 const PAGE_ACTIONS = {
   scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
   wait: "Wait: `ui` is still loading the needed element.",
+  back: "Go back to the previous page in the browser history.",
+  forward: "Go forward in the browser history.",
+  reload: "Reload the page.",
+} as const;
+/** Offered only while more than one tab is open (the `tabs` pseudo-element). */
+const TAB_ACTIONS = {
+  "close tab": "Close this browser tab and return to the previous one.",
+  "switch tab": "Switch to the previous browser tab, keeping this one open.",
 } as const;
 const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. run a search).";
 
@@ -25,7 +33,8 @@ const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. 
  * Turn; other keys only when the Step names them (`keys`, "press Escape"), pressed wherever the focus is (task 0039).
  */
 export function pageActions(obs: Observation, keys: string[]): Record<string, string> {
-  const out: Record<string, string> = obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state)) ? { ...PAGE_ACTIONS, enter: ENTER } : { ...PAGE_ACTIONS };
+  const out: Record<string, string> = { ...PAGE_ACTIONS, ...obs.readable.some(e => e.ref === "tabs") ? TAB_ACTIONS : {} };
+  if (obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state))) out.enter = ENTER;
   for (const key of keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
   return out;
 }
@@ -60,7 +69,7 @@ export const AREA_MISSING = "missing";
 
 const SPECIAL: Record<string, string> = {
   none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
-  scroll: "scroll down", wait: "wait for loading", enter: "press Enter",
+  scroll: "scroll down", wait: "wait for loading", enter: "press Enter", back: "go back", forward: "go forward", reload: "reload",
 };
 /** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
 export const named = (p: Pick, obs?: Observation) =>
