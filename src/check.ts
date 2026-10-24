@@ -207,6 +207,7 @@ function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[]
   const actual = assertableText(el);
   if (actual === undefined) return { outcome: "UNVERIFIABLE", reason: `${el.line} has no text to compare (only a label)`, inapplicable: true };
   log(`  Compare: "${values[0]}" in "${actual}"`);
+  if (el.role === "download" && el.state === "[empty]") return { outcome: "ASSERTION_FAILED", reason: `the downloaded file is empty (0 bytes)` };
   // URL paths are case-sensitive and not words: plain substring.
   if (el.role === "url") return actual.includes(values[0]) ? { outcome: "PASSED" } : { outcome: "ASSERTION_FAILED", reason: `expected the URL to contain "${values[0]}", but it is "${actual}"` };
   if (containsValue(actual, values[0])) return { outcome: "PASSED" };

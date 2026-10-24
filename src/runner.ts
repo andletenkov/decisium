@@ -202,9 +202,10 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
       const el = obs.elements.find(e => e.ref === t.target.choice);
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       if (el.verb === "CLICK" && toggled(el, read.toggle)) { log(`  Toggle: already ${el.line}`); return end("DONE"); }
-      action = { verb: (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : el.verb, ref: el.ref };
-      if (action.verb === "TYPE" || action.verb === "SELECT") {
-        const candidates = el.verb === "SELECT" ? el.options : read.candidates;
+      action = { verb: (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : read.upload && el.verb === "CLICK" ? "UPLOAD" : el.verb, ref: el.ref };
+      if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
+        // A file to upload is only ever one the Step quotes (task 0044).
+        const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
         if (!candidates.length) return end("AMBIGUOUS", `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`);
         const v = await decider.value(said, obs, el, candidates);
         log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);

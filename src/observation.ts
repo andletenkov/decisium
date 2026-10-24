@@ -180,3 +180,23 @@ export function withDialog(obs: Observation, dialog?: Dialog): Observation {
   const top = cap(`- ${type} "browser dialog" [${state}]: ${message}`);
   return { ...obs, dialog, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
 }
+
+/** The last download of the scenario (task 0044), saved to its run folder. `text`: its contents, unless binary. */
+export interface Download { name: string; size: number; text?: string }
+
+/**
+ * Adds the last download as a readable pseudo-element (ref `download`): its value is the file name and, for a text file,
+ * its contents, so the value check compares either. An empty file is `[empty]`, and a value check on it fails.
+ */
+export function withDownload(obs: Observation, download?: Download): Observation {
+  if (!download) return obs;
+  const { name, size, text } = download;
+  const value = text ? `${name}\n${text}` : name;
+  const state = size ? `[${size} bytes]` : "[empty]";
+  const el: Element = {
+    ref: "download", role: "download", name: "downloaded file", value, state, secret: false, verb: "CLICK", options: [],
+    text: value, line: `download "downloaded file" value="${clip(value.replace(/\s+/g, " "))}" ${state}`,
+  };
+  const top = cap(`- download "downloaded file" ${state}: ${value.replace(/\s+/g, " ")}`);
+  return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
+}

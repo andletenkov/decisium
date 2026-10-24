@@ -6,7 +6,8 @@
      driven by keys: Escape closes the help, Ctrl+K opens the command palette, arrows move through a list, and (?dialogs,
      task 0040) browser dialogs: a confirm before deleting a note, an alert, a prompt, and "Leave site?" with a draft, and
      (?nav, task 0041) navigation: links to other pages, one opening a new tab, and a load counter that shows reloads, and
-     (?hover, task 0042) a menu that opens only on mouse-over (a click closes it), a tooltip, and a title. -->
+     (?hover, task 0042) a menu that opens only on mouse-over (a click closes it), a tooltip, and a title, and
+     (?files, task 0044) a hidden file input behind an "Attach file" button, and an "Export CSV" download. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -146,12 +147,21 @@ function toggles() {
   sw.onclick = () => sw.setAttribute("aria-checked", String(sw.getAttribute("aria-checked") !== "true"));
 }
 
+function files() {
+  main.innerHTML = `<h1>Files</h1>
+    <input type="file" id="file" hidden><button id="attach">Attach file</button><p role="status">No file attached</p>
+    <a href="data:text/csv;charset=utf-8,name%2Crole%0AAda%20Lovelace%2Cengineer%0A" download="contacts.csv">Export CSV</a>`;
+  const input = main.querySelector("#file");
+  main.querySelector("#attach").onclick = () => input.click();
+  input.onchange = () => main.querySelector("[role=status]").textContent = `Attached ${input.files[0].name}`;
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
   : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs()
   : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover()
-  : location.search.includes("toggles") ? toggles() : search();
+  : location.search.includes("toggles") ? toggles() : location.search.includes("files") ? files() : search();
 </script>
 </body>
 </html>

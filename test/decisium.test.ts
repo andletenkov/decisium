@@ -1395,3 +1395,36 @@ test("cassette: replay is the live question without Jev, so an answer it no long
     await assert.rejects(ask(new Cassette(path, "m1", "none").step("S", noJev), false), (e: unknown) => e instanceof UiChanged && why.test(e.message), name);
   }
 });
+
+test("upload through a hidden input behind a button, never a missing file; downloads are saved and readable (task 0044)", async () => {
+  const { mkdtempSync, writeFileSync, existsSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const dir = mkdtempSync(`${tmpdir()}/files-`);
+  writeFileSync(`${dir}/notes.txt`, "hello");
+  const b = await Browser.open(`data:text/html,<input type=file id=f hidden><button onclick="f.click()">Attach</button><p id=o>none</p>
+    <a href="data:text/plain,a%2Cb" download="out.csv">Export</a><a href="data:text/plain," download="empty.txt">Empty</a>
+    <script>f.onchange=()=>o.textContent='got '+f.files[0].name</script>`, false, false, {}, dir, dir);
+  const click = (name: string, value: Pick = sure("none")): Decider => ({ ...oracle, value: async () => value, turn: async (_s, o, recent) => {
+    const el = o.elements.find(e => e.name === name)!;
+    return recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(el.ref) };
+  } });
+  const download = async () => (await b.observe()).readable.find(e => e.ref === "download");
+  try {
+    const missing = await runStep(`I upload "missing.txt" with Attach`, b, click("Attach", sure("missing.txt")), () => {});
+    assert.equal(missing.outcome, "ACTION_FAILED");
+    assert.match(missing.reason!, /no file "missing.txt"/);
+    assert.equal((await runStep(`I upload "notes.txt" with Attach`, b, click("Attach", sure("notes.txt")), () => {})).outcome, "DONE");
+    assert.match((await b.observe()).pageText, /got notes\.txt/);
+    assert.equal(await download(), undefined);
+    await runStep("I export", b, click("Export"), () => {});
+    assert.ok(existsSync(`${dir}/out.csv`));
+    assert.equal((await download())!.value, "out.csv\na,b");
+    const subject = (await download())!.ref;
+    const assess = (): Decider => ({ ...oracle, assess: async () => ({ kind: sure("value"), subject: sure(subject), area: sure("page"), state: sure("checked") }) });
+    assert.equal((await runAssertion(`the downloaded file should contain "a,b"`, b, assess(), () => {})).outcome, "PASSED");
+    await runStep("I download the empty one", b, click("Empty"), () => {});
+    assert.equal((await runAssertion(`the downloaded file should be "empty.txt"`, b, assess(), () => {})).outcome, "ASSERTION_FAILED");
+  } finally {
+    await b.close();
+  }
+});

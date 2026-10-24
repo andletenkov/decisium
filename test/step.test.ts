@@ -93,3 +93,10 @@ test("readStep: an action's table cell that cannot become a quoted value", () =>
   assert.equal(action("I fill in:", { table: [["Name", "Ada"]] }).badCell, undefined);
   assert.equal(check("the form should show:", { table: [["Name", ""], ["", "x"]] }).badCell, undefined); // a check's table is compared, not quoted
 });
+
+test("readStep: a Step uploads only when it says upload or attach and quotes a file (task 0044)", () => {
+  assert.equal(action(`I upload "a.txt" with the Attach button`).upload, true);
+  assert.equal(action(`I attach "a.txt"`).upload, true);
+  assert.equal(action(`I upload a file`).upload, false);
+  assert.equal(action(`I enter "a.txt"`).upload, false);
+});

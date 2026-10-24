@@ -1,13 +1,16 @@
 // Browser runtime: the only module that knows about Playwright. Swap for CDP behind the same surface.
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { chromium, type Browser as PwBrowser, type BrowserContext, type Dialog as PwDialog, type Page } from "playwright";
-import { parseSnapshot, withDialog, withPage, type Dialog, type Observation, type Verb } from "./observation.ts";
+import { parseSnapshot, withDialog, withDownload, withPage, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
   verb: Verb | "SCROLL" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
     | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB" // task 0041
-    | "HOVER"; // task 0042
+    | "HOVER" // task 0042
+    | "UPLOAD"; // task 0044: click `ref`, give the file chooser the file `value`
   ref?: string; // element actions only
-  value?: string; // PRESS: the key, as Playwright names it; ACCEPT: a prompt's text; GOTO: URL or path, resolved against the start URL
+  value?: string; // UPLOAD: a path relative to the feature file; PRESS: the key, as Playwright names it; ACCEPT: a prompt's text; GOTO: URL or path, resolved against the start URL
 }
 
 /** Chrome shows this for beforeunload; the page cannot set its own text. */
@@ -78,6 +81,10 @@ export class Browser {
   private secrets: Record<string, string> = {};
   /** A secret was typed: the Playwright trace stores typed text unmasked, so close() keeps none. */
   typedSecret = false;
+  /** Task 0044: UPLOAD paths resolve against `files` (the feature's folder); downloads are saved to `downloads`. */
+  private files = ".";
+  private downloads?: string;
+  private download?: Download; // the last finished download, readable for checks
   private mask(s: string) { return Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s); }
 
   private constructor(browser: PwBrowser, page: Page, start: string) {
@@ -91,12 +98,27 @@ export class Browser {
     context.on("request", () => this.inflight++);
     context.on("requestfinished", () => this.inflight--);
     context.on("requestfailed", () => this.inflight--);
-    context.on("page", p => { this.page = p; });
+    context.on("page", p => { this.page = p; this.watchDownloads(p); });
+    this.watchDownloads(page);
     this.rearm();
     context.on("dialog", d => {
       this.open = d;
       this.dialog = { type: d.type() as Dialog["type"], message: this.mask(d.message()) || (d.type() === "beforeunload" ? LEAVE : ""), state: "open" };
       this.signal();
+    });
+  }
+
+  /** Saves each download; counted in flight until saved, so the action that started it settles after it. */
+  private watchDownloads(page: Page) {
+    page.on("download", d => {
+      if (!this.downloads) return;
+      this.inflight++;
+      const path = join(this.downloads, d.suggestedFilename());
+      d.saveAs(path).then(() => {
+        const bytes = readFileSync(path);
+        // Text: no NUL byte. Binary contents are not compared.
+        this.download = { name: d.suggestedFilename(), size: bytes.length, text: bytes.includes(0) ? undefined : this.mask(bytes.toString("utf8")) };
+      }).catch(() => {}).finally(() => this.inflight--);
     });
   }
 
@@ -122,8 +144,11 @@ export class Browser {
     }
   }
 
-  /** `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. */
-  static async open(url: string, headed = false, trace = false, secrets: Record<string, string> = {}): Promise<Browser> {
+  /**
+   * `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. `files`: the
+   * folder UPLOAD paths are relative to; `downloads`: where downloads are saved (none: not saved, not readable).
+   */
+  static async open(url: string, headed = false, trace = false, secrets: Record<string, string> = {}, files = ".", downloads?: string): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
     const page = await browser.newPage();
     if (trace) await page.context().tracing.start({ screenshots: true, snapshots: true });
@@ -174,6 +199,8 @@ export class Browser {
     });
     const b = new Browser(browser, page, url);
     b.secrets = secrets;
+    b.files = files;
+    b.downloads = downloads;
     try {
       const loading = page.goto(url);
       while ((await b.unblocked(loading)) === undefined) await b.execute({ verb: "DISMISS" }); // no Step answers it
@@ -211,7 +238,7 @@ export class Browser {
   async observe(): Promise<Observation> {
     const page = this.open ? undefined : await this.unblocked(this.read());
     if (page) this.under = page;
-    return (this.last = withDialog(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.dialog));
+    return (this.last = withDialog(withDownload(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.download), this.dialog));
   }
 
   private async read(): Promise<Observation> {
@@ -330,6 +357,13 @@ export class Browser {
       const target = this.page.locator(`aria-ref=${ref}`);
       if (verb === "CLICK") await target.click(opts);
       else if (verb === "HOVER") await target.hover({ timeout: HOVER_TIMEOUT_MS });
+      else if (verb === "UPLOAD") {
+        const path = resolve(this.files, value);
+        if (!existsSync(path) || !statSync(path).isFile()) throw new Error(`no file "${value}" next to the feature file`);
+        // File inputs are often hidden behind a button: the click opens the chooser, which gets the file.
+        const [chooser] = await Promise.all([this.page.waitForEvent("filechooser", opts), target.click(opts)]);
+        await chooser.setFiles(path, opts);
+      }
       else {
         // The app may replace the control while re-rendering (a sorted list redrawn on change): the effect is then
         // read from the control with the same role and name.

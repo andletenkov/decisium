@@ -1,0 +1,247 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T11-58-27-910Z",
+  "entries": {
+    "Upload through a hidden file input: I upload \"notes.txt\" with the Attach file button": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Attach file",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "hover": 0.07,
+          "value": [
+            [
+              "notes.txt",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.72
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Attach file",
+                "container": ""
+              },
+              0.26
+            ]
+          ],
+          "hover": 0.11
+        }
+      ]
+    },
+    "Upload through a hidden file input: the status should be \"Attached notes.txt\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "pressed",
+          "confidence": 0.29,
+          "probabilities": {
+            "disabled": 0.07,
+            "enabled": 0.32,
+            "checked": 0.12,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.09,
+            "unselected": 0,
+            "pressed": 0.36,
+            "unpressed": 0.02
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.55
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.43
+          ]
+        ]
+      }
+    },
+    "Download a CSV: I export the contacts as CSV": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "link",
+                "name": "Export CSV",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "hover": 0.07
+        },
+        {
+          "done": 0.91,
+          "target": [
+            [
+              "none",
+              0.84
+            ]
+          ],
+          "hover": 0.1
+        }
+      ]
+    },
+    "Download a CSV: the downloaded file name should be \"contacts.csv\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.94,
+          "probabilities": {
+            "value": 0.95,
+            "presence": 0.01,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0.04
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.27,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.34,
+            "checked": 0.27,
+            "unchecked": 0.01,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.26,
+            "unselected": 0.01,
+            "pressed": 0.09,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "download",
+              "name": "downloaded file",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.74
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.2
+          ]
+        ]
+      }
+    },
+    "Download a CSV: the downloaded file should contain \"Ada Lovelace,engineer\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.91,
+          "probabilities": {
+            "value": 0.93,
+            "presence": 0.04,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0.02
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.34,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.32,
+            "checked": 0.41,
+            "unchecked": 0.02,
+            "expanded": 0.03,
+            "collapsed": 0,
+            "selected": 0.18,
+            "unselected": 0.01,
+            "pressed": 0.02,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "download",
+              "name": "downloaded file",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.69
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.18
+          ]
+        ]
+      }
+    }
+  }
+}

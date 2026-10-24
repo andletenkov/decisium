@@ -165,7 +165,9 @@ export class JevDecider implements Decider {
 
   async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
     const state = { step, ui: await this.#ui(obs, "step", step), element: el.line };
-    const question = "Which value should be entered into `element` to accomplish `step`?";
+    // A clicked element gets a value only to upload a file (task 0044): "entered into a button" read as nothing.
+    const question = el.verb === "CLICK" ? "Which file should be uploaded with `element` to accomplish `step`?"
+      : "Which value should be entered into `element` to accomplish `step`?";
     const criteria = await narrow(Object.fromEntries(candidates.map((c, i) => [`v${i}`, c])),
       { none: "None of these values is what `step` asks for." }, this.#choose(state, question));
     const res = await this.#ask({ state, questions: { value: choice(question, criteria) } });

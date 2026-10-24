@@ -3,7 +3,7 @@
 // Options come from DECISIUM_* env (set by `decisium run`), so raw `npx cucumber-js` works too.
 import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts";
 import { executeStep, type StepReport } from "./execute.ts";
@@ -78,7 +78,7 @@ Before(async function (this: Scenario, { pickle }) {
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
   this.dir = run.scenario(pickle.name);
   try {
-    this.browser = await Browser.open(toUrl(url), opt("HEADED"), true, secrets); // fresh browser per scenario: no shared state
+    this.browser = await Browser.open(toUrl(url), opt("HEADED"), true, secrets, dirname(pickle.uri), this.dir); // fresh browser per scenario: no shared state
   } catch (err) {
     throw infra(err);
   }
