@@ -110,8 +110,8 @@ function tableSteps(text: string, table: string[][], header: boolean): string[] 
 function toggleGoal(text: string): boolean | undefined {
   if (/\b(and|then)\b|,/i.test(text)) return undefined;
   if (/^(I\s+)?(uncheck|untick|deselect|clear|turn off|switch off|disable)\b/i.test(text)) return false;
-  if (/^(I\s+)?(check|tick|select|turn on|switch on|enable)\b/i.test(text)) return true;
-  return undefined;
+  // Task 0043: other wordings mean on unless negated; only applied when the clicked element is a toggle or radio.
+  return !/\b(disable|turn off|switch off|decline|reject|opt out|unsubscribe)/i.test(text);
 }
 
 /** Key names a Step can press (task 0039): Playwright's, lower-cased, plus aliases. */

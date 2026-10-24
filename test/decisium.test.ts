@@ -915,6 +915,29 @@ test("check/uncheck steps: code reads the box after the click, Jev's done is not
   }
 });
 
+test("toggles and radios without check words: on unless negated, already-there is DONE without a click (task 0043)", async () => {
+  const cases = [["I accept the terms", "checkbox", false, 1], ["I turn off dark mode", "switch", true, 1], ["I choose Express shipping", "radio", false, 1],
+    ["I subscribe to the newsletter", "checkbox", true, 0], ["I accept the invitation", "button", false, 1]] as const;
+  for (const [step, role, start, wantClicks] of cases) {
+    let on: boolean = start, clicks = 0;
+    const rt: Runtime = {
+      actionStep: run => run(),
+      observe: async () => parseSnapshot(`- ${role} "Box"${on ? " [checked]" : ""} [ref=e1]`),
+      execute: async () => { on = role === "radio" || !on; clicks++; },
+      waitForChange: async () => true,
+    };
+    const done = role === "button" ? (clicks: number) => clicks ? 0.9 : 0.1 : () => 0.45;
+    const d: Decider = { ...oracle, turn: async () => ({ done: done(clicks), target: sure("e1") }) };
+    assert.equal((await runStep(step, rt, d, () => {})).outcome, "DONE", step);
+    assert.equal(clicks, wantClicks, step);
+  }
+  // Jev torn between "nothing to do" and the box already on (live: none 0.52, box 0.37): done, no click.
+  const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(`- checkbox "Newsletter" [checked] [ref=e1]`),
+    execute: async () => assert.fail("no click"), waitForChange: async () => true };
+  const torn: Decider = { ...oracle, turn: async () => ({ done: 0.26, target: { choice: "none", probabilities: { none: 0.52, e1: 0.37, scroll: 0.09 } } }) };
+  assert.equal((await runStep("I subscribe to the newsletter", rt, torn, () => {})).outcome, "DONE");
+});
+
 test("parseFeature: data tables and doc strings ride on their Step (task 0038)", async () => {
   const [s] = parseFeature(`Feature: f\n  Scenario: s\n    When I fill in the form:\n      | First name | Ada |\n      | Last name | Lovelace |\n`
     + `    And I write the notes:\n      """\n      Line one.\n      Line "two".\n      """\n    Then the cart should list:\n      | Product | Qty |\n      | Backpack | 2 |\n    When I go back\n`);

@@ -1,0 +1,310 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T11-49-48-072Z",
+  "entries": {
+    "Accept, turn off, choose, already on: I accept the terms": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "checkbox",
+                "name": "I agree to the terms and conditions",
+                "container": ""
+              },
+              0.98
+            ]
+          ],
+          "hover": 0.05
+        }
+      ]
+    },
+    "Accept, turn off, choose, already on: I turn off dark mode": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "switch",
+                "name": "Dark mode",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "hover": 0.07
+        }
+      ]
+    },
+    "Accept, turn off, choose, already on: I choose Express shipping": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "radio",
+                "name": "Express",
+                "container": "group \"Shipping\""
+              },
+              1
+            ]
+          ],
+          "hover": 0.02
+        }
+      ]
+    },
+    "Accept, turn off, choose, already on: I subscribe to the newsletter": {
+      "turns": [
+        {
+          "done": 0.2,
+          "target": [
+            [
+              "none",
+              0.46
+            ],
+            [
+              {
+                "role": "checkbox",
+                "name": "Email me the newsletter",
+                "container": ""
+              },
+              0.41
+            ]
+          ],
+          "hover": 0.07
+        }
+      ]
+    },
+    "Accept, turn off, choose, already on: the terms checkbox should be checked": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 1,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 1,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "checkbox",
+              "name": "I agree to the terms and conditions",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.57
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.4
+          ]
+        ]
+      }
+    },
+    "Accept, turn off, choose, already on: the Dark mode switch should not be checked": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "unchecked",
+          "confidence": 0.97,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0,
+            "unchecked": 0.97,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0.03
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "switch",
+              "name": "Dark mode",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.64
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.33
+          ]
+        ]
+      }
+    },
+    "Accept, turn off, choose, already on: the Express radio should be checked": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 0.94,
+          "probabilities": {
+            "value": 0.02,
+            "presence": 0.02,
+            "absence": 0,
+            "state": 0.95,
+            "fuzzy": 0.01
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.86,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.01,
+            "checked": 0.87,
+            "unchecked": 0.1,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0.01,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "radio",
+              "name": "Express",
+              "container": "group \"Shipping\""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "group",
+              "name": "Shipping",
+              "container": ""
+            },
+            0.73
+          ],
+          [
+            "page",
+            0.25
+          ]
+        ]
+      }
+    },
+    "Accept, turn off, choose, already on: the newsletter checkbox should be checked": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 1,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 1,
+            "unchecked": 0,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "checkbox",
+              "name": "Email me the newsletter",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.56
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.43
+          ]
+        ]
+      }
+    }
+  }
+}

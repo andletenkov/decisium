@@ -42,6 +42,19 @@ async function settled<T>(rt: Runtime, obs: Observation, ask: (obs: Observation)
 const MAX_TURNS = 8;
 
 const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
+/** Jev torn between "nothing to do" and a toggle already in the wanted state (task 0043): both mean done. */
+function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined): boolean {
+  const done = (c: string) => c === "none" || obs.elements.some(e => e.ref === c && toggled(e, goal));
+  if (!Object.entries(pick.probabilities).some(([c, p]) => c !== "none" && p >= 0.1 && done(c))) return false;
+  const merged: Record<string, number> = {};
+  for (const [c, p] of Object.entries(pick.probabilities)) merged[done(c) ? "none" : c] = (merged[done(c) ? "none" : c] ?? 0) + p;
+  return gate({ choice: "none", probabilities: merged }, GATE_TARGET_TOP, GATE_TARGET_MARGIN)
+    && Object.entries(merged).every(([c, p]) => c === "none" || p < merged.none);
+}
+
+/** The element is a toggle in the Step's wanted state, or a checked radio (radios cannot be unchecked). */
+const toggled = (e: { role: string; state: string }, goal: boolean | undefined) => goal !== undefined
+  && (TOGGLES.has(e.role) || e.role === "radio" && goal) && /\[checked\]/.test(e.state) === goal;
 const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", wait: "WAIT", enter: "ENTER", back: "BACK", forward: "FORWARD",
   reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
@@ -175,6 +188,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     log(`  Decision: done=${t.done.toFixed(2)}${t.hover === undefined ? "" : ` hover=${t.hover.toFixed(2)}`} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
+    if (alreadyToggled(t.target, obs, read.toggle)) { log("  Toggle: already done"); return end("DONE"); }
     if (!gate(t.target, GATE_TARGET_TOP, GATE_TARGET_MARGIN)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
     if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
@@ -187,6 +201,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     } else {
       const el = obs.elements.find(e => e.ref === t.target.choice);
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
+      if (el.verb === "CLICK" && toggled(el, read.toggle)) { log(`  Toggle: already ${el.line}`); return end("DONE"); }
       action = { verb: (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : el.verb, ref: el.ref };
       if (action.verb === "TYPE" || action.verb === "SELECT") {
         const candidates = el.verb === "SELECT" ? el.options : read.candidates;
@@ -208,9 +223,8 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     recent.push(described);
 
     const next = await rt.observe();
-    const goal = read.toggle;
-    const box = action.verb === "CLICK" && goal !== undefined ? next.elements.find(e => e.ref === action.ref && TOGGLES.has(e.role)) : undefined;
-    if (box && /\[checked\]/.test(box.state) === goal) { log(`  Toggle: ${box.line}`); return end("DONE"); }
+    const box = action.verb === "CLICK" ? next.elements.find(e => e.ref === action.ref && toggled(e, read.toggle)) : undefined;
+    if (box) { log(`  Toggle: ${box.line}`); return end("DONE"); }
     unchanged = next.text === obs.text ? unchanged + 1 : 0;
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;

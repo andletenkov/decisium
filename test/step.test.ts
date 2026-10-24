@@ -44,7 +44,8 @@ test("readStep: Secret placeholders, quoted, as the doc string or as a table cel
 });
 
 test("readStep: a check or uncheck Step that does nothing else names the box state it wants", () => {
-  assert.deepEqual([`I check "A"`, "I uncheck checkbox 2", `I check "A" and submit`, "I open the page"].map(s => action(s).toggle), [true, false, undefined, undefined]);
+  assert.deepEqual([`I check "A"`, "I uncheck checkbox 2", `I check "A" and submit`, "I open the page"].map(s => action(s).toggle), [true, false, undefined, true]);
+  assert.deepEqual(["I accept the terms", "I disable dark mode", "I opt out of tracking", "I unsubscribe"].map(s => action(s).toggle), [true, false, false, false]);
 });
 
 test("readStep: Named keys after press/hit, as Playwright names them (task 0039)", () => {

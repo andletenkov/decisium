@@ -135,11 +135,23 @@ function hover() {
   help.onmouseleave = () => tip.hidden = true;
 }
 
+function toggles() {
+  main.innerHTML = `<h1>Checkout</h1>
+    <label><input type="checkbox"> I agree to the terms and conditions</label><br>
+    <label><input type="checkbox" checked> Email me the newsletter</label><br>
+    <button role="switch" aria-checked="true">Dark mode</button>
+    <fieldset><legend>Shipping</legend><label><input type="radio" name="ship" checked> Standard</label>
+      <label><input type="radio" name="ship"> Express</label></fieldset>`;
+  const sw = main.querySelector("[role=switch]");
+  sw.onclick = () => sw.setAttribute("aria-checked", String(sw.getAttribute("aria-checked") !== "true"));
+}
+
 document.getElementById("to-search").onclick = e => { e.preventDefault(); search(); };
 document.getElementById("to-settings").onclick = e => { e.preventDefault(); settings(); };
 location.search.includes("settings") ? settings() : location.search.includes("contacts") ? contacts()
   : location.search.includes("keys") ? keys() : location.search.includes("dialogs") ? dialogs()
-  : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover() : search();
+  : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover()
+  : location.search.includes("toggles") ? toggles() : search();
 </script>
 </body>
 </html>
