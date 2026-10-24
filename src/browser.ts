@@ -387,10 +387,11 @@ export class Browser {
       const { result } = await cdp.send("Runtime.evaluate", { expression: "document" });
       const { listeners } = await cdp.send("DOMDebugger.getEventListeners", { objectId: result.objectId!, depth: -1, pierce: true });
       const nodes = new Set(listeners.filter(l => /^(click|mousedown|pointerdown)$/.test(l.type) && l.backendNodeId).map(l => l.backendNodeId!));
-      for (const backendNodeId of nodes) {
+      // In parallel: one at a time took ~40 ms for Wikipedia's 131 listener nodes, ~13 ms pipelined.
+      await Promise.all([...nodes].map(async backendNodeId => {
         const { object } = await cdp.send("DOM.resolveNode", { backendNodeId }).catch(() => ({ object: undefined }));
         if (object?.objectId) await cdp.send("Runtime.callFunctionOn", { objectId: object.objectId, functionDeclaration: "function () { this.__decisiumClick = true; }" }).catch(() => {});
-      }
+      }));
     } catch { /* mid-navigation: no listener facts this time */ } finally { await cdp.detach().catch(() => {}); }
   }
 
