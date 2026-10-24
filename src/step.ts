@@ -37,6 +37,8 @@ export interface StepReading {
   navigation?: Navigation;
   /** The Step uploads (task 0044): an element it clicks gets one of the quoted values as a file. */
   upload: boolean;
+  /** The Step pastes the clipboard (task 0062): "paste" without a quoted value; a typed field gets Ctrl/Cmd+V instead. */
+  paste: boolean;
   /** A Step that only checks (true) or unchecks (false) one box; "and"/"then" mean more to do. */
   toggle?: boolean;
   /** A check of rows "exactly" or "in this order". */
@@ -73,6 +75,7 @@ export function readStep(step: ParsedStep): StepReading {
     navigation: isCheck ? undefined : navigation(text),
     toggle: isCheck ? undefined : toggleGoal(text),
     upload: !isCheck && quotedText.length > 0 && /\b(upload|attach)/i.test(text),
+    paste: !isCheck && quotedText.length === 0 && /\bpaste\b/i.test(text),
     exact: /\b(exactly|in this order)\b/i.test(text),
     header,
     list,

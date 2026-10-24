@@ -1577,3 +1577,22 @@ test("options: worldParameters.decisium fills DECISIUM_* env that is not set; en
   assert.equal(ourStdout(["summary"], "summary"), false);
   assert.equal(ourStdout(["progress"], "progress"), false);
 });
+
+test("clipboard: copied text is readable and masked, and PASTE puts it into the field (task 0062)", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const file = `${mkdtempSync(`${tmpdir()}/clip-`)}/p.html`; // file://: the clipboard needs a secure origin, data: has none
+  writeFileSync(file, `<button onclick="navigator.clipboard.writeText('key s3cret')">Copy</button><input aria-label=Box>`);
+  const b = await Browser.open(pathToFileURL(file).href, false, false, { "<KEY>": "s3cret" });
+  const clipboard = async () => (await b.observe()).readable.find(e => e.ref === "clipboard");
+  try {
+    assert.equal(await clipboard(), undefined);
+    const obs = await b.observe();
+    await b.execute({ verb: "CLICK", ref: obs.elements.find(e => e.name === "Copy")!.ref });
+    assert.equal((await clipboard())!.value, "key <KEY>");
+    await b.execute({ verb: "PASTE", ref: obs.elements.find(e => e.name === "Box")!.ref });
+    assert.match((await b.observe()).elements.find(e => e.name === "Box")!.line, /<KEY>/);
+  } finally {
+    await b.close();
+  }
+});

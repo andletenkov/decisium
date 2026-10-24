@@ -108,3 +108,9 @@ test("readStep: clear/empty offers an empty TYPE candidate only in action wordin
   assert.deepEqual(action("I search").candidates, []);
   assert.deepEqual(check("Search is empty").candidates, []);
 });
+
+test("readStep: a Step pastes only when it says paste and quotes nothing (task 0062)", () => {
+  assert.equal(action("I paste into the message box").paste, true);
+  assert.equal(action(`I paste "hi" into the message box`).paste, false);
+  assert.equal(action("I copy the invite link").paste, false);
+});

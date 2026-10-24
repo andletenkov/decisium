@@ -1,0 +1,212 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T17-45-16-747Z",
+  "entries": {
+    "Copy an invite link and paste it: I copy the invite link": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Copy invite link",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.99
+            ]
+          ]
+        },
+        {
+          "done": 0.98,
+          "target": [
+            [
+              "none",
+              0.86
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "Copy an invite link and paste it: the copied text should be \"https://example.com/invite/7f3a\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.6,
+          "probabilities": {
+            "disabled": 0.14,
+            "enabled": 0.64,
+            "checked": 0.16,
+            "unchecked": 0,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0.01,
+            "unselected": 0,
+            "pressed": 0.03,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "clipboard",
+              "name": "copied text",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.87
+          ]
+        ]
+      }
+    },
+    "Copy an invite link and paste it: I paste into the message box": {
+      "turns": [
+        {
+          "done": 0.17,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Message",
+                "container": ""
+              },
+              0.89
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.75
+            ],
+            [
+              "right click",
+              0.22
+            ]
+          ]
+        },
+        {
+          "done": 0.96,
+          "target": [
+            [
+              "none",
+              0.53
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Copy invite link",
+                "container": ""
+              },
+              0.26
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Message",
+                "container": ""
+              },
+              0.14
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              0.95
+            ]
+          ]
+        }
+      ]
+    },
+    "Copy an invite link and paste it: the message box should show \"https://example.com/invite/7f3a\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.46,
+          "probabilities": {
+            "disabled": 0.01,
+            "enabled": 0.51,
+            "checked": 0.12,
+            "unchecked": 0.01,
+            "expanded": 0.13,
+            "collapsed": 0.01,
+            "selected": 0.19,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "textbox",
+              "name": "Message",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.39
+          ],
+          [
+            "missing",
+            0.31
+          ],
+          [
+            "page",
+            0.21
+          ]
+        ]
+      }
+    }
+  }
+}

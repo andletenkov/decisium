@@ -3,14 +3,15 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium, type Browser as PwBrowser, type BrowserContext, type BrowserContextOptions, type Dialog as PwDialog, type Page } from "playwright";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
-import { parseSnapshot, withDialog, withDownload, withPage, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
+import { parseSnapshot, withDialog, withClipboard, withDownload, withPage, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
   verb: Verb | "SCROLL" | "SCROLL_UP" | "WAIT" | "ENTER" | "PRESS" | "ACCEPT" | "DISMISS" // ACCEPT/DISMISS: the open browser dialog
     | "GOTO" | "BACK" | "FORWARD" | "RELOAD" | "CLOSE_TAB" | "SWITCH_TAB" // task 0041
     | "HOVER" // task 0042
     | "UPLOAD" // task 0044: click `ref`, give the file chooser the file `value`
-    | "DBLCLICK" | "RIGHTCLICK" | "DRAG"; // task 0045
+    | "DBLCLICK" | "RIGHTCLICK" | "DRAG" // task 0045
+    | "PASTE"; // task 0062: click `ref`, press Ctrl/Cmd+V
   ref?: string; // element actions only
   to?: string; // DRAG: ref of the element to drop onto
   value?: string; // UPLOAD: a path relative to the feature file; PRESS: the key, as Playwright names it; ACCEPT: a prompt's text; GOTO: URL or path, resolved against the start URL
@@ -99,6 +100,9 @@ export class Browser {
   private files = ".";
   private downloads?: string;
   private download?: Download; // the last finished download, readable for checks
+  /** Task 0062: a headed browser may share the OS clipboard; only text copied since the open is shown. */
+  private clipboardAtOpen?: string;
+  private async readClipboard() { return this.page.evaluate(() => navigator.clipboard?.readText()).catch(() => undefined); } // undefined: insecure origin (data:)
   private mask(s: string) { return Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s); }
 
   private constructor(browser: PwBrowser, page: Page, start: string) {
@@ -166,7 +170,9 @@ export class Browser {
   static async open(url: string, headed = false, trace = false, secrets: Record<string, string> = {}, files = ".", downloads?: string,
     context: BrowserContextOptions = {}, network?: NetworkReplay): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
-    const page = await (await browser.newContext(context)).newPage();
+    // Task 0062: copy buttons and paste need the clipboard; granted for every origin (file:// and localhost measured).
+    const permissions = [...context.permissions ?? [], "clipboard-read", "clipboard-write"];
+    const page = await (await browser.newContext({ ...context, permissions })).newPage();
     if (trace) await page.context().tracing.start({ screenshots: true, snapshots: true });
     // In every document, new tabs included: the time of the last DOM mutation, and a count of work that can still change
     // the page on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
@@ -217,6 +223,7 @@ export class Browser {
     b.secrets = secrets;
     b.files = files;
     b.downloads = downloads;
+    b.clipboardAtOpen = await b.readClipboard();
     try {
       if (network?.mode === "record") await recordNetwork(b.context, network);
       if (network?.mode === "replay") await replayNetwork(b.context, network, r => b.networkMisses.push(r));
@@ -261,7 +268,9 @@ export class Browser {
   async observe(): Promise<Observation> {
     const page = this.open ? undefined : await this.unblocked(this.read());
     if (page) this.under = page;
-    return (this.last = withDialog(withDownload(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.download), this.dialog));
+    const clip = page ? await this.readClipboard() : undefined;
+    const copied = clip && clip !== this.clipboardAtOpen ? this.mask(clip) : undefined;
+    return (this.last = withDialog(withClipboard(withDownload(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.download), copied), this.dialog));
   }
 
   private async read(): Promise<Observation> {
@@ -410,6 +419,7 @@ export class Browser {
       else if (verb === "DBLCLICK") await target.dblclick(opts);
       else if (verb === "RIGHTCLICK") await target.click({ ...opts, button: "right" });
       else if (verb === "DRAG") await target.dragTo(this.page.locator(`aria-ref=${to}`), opts);
+      else if (verb === "PASTE") { await target.click(opts); await this.page.keyboard.press("ControlOrMeta+V"); }
       else if (verb === "UPLOAD") {
         const path = resolve(this.files, value);
         if (!existsSync(path) || !statSync(path).isFile()) throw new Error(`no file "${value}" next to the feature file`);

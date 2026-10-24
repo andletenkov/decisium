@@ -13,7 +13,7 @@
      and a like button inside a web component's open shadow root, and (?network, task 0048) the viewport and locale the
      browser context has, and campaigns loaded from the campaign manager's API on 127.0.0.1:5173, and (?scroll, task
      0061) an inbox panel that loads more messages when scrolled to its end, and a chat log that loads older messages
-     when scrolled to its top. -->
+     when scrolled to its top, and (?clipboard, task 0062) a "Copy invite link" button and a message box to paste into. -->
 <body>
 <nav aria-label="Main"><a href="#" id="to-search">Search</a> <a href="#" id="to-settings">Settings</a></nav>
 <main id="main"></main>
@@ -223,6 +223,13 @@ function network() {
   };
 }
 
+function clipboard() {
+  main.innerHTML = `<h1>Invite</h1><p>Invite link: https://example.com/invite/7f3a</p><button id="copy">Copy invite link</button>
+    <p role="status"></p><label>Message <textarea id="message"></textarea></label>`;
+  main.querySelector("#copy").onclick = () => navigator.clipboard.writeText("https://example.com/invite/7f3a")
+    .then(() => main.querySelector("[role=status]").textContent = "Copied");
+}
+
 function scroll() {
   const items = (from, to, what) => Array.from({ length: to - from + 1 }, (_, i) => `<li>${what} ${from + i}</li>`).join("");
   main.innerHTML = `<h1>Scroll</h1>
@@ -245,7 +252,8 @@ location.search.includes("settings") ? settings() : location.search.includes("co
   : location.search.includes("nav") ? nav() : location.search.includes("hover") ? hover()
   : location.search.includes("toggles") ? toggles() : location.search.includes("files") ? files()
   : location.search.includes("gestures") ? gestures() : location.search.includes("frames") ? frames()
-  : location.search.includes("network") ? network() : location.search.includes("scroll") ? scroll() : search();
+  : location.search.includes("network") ? network() : location.search.includes("scroll") ? scroll()
+  : location.search.includes("clipboard") ? clipboard() : search();
 </script>
 </body>
 </html>

@@ -205,7 +205,7 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
       if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       if (el.verb === "CLICK" && toggled(el, read.toggle)) { log(`  Toggle: already ${el.line}`); return end("DONE"); }
       const gesture = t.gesture ? GESTURE_VERBS[t.gesture.choice] : (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : undefined;
-      action = { verb: gesture ?? (read.upload && el.verb === "CLICK" ? "UPLOAD" : el.verb), ref: el.ref };
+      action = { verb: gesture ?? (read.upload && el.verb === "CLICK" ? "UPLOAD" : read.paste && el.verb === "TYPE" ? "PASTE" : el.verb), ref: el.ref };
       let onto = "";
       if (action.verb === "DRAG") {
         const d = await decider.drop(said, obs, el);

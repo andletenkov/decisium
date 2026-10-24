@@ -202,3 +202,14 @@ export function withDownload(obs: Observation, download?: Download): Observation
   const top = cap(`- download "downloaded file" ${state}: ${value.replace(/\s+/g, " ")}`);
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
 }
+
+/** Adds the clipboard text (task 0062) as a readable pseudo-element (ref `clipboard`), so a value check reads copied text. */
+export function withClipboard(obs: Observation, text?: string): Observation {
+  if (!text) return obs;
+  const el: Element = {
+    ref: "clipboard", role: "clipboard", name: "copied text", value: text, state: "", secret: false, verb: "CLICK", options: [],
+    text, line: `clipboard "copied text" value="${clip(text.replace(/\s+/g, " "))}"`,
+  };
+  const top = cap(`- clipboard "copied text": ${text.replace(/\s+/g, " ")}`);
+  return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
+}
