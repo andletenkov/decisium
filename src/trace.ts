@@ -86,6 +86,7 @@ export class RunDir {
         await b.execute(a);
       },
       waitForChange: (since, ms) => b.waitForChange(since, ms),
+      stale: () => b.stale(),
       actionStep: (run, log) => b.actionStep(run, log, rt.execute),
     };
     return rt;

@@ -289,7 +289,16 @@ export class Browser {
     return (this.last = withDialog(withClipboard(withDownload(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.download), copied), this.dialog));
   }
 
+  private stamp?: number; // __lastMutation when the latest Observation was read
+
+  /** The DOM changed since the latest Observation (task 0066): the page moved on its own before an action. */
+  async stale(): Promise<boolean> {
+    const now = await this.unblocked(this.page.evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation).catch(() => undefined));
+    return now === undefined || now !== this.stamp;
+  }
+
   private async read(): Promise<Observation> {
+    this.stamp = await this.page.evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation).catch(() => undefined);
     const found = await this.facts();
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);

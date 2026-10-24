@@ -469,7 +469,8 @@ for (const variant of ["", "?dropdown=custom"]) {
       const obs = await b.observe();
       assert.match(obs.text, variant ? /combobox "Activation period" \[ref=\w+\]: 2 weeks/ : /option "2 weeks" \[selected\]/);
       // The last turn saw what was already done in this Step.
-      assert.deepEqual(seenRecent.at(-1), variant
+      assert.match(seenRecent.at(-1)!.at(-1)!, / -> changed: .*2 weeks/); // and what it changed (task 0066)
+      assert.deepEqual(seenRecent.at(-1)?.map(a => a.split(" -> ")[0]), variant
         ? ['CLICK combobox "Activation period"', 'CLICK option "2 weeks"']
         : ['SELECT combobox "Activation period" <- "2 weeks"']);
     } finally {

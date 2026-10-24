@@ -182,7 +182,8 @@ function gestures() {
   };
   const menu = main.querySelector("[role=menu]");
   main.querySelector("#file").oncontextmenu = e => { e.preventDefault(); menu.hidden = false; };
-  menu.querySelectorAll("li").forEach(li => li.onclick = () => { menu.hidden = true; status.textContent = `${li.textContent} report.pdf`; });
+  // Delete removes the file, as a real app does: a status alone left Jev unsure it was deleted (task 0066).
+  menu.querySelectorAll("li").forEach(li => li.onclick = () => { menu.hidden = true; status.textContent = `${li.textContent} report.pdf`; if (li.textContent === "Delete") main.querySelector("#file").remove(); });
   let dragged;
   main.querySelectorAll("[draggable]").forEach(li => li.ondragstart = () => dragged = li);
   main.querySelectorAll("ul[aria-label]").forEach(ul => {

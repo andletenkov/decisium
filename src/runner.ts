@@ -2,6 +2,7 @@ import type { Action } from "./browser.ts";
 import { readStep, type StepArgument } from "./step.ts";
 import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, NotYet, pageActions, named, fmt, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import { verdict as checkVerdict, type Verdict } from "./check.ts";
+import { changes } from "./change.ts";
 import { MASK, type Dialog, type Observation } from "./observation.ts";
 
 export type StepOutcome =
@@ -17,6 +18,8 @@ export interface Runtime {
   waitForChange(since: string, timeoutMs?: number): Promise<boolean>;
   /** Runs one Action step with runtime-owned setup and cleanup, even if it throws. */
   actionStep<T>(run: () => Promise<T>, log: typeof console.log): Promise<T>;
+  /** True when the page changed since the latest Observation (task 0066); absent: assume it did not. */
+  stale?(): Promise<boolean>;
 }
 
 export interface StepResult {
@@ -227,15 +230,20 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
       const shown = action.value === undefined ? "" : ` <- "${el.secret ? MASK : action.value}"`;
       described = `${action.verb} ${el.role} "${el.name || el.value.slice(0, 60)}"${shown}${onto}`;
     }
+    // The page moved on its own since the Turn's Observation: diff from now, so that change is not the action's.
+    const before = await rt.stale?.() ? await rt.observe() : obs;
     log(`  Execute: ${described}`);
     try {
       await rt.execute(action);
     } catch (err) {
       return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
     }
-    recent.push(described);
 
     const next = await rt.observe();
+    // What the action changed, for Jev's next `done` (task 0066: under-confident after working actions).
+    const effect = changes(before, next, action.ref);
+    log(`  Effect: ${effect}`);
+    recent.push(`${described} -> ${effect}`);
     const box = action.verb === "CLICK" ? next.elements.find(e => e.ref === action.ref && toggled(e, read.toggle)) : undefined;
     if (box) { log(`  Toggle: ${box.line}`); return end("DONE"); }
     unchanged = next.text === obs.text ? unchanged + 1 : 0;
