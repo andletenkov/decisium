@@ -1,6 +1,6 @@
 // cucumber-js support code (ADR 0003): one catch-all step definition runs every Step through Jev; hooks give each
 // scenario a fresh browser, its run-directory folder, the feature's cassette and an empty memory.
-// Options come from DECISIUM_* env (set by `decisium run`), so raw `npx cucumber-js` works too.
+// Options come from worldParameters.decisium and DECISIUM_* env (src/options.ts), so raw `npx cucumber-js` works too.
 import { After, AfterAll, AfterStep, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, supportCodeLibraryBuilder, World } from "@cucumber/cucumber";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -14,10 +14,11 @@ import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import { type Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
+import { applyOptions } from "./options.ts";
 
 const env = process.env;
 const opt = (name: string) => env[`DECISIUM_${name}`] === "1";
-const record = (env.DECISIUM_RECORD ?? "new") as RecordMode;
+let record: RecordMode; // set in BeforeAll, once worldParameters are known
 
 // Jev steps take seconds per Turn; the runner has its own caps (8 Turns, 5 s waits).
 setDefaultTimeout(10 * 60_000);
@@ -52,6 +53,8 @@ setParallelCanAssign((pickle, running) => !running.some(p => p.uri === pickle.ur
 
 BeforeAll(function () {
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
+  applyOptions(this.parameters.decisium);
+  record = (env.DECISIUM_RECORD || "new") as RecordMode;
   if (!RECORD_MODES.includes(record)) throw new Error(`DECISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED"))) throw new Error("TYPESAFE_API_KEY is not set.");
   run = new RunDir("runs", env.DECISIUM_RUN_DIR || undefined);
@@ -130,13 +133,14 @@ async function step(this: Scenario, text: string) {
   }
   run.event("step", { kind: this.kind, step: readStep({ text, kind: this.kind, ...this.arg }).label, at: this.at, ...r });
   if (r.outcome === "JUDGED_PASSED") this.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
-  if (r.marginal) this.log(`${MARGINAL}${r.marginal}`); // read by the console formatter and the Qase reporter
+  // A file attachment any reporter keeps (text/plain opens as .txt); the console formatter reads it by its prefix.
+  if (r.marginal) this.attach(`${MARGINAL}${r.marginal}`, { mediaType: "text/plain", fileName: "marginal-pass.txt" });
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
     // Failed Step only; fileName carries the path to the console formatter.
     const shot = run.lastScreenshot;
     if (shot && existsSync(shot)) this.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
     const err = new Error(outcomeMessage(r));
-    err.stack = err.message; // no stack frames: the Qase reporter reads keywords in them
+    err.stack = err.message; // no stack frames: reporters such as Qase's read keywords in them
     throw err;
   }
 }

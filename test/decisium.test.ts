@@ -687,8 +687,25 @@ test("lint: cookbook warnings flag the failing wordings and leave the working on
   assert.match(w(`I log in with password "$MISSING"`, "action"), /\$MISSING is not set/);
 });
 
-test("Qase status: every outcome message starts with its outcome and the reporter classifies it as decided", async () => {
-  const { determineTestStatus } = await import("qase-javascript-commons");
+// shortcut: copy of determineTestStatus(error, "failed") from qase-javascript-commons 2.9 (utils/test-status-utils.js),
+// the rule test-management reporters use to tell `failed` from `invalid`; recheck against a newer release when it changes.
+function determineTestStatus(error: Error, _original: "failed"): "failed" | "invalid" {
+  const msg = error.message.toLowerCase(), stack = (error.stack ?? "").toLowerCase();
+  const has = (patterns: string[]) => patterns.some(p => msg.includes(p) || stack.includes(p));
+  const assertion = ["expect", "assert", "matcher", "objectcontaining", "assertion", "expected", "actual", "to be", "to equal", "to contain",
+    "to match", "to throw", "to be called", "to have been called", "test failed", "expectation failed", "assertion failed"];
+  const nonAssertion = ["syntaxerror", "referenceerror", "typeerror", "network", "connection", "http", "fetch", "axios", "cors",
+    "permission", "access denied", "unauthorized", "forbidden", "not found", "server error", "internal error"];
+  const cypress = /timed out retrying after \d+ms/.test(msg);
+  const isAssertion = msg.includes("timeout") && msg.includes("expect") ? true
+    : has(nonAssertion) ? (has(assertion) && !has(["syntaxerror"])) || cypress
+    : cypress ? true
+    : msg.includes("timeout") ? false
+    : has(assertion) || msg.includes("expect") || msg.includes("matcher") || msg.includes("assert");
+  return isAssertion ? "failed" : "invalid";
+}
+
+test("failed vs invalid: every outcome message starts with its outcome and Qase's status rule classifies it as decided", async () => {
   const { HINTS, outcomeMessage, parseOutcome } = await import("../src/report.ts");
   // Reasons as the runner writes them, including words the reporter treats as assertion or infrastructure hints.
   const reasons = [
@@ -714,34 +731,6 @@ test("Qase status: every outcome message starts with its outcome and the reporte
     }
   }
   assert.equal(parseOutcome("Cannot open http://x: refused"), undefined);
-});
-
-test("Qase preflight (testops mode): missing token or unknown case id is one line before anything runs", async () => {
-  const { createServer } = await import("node:http");
-  const { qasePreflight, qaseIds } = await import("../src/qase.ts");
-  assert.deepEqual(qaseIds(["@url:x", "@QaseID=3,4", "@Q-7", "@qaseid=8"]), [3, 4, 7, 8]);
-  const seen: string[] = [];
-  const server = createServer((req, res) => {
-    seen.push(`${req.url} ${req.headers.token}`);
-    res.statusCode = req.headers.token !== "good" ? 401 : ["/v1/case/DEMO/1", "/v1/project/DEMO"].includes(req.url!) ? 200 : 404;
-    res.end("{}");
-  });
-  await new Promise<void>(r => server.listen(0, r));
-  const host = `http://localhost:${(server.address() as { port: number }).port}`;
-  const env = (token?: string) => ({ QASE_MODE: "testops", QASE_TESTOPS_PROJECT: "DEMO", QASE_TESTOPS_API_HOST: host, QASE_TESTOPS_API_TOKEN: token });
-  const scenarios = [{ name: "a", tags: ["@QaseID=1"] }, { name: "b", tags: ["@QaseID=99"] }, { name: "c", tags: [] }];
-  try {
-    assert.equal(await qasePreflight(scenarios, {}), undefined); // reporter off: nothing to check
-    assert.match((await qasePreflight(scenarios, env()))!, /^QASE_TESTOPS_API_TOKEN is not set/);
-    assert.match((await qasePreflight(scenarios, env("bad")))!, /^Qase rejected QASE_TESTOPS_API_TOKEN/);
-    assert.equal(await qasePreflight(scenarios, env("good")), `Qase case DEMO-99 not found (scenario "b", @QaseID=99).`);
-    assert.equal(await qasePreflight(scenarios.slice(0, 1), env("good")), undefined);
-    assert.ok(seen.includes("/v1/case/DEMO/1 good"));
-    assert.equal(await qasePreflight([], env("good")), undefined); // no case ids: the project is still checked
-    assert.equal(await qasePreflight([], { ...env("good"), QASE_TESTOPS_PROJECT: "NOPE" }), "Qase project NOPE not found.");
-  } finally {
-    server.close();
-  }
 });
 
 test("narrow: more candidates than Jev accepts are cut down in rounds, keeping the right one and the fixed answers", async () => {
@@ -1554,4 +1543,19 @@ test("client steps: a line a client definition matches runs it beside the catch-
   const steps = readFileSync(`${dir}/trace.jsonl`, "utf8").trim().split("\n").map(l => JSON.parse(l)).filter(e => e.type === "step");
   assert.equal(steps.length, 7); // the client step never reaches Jev or the cassette
   assert.equal(steps.reduce((n, s) => n + s.jevCalls, 0), 0);
+});
+
+test("options: worldParameters.decisium fills DECISIUM_* env that is not set; env wins; the stdout formatter is the client's or ours", async () => {
+  const { applyOptions, ourStdout } = await import("../src/options.ts");
+  const env: Record<string, string | undefined> = { DECISIUM_RECORD: "none", DECISIUM_STRICT: "0" };
+  applyOptions({ url: "http://x", record: "all", strict: true, judged: true, agentReport: false }, env);
+  assert.deepEqual(env, { DECISIUM_RECORD: "none", DECISIUM_STRICT: "0", DECISIUM_URL: "http://x", DECISIUM_JUDGED: "1", DECISIUM_NO_AGENT_REPORT: "1" });
+  applyOptions(undefined, env); // no worldParameters.decisium: nothing changes
+  assert.throws(() => applyOptions({ strickt: true }, {}), /strickt is not an option/);
+  assert.throws(() => applyOptions({ strict: "yes" }, {}), /strict must be a boolean/);
+  // cucumber resolves stdout to the last format entry without a path, else "progress".
+  assert.equal(ourStdout(["cucumberjs-qase-reporter:/dev/null", "junit:junit.xml"], "progress"), true);
+  assert.equal(ourStdout([], "progress"), true);
+  assert.equal(ourStdout(["summary"], "summary"), false);
+  assert.equal(ourStdout(["progress"], "progress"), false);
 });

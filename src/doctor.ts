@@ -5,7 +5,6 @@ import { chromium } from "playwright";
 import { Browser } from "./browser.ts";
 import { parseFeature, toUrl, type Scenario } from "./feature.ts";
 import { MODEL } from "./jev.ts";
-import { qaseOn, qasePreflight } from "./qase.ts";
 
 /** Node with type stripping on by default: the CLI runs .ts files directly. */
 export const nodeOk = (version = process.versions.node) => {
@@ -31,10 +30,6 @@ export async function doctor(files: string[]): Promise<number> {
     try { scenarios.push(...parseFeature(readFileSync(f, "utf8"), f)); line(true, `${f} parses`); }
     catch (err) { line(false, `${f}: ${(err as Error).message}`); }
   }
-  if (process.env.QASE_MODE === "testops") {
-    const error = await qasePreflight(scenarios);
-    line(!error, error ?? `Qase reachable, project and case ids found`);
-  } else if (qaseOn()) line(true, `Qase mode ${process.env.QASE_MODE ?? "from qase.config.json"}: nothing to reach (only testops calls Qase)`);
   for (const url of new Set(scenarios.map(s => s.url).filter(u => u !== undefined))) {
     await attempt(`opens ${url}`, async () => (await Browser.open(toUrl(url))).close());
   }

@@ -21,12 +21,10 @@
     "@cucumber/gherkin": "^42.0.1",
     "@cucumber/messages": "^34.2.1",
     "@typesafe-ai/sdk": "^0.7.0",
-    "cucumberjs-qase-reporter": "2.5",
     "playwright": "^1.64.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
-    "qase-javascript-commons": "~2.9.0",
     "typescript": "^7.0.2"
   }
 }
