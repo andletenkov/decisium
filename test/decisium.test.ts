@@ -1522,3 +1522,36 @@ test("Browser: secrets, titles, draggable, current links and collapsed entries a
     await b.close();
   }
 });
+
+test("@replay-network: served by method + URL + occurrence, body ignored; a request not in the recording is aborted and reported (task 0048)", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const har = `${mkdtempSync(`${tmpdir()}/decisium-`)}/s.har`;
+  const entry = (text: string) => ({ request: { method: "POST", url: "http://127.0.0.1:9/api" },
+    response: { status: 200, headers: [{ name: "access-control-allow-origin", value: "*" }, { name: "content-length", value: "999" }], content: { text } } });
+  writeFileSync(har, JSON.stringify({ log: { entries: [entry("first"), entry("second")] } }));
+  const b = await Browser.open("data:text/html,<p>x</p>", false, false, {}, ".", undefined, {}, { glob: "**/api", har, mode: "replay" });
+  try {
+    const call = (body: string) => b.page.evaluate(body => fetch("http://127.0.0.1:9/api", { method: "POST", body }).then(r => r.text(), () => "failed"), body);
+    assert.deepEqual([await call(`{"ts":1}`), await call(`{"ts":2}`), await call("")], ["first", "second", "failed"]);
+    assert.deepEqual(b.networkMisses, ["POST http://127.0.0.1:9/api (call 3)"]);
+  } finally {
+    await b.close();
+  }
+});
+
+test("client steps: a line a client definition matches runs it beside the catch-all, not Ambiguous; context tags; network replay without the server (task 0048)", async () => {
+  // Fails if cucumber's internals behind the catch-all's finalize wrapper (src/steps.ts) change.
+  const { execFile } = await import("node:child_process");
+  const { readFileSync } = await import("node:fs");
+  const { promisify } = await import("node:util");
+  const r = await promisify(execFile)("node", ["src/cli.ts", "run", "examples/cookbook/network.feature", "--import", "examples/cookbook/network.steps.ts",
+    "--record", "none", "--no-agent-report"], { env: { ...process.env, TYPESAFE_API_KEY: "" } })
+    .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
+  assert.equal(r.code, 0, r.stdout);
+  assert.match(r.stdout, /✓ Step: the campaigns API returns "Mocked Sale"/);
+  const dir = /Run directory: (\S+)/.exec(r.stdout)![1];
+  const steps = readFileSync(`${dir}/trace.jsonl`, "utf8").trim().split("\n").map(l => JSON.parse(l)).filter(e => e.type === "step");
+  assert.equal(steps.length, 7); // the client step never reaches Jev or the cassette
+  assert.equal(steps.reduce((n, s) => n + s.jevCalls, 0), 0);
+});

@@ -4,6 +4,7 @@ import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumb
 import { IdGenerator, type PickleStepArgument, type PickleStepType } from "@cucumber/messages";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { devices, type BrowserContextOptions } from "playwright";
 import { readStep, stepKind, type ParsedStep, type StepArgument } from "./step.ts";
 
 export interface Scenario {
@@ -14,8 +15,37 @@ export interface Scenario {
 }
 
 /** Start URL from the last `@url:<url>` tag (pickle tags list feature tags first). */
-export const urlFromTags = (tags: readonly { name: string }[]) =>
-  tags.map(t => /^@url:(.+)$/.exec(t.name)?.[1]).filter(Boolean).at(-1);
+export const urlFromTags = (tags: readonly { name: string }[]) => tagValue(tags, "url");
+
+/** The value of the last `@<name>:<value>` tag. */
+export const tagValue = (tags: readonly { name: string }[], name: string) =>
+  tags.map(t => t.name.startsWith(`@${name}:`) ? t.name.slice(name.length + 2) : undefined).filter(Boolean).at(-1);
+
+/**
+ * Browser context options from `@viewport:<w>x<h>` (or a Playwright device name, dashes for spaces: `@viewport:iPhone-13`),
+ * `@locale:<bcp47>`, `@timezone:<IANA id>`, `@geolocation:<lat>,<lon>` (task 0048). A malformed value throws.
+ */
+export function contextFromTags(tags: readonly { name: string }[]): BrowserContextOptions {
+  const o: BrowserContextOptions = {};
+  const viewport = tagValue(tags, "viewport"), geo = tagValue(tags, "geolocation");
+  if (viewport) {
+    const size = /^(\d+)x(\d+)$/.exec(viewport);
+    const device = devices[viewport.replaceAll("-", " ")];
+    if (size) o.viewport = { width: Number(size[1]), height: Number(size[2]) };
+    else if (device) { const { defaultBrowserType: _, ...d } = device; Object.assign(o, d); }
+    else throw new Error(`@viewport:${viewport}: expected <width>x<height> or a Playwright device name such as iPhone-13`);
+  }
+  if (geo) {
+    const m = /^(-?[\d.]+),(-?[\d.]+)$/.exec(geo);
+    if (!m) throw new Error(`@geolocation:${geo}: expected <latitude>,<longitude>`);
+    o.geolocation = { latitude: Number(m[1]), longitude: Number(m[2]) };
+    o.permissions = ["geolocation"];
+  }
+  const locale = tagValue(tags, "locale"), timezoneId = tagValue(tags, "timezone");
+  if (locale) o.locale = locale;
+  if (timezoneId) o.timezoneId = timezoneId;
+  return o;
+}
 
 /** A pickle step's data table or doc string, only the one it has. */
 const stepArgument = ({ argument }: { argument?: PickleStepArgument }): StepArgument =>

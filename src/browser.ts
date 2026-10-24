@@ -1,7 +1,8 @@
 // Browser runtime: the only module that knows about Playwright. Swap for CDP behind the same surface.
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { chromium, type Browser as PwBrowser, type BrowserContext, type Dialog as PwDialog, type Page } from "playwright";
+import { chromium, type Browser as PwBrowser, type BrowserContext, type BrowserContextOptions, type Dialog as PwDialog, type Page } from "playwright";
+import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import { parseSnapshot, withDialog, withDownload, withPage, type Dialog, type Download, type Observation, type Verb } from "./observation.ts";
 
 export interface Action {
@@ -67,9 +68,12 @@ const HOVER_TIMEOUT_MS = 2000;
 
 export class Browser {
   private browser: PwBrowser;
-  private context: BrowserContext;
-  /** The tab Steps act on. A tab the page opens (a popup, a target=_blank link) becomes it at once (task 0041). */
-  private page: Page;
+  /** Public for client step definitions (`this.context` on the World, task 0048). */
+  readonly context: BrowserContext;
+  /** The tab Steps act on. A tab the page opens (a popup, a target=_blank link) becomes it at once (task 0041). Public as `this.page`. */
+  page: Page;
+  /** `@replay-network` requests missing from the recording, until the Step that made them fails on them (task 0048). */
+  readonly networkMisses: string[] = [];
   private start: string; // GOTO paths resolve against it
   private inflight = 0;
   private last?: Observation; // refs are valid for the latest Observation only
@@ -153,10 +157,12 @@ export class Browser {
   /**
    * `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. `files`: the
    * folder UPLOAD paths are relative to; `downloads`: where downloads are saved (none: not saved, not readable).
+   * `context`: options that must exist before the page opens (tags, task 0048); `network`: `@replay-network`.
    */
-  static async open(url: string, headed = false, trace = false, secrets: Record<string, string> = {}, files = ".", downloads?: string): Promise<Browser> {
+  static async open(url: string, headed = false, trace = false, secrets: Record<string, string> = {}, files = ".", downloads?: string,
+    context: BrowserContextOptions = {}, network?: NetworkReplay): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }) // SLOWMO=ms: pause per browser action for demos;
-    const page = await browser.newPage();
+    const page = await (await browser.newContext(context)).newPage();
     if (trace) await page.context().tracing.start({ screenshots: true, snapshots: true });
     // In every document, new tabs included: the time of the last DOM mutation, and a count of work that can still change
     // the page on its own (timers, intervals, animation frames, open sockets). Requests are counted from Node.
@@ -207,6 +213,13 @@ export class Browser {
     b.secrets = secrets;
     b.files = files;
     b.downloads = downloads;
+    try {
+      if (network?.mode === "record") await recordNetwork(b.context, network);
+      if (network?.mode === "replay") await replayNetwork(b.context, network, r => b.networkMisses.push(r));
+    } catch (err) {
+      await browser.close();
+      throw err;
+    }
     try {
       const loading = page.goto(url);
       while ((await b.unblocked(loading)) === undefined) await b.execute({ verb: "DISMISS" }); // no Step answers it
@@ -461,7 +474,8 @@ export class Browser {
 
   /** `tracePath`: where to save the Playwright trace started by open(..., trace); omitted, or a secret typed = discard it. */
   async close(tracePath?: string): Promise<void> {
-    if (tracePath && !this.typedSecret) await this.page.context().tracing.stop({ path: tracePath }).catch(() => undefined);
+    if (tracePath && !this.typedSecret) await this.context.tracing.stop({ path: tracePath }).catch(() => undefined);
+    await this.context.close(); // writes a @replay-network recording
     await this.browser.close();
   }
 }

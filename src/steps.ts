@@ -1,13 +1,13 @@
 // cucumber-js support code (ADR 0003): one catch-all step definition runs every Step through Jev; hooks give each
 // scenario a fresh browser, its run-directory folder, the feature's cassette and an empty memory.
 // Options come from DECISIUM_* env (set by `decisium run`), so raw `npx cucumber-js` works too.
-import { After, AfterAll, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, World } from "@cucumber/cucumber";
+import { After, AfterAll, AfterStep, Before, BeforeAll, BeforeStep, defineStep, formatterHelpers, setDefaultTimeout, setParallelCanAssign, setWorldConstructor, Status, supportCodeLibraryBuilder, World } from "@cucumber/cucumber";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Browser } from "./browser.ts";
 import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts";
 import { executeStep, type StepReport } from "./execute.ts";
-import { fromPickle, toUrl, urlFromTags } from "./feature.ts";
+import { contextFromTags, fromPickle, tagValue, toUrl, urlFromTags } from "./feature.ts";
 import type { Decider } from "./decision.ts";
 import { JevDecider, MODEL } from "./jev.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
@@ -41,6 +41,9 @@ class Scenario extends World {
   arg: StepArgument = {}; // the running Step's data table or doc string
   at = ""; // file:line of the running Step, in its trace event (scripts/cookbook.ts)
   earlier: Record<string, string> = {}; // memory: quoted value -> the Step that named it
+  /** Public API for client step definitions (task 0048): the current tab (a popup becomes it) and its Playwright context. */
+  get page() { return this.browser.page; }
+  get context() { return this.browser.context; }
 }
 setWorldConstructor(Scenario);
 
@@ -77,13 +80,31 @@ Before(async function (this: Scenario, { pickle }) {
   }
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
   this.dir = run.scenario(pickle.name);
+  const glob = tagValue(pickle.tags, "replay-network");
+  // One recording per scenario: replay matches the n-th call to a URL. Outline rows share a name, so the last row's wins.
+  const har = `${pickle.uri.replace(/\.feature$/, "")}.network/${pickle.name.replace(/[^\w-]+/g, "_")}.har`;
+  // Follows --record: all re-records, none replays, new replays an existing recording and records a missing one.
+  const network = glob ? { glob, har, mode: record === "all" || (record === "new" && !existsSync(har)) ? "record" as const : "replay" as const } : undefined;
   try {
-    this.browser = await Browser.open(toUrl(url), opt("HEADED"), true, secrets, dirname(pickle.uri), this.dir); // fresh browser per scenario: no shared state
+    this.browser = await Browser.open(toUrl(url), opt("HEADED"), true, secrets, dirname(pickle.uri), this.dir, // fresh browser per scenario: no shared state
+      contextFromTags(pickle.tags), network);
   } catch (err) {
     throw infra(err);
   }
   this.rt = run.runtime(this.browser);
+  networkMissed(this.browser);
 });
+
+/** Fails the Step (or the page load) that made a `@replay-network` request the recording does not have. */
+function networkMissed(browser?: Browser) {
+  const missed = browser?.networkMisses.splice(0);
+  if (missed?.length) {
+    const err = new Error(`network not in recording: ${missed.join(", ")} (re-record with --record all)`);
+    err.stack = err.message;
+    throw err;
+  }
+}
+AfterStep(function (this: Scenario) { networkMissed(this.browser); });
 
 BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   const line = formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[pickleStep.astNodeIds[0]]?.location.line;
@@ -119,7 +140,21 @@ async function step(this: Scenario, text: string) {
     throw err;
   }
 }
-defineStep(/^(.*)$/, step);
+const CATCH_ALL = /^(.*)$/;
+defineStep(CATCH_ALL, step);
+
+// Client step definitions (task 0048): a line another definition matches runs that one, not Jev. Without this cucumber
+// reports it Ambiguous. Relies on cucumber internals (finalize, expression.match); "client steps" in test/decisium.test.ts
+// fails when they change.
+const finalize = supportCodeLibraryBuilder.finalize.bind(supportCodeLibraryBuilder);
+supportCodeLibraryBuilder.finalize = canonicalIds => {
+  const lib = finalize(canonicalIds);
+  const ours = lib.stepDefinitions.find(d => d.pattern === CATCH_ALL)!;
+  const others = lib.stepDefinitions.filter(d => d !== ours);
+  const match = ours.expression.match.bind(ours.expression);
+  ours.expression.match = text => (others.some(d => d.matchesStepName(text)) ? null : match(text));
+  return lib;
+};
 
 After(async function (this: Scenario, { result }) {
   run.flush(); // the scenario's whole log in one write

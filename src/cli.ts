@@ -2,7 +2,7 @@
 import { loadConfiguration, runCucumber } from "@cucumber/cucumber/api";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { availableParallelism, devNull, tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { RECORD_MODES, type RecordMode } from "./cassette.ts";
@@ -16,7 +16,7 @@ import { MODEL } from "./jev.ts";
 const USAGE = `Usage:
   decisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]
   decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>] [--reporter junit|json[:path]]
-                [--parallel <n|auto>] [--no-agent-report] [-v] [--debug]
+                [--parallel <n|auto>] [--import <steps.ts>] [--no-agent-report] [-v] [--debug]
   decisium doctor [<file.feature>...]
   decisium lint <file.feature>...
 
@@ -33,6 +33,8 @@ doctor: checks Node, Chromium, TYPESAFE_API_KEY (one tiny Jev call) and Qase if 
   every start URL.
 lint: no browser, no Jev. Per Step: its kind, the quoted values, keys, secret placeholders, and warnings for wordings
   docs/cookbook.md shows failing.
+--import (repeatable): your own cucumber step definitions or hooks. A line one of them matches runs it, not Jev; the World
+  gives them this.page (the current tab) and this.context (Playwright). See docs/cookbook.md.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 --strict: a check that passes on a barely-confident Jev answer (shown as "marginal pass") fails as AMBIGUOUS.
@@ -64,6 +66,7 @@ async function main(): Promise<number> {
       strict: { type: "boolean", default: false }, "agent-report": { type: "boolean", default: true },
       record: { type: "string", default: "new" },
       reporter: { type: "string", multiple: true, default: [] }, parallel: { type: "string" },
+      import: { type: "string", multiple: true, default: [] },
       verbose: { type: "boolean", short: "v", default: false }, debug: { type: "boolean", default: false } },
   });
   const [cmd, arg] = positionals;
@@ -123,7 +126,7 @@ async function main(): Promise<number> {
   const reports = reporters.map(r => [r![1], r![2] ?? join(run.path, r![1] === "junit" ? "junit.xml" : "report.json")] as [string, string]);
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
   const { runConfiguration } = await loadConfiguration({ file: false, provided: {
-    paths: files, import: [here("./steps.ts")],
+    paths: files, import: [here("./steps.ts"), ...values.import.map(f => resolve(f))],
     // Workers only pay off across features (a feature's scenarios share its cassette and run in sequence).
     parallel: files.length > 1 ? parallel : 0,
     // Only one formatter may write to stdout; the Qase reporter writes nothing there itself.

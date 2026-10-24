@@ -1,5 +1,6 @@
 // Campaign manager fixture: static SPA + in-memory JSON API with artificial latency.
 // Usage: node examples/campaign-manager/server.ts [port]   (LATENCY_MS env, default 300)
+// The API allows any origin: examples/cookbook/index.html?network fetches it from a file:// page.
 // Opening the app with ?reset=1 restores the seed data, so every test starts from the same state.
 import { createServer, type ServerResponse } from "node:http";
 import { readFileSync } from "node:fs";
@@ -18,7 +19,7 @@ reset();
 const LATENCY = Number(process.env.LATENCY_MS ?? 300);
 const html = readFileSync(new URL("./index.html", import.meta.url));
 const send = (res: ServerResponse, status: number, body: unknown) =>
-  setTimeout(() => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(body)); }, LATENCY);
+  setTimeout(() => { res.writeHead(status, { "content-type": "application/json", "access-control-allow-origin": "*" }); res.end(JSON.stringify(body)); }, LATENCY);
 
 export function start(port = 0) {
   const server = createServer(async (req, res) => {

@@ -1,0 +1,386 @@
+{
+  "model": "jev-1.14.0",
+  "run": "runs/2026-10-24T17-12-24-876Z",
+  "entries": {
+    "Context tags: the Viewport should be \"390x844\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.58,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.26,
+            "checked": 0.62,
+            "unchecked": 0.04,
+            "expanded": 0.02,
+            "collapsed": 0.01,
+            "selected": 0.03,
+            "unselected": 0.01,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "definition",
+              "name": "",
+              "container": "",
+              "near": "390x844"
+            },
+            0.98
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.66
+          ],
+          [
+            "page",
+            0.33
+          ]
+        ]
+      }
+    },
+    "Context tags: the Locale should be \"de-DE\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.46,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.28,
+            "checked": 0.51,
+            "unchecked": 0.04,
+            "expanded": 0.02,
+            "collapsed": 0,
+            "selected": 0.12,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "definition",
+              "name": "",
+              "container": "",
+              "near": "de-DE"
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.64
+          ],
+          [
+            "page",
+            0.35
+          ]
+        ]
+      }
+    },
+    "A client step mocks the API: I click Load campaigns": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.94,
+          "target": [
+            [
+              "none",
+              0.53
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              0.46
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "A client step mocks the API: \"Mocked Sale\" should be shown": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.45,
+          "probabilities": {
+            "value": 0.56,
+            "presence": 0.44,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.23,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.31,
+            "checked": 0.18,
+            "unchecked": 0.01,
+            "expanded": 0.21,
+            "collapsed": 0.01,
+            "selected": 0.23,
+            "unselected": 0.04,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Campaigns\""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Campaigns",
+              "container": ""
+            },
+            0.58
+          ],
+          [
+            "page",
+            0.42
+          ]
+        ]
+      }
+    },
+    "A client step mocks the API: the status should be \"Loaded 1 campaigns\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "pressed",
+          "confidence": 0.41,
+          "probabilities": {
+            "disabled": 0.12,
+            "enabled": 0.34,
+            "checked": 0.02,
+            "unchecked": 0,
+            "expanded": 0.01,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0.47000000000000003,
+            "unpressed": 0.03
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "status",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.72
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.2
+          ]
+        ]
+      }
+    },
+    "Backend calls replayed from the recording: I click Load campaigns": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.96,
+          "target": [
+            [
+              "none",
+              0.55
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              0.44
+            ]
+          ],
+          "gesture": [
+            [
+              "default",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "Backend calls replayed from the recording: \"Autumn Sale\" should be shown": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.37,
+          "probabilities": {
+            "value": 0.5,
+            "presence": 0.5,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.2,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.28,
+            "checked": 0.23,
+            "unchecked": 0,
+            "expanded": 0.28,
+            "collapsed": 0.01,
+            "selected": 0.17,
+            "unselected": 0.02,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "list \"Campaigns\"",
+              "near": "Autumn Sale"
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.53
+          ],
+          [
+            {
+              "role": "list",
+              "name": "Campaigns",
+              "container": ""
+            },
+            0.47
+          ]
+        ]
+      }
+    }
+  }
+}
