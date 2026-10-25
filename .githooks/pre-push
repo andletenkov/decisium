@@ -1,0 +1,4 @@
+#!/bin/sh
+# Full gate before code leaves the machine: same checks as CI (minus browser install and pack smoke).
+set -e
+npm run --silent check

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Format/lint the staged files (fixes are re-staged), then typecheck. Bypass deliberately with --no-verify.
+set -e
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$files" ] && exit 0
+echo "$files" | xargs npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true
+echo "$files" | xargs git add
+npm run --silent typecheck
