@@ -39,6 +39,7 @@ export interface Element {
   text: string; // own name/value plus every descendant's, for scoped presence checks
   parent?: Element; // nearest ref'd ancestor
   cells?: Element[]; // a table row's cells in order, empty ones included
+  url?: string; // a link's target: equivalent links are grouped (task 0065)
 }
 
 export interface Observation {
@@ -91,8 +92,10 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     // (task 0031: 8 clicks, then STEP_TIMEOUT).
     if (/^\s*- (checkbox|radio|switch|menuitemcheckbox|menuitemradio)\b/.test(raw) && !/\[checked/.test(raw)) raw = raw.replace(" [ref=", " [unchecked] [ref=");
     const m = LINE.exec(raw);
-    // `/url` lines repeat what the link's name already says; browser.ts reads urls from the raw snapshot.
-    if (!m) { if (raw.trim() && !/^\s*- \/url:/.test(raw)) kept.push(cap(raw)); continue; }
+    // `/url` lines repeat what the link's name already says: kept on the link, not in `ui`.
+    const url = /^\s*- \/url: (.*)$/.exec(raw)?.[1];
+    if (url !== undefined) { const link = open.at(-1)?.el; if (link?.role === "link") link.url = url.replace(/^"(.*)"$/, "$1"); continue; }
+    if (!m) { if (raw.trim()) kept.push(cap(raw)); continue; }
     const [, indent, role, name = "", attrs = "", rest = ""] = m;
     const ref = /\[ref=(\w+)\]/.exec(attrs)?.[1];
     const secret = ref !== undefined && secretRefs.has(ref);
@@ -189,7 +192,8 @@ export function withPage(obs: Observation, url: string, title: string, tabs?: st
     ref: role, role, name: "", value, state: "", secret: false, verb: "CLICK", options: [], text: value,
     line: `${role} value="${clip(value)}"`,
   }));
-  const top = page.map(e => cap(`- ${e.role}: ${e.value}`)).join("\n");
+  // The page as a target (task 0065): its line is what Jev compares "scroll up the Chat" with the Chat panel against.
+  const top = [cap(`- page "${title}" [ref=page]`), ...page.map(e => cap(`- ${e.role}: ${e.value}`))].join("\n");
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [...page, ...obs.readable] };
 }
 

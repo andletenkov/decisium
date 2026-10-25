@@ -95,7 +95,7 @@ test("Browser: password fields are detected from the DOM; TYPE checks its effect
   const b = await Browser.open(`data:text/html,<label>Password <input type=password value=hunter2></label><label>Code <input maxlength=3></label>`);
   try {
     const obs = await b.observe();
-    assert.ok(!obs.text.split("\n").slice(1).join("\n").includes("hunter2")); // line 1: the data: URL holds the markup
+    assert.ok(!obs.text.split("\n").slice(2).join("\n").includes("hunter2")); // lines 1-2: the page and the data: URL hold the markup
     const code = obs.elements.find(e => e.name === "Code")!;
     await assert.rejects(b.execute({ verb: "TYPE", ref: code.ref, value: "12345" }), /does not hold the typed value/);
   } finally {
@@ -785,12 +785,14 @@ test("oversized page: ui drops /url lines and caps lines; reduceUi keeps the ste
 });
 
 test("Enter: offered only while a text field has focus; submits what was typed", async () => {
-  const { pageActions } = await import("../src/decision.ts");
+  const { capabilities } = await import("../src/decision.ts");
+  // Task 0065: Enter is the focused field's action.
+  const pageActions = (o: Observation) => Object.fromEntries(o.elements.flatMap(e => capabilities(e, o)).map(a => [a, a]));
   const page = `data:text/html,<form onsubmit="event.preventDefault();o.textContent='Results for '+q.value">`
     + `<input id=q aria-label="Search"></form><p id=o></p>`;
   const b = await Browser.open(page);
   try {
-    assert.ok(!("enter" in pageActions(await b.observe(), [])), "no field has focus yet");
+    assert.ok(!("enter" in pageActions(await b.observe())), "no field has focus yet");
     // Scripted Jev: type into the search box, press Enter, then done once results show.
     const decider: Decider = {
       ...oracle,
@@ -798,8 +800,8 @@ test("Enter: offered only while a text field has focus; submits what was typed",
         if (/Results for/.test(obs.pageText)) return { done: 1, target: sure("none") };
         const box = obs.elements.find(e => e.name === "Search")!;
         if (!box.value) return { done: 0, target: sure(box.ref) };
-        assert.ok("enter" in pageActions(obs, []), "field focused after typing");
-        return { done: 0, target: sure("enter") };
+        assert.ok("enter" in pageActions(obs), "field focused after typing");
+        return { done: 0, target: sure(box.ref), action: sure("enter") };
       },
       async value() { return sure("playwright"); },
     };
@@ -874,8 +876,9 @@ test("Browser: the page URL and title are readable subjects, not actionable and 
     const url = obs.readable.find(e => e.role === "url")!, title = obs.readable.find(e => e.role === "title")!;
     assert.match(url.value, /^data:text\/html/);
     assert.equal(title.value, "Ada Lovelace - Wikipedia");
-    assert.match(obs.text.split("\n")[0], /^- url: data:/);
-    assert.equal(obs.text.split("\n")[1], "- title: Ada Lovelace - Wikipedia");
+    assert.equal(obs.text.split("\n")[0], '- page "Ada Lovelace - Wikipedia" [ref=page]'); // the page as a target (task 0065)
+    assert.match(obs.text.split("\n")[1], /^- url: data:/);
+    assert.equal(obs.text.split("\n")[2], "- title: Ada Lovelace - Wikipedia");
     assert.ok(!obs.elements.some(e => e === url || e === title));
     assert.ok(!obs.pageText.includes("Wikipedia"));
     const run = (s: string, ref: string) => runAssertion(s, b, assessing("value", () => ({ subject: sure(ref) })), () => {}).then(r => r.outcome);
@@ -1033,7 +1036,7 @@ test("secret placeholders: a doc string or table cell \"$NAME\" is one too, at r
 });
 
 test("keys: a press-only Step is pressed by code; other Steps offer only the keys they name (task 0039)", async () => {
-  const { pageActions } = await import("../src/decision.ts");
+  const { capabilities } = await import("../src/decision.ts"); const pageActions = (o: Observation, k: string[]) => Object.fromEntries(capabilities("page", o, k).map(a => [a, a]));
   const b = await Browser.open(`data:text/html,<p id=o>none</p><input aria-label=Note autofocus>`
     + `<script>addEventListener('keydown',e=>o.textContent=(e.ctrlKey?'Ctrl+':'')+e.key)</script>`);
   try {
@@ -1091,7 +1094,7 @@ test("navigation: back/forward/reload/go to by code, new tabs switched to and cl
     assert.match((await b.observe()).readable.find(e => e.ref === "url")!.value, /^file:\/\/\/$/);
     await runStep(`I go to "${pathToFileURL(`${dir}/a.html`).href}"`, b, noJev, () => {});
     // A link that opens a new tab: Steps continue in it; tab actions are offered only while two are open.
-    const { pageActions } = await import("../src/decision.ts");
+    const { capabilities } = await import("../src/decision.ts"); const pageActions = (o: Observation, k: string[]) => Object.fromEntries(capabilities("page", o, k).map(a => [a, a]));
     assert.ok(!("close tab" in pageActions(await b.observe(), [])));
     await runStep("I open B in a new tab", b, click("B in a new tab"), () => {});
     const obs = await b.observe();
@@ -1154,7 +1157,12 @@ test("gestures: double-click, right-click and drag by Jev's gesture answer; drag
     assert.ok((await b.observe()).elements.some(e => e.name === "Note title"));
     await runStep("I right-click report.pdf", b, once("report.pdf", "right click"), () => {});
     assert.ok((await b.observe()).elements.some(e => e.name === "Delete"), "the custom context menu is open");
-    assert.equal((await runStep("I drag Fix bug to Done", b, once("Fix bug", "drag", "Done"), () => {})).outcome, "DONE");
+    // Jev never says done after the drop (task 0065: 0.57-0.73 live): code sees the item in the target list.
+    const stubborn: Decider = { ...once("Fix bug", "drag", "Done"), turn: async (_s, o) => ({ done: 0.6, action: sure("drag"), target: sure(by(o, "Fix bug").ref) }) };
+    const lines: string[] = [];
+    assert.equal((await runStep("I drag Fix bug to Done", b, stubborn, l => lines.push(l))).outcome, "DONE");
+    assert.equal(lines.filter(l => /Execute: DRAG/.test(l)).length, 1);
+    assert.ok(lines.some(l => /Drag: .* is now in list "Done"/.test(l)));
     assert.match((await b.observe()).areas.find(e => e.name === "Done")!.text, /Fix bug/);
     await b.execute({ verb: "TYPE", ref: by(await b.observe(), "Volume").ref, value: "75" });
     assert.equal(await status(), "Volume 75");
@@ -1520,7 +1528,7 @@ test("Browser: secrets, titles, draggable, current links and collapsed entries a
   try {
     const obs = await b.observe();
     const line = (name: string) => obs.readable.find(e => e.name === name || e.value === name)!.line;
-    assert.ok(!obs.text.split("\n").slice(1).join("\n").includes("hunter2") && !obs.text.includes("s3cret"));
+    assert.ok(!obs.text.split("\n").slice(2).join("\n").includes("hunter2") && !obs.text.includes("s3cret"));
     assert.match(line("Saved"), /Saved two minutes ago/);
     assert.match(line("Card"), /\[draggable\]/);
     assert.match(line("Inbox"), /\[current\]/);

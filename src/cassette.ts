@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { NotYet, pageActions, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { capabilities, NotYet, oldPageAction, PAGE, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
@@ -20,7 +20,7 @@ type Target = Resolution | string; // a string: a non-element answer (scroll, wa
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
 type Answer = [Target, number][];
-type Turn = { done: number; target: Answer; hover?: number; gesture?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
+type Turn = { done: number; target: Answer; action?: Answer; hover?: number; gesture?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check { kind: Pick; state: Pick; subject: Answer; area: Answer }
 interface Entry { turns?: Turn[]; check?: Check; recall?: Answer }
 interface File { model: string; run?: string; entries: Record<string, Entry> } // run: id of the run that last saved it
@@ -177,13 +177,16 @@ export class Cassette {
           const t = e.turns?.[i];
           if (!t) throw `recorded ${e.turns?.length ?? 0} turns, this is turn ${i + 1}`;
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
-          const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && !(k in pageActions(obs, keys ?? [])));
+          // Strings: "none", the page, or (older cassettes, task 0065) a page action, offered while the page has it now.
+          const offered = (k: string) => k === "none" || k === PAGE || capabilities(PAGE, obs, keys ?? []).includes(oldPageAction(k) ?? "")
+            || k === "enter" && obs.elements.some(e => capabilities(e, obs).includes("enter"));
+          const gone = t.target.find(([k]) => typeof k === "string" && !offered(k));
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
-          return { done: t.done, target: load(t.target, obs.elements), hover: t.hover, gesture: t.gesture && load(t.gesture) };
+          return { done: t.done, target: load(t.target, obs.elements), action: t.action && load(t.action), hover: t.hover, gesture: t.gesture && load(t.gesture) };
         });
         turn = i + 1;
         const a = r ?? await live.turn(step, obs, recent, attempt, keys);
-        (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements), hover: a.hover, gesture: a.gesture && store(a.gesture) };
+        (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements), action: a.action && store(a.action), hover: a.hover, gesture: a.gesture && store(a.gesture) };
         return a;
       },
       value: async (step, obs, el, candidates) => {

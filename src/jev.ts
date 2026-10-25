@@ -1,5 +1,5 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { AREA_MISSING, AREA_PAGE, ASSERTION_KINDS, GESTURES, pageActions, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { AREA_MISSING, AREA_PAGE, ASSERTION_KINDS, capabilities, describeAction, PAGE, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
@@ -121,8 +121,11 @@ export class JevDecider implements Decider {
   async turn(step: string, obs: Observation, recent: string[], attempt = false, keys: string[] = []): Promise<TurnAnswer> {
     const state = { step, ui: await this.#ui(obs, "step", step), actions_taken_for_step: recent.length ? recent : "none yet" };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
-    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", ...pageActions(obs, keys) },
+    const page = `page "${obs.readable.find(e => e.ref === "title")?.value ?? ""}": the page itself (scroll it, wait, history, tabs, keys)`;
+    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", [PAGE]: page },
       this.#choose(state, question));
+    // Every action some target offers; code keeps the chosen target's own (task 0065, ADR 0005).
+    const actions = [...new Set([PAGE as typeof PAGE | Element, ...obs.elements].flatMap(t => capabilities(t, obs, keys)))];
     const res = await this.#ask({
       state,
       questions: {
@@ -130,11 +133,12 @@ export class JevDecider implements Decider {
           ? noul("Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?")
           : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
         target: choice(question, targets),
-        // Same request as target: a gesture on any element without multiplying the choices (tasks 0042, 0045).
-        gesture: choice("How should the element chosen to interact with next be used to accomplish `step`?", GESTURES),
+        // Same request as target: one call per Turn (task 0065: as accurate as asking after the target, half the time).
+        action: choice("How should the element chosen to interact with next be used to accomplish `step`?",
+          Object.fromEntries(actions.map(a => [a, describeAction(a)]))),
       },
     });
-    return { done: res.answers.done.noul, target: res.answers.target, gesture: res.answers.gesture };
+    return { done: res.answers.done.noul, target: res.answers.target, action: res.answers.action };
   }
 
   async drop(step: string, obs: Observation, source: Element): Promise<Pick> {

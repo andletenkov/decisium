@@ -35,9 +35,9 @@ export interface StepReading {
   pressOnly?: string;
   /** A Step that is only "go back", "go forward", "reload the page" or "go to <URL or path>" (task 0041). */
   navigation?: Navigation;
-  /** The Step uploads (task 0044): an element it clicks gets one of the quoted values as a file. */
+  /** Upload wording (task 0044). Only translates older cassettes (ADR 0005); Jev now picks `upload` itself. */
   upload: boolean;
-  /** The Step pastes the clipboard (task 0062): "paste" without a quoted value; a typed field gets Ctrl/Cmd+V instead. */
+  /** Paste wording (task 0062). Only translates older cassettes (ADR 0005); Jev now picks `paste` itself. */
   paste: boolean;
   /** A Step that only checks (true) or unchecks (false) one box; "and"/"then" mean more to do. */
   toggle?: boolean;

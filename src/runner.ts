@@ -1,9 +1,9 @@
 import type { Action } from "./browser.ts";
 import { readStep, type StepArgument } from "./step.ts";
-import { gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, NotYet, pageActions, named, fmt, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { capabilities, gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, grouped, legacy, NotYet, named, fmt, PAGE, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import { verdict as checkVerdict, type Verdict } from "./check.ts";
 import { changes } from "./change.ts";
-import { MASK, type Dialog, type Observation } from "./observation.ts";
+import { MASK, type Dialog, type Element, type Observation } from "./observation.ts";
 
 export type StepOutcome =
   | "DONE" | "BLOCKED" | "AMBIGUOUS" | "ELEMENT_NOT_FOUND" | "ACTION_FAILED" | "STEP_TIMEOUT" // Action steps
@@ -55,16 +55,26 @@ function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined)
     && Object.entries(merged).every(([c, p]) => c === "none" || p < merged.none);
 }
 
+/** An element like `el` (role, name or text) inside a named element like `to` on `obs`; unnamed targets cannot be told apart. */
+function landed(obs: Observation, el: Element, to: Element): boolean {
+  if (!to.name) return false;
+  const id = (e: Element) => `${e.role}|${e.name || e.value}`;
+  return obs.elements.some(e => {
+    if (id(e) !== id(el)) return false;
+    for (let p = e.parent; p; p = p.parent) if (p.role === to.role && p.name === to.name) return true;
+    return false;
+  });
+}
+
 /** The element is a toggle in the Step's wanted state, or a checked radio (radios cannot be unchecked). */
 const toggled = (e: { role: string; state: string }, goal: boolean | undefined) => goal !== undefined
   && (TOGGLES.has(e.role) || e.role === "radio" && goal) && /\[checked\]/.test(e.state) === goal;
-const PAGE_VERBS: Record<string, Action["verb"]> = { scroll: "SCROLL", "scroll up": "SCROLL_UP", wait: "WAIT", enter: "ENTER", back: "BACK", forward: "FORWARD",
-  reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB" };
+/** The browser Action for each target action (decision.ts ACTIONS); `press <key>` is PRESS. */
+const VERBS: Record<string, Action["verb"]> = { click: "CLICK", type: "TYPE", select: "SELECT", upload: "UPLOAD", paste: "PASTE",
+  hover: "HOVER", "double click": "DBLCLICK", "right click": "RIGHTCLICK", drag: "DRAG", "scroll down": "SCROLL", "scroll up": "SCROLL_UP",
+  wait: "WAIT", back: "BACK", forward: "FORWARD", reload: "RELOAD", "close tab": "CLOSE_TAB", "switch tab": "SWITCH_TAB", enter: "ENTER" };
 const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
-const HOVER_THRESHOLD = 0.5; // a recorded `hover` answer (task 0042): above it the chosen element is hovered instead of its own verb
-const GESTURE_VERBS: Record<string, Action["verb"]> = { hover: "HOVER", "double click": "DBLCLICK", "right click": "RIGHTCLICK", drag: "DRAG",
-  "scroll down": "SCROLL", "scroll up": "SCROLL_UP" };
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
@@ -190,32 +200,39 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     let t: TurnAnswer;
     [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt, read.keys));
-    log(`  Decision: done=${t.done.toFixed(2)}${t.hover === undefined ? "" : ` hover=${t.hover.toFixed(2)}`}${t.gesture ? ` gesture: ${fmt(t.gesture)}` : ""} target: ${fmt(t.target)}`);
+    t = legacy(t, obs, read);
+    t = { ...t, target: grouped(t.target, obs) }; // equivalent links count as one (task 0065)
+    log(`  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION) return end("DONE");
     if (alreadyToggled(t.target, obs, read.toggle)) { log("  Toggle: already done"); return end("DONE"); }
     if (!gate(t.target, GATE_TARGET_TOP, GATE_TARGET_MARGIN)) return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
     if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
+    const el = t.target.choice === PAGE ? undefined : obs.elements.find(e => e.ref === t.target.choice);
+    if (t.target.choice !== PAGE && !el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
+    // The likeliest action the target can do; not gated (task 0065: restricted, the right one can be far below 0.5).
+    const can = capabilities(el ?? PAGE, obs, read.keys);
+    const how = Object.entries(t.action?.probabilities ?? {}).filter(([a]) => can.includes(a)).sort((a, b) => b[1] - a[1])[0]?.[0];
+    // Only a recorded answer can lack one (live answers rate every action): it was not offered this Turn.
+    if (!how) return end("ELEMENT_NOT_FOUND", `Jev chose ${t.action?.choice} on ${el?.line ?? "the page"}, which is not offered now`);
+    const key = /^press (.+)$/.exec(how)?.[1];
     let action: Action;
     let described: string;
-    if (t.target.choice in pageActions(obs, read.keys)) {
-      const key = /^press (.+)$/.exec(t.target.choice)?.[1];
-      action = key ? { verb: "PRESS", value: key } : { verb: PAGE_VERBS[t.target.choice] };
+    let dropOn: Element | undefined;
+    if (!el) {
+      action = key ? { verb: "PRESS", value: key } : { verb: VERBS[how] };
       described = key ? `PRESS ${key}` : action.verb;
     } else {
-      const el = obs.elements.find(e => e.ref === t.target.choice);
-      if (!el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
       if (el.verb === "CLICK" && toggled(el, read.toggle)) { log(`  Toggle: already ${el.line}`); return end("DONE"); }
-      const gesture = t.gesture ? GESTURE_VERBS[t.gesture.choice] : (t.hover ?? 0) >= HOVER_THRESHOLD ? "HOVER" : undefined;
-      action = { verb: gesture ?? (read.upload && el.verb === "CLICK" ? "UPLOAD" : read.paste && el.verb === "TYPE" ? "PASTE" : el.verb), ref: el.ref };
+      action = { verb: VERBS[how], ref: el.ref };
       let onto = "";
       if (action.verb === "DRAG") {
         const d = await decider.drop(said, obs, el);
         log(`  Drop: ${fmt(d)}`);
         if (!gate(d, GATE_TARGET_TOP, GATE_TARGET_MARGIN) || d.choice === "none") return end("AMBIGUOUS", `Jev is unsure where to drop ${el.line}: ${named(d, obs)}`);
         action.to = d.choice;
-        const to = [...obs.readable, ...obs.areas].find(e => e.ref === d.choice)!;
+        const to = dropOn = [...obs.readable, ...obs.areas].find(e => e.ref === d.choice)!;
         onto = ` onto ${to.role} "${to.name || to.value.slice(0, 60)}"`;
       }
       if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
@@ -244,6 +261,11 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     const effect = changes(before, next, action.ref);
     log(`  Effect: ${effect}`);
     recent.push(`${described} -> ${effect}`);
+    // Drag effect check (task 0065): Jev's done stayed 0.57-0.73 with the item shown in its new list, any wording.
+    if (action.verb === "DRAG" && el && dropOn && !landed(obs, el, dropOn) && landed(next, el, dropOn)) {
+      log(`  Drag: ${el.line} is now in ${dropOn.role} "${dropOn.name}"`);
+      return end("DONE");
+    }
     const box = action.verb === "CLICK" ? next.elements.find(e => e.ref === action.ref && toggled(e, read.toggle)) : undefined;
     if (box) { log(`  Toggle: ${box.line}`); return end("DONE"); }
     unchanged = next.text === obs.text ? unchanged + 1 : 0;

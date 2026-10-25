@@ -9,50 +9,111 @@ export interface Pick {
 
 export interface TurnAnswer {
   done: number; // P(step already accomplished)
-  target: Pick; // element ref, a pageActions() key, or "none"
-  /** P(the target element is only to be hovered, not clicked/typed into/selected) (task 0042); absent in older cassettes. */
+  target: Pick; // element ref, PAGE, or "none" (older cassettes: a page-action key, see legacy())
+  /** How to use the target, an ACTIONS key or `press <key>` (task 0065); only the target's capabilities count. */
+  action?: Pick;
+  /** Older cassettes: P(only hover) (task 0042), or a gesture (task 0045); legacy() reads them. */
   hover?: number;
-  /** How to use the target element, a GESTURES key (task 0045); absent in older cassettes, which have `hover`. */
   gesture?: Pick;
 }
 
-/** Ways to use a Turn's target element, asked in the same request as the target (task 0045). */
-export const GESTURES = {
-  default: "Click it, type into it or select from it, as usual.",
+/** The page itself as a target (task 0065): scrolling it, history, tabs, keys, waiting. */
+export const PAGE = "page";
+
+/** Everything a target can be used for (task 0065, ADR 0005); capabilities() picks a target's own. */
+export const ACTIONS = {
+  click: "Click it.",
+  type: "Type a value from `step` into it (an empty value clears it).",
+  select: "Select an option in it.",
+  upload: "Click it to choose a file to upload, one `step` names.",
+  paste: "Paste the copied text into it.",
   hover: "Only hover over it with the mouse pointer (e.g. to open a menu or show a tooltip).",
   "double click": "Double-click it (e.g. to edit it inline).",
   "right click": "Right-click it (e.g. to open its context menu).",
-  "scroll down": "Scroll inside it (a list or panel marked [scrollable]) to show or load more of its content further down.",
-  "scroll up": "Scroll inside it (a list or panel marked [scrollable]) to show or load more of its content further up.",
   drag: "Drag it with the mouse and drop it onto another element (e.g. to reorder it or move it to another list).",
-} as const;
-
-// The answers a question can have besides element refs: Jev is offered them, code reads them.
-/** Non-element moves offered next to the element refs. */
-const PAGE_ACTIONS = {
-  scroll: "Scroll down: the needed element is not in `ui` yet and may load further down the page.",
-  "scroll up": "Scroll up: the needed element is not in `ui` yet and may be further up the page.",
-  wait: "Wait: `ui` is still loading the needed element.",
+  "scroll down": "Scroll it down: show or load more of its content further down (the page: the needed element may load further down).",
+  "scroll up": "Scroll it up: show or load more of its content further up.",
+  wait: "Wait: the page is still loading what is needed.",
   back: "Go back to the previous page in the browser history.",
   forward: "Go forward in the browser history.",
   reload: "Reload the page.",
-} as const;
-/** Offered only while more than one tab is open (the `tabs` pseudo-element). */
-const TAB_ACTIONS = {
   "close tab": "Close this browser tab and return to the previous one.",
   "switch tab": "Switch to the previous browser tab, keeping this one open.",
+  enter: "Press Enter in it, to submit what was typed (e.g. run a search).",
 } as const;
-const ENTER = "Press Enter in the focused field, to submit what was typed (e.g. run a search).";
 
 /**
- * Page actions for this Observation and Step: Enter only while a text field has focus, so it is not offered on every
- * Turn; other keys only when the Step names them (`keys`, "press Escape"), pressed wherever the focus is (task 0039).
+ * What `target` can be used for. Elements: their role's verb (a typeable field also takes paste, a clickable one an
+ * upload), click-like gestures on every target (no DOM evidence for them, task 0064), drag/scroll only with the fact.
+ * The page: scroll, wait, history; tabs while more than one is open; keys the Step names (`keys`, task 0039). Enter:
+ * the focused text field's.
  */
-export function pageActions(obs: Observation, keys: string[]): Record<string, string> {
-  const out: Record<string, string> = { ...PAGE_ACTIONS, ...obs.readable.some(e => e.ref === "tabs") ? TAB_ACTIONS : {} };
-  if (obs.elements.some(e => e.verb === "TYPE" && /\[active\]/.test(e.state))) out.enter = ENTER;
-  for (const key of keys) if (key !== "Enter") out[`press ${key}`] = `Press the ${key} key, as \`step\` says.`;
-  return out;
+export function capabilities(target: Element | typeof PAGE, obs: Observation, keys: string[] = []): string[] {
+  if (target === PAGE) return ["scroll down", "scroll up", "wait", "back", "forward", "reload",
+    ...obs.readable.some(e => e.ref === "tabs") ? ["close tab", "switch tab"] : [],
+    ...keys.filter(k => k !== "Enter").map(k => `press ${k}`)];
+  // Enter goes to the focused field: offered there, so the field is the target (as the page, Jev split it with the
+  // Search button: 0.47 / 0.29, AMBIGUOUS on Wikipedia).
+  const own = target.verb === "TYPE" ? ["type", "paste", ...(/\[active\]/.test(target.state) ? ["enter"] : [])]
+    : target.verb === "SELECT" ? ["select"] : ["click", "upload"];
+  return [...own, "hover", "double click", "right click",
+    ...(/\[draggable\]/.test(target.state) ? ["drag"] : []), ...(/\[scrollable\]/.test(target.state) ? ["scroll down", "scroll up"] : [])];
+}
+
+/** Choice text of an action: ACTIONS, or a key the Step names. */
+export const describeAction = (a: string) => ACTIONS[a as keyof typeof ACTIONS] ?? `Press the ${a.slice(6)} key, as \`step\` says.`;
+
+/** Before task 0065 page moves were target answers; they now are the page's actions. */
+const OLD_PAGE: Record<string, string> = { scroll: "scroll down", "scroll up": "scroll up", wait: "wait", back: "back", forward: "forward",
+  reload: "reload", "close tab": "close tab", "switch tab": "switch tab", enter: "enter" };
+const OLD_GESTURE: Record<string, string> = { hover: "hover", "double click": "double click", "right click": "right click", drag: "drag",
+  "scroll down": "scroll down", "scroll up": "scroll up" };
+const isOldPage = (k: string) => k in OLD_PAGE || k.startsWith("press ");
+/** The page action an older cassette's target key meant, if it was one. */
+export const oldPageAction = (k: string) => (isOldPage(k) ? OLD_PAGE[k] ?? k : undefined);
+
+/**
+ * A Turn answer from an older cassette in today's shape (task 0065, decision 6): page-action targets summed into PAGE
+ * with the likeliest as its action; a `default` gesture (or none) means the element's own verb, upload/paste as the
+ * Step said then (`upload`, `paste`).
+ */
+export function legacy(t: TurnAnswer, obs: Observation, read: { upload?: boolean; paste?: boolean } = {}): TurnAnswer {
+  if (t.action) return t;
+  // Enter was a page move; it now is the focused field's action.
+  const focused = obs.elements.find(e => e.verb === "TYPE" && /\[active\]/.test(e.state))?.ref;
+  const owner = (k: string) => (k === "enter" && focused ? focused : isOldPage(k) ? PAGE : k);
+  const probabilities: Record<string, number> = {};
+  let moved: [string, number] | undefined; // the likeliest old page move, as an action
+  for (const [k, v] of Object.entries(t.target.probabilities)) {
+    probabilities[owner(k)] = (probabilities[owner(k)] ?? 0) + v;
+    if (isOldPage(k) && (!moved || v > moved[1])) moved = [OLD_PAGE[k] ?? k, v];
+  }
+  const choice = owner(t.target.choice);
+  const target = { choice, probabilities };
+  const pick = (a: string): TurnAnswer => ({ done: t.done, target, action: { choice: a, probabilities: { [a]: 1 } } });
+  if (isOldPage(t.target.choice)) return pick(moved![0]);
+  const e = obs.elements.find(x => x.ref === choice);
+  const gesture = t.gesture ? OLD_GESTURE[t.gesture.choice] : (t.hover ?? 0) >= 0.5 ? "hover" : undefined;
+  const own = !e ? "click" : e.verb === "TYPE" ? (read.paste ? "paste" : "type") : e.verb === "SELECT" ? "select" : read.upload ? "upload" : "click";
+  return pick(gesture ?? own);
+}
+
+/**
+ * Equivalent targets sum their confidence before the gate (task 0065, 0057): links with the same name and URL lead to
+ * the same page (Wikipedia's two `Deutsch` links, 42% / 38%). The first keeps the sum. Buttons never: their handlers
+ * may differ.
+ */
+export function grouped(p: Pick, obs: Observation): Pick {
+  const first = new Map<string, string>();
+  const probabilities: Record<string, number> = {};
+  for (const [k, v] of Object.entries(p.probabilities)) {
+    const e = obs.elements.find(x => x.ref === k);
+    const id = e?.role === "link" && e.url ? `${e.name}|${e.url}` : undefined;
+    const into = id ? (first.get(id) ?? (first.set(id, k), k)) : k;
+    probabilities[into] = (probabilities[into] ?? 0) + v;
+  }
+  const choice = Object.entries(probabilities).sort((a, b) => b[1] - a[1])[0]?.[0] ?? p.choice;
+  return { choice, probabilities };
 }
 
 export const ASSERTION_KINDS = {
@@ -85,7 +146,6 @@ export const AREA_MISSING = "missing";
 
 const SPECIAL: Record<string, string> = {
   none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
-  scroll: "scroll down", "scroll up": "scroll up", wait: "wait for loading", enter: "press Enter", back: "go back", forward: "go forward", reload: "reload",
 };
 /** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
 export const named = (p: Pick, obs?: Observation) =>
@@ -102,7 +162,7 @@ export const fmt = (p: Pick) =>
 export interface Decider {
   /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
   /** `attempt`: done means the user performed the actions, whether or not the app accepted them. */
-  /** `keys`: the Named keys the Step's text names (readStep), offered as `press <key>` next to the elements. */
+  /** `keys`: the Named keys the Step's text names (readStep), offered as the page's `press <key>` actions. */
   turn(step: string, obs: Observation, recent: string[], attempt?: boolean, keys?: string[]): Promise<TurnAnswer>;
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Drag: the readable element or area to drop `source` onto, or "none" (task 0045). */
