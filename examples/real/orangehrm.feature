@@ -10,7 +10,6 @@ Feature: OrangeHRM demo (enterprise SPA, filters)
     When I log in as "Admin" with password "admin123"
     And I open the Admin section
     And I filter the users by user role "Admin"
-    And I search
     Then every listed user should have the role "Admin"
 
   Scenario: The dashboard shows after login
