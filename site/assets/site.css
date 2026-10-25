@@ -104,8 +104,11 @@ pre.feature .ln:target a { color: var(--signal); }
 }
 
 .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
-  background: none; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); color: var(--color-text); cursor: pointer; }
+  background: none; border: 0; border-radius: var(--radius-sm); color: var(--color-text); cursor: pointer; }
 .theme-toggle:hover { background: var(--color-neutral-900); }
 .theme-toggle .sun, :root[data-theme="light"] .theme-toggle .moon { display: none; }
 :root[data-theme="light"] .theme-toggle .sun { display: block; }
 .top-links { align-items: center; }
+.icon-link { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-sm); }
+.icon-link:hover { background: var(--color-neutral-900); color: var(--color-text); }
+.top-links { gap: 8px; }
