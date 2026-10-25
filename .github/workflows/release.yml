@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # npm --provenance
+      id-token: write # npm trusted publishing (OIDC)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,9 +26,8 @@ jobs:
       - run: npm run pack:smoke
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm install -g npm@latest # trusted publishing (OIDC) needs npm 11.5.1+
+      - run: npm publish --access public # trusted publishing: no token, provenance attached automatically
   pages:
     needs: publish
     runs-on: ubuntu-latest
