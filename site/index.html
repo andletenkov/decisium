@@ -1,0 +1,27 @@
+---
+title: Decisium
+landing: true
+---
+<section class="hero">
+  <span class="kicker">Gherkin · Playwright · AI agent</span>
+  <h1>From behavioral specification to intelligent execution.</h1>
+  <p>Write plain-English Gherkin steps. Decisium drives a real browser to carry them out, records what each Step resolved to,
+    and replays it in CI without calling the model.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ '/readme.html' | relative_url }}">Get started</a>
+    <a class="btn btn-secondary" href="{{ '/docs/cookbook.html' | relative_url }}">Cookbook</a>
+  </div>
+</section>
+
+<pre><code><span class="signal">$</span> npm install --save-dev decisium
+<span class="signal">$</span> npx playwright install chromium
+<span class="signal">$</span> npx decisium run checkout.feature</code></pre>
+
+<section class="features">
+  <div class="card"><span class="card-kicker">No selectors</span><h3 class="card-title">Steps in plain English</h3>
+    <p class="card-body">“When I schedule the campaign”. The agent finds the element by meaning, not by CSS.</p></div>
+  <div class="card"><span class="card-kicker">Record / replay</span><h3 class="card-title">Cassettes</h3>
+    <p class="card-body">Each resolution is saved next to the feature. <code>--record none</code> replays with zero model calls.</p></div>
+  <div class="card"><span class="card-kicker">Agent-ready</span><h3 class="card-title">Failure reports</h3>
+    <p class="card-body">A failed run writes report.md with the decision trail, page text and a rerun command for a coding agent.</p></div>
+</section>

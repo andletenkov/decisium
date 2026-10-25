@@ -1,0 +1,57 @@
+/* Decisium identity on top of Nocturne: Ink/Paper carry the mark, Signal only on the decision diamond and tittles. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@500&family=Geist+Mono:wght@400;500&display=swap");
+
+:root {
+  --ink: #121417;
+  --paper: #F4F3EF;
+  --signal: #3BE38F;
+  --signal-deep: #0E9F63;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}
+body { background: var(--color-bg); color: var(--color-text); }
+a { color: var(--color-accent-300); }
+a:hover { color: var(--color-accent-200); }
+
+.page { padding: 0 clamp(20px, 5vw, 72px) 120px; max-width: 1080px; }
+
+/* Mark: currentColor is the D, --a the node. */
+.mark { --a: var(--signal); color: var(--paper); flex: none; }
+
+/* Wordmark: dotless ı with a diamond tittle sitting where the dot would. */
+.wordmark { display: inline-block; white-space: nowrap; font-family: "Geist", var(--font-heading); font-weight: 500;
+  letter-spacing: -0.045em; line-height: 1; color: var(--paper); --a: var(--signal); }
+.wordmark .i { position: relative; display: inline-block; letter-spacing: 0; margin-right: -0.04em; }
+.wordmark .i::after { content: ""; position: absolute; left: 50%; top: 0.06em; width: 0.16em; height: 0.16em;
+  background: var(--a); transform: translateX(-50%) rotate(45deg); }
+
+.site-nav { display: flex; align-items: center; gap: var(--space-4, 24px); padding: 20px clamp(20px, 5vw, 72px); }
+.site-nav .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.site-nav .brand .wordmark { font-size: 22px; }
+.site-nav .links { display: flex; gap: 20px; margin-left: auto; font-size: 14px; }
+.site-nav .links a { color: var(--color-neutral-300); text-decoration: none; }
+.site-nav .links a:hover, .site-nav .links a[aria-current] { color: var(--color-text); }
+
+.hero { display: flex; flex-direction: column; gap: 20px; padding: 72px 0 56px; max-width: 760px; }
+.hero h1 { margin: 0; font-size: clamp(36px, 5vw, 60px); line-height: 1.05; letter-spacing: -0.025em; text-wrap: balance; }
+.hero p { margin: 0; font-size: 17px; color: var(--color-neutral-300); text-wrap: pretty; }
+.hero .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.kicker { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-400); }
+
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 8px; margin: 24px 0 72px; }
+
+pre, code { font-family: var(--font-mono); }
+pre { background: var(--color-neutral-900); border-radius: var(--radius-md); padding: 20px; font-size: 13px; line-height: 1.65;
+  color: var(--color-neutral-200); overflow-x: auto; }
+:not(pre) > code { white-space: nowrap; background: var(--color-neutral-800); border-radius: 4px; padding: 0.1em 0.35em; font-size: 0.9em; }
+.signal { color: var(--signal); }
+
+/* Markdown pages */
+.doc { max-width: 760px; padding-top: 40px; }
+.doc h1 { letter-spacing: -0.025em; }
+.doc h2 { margin-top: 48px; font-size: 25px; }
+.doc h3 { margin-top: 32px; font-size: 19px; }
+.doc table { border-collapse: collapse; font-size: 14px; }
+.doc th, .doc td { border-bottom: 1px solid var(--color-neutral-800); padding: 6px 12px 6px 0; text-align: left; vertical-align: top; }
+
+footer { padding: 24px clamp(20px, 5vw, 72px); color: var(--color-neutral-400); font-size: 13px; display: flex; align-items: center; gap: 10px; }
+.features .card { padding: 20px; }

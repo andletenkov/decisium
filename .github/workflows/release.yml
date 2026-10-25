@@ -40,11 +40,11 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - run: cp README.md site/readme.md && cp docs/configuration.md docs/cookbook.md site/
+      - run: scripts/site.sh _site_src
       - uses: actions/configure-pages@v5
       - uses: actions/jekyll-build-pages@v1
         with:
-          source: site
+          source: _site_src
           destination: _site
       - uses: actions/upload-pages-artifact@v3
       - id: deploy
