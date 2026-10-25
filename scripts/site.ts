@@ -121,11 +121,14 @@ function page(slug: string, title: string, html: string, toc: { level: number; i
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/nocturne.css">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/search-index.js" defer></script>
+<script src="assets/search.js" defer></script>
 <script>${THEME_JS}</script>
 </head>
 <body>
 <header class="topbar">
   <a class="brand" href="index.html">${MARK(24)}${WORDMARK}</a>
+  <div class="search"><input type="search" id="search" placeholder="Search docs" aria-label="Search docs" autocomplete="off"><kbd>/</kbd><div class="search-results" role="listbox" hidden></div></div>
   <nav class="top-links"><a class="icon-link" href="${REPO}" aria-label="GitHub" title="GitHub">${GITHUB}</a><a class="icon-link" href="https://www.npmjs.com/package/decisium" aria-label="npm" title="npm">${NPM}</a>
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')">${MOON}${SUN}</button></nav>
 </header>
@@ -139,10 +142,24 @@ ${onPage}
 `;
 }
 
+/** Search entries: one per page section (split at h2/h3), as plain text. */
+export function searchEntries(slug: string, title: string, html: string) {
+  const text = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+  return html.split(/(?=<h[23] id=")/).map(part => {
+    const h = /^<h[23] id="([^"]+)">([\s\S]*?)<\/h[23]>/.exec(part);
+    return { url: `${slug}.html${h ? `#${h[1]}` : ""}`, page: title, section: h ? text(h[2]) : "", text: text(h ? part.slice(h[0].length) : part).slice(0, 2000) };
+  }).filter(e => e.section || e.text);
+}
+
 if (import.meta.main) {
+  const index: ReturnType<typeof searchEntries> = [];
   for (const [slug, title, path] of NAV.flatMap(([, ps]) => ps)) {
     const { html, toc } = slug === "examples" ? examples() : render(source(path));
     writeFileSync(join(root, "site", `${slug}.html`), page(slug, title, html, toc));
+    index.push(...searchEntries(slug, title, html));
   }
+  // A script, not JSON: fetch() is blocked on file://.
+  writeFileSync(join(root, "site", "assets", "search-index.js"), `window.SEARCH_INDEX = ${JSON.stringify(index)};\n`);
   console.log(`site/: ${slugs.size} pages`);
 }

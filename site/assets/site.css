@@ -112,3 +112,23 @@ pre.feature .ln:target a { color: var(--signal); }
 .icon-link { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-sm); }
 .icon-link:hover { background: var(--color-neutral-900); color: var(--color-text); }
 .top-links { gap: 8px; }
+
+.search { position: relative; margin-left: auto; width: min(320px, 40vw); }
+.search input { width: 100%; height: 32px; padding: 0 32px 0 12px; font: inherit; font-size: 14px; color: var(--color-text);
+  background: var(--color-neutral-900); border: 1px solid var(--color-divider); border-radius: var(--radius-sm); }
+.search input::placeholder { color: var(--color-neutral-400); }
+.search input:focus { outline: 2px solid var(--color-text); outline-offset: 1px; }
+.search kbd { position: absolute; right: 8px; top: 7px; font: 11px var(--font-mono); color: var(--color-neutral-400);
+  border: 1px solid var(--color-divider); border-radius: 4px; padding: 0 5px; pointer-events: none; }
+.search input:focus + kbd { display: none; }
+.search-results { position: absolute; top: 40px; right: 0; width: min(520px, 90vw); max-height: 70vh; overflow-y: auto; padding: 6px;
+  background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md); z-index: 3; }
+.search-results a { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); text-decoration: none; color: var(--color-text); }
+.search-results a:hover, .search-results a[aria-selected] { background: var(--color-neutral-900); }
+.r-title { font-size: 14px; font-weight: 500; }
+.r-text { font-size: 12px; color: var(--color-neutral-400); }
+.search-results mark { background: none; color: var(--color-text); text-decoration: underline; text-underline-offset: 2px; }
+.r-none { margin: 8px 10px; font-size: 13px; color: var(--color-neutral-400); }
+.top-links { margin-left: 0; }
+@media (max-width: 760px) { .search kbd { display: none; } .topbar .brand .wordmark { display: none; } }
+.search input::-webkit-search-cancel-button { -webkit-appearance: none; }
