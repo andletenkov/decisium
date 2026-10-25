@@ -6,4 +6,3 @@ logs/
 examples/real/*.cassette.json
 dist/
 *.tgz
-_site_src/

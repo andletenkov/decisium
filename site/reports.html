@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reports and debugging · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html" aria-current="page">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="reports-and-debugging">Reports and debugging</h1>
+<h2 id="console">Console</h2>
+<p>One line per Step, the reason under a failed one, and a Failures block at the end with a rerun command per failed
+scenario. A marginal pass (the check passed, but Jev was barely confident) is listed separately; treat it like an
+unclear wording, or fail it with <code>--strict</code>.</p>
+<h2 id="the-run-directory">The run directory</h2>
+<p>Each run writes <code>runs/&lt;timestamp&gt;/</code>:</p>
+<ul>
+<li><code>trace.jsonl</code>: Observations, Jev answers, actions and outcomes.</li>
+<li><code>log.txt</code>: the full decision log (what <code>-v</code> prints).</li>
+<li>Per failed scenario: a screenshot per Turn, <code>playwright-trace.zip</code>, <code>console-errors.txt</code> and <code>ui.txt</code> (the page text).
+Passed scenarios keep none.</li>
+<li><code>report.md</code> when something failed: every failure with Jev&#39;s answers, the page text around it and a rerun command, for
+a coding agent. <code>--no-agent-report</code> turns it off.</li>
+</ul>
+<h2 id="outcomes">Outcomes</h2>
+<table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PASSED</code> / <code>DONE</code></td>
+<td>The check held / the action finished.</td>
+</tr>
+<tr>
+<td><code>ASSERTION_FAILED</code></td>
+<td>The app is wrong: the value or text is not what the Step expects.</td>
+</tr>
+<tr>
+<td><code>BLOCKED</code>, <code>ACTION_FAILED</code></td>
+<td>The action could not be done.</td>
+</tr>
+<tr>
+<td><code>ELEMENT_NOT_FOUND</code></td>
+<td>Nothing on the page matches what the Step names.</td>
+</tr>
+<tr>
+<td><code>STEP_TIMEOUT</code></td>
+<td>The Step took too many Turns without finishing.</td>
+</tr>
+<tr>
+<td><code>PAGE_TOO_LARGE</code></td>
+<td>The page is over the model&#39;s request limit.</td>
+</tr>
+<tr>
+<td><code>AMBIGUOUS</code></td>
+<td>Jev could not tell which element the Step means. Reword.</td>
+</tr>
+<tr>
+<td><code>UNVERIFIABLE</code></td>
+<td>The check quotes nothing code can compare. Reword.</td>
+</tr>
+<tr>
+<td><code>UI_CHANGED</code></td>
+<td>A replayed resolution no longer matches the page (<code>--record none</code>).</td>
+</tr>
+<tr>
+<td><code>JUDGED_PASSED</code> / <code>JUDGED_FAILED</code></td>
+<td>A fuzzy check judged by Jev (<code>--judged</code>).</td>
+</tr>
+</tbody></table>
+<p>The <a href="agent-skill.html">agent skill</a> shows how to classify a failure: the app is wrong, or the wording is unclear.</p>
+<div class="pager"><a class="prev" href="configuration.html"><span>Previous</span>Configuration</a><a class="next" href="ci.html"><span>Next</span>CI</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#console">Console</a><a class="l2" href="#the-run-directory">The run directory</a><a class="l2" href="#outcomes">Outcomes</a></aside>
+</div>
+</body>
+</html>

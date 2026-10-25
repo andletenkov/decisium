@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command line · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html" aria-current="page">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="command-line">Command line</h1>
+<pre><code class="language-text">decisium step &quot;&lt;step&gt;&quot; --url &lt;url|file&gt; [--headed] [--judged] [--strict] [-v] [--debug]
+decisium run &lt;file.feature[:line]&gt;... [--url &lt;url|file&gt;] [--headed] [--judged] [--strict] [--record &lt;mode&gt;]
+             [--parallel &lt;n|auto&gt;] [--format &lt;name[:path]&gt;] [--import &lt;file&gt;] [-p &lt;profile&gt;] [--no-agent-report] [-v] [--debug]
+decisium doctor [&lt;file.feature&gt;...]
+decisium lint &lt;file.feature&gt;...
+</code></pre>
+<h2 id="run">run</h2>
+<p>Runs features. <code>file.feature:line</code> runs only the scenario (or Examples row) at that line.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--url &lt;url|file&gt;</code></td>
+<td>Start URL; overrides <code>@url:</code> tags.</td>
+</tr>
+<tr>
+<td><code>--record new|none|all</code></td>
+<td>Cassette mode, see <a href="record-replay.html">Record and replay</a>. Default <code>new</code>.</td>
+</tr>
+<tr>
+<td><code>--parallel &lt;n|auto&gt;</code></td>
+<td>Worker processes. Features run side by side, a feature&#39;s scenarios in order. Only for features that do not share app state. <code>auto</code>: min(CPUs, 4) with Jev, every CPU with <code>--record none</code>.</td>
+</tr>
+<tr>
+<td><code>--headed</code></td>
+<td>Show the browser.</td>
+</tr>
+<tr>
+<td><code>--judged</code></td>
+<td>Let Jev judge fuzzy checks. They report <code>JUDGED_PASSED</code> / <code>JUDGED_FAILED</code>, never <code>PASSED</code>.</td>
+</tr>
+<tr>
+<td><code>--strict</code></td>
+<td>A check that passed on a barely-confident answer (a &quot;marginal pass&quot;) fails as <code>AMBIGUOUS</code>.</td>
+</tr>
+<tr>
+<td><code>--format &lt;name[:path]&gt;</code></td>
+<td>Any cucumber formatter, e.g. <code>junit:junit.xml</code>. Repeatable.</td>
+</tr>
+<tr>
+<td><code>--import &lt;file&gt;</code></td>
+<td>Your own step definitions or hooks. Repeatable.</td>
+</tr>
+<tr>
+<td><code>-p &lt;profile&gt;</code></td>
+<td>A cucumber profile. Repeatable.</td>
+</tr>
+<tr>
+<td><code>--no-agent-report</code></td>
+<td>Do not write <code>report.md</code>.</td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Print every Observation and Jev answer (always saved to <code>log.txt</code>).</td>
+</tr>
+<tr>
+<td><code>--debug</code></td>
+<td>Show stack traces.</td>
+</tr>
+</tbody></table>
+<h2 id="step">step</h2>
+<p>Runs one Step against a URL, without a feature file. Handy for trying a wording.</p>
+<pre><code class="language-sh">npx decisium step &quot;I open the calendar&quot; --url http://localhost:3000
+</code></pre>
+<h2 id="doctor">doctor</h2>
+<p>Checks Node, Chromium and <code>TYPESAFE_API_KEY</code>; given features, also opens every start URL.</p>
+<h2 id="lint">lint</h2>
+<p>No browser, no model. Per Step: its kind, the quoted values, keys, secret placeholders, and warnings for wordings the
+<a href="cookbook.html">Cookbook</a> shows failing.</p>
+<h2 id="exit-codes">Exit codes</h2>
+<p><code>0</code> passed, <code>1</code> a scenario failed, <code>2</code> configuration or infrastructure error.</p>
+<div class="pager"><a class="prev" href="writing-features.html"><span>Previous</span>Writing features</a><a class="next" href="record-replay.html"><span>Next</span>Record and replay</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#run">run</a><a class="l2" href="#step">step</a><a class="l2" href="#doctor">doctor</a><a class="l2" href="#lint">lint</a><a class="l2" href="#exit-codes">Exit codes</a></aside>
+</div>
+</body>
+</html>

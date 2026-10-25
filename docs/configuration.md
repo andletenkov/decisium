@@ -42,9 +42,9 @@ Or in your configuration, which raw `npx cucumber-js` uses too:
 ```js
 // cucumber.mjs
 export default {
-  // Raw cucumber-js only: Decisium's src/steps.ts and src/formatter.ts (decisium run adds both itself).
-  import: ["path/to/decisium/src/steps.ts"],
-  format: ["path/to/decisium/src/formatter.ts", "cucumberjs-qase-reporter:/dev/null"],
+  // Raw cucumber-js only: Decisium's steps and formatter (decisium run adds both itself).
+  import: ["node_modules/decisium/dist/steps.js"],
+  format: ["decisium/formatter", "cucumberjs-qase-reporter:/dev/null"],
 };
 ```
 

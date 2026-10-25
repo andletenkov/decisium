@@ -1,27 +1,45 @@
----
-title: Decisium
-landing: true
----
-<section class="hero">
-  <span class="kicker">Gherkin · Playwright · AI agent</span>
-  <h1>From behavioral specification to intelligent execution.</h1>
-  <p>Write plain-English Gherkin steps. Decisium drives a real browser to carry them out, records what each Step resolved to,
-    and replays it in CI without calling the model.</p>
-  <div class="actions">
-    <a class="btn btn-primary" href="{{ '/readme.html' | relative_url }}">Get started</a>
-    <a class="btn btn-secondary" href="{{ '/docs/cookbook.html' | relative_url }}">Cookbook</a>
-  </div>
-</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html" aria-current="page">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="decisium">Decisium</h1>
+<p><strong>From behavioral specification to intelligent execution.</strong></p>
+<p>Decisium runs Gherkin features written in plain English against a real browser. You write
+<code>When I schedule the campaign</code>, not selectors. An AI model (Jev) only picks among the options Decisium shows it, and
+Decisium&#39;s code, not the model, decides whether each Step passed.</p>
+<pre><code class="language-gherkin">@url:https://shop.example.com
+Feature: Checkout
 
-<pre><code><span class="signal">$</span> npm install --save-dev decisium
-<span class="signal">$</span> npx playwright install chromium
-<span class="signal">$</span> npx decisium run checkout.feature</code></pre>
+  Scenario: Buy a backpack
+    When I add the &quot;Backpack&quot; to the cart
+    And I check out with email &quot;ada@example.com&quot;
+    Then the order status should be &quot;Confirmed&quot;
+</code></pre>
+<ul>
+<li><strong>No selectors.</strong> Steps name what the user wants. Decisium finds the element by meaning.</li>
+<li><strong>Record and replay.</strong> What each Step resolved to is saved in a cassette next to the feature. CI replays it with zero
+model calls, and a real UI change fails as <code>UI_CHANGED</code>.</li>
+<li><strong>Built on cucumber-js and Playwright.</strong> Your cucumber configuration, formatters, profiles and step definitions keep
+working.</li>
+<li><strong>Agent-ready failures.</strong> A failed run writes <code>report.md</code>: the Step, the model&#39;s answers, the page text and a rerun
+command, ready for a coding agent.</li>
+</ul>
+<p>Next: <a href="installation.html">Installation</a>, then the <a href="quick-start.html">Quick start</a>.</p>
+<div class="pager"><a class="next" href="installation.html"><span>Next</span>Installation</a></div></main>
 
-<section class="features">
-  <div class="card"><span class="card-kicker">No selectors</span><h3 class="card-title">Steps in plain English</h3>
-    <p class="card-body">“When I schedule the campaign”. The agent finds the element by meaning, not by CSS.</p></div>
-  <div class="card"><span class="card-kicker">Record / replay</span><h3 class="card-title">Cassettes</h3>
-    <p class="card-body">Each resolution is saved next to the feature. <code>--record none</code> replays with zero model calls.</p></div>
-  <div class="card"><span class="card-kicker">Agent-ready</span><h3 class="card-title">Failure reports</h3>
-    <p class="card-body">A failed run writes report.md with the decision trail, page text and a rerun command for a coding agent.</p></div>
-</section>
+</div>
+</body>
+</html>

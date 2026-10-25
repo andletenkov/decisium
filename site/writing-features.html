@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing features · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html" aria-current="page">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="writing-features">Writing features</h1>
+<p>A Decisium feature is ordinary Gherkin. Any <code>Given</code>/<code>When</code>/<code>Then</code>/<code>And</code> line that no step definition of yours matches is
+run by Decisium.</p>
+<h2 id="start-url">Start URL</h2>
+<p><code>@url:&lt;url|file&gt;</code> on the feature or a scenario (a scenario&#39;s tag wins), or <code>--url</code> on the command line. A relative file
+path resolves from the directory you run in.</p>
+<h2 id="kinds-of-step">Kinds of Step</h2>
+<p>Decisium reads each line as one of these:</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Example</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Step (action)</td>
+<td><code>I schedule the campaign</code></td>
+<td>Jev picks actions until the task is done.</td>
+</tr>
+<tr>
+<td>Navigation</td>
+<td><code>I go to &quot;/settings&quot;</code>, <code>I go back</code></td>
+<td>Done by code, no model.</td>
+</tr>
+<tr>
+<td>Value check</td>
+<td><code>the campaign status should be &quot;Scheduled&quot;</code></td>
+<td>Code compares the element&#39;s value with the quote.</td>
+</tr>
+<tr>
+<td>Presence</td>
+<td><code>&quot;Saved&quot; should appear</code></td>
+<td>Code looks for the text.</td>
+</tr>
+<tr>
+<td>Scoped presence</td>
+<td><code>&quot;Banana&quot; should appear in the cart</code></td>
+<td>The same, inside one area.</td>
+</tr>
+<tr>
+<td>State check</td>
+<td><code>&quot;Banana&quot; should be selected</code></td>
+<td>Code reads the element&#39;s state.</td>
+</tr>
+<tr>
+<td>Attempt</td>
+<td><code>I try to save the form</code></td>
+<td>A negative path: the action may be refused.</td>
+</tr>
+</tbody></table>
+<p>The <a href="cookbook.html">Cookbook</a> lists, for each kind, the wordings that pass and the ones to avoid, each backed by an
+<a href="examples.html">example</a>.</p>
+<h2 id="rules">Rules</h2>
+<ul>
+<li>One Step, one task, named by what the user wants: &quot;I save the draft&quot;, not &quot;I click Save draft&quot;.</li>
+<li>Quote every value: what to type, the option to pick, the text a check expects.</li>
+<li>Secrets go in as <code>&quot;$NAME&quot;</code>; the value comes from the environment or <code>.env</code>. Jev, logs, the trace and the cassette
+only see the token. A value written literally in a Step is sent to the model and recorded.</li>
+<li>Tables and doc strings work as in cucumber.</li>
+</ul>
+<h2 id="your-own-step-definitions">Your own step definitions</h2>
+<p>Pass them with <code>--import</code>. A line one of them matches runs your code, not Jev. The World gives you <code>this.page</code> (the
+current tab) and <code>this.context</code> (the Playwright browser context).</p>
+<pre><code class="language-js">// steps/network.js
+import { When } from &quot;@cucumber/cucumber&quot;;
+When(&quot;the API is offline&quot;, async function () {
+  await this.context.route(&quot;**/api/**&quot;, route =&gt; route.abort());
+});
+</code></pre>
+<pre><code class="language-sh">npx decisium run features/offline.feature --import steps/network.js
+</code></pre>
+<div class="pager"><a class="prev" href="quick-start.html"><span>Previous</span>Quick start</a><a class="next" href="cli.html"><span>Next</span>Command line</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#start-url">Start URL</a><a class="l2" href="#kinds-of-step">Kinds of Step</a><a class="l2" href="#rules">Rules</a><a class="l2" href="#your-own-step-definitions">Your own step definitions</a></aside>
+</div>
+</body>
+</html>

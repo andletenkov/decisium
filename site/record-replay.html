@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Record and replay · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html" aria-current="page">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="record-and-replay">Record and replay</h1>
+<p>What each Step resolved to (the element&#39;s role, name, container and position, and the values) is recorded in
+<code>&lt;file&gt;.cassette.json</code> next to the feature. On the next run it is replayed without Jev while exactly one element on the
+page still matches it.</p>
+<table>
+<thead>
+<tr>
+<th><code>--record</code></th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>new</code> (default)</td>
+<td>Replay; resolve new or no-longer-matching Steps live and write them back (reported as <em>healed</em>).</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>Replay only. A missing or broken resolution fails as <code>UI_CHANGED</code>. Use in CI.</td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td>Resolve everything live and rewrite the cassette.</td>
+</tr>
+</tbody></table>
+<p>The run summary says what happened:</p>
+<pre><code class="language-text">Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
+</code></pre>
+<h2 id="workflow">Workflow</h2>
+<ol>
+<li>Record once with <code>--record new</code> (or <code>all</code>), check the outcomes, commit the cassettes.</li>
+<li>Run CI with <code>--record none</code>: same outcome every run, zero model calls.</li>
+<li>When the UI really changes, CI fails as <code>UI_CHANGED</code>. Heal locally with <code>--record new</code> and commit the cassette.</li>
+</ol>
+<p>A live run asks Jev every time, so a Step close to the confidence gate can end differently from run to run. Replays
+do not. See <a href="cookbook.html#flaky-steps">Flaky Steps</a>.</p>
+<div class="pager"><a class="prev" href="cli.html"><span>Previous</span>Command line</a><a class="next" href="configuration.html"><span>Next</span>Configuration</a></div></main>
+
+</div>
+</body>
+</html>

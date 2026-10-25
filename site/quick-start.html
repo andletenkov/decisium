@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick start · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html" aria-current="page">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="quick-start">Quick start</h1>
+<h2 id="1-write-a-feature">1. Write a feature</h2>
+<pre><code class="language-gherkin"># features/campaign.feature
+@url:http://localhost:3000
+Feature: Campaigns
+
+  Scenario: Schedule a campaign
+    When I enter &quot;Autumn Sale&quot; as the campaign name
+    And I set the activation period to 2 weeks
+    And I schedule the campaign
+    Then the campaign status should be &quot;Scheduled&quot;
+</code></pre>
+<p>The <code>@url:</code> tag is the start URL (a URL or a local HTML file). Each Scenario starts from a fresh browser. Quote every
+value a Step types or a check compares.</p>
+<h2 id="2-lint-it">2. Lint it</h2>
+<pre><code class="language-sh">npx decisium lint features/campaign.feature
+</code></pre>
+<p>No browser, no model: shows how each Step will be read and flags wordings the <a href="cookbook.html">Cookbook</a> shows failing.</p>
+<h2 id="3-run-it-live">3. Run it live</h2>
+<pre><code class="language-sh">npx decisium run features/campaign.feature
+</code></pre>
+<p>The first run asks Jev for every Step and records the answers in <code>features/campaign.cassette.json</code>. Commit it.</p>
+<h2 id="4-replay-it">4. Replay it</h2>
+<pre><code class="language-sh">npx decisium run features/campaign.feature --record none
+</code></pre>
+<p>Every Step replays its recorded resolution with zero model calls. Use this in <a href="ci.html">CI</a>.</p>
+<p>When a Step fails, read <a href="reports.html">Reports and debugging</a>. When a wording does not work, look it up in the
+<a href="cookbook.html">Cookbook</a>.</p>
+<div class="pager"><a class="prev" href="installation.html"><span>Previous</span>Installation</a><a class="next" href="writing-features.html"><span>Next</span>Writing features</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#1-write-a-feature">1. Write a feature</a><a class="l2" href="#2-lint-it">2. Lint it</a><a class="l2" href="#3-run-it-live">3. Run it live</a><a class="l2" href="#4-replay-it">4. Replay it</a></aside>
+</div>
+</body>
+</html>

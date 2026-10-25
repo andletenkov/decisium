@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://www.npmjs.com/package/decisium">npm</a></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html" aria-current="page">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="configuration-and-reporters">Configuration and reporters</h1>
+<p><code>decisium run</code> loads configuration exactly like cucumber-js (ADR 0004):
+your <code>cucumber.{js,mjs,cjs,json,yaml}</code>, <code>-p &lt;profile&gt;</code>, and cucumber&#39;s <code>--format name[:path]</code> and <code>--import &lt;file&gt;</code>
+flags, added to the file&#39;s values. Decisium adds its own step definitions to <code>import</code>.</p>
+<h2 id="decisium-options">Decisium options</h2>
+<p>In <code>worldParameters.decisium</code>, so raw <code>npx cucumber-js</code> reads them too. Flags (<code>--url</code>, <code>--record</code>, <code>--strict</code>, ...)
+and <code>DECISIUM_*</code> env (<code>DECISIUM_URL</code>, <code>DECISIUM_RECORD</code>, <code>DECISIUM_STRICT=1</code>, ...) override them.</p>
+<pre><code class="language-js">// cucumber.mjs
+export default {
+  worldParameters: { decisium: { record: &quot;none&quot;, strict: true } },
+  // url, record, headed, judged, strict, verbose, debug, agentReport
+};
+</code></pre>
+<h2 id="reporters">Reporters</h2>
+<p>Any cucumber formatter: cucumber&#39;s own <code>junit</code>, <code>json</code>, <code>html</code>, <code>message</code>, or a package such as the official Qase
+reporter. Only one formatter may write to stdout: one configured without a path takes it; otherwise Decisium&#39;s console
+output does.</p>
+<pre><code class="language-sh">decisium run features/login.feature --format junit:reports/junit.xml
+</code></pre>
+<h3 id="qase">Qase</h3>
+<p>Decisium ships nothing Qase-specific; wire the official reporter as in any cucumber project.</p>
+<pre><code class="language-sh">npm install --save-dev cucumberjs-qase-reporter
+echo &#39;{&quot;mode&quot;:&quot;report&quot;}&#39; &gt; qase.config.json   # or mode &quot;testops&quot; with QASE_TESTOPS_API_TOKEN, QASE_TESTOPS_PROJECT
+decisium run features/login.feature --format cucumberjs-qase-reporter:/dev/null
+</code></pre>
+<p>Or in your configuration, which raw <code>npx cucumber-js</code> uses too:</p>
+<pre><code class="language-js">// cucumber.mjs
+export default {
+  // Raw cucumber-js only: Decisium&#39;s steps and formatter (decisium run adds both itself).
+  import: [&quot;node_modules/decisium/dist/steps.js&quot;],
+  format: [&quot;decisium/formatter&quot;, &quot;cucumberjs-qase-reporter:/dev/null&quot;],
+};
+</code></pre>
+<p>Tag scenarios <code>@QaseID=&lt;id&gt;</code>. A failing Step&#39;s message starts with its outcome; app failures (<code>ASSERTION_FAILED</code>,
+<code>JUDGED_FAILED</code>, <code>BLOCKED</code>, <code>ACTION_FAILED</code>) report as <code>failed</code>, every other outcome as <code>invalid</code>. A marginal pass
+reaches every reporter as a <code>text/plain</code> attachment <code>marginal-pass.txt</code> on its Step (Qase stores it as <code>file.txt</code>).</p>
+<div class="pager"><a class="prev" href="record-replay.html"><span>Previous</span>Record and replay</a><a class="next" href="reports.html"><span>Next</span>Reports and debugging</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#decisium-options">Decisium options</a><a class="l2" href="#reporters">Reporters</a><a class="l3" href="#qase">Qase</a></aside>
+</div>
+</body>
+</html>
