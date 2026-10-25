@@ -25,8 +25,8 @@ jobs:
           node-version: 24
       - run: npm ci
       - run: node scripts/site.ts
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: site
       - id: deploy
