@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?frames
+@url:test/fixtures/cookbook/index.html?frames
 Feature: iframes and open shadow roots (task 0047)
   Backs docs/cookbook.md.
 

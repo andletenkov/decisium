@@ -21,7 +21,7 @@ bad=$(grep -vE '^package/(dist/|skills/|docs/(cookbook|configuration)\.md$|packa
 cd "$tmp"
 npm init -y >/dev/null
 npm install --silent "$tarball"
-cp "$root/examples/campaign-app/index.html" .
+cp "$root/test/fixtures/campaign-app/index.html" .
 cat > sample.feature <<'EOF'
 @url:index.html
 Feature: Smoke

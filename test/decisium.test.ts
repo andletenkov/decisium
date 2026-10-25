@@ -9,7 +9,7 @@ import { runAssertion, runStep, type Runtime } from "../src/runner.ts";
 import { containsValue } from "../src/check.ts";
 import { parseFeature, parseStep } from "../src/feature.ts";
 
-const APP = pathToFileURL("examples/campaign-app/index.html").href;
+const APP = pathToFileURL("test/fixtures/campaign-app/index.html").href;
 
 const NATIVE = `- generic [active] [ref=e1]:
   - generic [ref=e7]:
@@ -1142,7 +1142,7 @@ test("hover: Jev's hover answer hovers the element; titles are descriptions; a m
 });
 
 test("gestures: double-click, right-click and drag by Jev's gesture answer; draggable and pointer elements offered; sliders filled (task 0045)", async () => {
-  const b = await Browser.open(pathToFileURL("examples/cookbook/index.html").href + "?gestures");
+  const b = await Browser.open(pathToFileURL("test/fixtures/cookbook/index.html").href + "?gestures");
   const by = (o: Observation, text: string) => o.elements.find(e => e.name === text || e.value === text)!;
   const once = (text: string, gesture: string, drop?: string): Decider => ({ ...oracle,
     turn: async (_s, o, recent) => recent.length ? { done: 1, target: sure("none") } : { done: 0, action: sure(gesture), target: sure(by(o, text).ref) },
@@ -1172,7 +1172,7 @@ test("gestures: double-click, right-click and drag by Jev's gesture answer; drag
 });
 
 test("scroll: scrollable panels offered as targets and scrolled down or up by gesture; page scroll up (task 0061)", async () => {
-  const b = await Browser.open(pathToFileURL("examples/cookbook/index.html").href + "?scroll");
+  const b = await Browser.open(pathToFileURL("test/fixtures/cookbook/index.html").href + "?scroll");
   const has = async (text: string) => (await b.observe()).text.includes(text);
   try {
     const panel = (await b.observe()).elements.find(e => e.name === "Inbox")!;
@@ -1341,16 +1341,16 @@ test("decisium run: cassette replay through cucumber (table rows, cassette keys)
     const steps = readFileSync(`${dir}/trace.jsonl`, "utf8").trim().split("\n").map(l => JSON.parse(l)).filter(e => e.type === "step");
     return { code: r.code, steps };
   };
-  const tables = await run("examples/cookbook/tables.feature:5", "examples/cookbook/tables.feature:30");
+  const tables = await run("test/fixtures/cookbook/tables.feature:5", "test/fixtures/cookbook/tables.feature:30");
   assert.equal(tables.code, 0);
   assert.deepEqual([...new Set(tables.steps.map(s => s.cassette))], ["replayed"]);
   assert.equal(tables.steps.reduce((n, s) => n + s.jevCalls, 0), 0);
   // A marginal pass is a pass, and AMBIGUOUS with --strict.
-  const marginal = (r: Awaited<ReturnType<typeof run>>) => r.steps.find(s => s.at === "examples/cookbook/lab.feature:22").outcome;
-  const lax = await run("examples/cookbook/lab.feature:20");
+  const marginal = (r: Awaited<ReturnType<typeof run>>) => r.steps.find(s => s.at === "test/fixtures/cookbook/lab.feature:22").outcome;
+  const lax = await run("test/fixtures/cookbook/lab.feature:20");
   assert.equal(lax.code, 0);
   assert.equal(marginal(lax), "PASSED");
-  const strict = await run("examples/cookbook/lab.feature:20", "--strict");
+  const strict = await run("test/fixtures/cookbook/lab.feature:20", "--strict");
   assert.equal(strict.code, 1);
   assert.equal(marginal(strict), "AMBIGUOUS");
 });
@@ -1358,7 +1358,7 @@ test("decisium run: cassette replay through cucumber (table rows, cassette keys)
 test("raw cucumber-js: a failed BeforeAll hook is reported, not a silent 0/0", async () => {
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");
-  const r = await promisify(execFile)("npx", ["cucumber-js", "examples/cookbook/tables.feature:5"], { env: { ...process.env, TYPESAFE_API_KEY: "", DECISIUM_RECORD: "all", DECISIUM_NO_AGENT_REPORT: "1" } })
+  const r = await promisify(execFile)("npx", ["cucumber-js", "test/fixtures/cookbook/tables.feature:5"], { env: { ...process.env, TYPESAFE_API_KEY: "", DECISIUM_RECORD: "all", DECISIUM_NO_AGENT_REPORT: "1" } })
     .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
   assert.notEqual(r.code, 0);
   assert.match(r.stdout, /BeforeAll hook failed[^\n]*\n.*TYPESAFE_API_KEY is not set/);
@@ -1372,7 +1372,7 @@ test("raw cucumber-js: an undefined Step says the steps file is not loaded", asy
   const config = "runs/no-steps.cucumber.mjs"; // cucumber resolves -c against the cwd
   mkdirSync("runs", { recursive: true });
   writeFileSync(config, `export default { import: [], format: ["./src/formatter.ts"] };`);
-  const r = await promisify(execFile)("npx", ["cucumber-js", "-c", config, "examples/cookbook/tables.feature:5"])
+  const r = await promisify(execFile)("npx", ["cucumber-js", "-c", config, "test/fixtures/cookbook/tables.feature:5"])
     .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
   assert.notEqual(r.code, 0);
   assert.match(r.stdout, /\? Step: .*\n  no step definition: is Decisium's steps file in "import"\?/);
@@ -1534,7 +1534,7 @@ test("upload through a hidden input behind a button, never a missing file; downl
 });
 
 test("Browser: TYPE native ISO dates, clear and blur validation", async () => {
-  const b = await Browser.open(pathToFileURL("examples/cookbook/form-details.html").href);
+  const b = await Browser.open(pathToFileURL("test/fixtures/cookbook/form-details.html").href);
   try {
     for (const [name, value] of [["Search", ""], ["Start date", "2026-10-20"], ["Start time", "14:30"], ["Appointment", "2026-10-20T14:30"], ["Email", "invalid"]]) {
       const el = (await b.observe()).elements.find(e => e.name === name)!;
@@ -1621,7 +1621,7 @@ test("client steps: a line a client definition matches runs it beside the catch-
   const { execFile } = await import("node:child_process");
   const { readFileSync } = await import("node:fs");
   const { promisify } = await import("node:util");
-  const r = await promisify(execFile)("node", ["src/cli.ts", "run", "examples/cookbook/network.feature", "--import", "examples/cookbook/network.steps.ts",
+  const r = await promisify(execFile)("node", ["src/cli.ts", "run", "test/fixtures/cookbook/network.feature", "--import", "test/fixtures/cookbook/network.steps.ts",
     "--record", "none", "--no-agent-report"], { env: { ...process.env, TYPESAFE_API_KEY: "" } })
     .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
   assert.equal(r.code, 0, r.stdout);

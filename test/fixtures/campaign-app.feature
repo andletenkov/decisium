@@ -1,4 +1,4 @@
-@url:examples/campaign-app/index.html
+@url:test/fixtures/campaign-app/index.html
 Feature: Campaign form (single screen)
 
   Scenario: Schedule a campaign
@@ -13,6 +13,6 @@ Feature: Campaign form (single screen)
 
   # Expected to FAIL: the status stays "Draft" while a filter elsewhere says "Scheduled".
   # A pass means the subject was picked by matching text, not by meaning.
-  @url:examples/campaign-app/index.html?decoy=1
+  @url:test/fixtures/campaign-app/index.html?decoy=1
   Scenario: Status assertion ignores a decoy
     Then the campaign status should be "Scheduled"

@@ -1,6 +1,6 @@
-@url:examples/cookbook/index.html?network
+@url:test/fixtures/cookbook/index.html?network
 Feature: Client steps, browser context tags and network replay (task 0048)
-  Backs docs/cookbook.md. Run with --import examples/cookbook/network.steps.ts; the campaign manager must run on 5173
+  Backs docs/cookbook.md. Run with --import test/fixtures/cookbook/network.steps.ts; the campaign manager must run on 5173
   to record (npm run example:server), not to replay.
 
   @viewport:390x844 @locale:de-DE

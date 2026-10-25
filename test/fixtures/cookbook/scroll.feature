@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?scroll
+@url:test/fixtures/cookbook/index.html?scroll
 Feature: Scroll inside lists and panels, and up (task 0061)
   Backs docs/cookbook.md.
 

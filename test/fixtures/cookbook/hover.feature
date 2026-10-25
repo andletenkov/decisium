@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?hover
+@url:test/fixtures/cookbook/index.html?hover
 Feature: Hover (task 0042)
   Backs docs/cookbook.md.
 

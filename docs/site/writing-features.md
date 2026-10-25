@@ -23,7 +23,7 @@ Decisium reads each line as one of these:
 | Attempt | `I try to save the form` | A negative path: the action may be refused. |
 
 The [Cookbook](cookbook.md) lists, for each kind, the wordings that pass and the ones to avoid, each backed by a
-Step in the repository's `examples/`. Ready-to-run features are on the [Examples](examples.md) page.
+Step in the repository's `test/fixtures/`. Ready-to-run features are on the [Examples](examples.md) page.
 
 ## Rules
 

@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?nav
+@url:test/fixtures/cookbook/index.html?nav
 Feature: Navigation and tabs (task 0041)
   Backs docs/cookbook.md.
 

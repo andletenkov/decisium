@@ -1,6 +1,6 @@
 // Campaign manager fixture: static SPA + in-memory JSON API with artificial latency.
-// Usage: node examples/campaign-manager/server.ts [port]   (LATENCY_MS env, default 300)
-// The API allows any origin: examples/cookbook/index.html?network fetches it from a file:// page.
+// Usage: node test/fixtures/campaign-manager/server.ts [port]   (LATENCY_MS env, default 300)
+// The API allows any origin: test/fixtures/cookbook/index.html?network fetches it from a file:// page.
 // Opening the app with ?reset=1 restores the seed data, so every test starts from the same state.
 import { createServer, type ServerResponse } from "node:http";
 import { readFileSync } from "node:fs";

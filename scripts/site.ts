@@ -28,7 +28,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 /** A link from a source page to its place in the site; undefined drops the link and keeps its text. */
 export function siteHref(href: string): string | undefined {
   if (/^(https?:|mailto:|#)/.test(href)) return href;
-  const example = /(?:^|\/)(examples\/[\w./-]+\.(?:feature|ts|html))(#L\d+)?$/.exec(href);
+  const example = /(?:^|\/)((?:examples|test\/fixtures)\/[\w./-]+\.(?:feature|ts|html))(#L\d+)?$/.exec(href);
   if (example) return `${REPO}/blob/main/${example[1]}${example[2] ?? ""}`; // the cookbook's evidence, on GitHub
   const page = /^(?:\.\/|\.\.\/)?(?:docs\/)?([\w-]+)\.md(#.*)?$/.exec(href);
   if (page && slugs.has(page[1])) return `${page[1]}.html${page[2] ?? ""}`;
@@ -57,10 +57,10 @@ function render(md: string) {
 
 /** Real public sites a user can run as is, each replaying from its committed cassette. */
 const EXAMPLES: [file: string, about: string][] = [
-  ["examples/real/saucedemo.feature", "A shop: login, a locked-out user, sorting, the cart and checkout validation."],
-  ["examples/real/todomvc.feature", "List state: a Background, counters, filters and absence checks scoped to the list."],
-  ["examples/real/the-internet.feature", "Classic widgets: checkboxes, dropdowns, and a start URL per scenario."],
-  ["examples/real/github.feature", "A large live site with no login: tabs, headings and releases."],
+  ["examples/saucedemo.feature", "A shop: login, a locked-out user, sorting, the cart and checkout validation."],
+  ["examples/todomvc.feature", "List state: a Background, counters, filters and absence checks scoped to the list."],
+  ["examples/the-internet.feature", "Classic widgets: checkboxes, dropdowns, and a start URL per scenario."],
+  ["examples/github.feature", "A large live site with no login: tabs, headings and releases."],
 ];
 
 /** The examples page: the EXAMPLES features with an anchor per line. */

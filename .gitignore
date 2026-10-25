@@ -3,7 +3,7 @@ runs/
 .env
 build/
 logs/
-examples/real/*.cassette.json
+examples/*.cassette.json
 dist/
 *.tgz
 

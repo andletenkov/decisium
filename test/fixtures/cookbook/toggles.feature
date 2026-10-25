@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?toggles
+@url:test/fixtures/cookbook/index.html?toggles
 Feature: Radios and toggles without check words (task 0043)
   Backs docs/cookbook.md.
 

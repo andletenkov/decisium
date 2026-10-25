@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?gestures
+@url:test/fixtures/cookbook/index.html?gestures
 Feature: Double-click, right-click, drag and drop, sliders (task 0045)
   Backs docs/cookbook.md.
 

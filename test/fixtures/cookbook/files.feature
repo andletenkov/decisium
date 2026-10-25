@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?files
+@url:test/fixtures/cookbook/index.html?files
 Feature: File upload and download (task 0044)
   Backs docs/cookbook.md.
 

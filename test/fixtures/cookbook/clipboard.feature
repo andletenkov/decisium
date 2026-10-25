@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?clipboard
+@url:test/fixtures/cookbook/index.html?clipboard
 Feature: Clipboard (task 0062)
   Backs docs/cookbook.md.
 

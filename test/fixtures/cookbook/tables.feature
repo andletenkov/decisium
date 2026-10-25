@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?contacts
+@url:test/fixtures/cookbook/index.html?contacts
 Feature: Data tables and doc strings (task 0038)
   Backs docs/cookbook.md. Scenarios marked "Should FAIL" show a wording the cookbook warns against.
 

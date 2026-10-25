@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?dialogs
+@url:test/fixtures/cookbook/index.html?dialogs
 Feature: Browser dialogs (task 0040)
   Backs docs/cookbook.md. Scenarios marked "Should FAIL" show a wording the cookbook warns against.
 

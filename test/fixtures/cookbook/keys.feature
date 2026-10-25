@@ -1,4 +1,4 @@
-@url:examples/cookbook/index.html?keys
+@url:test/fixtures/cookbook/index.html?keys
 Feature: Keys (task 0039)
   Backs docs/cookbook.md. Scenarios marked "Should FAIL" show a wording the cookbook warns against.
 

@@ -1,4 +1,4 @@
-@url:examples/cookbook/form-details.html
+@url:test/fixtures/cookbook/form-details.html
 Feature: Clear fields, native dates and on-leave validation (task 0046)
   Scenario: Clear a populated search field
     When I clear the Search field
