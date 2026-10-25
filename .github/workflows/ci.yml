@@ -1,0 +1,24 @@
+# Typecheck, tests, the docs build and the packed-tarball smoke test on every push to main and every PR.
+# No secrets: the suite runs without TYPESAFE_API_KEY (the one live test skips) and the smoke test checks install + bin.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm test
+      - run: node scripts/site.ts && git diff --exit-code site/ # committed site/ matches the markdown
+      - run: npm run pack:smoke
