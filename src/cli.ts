@@ -13,6 +13,9 @@ import { lint } from "./lint.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 
+// ".ts" from source, ".js" from the built package in dist/.
+const EXT = import.meta.url.slice(-3);
+
 const USAGE = `Usage:
   decisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]
   decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]
@@ -49,8 +52,8 @@ screenshot per Turn, playwright-trace.zip, console-errors.txt and ui.txt (the pa
 A run with a failure writes report.md: every failure with Jev's answers, the page text around it and a rerun command,
 for a coding agent (--no-agent-report: off).
 
-Runs inside cucumber-js: raw \`npx cucumber-js <file>\` works too with Decisium's src/steps.ts in "import" and its
-src/formatter.ts in "format" (see cucumber.mjs).
+Runs inside cucumber-js: raw \`npx cucumber-js <file>\` works too with
+import: ["node_modules/decisium/dist/steps.js"] and format: ["decisium/formatter"] in its cucumber.mjs.
 
 Secrets: write "$NAME" in a Step's quotes (e.g. with password "$SAUCE_PASSWORD"): Jev, logs, trace and cassette see only
 the token; the value comes from the environment (or .env) and is typed into the page. Wherever the page shows it, it is
@@ -116,9 +119,9 @@ async function main(): Promise<number> {
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
   // The client's cucumber configuration and profiles, plus ours; `step` runs one line, so none of the client's features.
   const { useConfiguration, runConfiguration } = await loadConfiguration({ file: cmd === "step" ? false : undefined, profiles: values.profile, provided: {
-    paths: files, import: [here("./steps.ts"), ...values.import.map(f => resolve(f))], format: values.format,
+    paths: files, import: [here(`./steps${EXT}`), ...values.import.map(f => resolve(f))], format: values.format,
   } });
-  if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout)) runConfiguration.formats.stdout = here("./formatter.ts");
+  if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout)) runConfiguration.formats.stdout = here(`./formatter${EXT}`);
   try {
     applyOptions((runConfiguration.runtime.worldParameters as { decisium?: unknown } | undefined)?.decisium);
   } catch (err) {

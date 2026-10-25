@@ -1,20 +1,48 @@
 {
   "name": "decisium",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "description": "Plain-English Gherkin steps run against a real browser by an AI agent, with record/replay cassettes",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "cucumber",
+    "gherkin",
+    "playwright",
+    "e2e",
+    "testing",
+    "ai"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "bin": {
+    "decisium": "dist/cli.js"
+  },
+  "exports": {
+    "./steps": {
+      "types": "./dist/steps.d.ts",
+      "default": "./dist/steps.js"
+    },
+    "./formatter": {
+      "types": "./dist/formatter.d.ts",
+      "default": "./dist/formatter.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "docs/cookbook.md",
+    "docs/configuration.md"
+  ],
   "scripts": {
     "test": "node --env-file-if-exists=.env --test test/*.test.ts",
     "typecheck": "tsc -p .",
     "example:server": "node examples/campaign-manager/server.ts",
-    "cookbook": "node scripts/cookbook.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "bin": {
-    "decisium": "src/cli.ts"
+    "cookbook": "node scripts/cookbook.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "pack:smoke": "scripts/pack-smoke.sh"
   },
   "dependencies": {
     "@cucumber/cucumber": "^13.3.0",

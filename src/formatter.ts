@@ -13,7 +13,7 @@ const env = process.env;
 const q = (s: string) => /^[\w./:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`;
 /** The command that reruns one scenario (or the one command-line Step) with this run's options. */
 function rerun(target: string[]): string {
-  const cli = relative(process.cwd(), fileURLToPath(import.meta.resolve("./cli.ts")));
+  const cli = relative(process.cwd(), fileURLToPath(import.meta.resolve(`./cli${import.meta.url.slice(-3)}`)));
   const flags = [env.DECISIUM_URL && `--url ${q(env.DECISIUM_URL)}`, env.DECISIUM_JUDGED === "1" && "--judged", env.DECISIUM_STRICT === "1" && "--strict"];
   return ["node", cli, ...target.map(q), ...flags].filter(Boolean).join(" ");
 }
