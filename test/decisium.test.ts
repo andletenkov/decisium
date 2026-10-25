@@ -1355,6 +1355,16 @@ test("decisium run: cassette replay through cucumber (table rows, cassette keys)
   assert.equal(marginal(strict), "AMBIGUOUS");
 });
 
+test("raw cucumber-js: a failed BeforeAll hook is reported, not a silent 0/0", async () => {
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const r = await promisify(execFile)("npx", ["cucumber-js", "examples/cookbook/tables.feature:5"], { env: { ...process.env, TYPESAFE_API_KEY: "", DECISIUM_RECORD: "all", DECISIUM_NO_AGENT_REPORT: "1" } })
+    .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
+  assert.notEqual(r.code, 0);
+  assert.match(r.stdout, /BeforeAll hook failed[^\n]*\n.*TYPESAFE_API_KEY is not set/);
+  assert.doesNotMatch(r.stdout, /0\/0 scenarios passed/);
+});
+
 test("executeStep: table rows, UI_CHANGED, PAGE_TOO_LARGE, setup errors, --strict and memory, without cucumber", async () => {
   const { executeStep } = await import("../src/execute.ts");
   const { Cassette } = await import("../src/cassette.ts");

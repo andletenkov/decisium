@@ -26,6 +26,8 @@ export default class DecisiumFormatter extends Formatter {
     const scenarios: { name: string; passed: boolean }[] = [];
     const failures: (() => Omit<AgentFailure, "events">)[] = []; // built at the end: the Playwright trace is saved after the step
     const warnings: string[] = [];
+    const hookIds = new Map<string, string>(); // testRunHookStarted id -> hook definition id
+    const hookFailures: string[] = []; // a failed BeforeAll/AfterAll (e.g. no TYPESAFE_API_KEY): cucumber runs no scenario
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
       if (e.testCaseStarted) {
         const { pickle } = this.eventDataCollector.getTestCaseAttempt(e.testCaseStarted.id);
@@ -74,11 +76,19 @@ export default class DecisiumFormatter extends Formatter {
       } else if (e.testCaseFinished && !e.testCaseFinished.willBeRetried) {
         const { pickle, worstTestStepResult } = this.eventDataCollector.getTestCaseAttempt(e.testCaseFinished.testCaseStartedId);
         scenarios.push({ name: pickle.name, passed: worstTestStepResult.status === Status.PASSED });
+      } else if (e.testRunHookStarted) {
+        hookIds.set(e.testRunHookStarted.id, e.testRunHookStarted.hookId);
+      } else if (e.testRunHookFinished?.result.status === Status.FAILED) {
+        const before = this.supportCodeLibrary.beforeTestRunHookDefinitions.some(h => h.id === hookIds.get(e.testRunHookFinished!.testRunHookStartedId));
+        const { message, exception } = e.testRunHookFinished.result;
+        hookFailures.push(`✗ ${before ? "BeforeAll" : "AfterAll"} hook failed\n  ${(exception?.message ?? message ?? "").split("\n")[0]}`);
       } else if (e.testRunFinished) {
+        if (hookFailures.length) this.log(`\n${hookFailures.join("\n")}\n`);
         const failed = failures.map(f => f());
         if (failed.length) this.log(`\n${"─".repeat(60)}\nFailures\n\n${failed.map(f => failureReport(f.where, f.scenario, f.kind, f.step, f, f.screenshot, f.trace)).join("\n\n")}\n`);
         if (warnings.length) this.log(`\n${"─".repeat(60)}\nMarginal passes\n\n${warnings.join("\n\n")}\n\nWhat to do: ${MARGINAL_HINT}\n`);
         const failedNames = scenarios.filter(s => !s.passed).map(s => s.name);
+        if (!scenarios.length && hookFailures.length) return;
         this.log(`\n${scenarios.length - failedNames.length}/${scenarios.length} scenarios passed${failedNames.length ? `; failed: ${failedNames.join(", ")}` : ""}\n`);
         // The run directory: the CLI's, or (raw cucumber-js) the one the screenshots are in.
         const shot = failed.find(f => f.screenshot)?.screenshot;
