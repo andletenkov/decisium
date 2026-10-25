@@ -42,7 +42,7 @@ Checks Node, Chromium and `TYPESAFE_API_KEY`; given features, also opens every s
 ## lint
 
 No browser, no model. Per Step: its kind, the quoted values, keys, secret placeholders, and warnings for wordings the
-[Cookbook](cookbook.md) shows failing.
+[Writing Steps](steps.md) marks as ones to avoid.
 
 ## Exit codes
 

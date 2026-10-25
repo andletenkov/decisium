@@ -34,13 +34,13 @@ the scenario (or Examples row) at that line.
 doctor: checks Node, Chromium and TYPESAFE_API_KEY (one tiny Jev call); given features, also opens
   every start URL.
 lint: no browser, no Jev. Per Step: its kind, the quoted values, keys, secret placeholders, and warnings for wordings
-  docs/cookbook.md shows failing.
+  the docs mark as ones to avoid (andletenkov.github.io/decisium/steps.html).
 Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (and -p profiles); --format, --import and
   -p (repeatable) are cucumber's flags, added to it. --format name[:path]: cucumber's junit, json, html, message or any
   formatter package, e.g. --format junit:junit.xml or --format cucumberjs-qase-reporter:/dev/null. Only one formatter may
   write to stdout: one configured without a path takes it, else Decisium's console output does.
 --import: your own cucumber step definitions or hooks. A line one of them matches runs it, not Jev; the World gives them
-  this.page (the current tab) and this.context (Playwright). See docs/cookbook.md.
+  this.page (the current tab) and this.context (Playwright). See andletenkov.github.io/decisium/client-steps.html.
 Options in the configuration: worldParameters: { decisium: { url, record, headed, judged, strict, verbose, debug,
   agentReport } }; flags and DECISIUM_* env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, ...) override them.
 -v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.

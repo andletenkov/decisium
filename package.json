@@ -43,14 +43,12 @@
   "files": [
     "dist",
     "skills",
-    "docs/cookbook.md",
     "docs/configuration.md"
   ],
   "scripts": {
     "test": "node --env-file-if-exists=.env --test test/*.test.ts",
     "typecheck": "tsc -p .",
     "example:server": "node test/fixtures/campaign-manager/server.ts",
-    "cookbook": "node scripts/cookbook.ts",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "site": "node scripts/site.ts",

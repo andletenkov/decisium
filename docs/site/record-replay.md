@@ -23,4 +23,4 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
 3. When the UI really changes, CI fails as `UI_CHANGED`. Heal locally with `--record new` and commit the cassette.
 
 A live run asks Jev every time, so a Step close to the confidence gate can end differently from run to run. Replays
-do not. See [Flaky Steps](cookbook.md#flaky-steps).
+do not. See [Troubleshooting](troubleshooting.md). Backend requests can be replayed too: [Network replay](network-replay.md).

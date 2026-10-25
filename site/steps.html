@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing Steps · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.dataset.theme = localStorage.getItem("theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://github.com/andletenkov/decisium">GitHub</a><a href="https://www.npmjs.com/package/decisium">npm</a>
+    <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t)"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html" aria-current="page">Writing Steps</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="writing-steps">Writing Steps</h1>
+<p>A Step is one line of a scenario, written the way a user would describe the task. Decisium reads each line as an
+<strong>action</strong> (it changes the page) or a <strong>check</strong> (it verifies what the page shows). This page lists what each kind can
+do and how to word it. <code>npx decisium lint &lt;file.feature&gt;</code> flags the wordings marked <strong>Avoid</strong> below.</p>
+<h2 id="rules-of-thumb">Rules of thumb</h2>
+<ol>
+<li><strong>One Step, one task</strong>, named by what the user wants, not by the clicks: <code>I save the draft</code>, not
+<code>I click the button labelled Save draft</code>.</li>
+<li><strong>Quote every value</strong>: what to type, the option to pick, the text a check expects. Decisium only uses values you
+quoted; it never invents one. A number with a unit can stay unquoted (<code>2 weeks</code>).</li>
+<li><strong>A check quotes exactly what it compares</strong>: one value for a value check, the text to look for in a presence check.</li>
+<li><strong>Name things the way the page labels them</strong>: &quot;heading&quot;, &quot;error&quot;, &quot;status&quot;, &quot;the calendar&quot;. Avoid words that also
+name something else; &quot;title&quot; can also mean the browser tab&#39;s title.</li>
+<li><strong>Say &quot;open&quot; when you mean open.</strong> &quot;Search for&quot; runs a search; it does not open a result.</li>
+<li><strong>Write <code>&quot;$NAME&quot;</code> for secrets.</strong> See <a href="#secrets">Secrets</a>.</li>
+<li><strong>No CSS or XPath selectors.</strong> Quote what the page shows (<code>the &quot;Search page&quot; link</code>). When no wording works, write a
+<a href="client-steps.html">client step</a>.</li>
+</ol>
+<h2 id="actions">Actions</h2>
+<p>An action Step runs in Turns: each Turn Jev picks one action among the elements on the page, Decisium performs it,
+and the Step ends once the task is done. Several clicks in one Step are fine when they serve one task: <code>I delete the campaign</code> opens the &quot;More actions&quot; menu first. An action waits for the requests it started to finish (up to 5 s), so
+the next Step sees their result.</p>
+<h3 id="navigate">Navigate</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I open the calendar</code></td>
+<td>Names the place, not the link.</td>
+</tr>
+<tr>
+<td><code>I open the &quot;Spring Sale&quot; campaign</code></td>
+<td>The quoted name picks the row.</td>
+</tr>
+<tr>
+<td><code>I start a new campaign</code></td>
+<td>The task, not the button text.</td>
+</tr>
+<tr>
+<td><code>I open the &quot;Ada Lovelace&quot; article through the search</code></td>
+<td>Says how and that it opens: types, submits, then opens the result.</td>
+</tr>
+<tr>
+<td><code>I go to &quot;/settings&quot;</code></td>
+<td>A path, query (<code>&quot;?tab=2&quot;</code>), <code>#hash</code> or full URL opens directly, relative to the start URL.</td>
+</tr>
+<tr>
+<td><code>I go back</code>, <code>I go forward</code>, <code>I reload the page</code></td>
+<td>Done directly, without the model.</td>
+</tr>
+<tr>
+<td><code>I open the contacts</code></td>
+<td>A link that opens a new tab: the following Steps act in the new tab.</td>
+</tr>
+<tr>
+<td><code>I close the tab</code>, <code>I switch back to the previous tab</code></td>
+<td>Done directly. Say them as their own Step.</td>
+</tr>
+</tbody></table>
+<p><strong>Avoid</strong> <code>I search for &quot;Ada Lovelace&quot;</code> when you want the article: the search runs, the result is never opened.</p>
+<h3 id="type">Type</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I enter &quot;Winter Sale&quot; as the campaign name</code></td>
+<td>Value quoted, field named.</td>
+</tr>
+<tr>
+<td><code>I set the activation date to &quot;2026-12-01&quot;</code></td>
+<td>Dates in the format the field takes.</td>
+</tr>
+<tr>
+<td><code>I search for &quot;Ada&quot; and submit the search</code></td>
+<td>&quot;and submit&quot; makes typing alone not enough.</td>
+</tr>
+<tr>
+<td><code>I clear the Search field</code></td>
+<td>Types an empty value.</td>
+</tr>
+</tbody></table>
+<p>After typing, Decisium leaves the field (so on-leave validation runs) and checks that the field holds the value; if it
+does not, the Step fails as <code>ACTION_FAILED</code>. Native inputs take ISO values: date <code>&quot;2026-10-20&quot;</code>, time <code>&quot;14:30&quot;</code>,
+datetime-local <code>&quot;2026-10-20T14:30&quot;</code>. Custom date pickers are clicked like any widget. A range input (slider) is filled
+like a text field: <code>I set the volume to &quot;75&quot;</code>.</p>
+<h3 id="select">Select</h3>
+<p><code>I set the activation period to 2 weeks</code>: a native select&#39;s options are the choices; the value can be quoted or a
+number with a unit. Decisium checks the option was chosen.</p>
+<h3 id="submit-and-act">Submit and act</h3>
+<p><code>I save the draft</code>, <code>I schedule the campaign</code>, <code>I delete the campaign</code>. Name the task; Decisium finds the control.</p>
+<h3 id="attempt">Attempt</h3>
+<p>A Step starting with &quot;try&quot; or &quot;attempt&quot; is done once the action ran, even if the app refuses it. Use it for negative
+paths and check the refusal after it:</p>
+<pre><code class="language-gherkin">When I try to schedule the campaign
+Then the error should say &quot;Set an activation date before scheduling&quot;
+</code></pre>
+<h3 id="radios-and-toggles">Radios and toggles</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I accept the terms</code></td>
+<td>Clicking a checkbox, switch or radio means &quot;on&quot;; Decisium reads the box after the click.</td>
+</tr>
+<tr>
+<td><code>I turn off dark mode</code></td>
+<td>Disable, turn off, decline, reject, opt out, unsubscribe mean &quot;off&quot;.</td>
+</tr>
+<tr>
+<td><code>I choose Express shipping</code></td>
+<td>A radio is done once it is checked.</td>
+</tr>
+<tr>
+<td><code>I check &quot;Weekly digest&quot;</code>, <code>I uncheck &quot;Newsletter&quot;</code></td>
+<td>Decided by code, when the Step does nothing else.</td>
+</tr>
+</tbody></table>
+<p>Already in the wanted state: the Step is done without a click. <strong>Avoid</strong> <code>I check &quot;Weekly digest&quot; and save</code>: split it.</p>
+<h3 id="keys">Keys</h3>
+<p>A key is pressed only when the Step names it after &quot;press&quot; or &quot;hit&quot;: Playwright&#39;s names (<code>Escape</code>, <code>Tab</code>,
+<code>ArrowDown</code>, <code>PageDown</code>, <code>Home</code>, <code>F2</code>, …), aliases (<code>Esc</code>, <code>down arrow</code>, <code>Return</code>, <code>Space</code>) and <code>+</code> combinations
+(<code>Ctrl+K</code>, <code>Shift+Tab</code>; <code>Ctrl</code> is Control, <code>Cmd</code> is Meta). The key goes to whatever has focus.</p>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I press Escape</code></td>
+<td>Only a key: pressed directly, without the model.</td>
+</tr>
+<tr>
+<td><code>I open the command palette by pressing Ctrl+K</code></td>
+<td>The key is offered next to the page&#39;s elements.</td>
+</tr>
+<tr>
+<td><code>I press the down arrow</code>, <code>I press &quot;Tab&quot;</code></td>
+<td>Aliases and quotes both work.</td>
+</tr>
+</tbody></table>
+<p><strong>Avoid</strong> <code>I close the help with the Escape key</code>: without &quot;press&quot; or &quot;hit&quot; no key is pressed.</p>
+<h3 id="hover">Hover</h3>
+<p><code>I hover over the help button</code>: say &quot;hover&quot; for a tooltip or a menu that opens on mouse-over; a plain click would close
+it again. What the hover shows is then part of the page: <code>the tooltip should say &quot;Opens the docs&quot;</code>. A <code>title</code>
+attribute needs no hover: <code>the Save button&#39;s tooltip should be &quot;Save your work&quot;</code>.</p>
+<h3 id="double-click-right-click-drag-and-sliders">Double-click, right-click, drag and sliders</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I double-click the note title and change it to &quot;Groceries&quot;</code></td>
+<td>Say the edit in the same Step, not just the double-click.</td>
+</tr>
+<tr>
+<td><code>I right-click report.pdf and choose &quot;Delete&quot;</code></td>
+<td>The custom context menu is used in the next Turn.</td>
+</tr>
+<tr>
+<td><code>I drag &quot;Fix bug&quot; to the Done list</code></td>
+<td>Decisium picks where to drop it among the page&#39;s areas.</td>
+</tr>
+<tr>
+<td><code>I set the volume to &quot;75&quot;</code></td>
+<td>A slider is filled with the quoted value.</td>
+</tr>
+</tbody></table>
+<h3 id="scroll-inside-lists-and-panels">Scroll inside lists and panels</h3>
+<p><code>I scroll down the Inbox until &quot;Message 15&quot; is shown</code>, <code>I scroll up the Chat until &quot;Chat line 5&quot; is shown</code>. A panel
+that scrolls on its own is offered as a target. Content already rendered is visible without scrolling; only
+lazy-loaded content needs it.</p>
+<h3 id="files-and-downloads">Files and downloads</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I upload &quot;notes.txt&quot; with the Attach file button</code></td>
+<td>&quot;upload&quot; or &quot;attach&quot; plus a quoted path (relative to the feature file). Hidden file inputs work.</td>
+</tr>
+<tr>
+<td><code>I export the contacts as CSV</code></td>
+<td>The download is saved to the scenario&#39;s run folder.</td>
+</tr>
+<tr>
+<td><code>the downloaded file name should be &quot;contacts.csv&quot;</code></td>
+<td>The last download&#39;s name.</td>
+</tr>
+<tr>
+<td><code>the downloaded file should contain &quot;Ada Lovelace,engineer&quot;</code></td>
+<td>A text file&#39;s contents; binary files only by name.</td>
+</tr>
+</tbody></table>
+<h3 id="clipboard">Clipboard</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I copy the invite link</code></td>
+<td>Clicked like any button; the page may use the clipboard.</td>
+</tr>
+<tr>
+<td><code>the copied text should be &quot;https://example.com/invite/7f3a&quot;</code></td>
+<td>What was copied during the scenario.</td>
+</tr>
+<tr>
+<td><code>I paste into the message box</code></td>
+<td>Pastes the clipboard (Ctrl/Cmd+V). With a quoted value it types it instead.</td>
+</tr>
+</tbody></table>
+<h3 id="browser-dialogs">Browser dialogs</h3>
+<p><code>alert</code>, <code>confirm</code>, <code>prompt</code> and &quot;Leave site?&quot; are answered by the Step that opens them: OK (or leave) only when the
+Step clearly means it, otherwise Cancel. An alert is closed. A prompt gets the Step&#39;s quoted value. Until the next
+action, the dialog&#39;s message can be checked.</p>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>I delete the &quot;Groceries&quot; note</code></td>
+<td>Clicks Delete, then confirms: the Step asks for the deletion.</td>
+</tr>
+<tr>
+<td><code>I start deleting the &quot;Ideas&quot; note but cancel</code></td>
+<td>Says to cancel: Cancel.</td>
+</tr>
+<tr>
+<td><code>I rename the list to &quot;Errands&quot;</code></td>
+<td>The prompt gets the quoted value.</td>
+</tr>
+<tr>
+<td><code>the confirm should say &quot;Delete the Groceries note?&quot;</code></td>
+<td>The last dialog&#39;s message.</td>
+</tr>
+<tr>
+<td><code>I leave by the &quot;Search page&quot; link</code></td>
+<td>&quot;Leave site?&quot; is accepted because the Step means to leave.</td>
+</tr>
+</tbody></table>
+<p><strong>Avoid</strong> <code>I accept the confirm</code> as its own Step: the Step before already answered it. Say the intent in the Step that
+opens the dialog.</p>
+<h3 id="iframes-and-web-components">iframes and web components</h3>
+<p>Elements inside iframes and open shadow roots are part of the page like any other: no frame or component to name.
+<code>I enter &quot;ada@example.com&quot; in Email</code> works when the field is in an iframe.</p>
+<h2 id="checks">Checks</h2>
+<p>A check is decided by code, not by the model. Jev only identifies <em>what</em> to look at (the subject) and <em>what kind</em> of
+check it is; code then compares. A check that cannot be compared is <code>UNVERIFIABLE</code>, not passed.</p>
+<h3 id="value-checks">Value checks</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>the campaign status should be &quot;Draft&quot;</code></td>
+<td>One subject, one quoted value.</td>
+</tr>
+<tr>
+<td><code>the error should say &quot;Set an activation date before scheduling&quot;</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>the activation period should be &quot;2 weeks&quot;</code></td>
+<td>Reads a select&#39;s chosen option.</td>
+</tr>
+<tr>
+<td><code>the Email field should be &quot;ada@example.com&quot;</code></td>
+<td>A field&#39;s current value.</td>
+</tr>
+</tbody></table>
+<p>The subject is picked by meaning: if the status says &quot;Draft&quot; while a filter elsewhere says &quot;Scheduled&quot;,
+<code>the campaign status should be &quot;Scheduled&quot;</code> correctly fails.</p>
+<p><strong>Avoid</strong>: <code>the article title should be &quot;Ada Lovelace&quot;</code> (&quot;title&quot; is also the tab&#39;s title; say &quot;heading&quot;),
+<code>… should be &quot;Ada&quot; or &quot;Ada Lovelace&quot;</code> (exactly one value), <code>the article should be well written</code> (subjective; see
+<a href="#judged-checks">Judged checks</a>).</p>
+<h3 id="presence">Presence</h3>
+<table>
+<thead>
+<tr>
+<th>Write</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;Saved&quot; should appear</code></td>
+<td>The text anywhere on the page.</td>
+</tr>
+<tr>
+<td><code>the article should say &quot;born 10 December 1815&quot;</code></td>
+<td>The text anywhere in the subject.</td>
+</tr>
+<tr>
+<td><code>&quot;Charles Babbage&quot; should not appear in the results</code></td>
+<td>Absence.</td>
+</tr>
+</tbody></table>
+<p><strong>Avoid</strong> <code>the results should be shown</code>: it quotes nothing to look for.</p>
+<h3 id="scoped-presence">Scoped presence</h3>
+<p><code>&quot;Winter Sale&quot; should appear in the calendar</code>, <code>&quot;Spring Sale&quot; should not appear in the campaign list</code>. Only text inside
+the named area counts; the same name in a toast elsewhere does not. The area must be on the screen: open it first.</p>
+<h3 id="state-checks">State checks</h3>
+<p><code>the &quot;Schedule&quot; button should be disabled</code>, <code>&quot;Newsletter&quot; should be unchecked</code>. States: disabled, enabled, checked,
+unchecked, expanded, collapsed, selected, pressed. An unquoted name works when it is unique.</p>
+<h3 id="memory">Memory</h3>
+<p>A check may refer back to a value an earlier Step quoted: after <code>I enter &quot;Winter Sale&quot; as the campaign name</code>,
+<code>the campaign should appear in the calendar</code> looks for &quot;Winter Sale&quot;. When the scenario quoted several values and it
+is unclear which one is meant, the check is <code>UNVERIFIABLE</code>: quote the value.</p>
+<h3 id="judged-checks">Judged checks</h3>
+<p>A subjective check (<code>the article should be well written</code>) cannot be compared by code. With <code>--judged</code>, Jev judges it
+and the result is reported as <code>JUDGED_PASSED</code> or <code>JUDGED_FAILED</code>, never as a plain pass.</p>
+<h3 id="marginal-passes">Marginal passes</h3>
+<p>A check that passed while the model was barely sure what it was looking at is reported as a <strong>marginal pass</strong>: passed,
+with a warning. Treat it like an unclear wording and make the Step more specific; <code>--strict</code> fails it as <code>AMBIGUOUS</code>.</p>
+<h2 id="more">More</h2>
+<h3 id="data-tables">Data tables</h3>
+<p>An action&#39;s table runs one Step per row:</p>
+<pre><code class="language-gherkin">When I fill in the new contact:
+  | First name | Ada      |
+  | Last name  | Lovelace |
+</code></pre>
+<p>Two columns are label/value pairs, one column is a list of values, three or more columns are rows under a header row.
+A check&#39;s table is matched row by row to a table on the page by column header (extra rows and any order pass; say
+&quot;exactly&quot; or &quot;in this order&quot; to be strict). A one-column check table lists values that must all be shown; &quot;should not
+show:&quot; checks that none is. Absence of table rows cannot be checked. Table cells cannot be empty or contain <code>&quot;</code>.</p>
+<p>A doc string is one more quoted value, line breaks kept:</p>
+<pre><code class="language-gherkin">When I write the notes:
+  &quot;&quot;&quot;
+  Wrote the first program.
+  Born in London.
+  &quot;&quot;&quot;
+</code></pre>
+<h3 id="secrets">Secrets</h3>
+<p>Write <code>&quot;$NAME&quot;</code> in a Step&#39;s quotes: <code>I log in as &quot;$SAUCE_USER&quot; with password &quot;$SAUCE_PASSWORD&quot;</code>. The value comes from
+the environment or <code>.env</code> and is typed into the page; the model, logs, traces and cassettes only see the token, and it
+is masked back wherever the page shows it. A missing variable is a setup error. A scenario that typed a secret keeps no
+Playwright trace. Password fields are always masked. A value written literally in a Step is sent to the model and
+recorded.</p>
+<h3 id="out-of-scope">Out of scope</h3>
+<p>Canvas drawing, maps, captchas, 2FA codes and closed shadow roots cannot be seen or driven by Steps. Use a test mode in
+the app, or a <a href="client-steps.html">client step</a> (for example, compute a 2FA code from its secret).</p>
+<div class="pager"><a class="prev" href="writing-features.html"><span>Previous</span>Features and scenarios</a><a class="next" href="browser-context.html"><span>Next</span>Browser context</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#rules-of-thumb">Rules of thumb</a><a class="l2" href="#actions">Actions</a><a class="l3" href="#navigate">Navigate</a><a class="l3" href="#type">Type</a><a class="l3" href="#select">Select</a><a class="l3" href="#submit-and-act">Submit and act</a><a class="l3" href="#attempt">Attempt</a><a class="l3" href="#radios-and-toggles">Radios and toggles</a><a class="l3" href="#keys">Keys</a><a class="l3" href="#hover">Hover</a><a class="l3" href="#double-click-right-click-drag-and-sliders">Double-click, right-click, drag and sliders</a><a class="l3" href="#scroll-inside-lists-and-panels">Scroll inside lists and panels</a><a class="l3" href="#files-and-downloads">Files and downloads</a><a class="l3" href="#clipboard">Clipboard</a><a class="l3" href="#browser-dialogs">Browser dialogs</a><a class="l3" href="#iframes-and-web-components">iframes and web components</a><a class="l2" href="#checks">Checks</a><a class="l3" href="#value-checks">Value checks</a><a class="l3" href="#presence">Presence</a><a class="l3" href="#scoped-presence">Scoped presence</a><a class="l3" href="#state-checks">State checks</a><a class="l3" href="#memory">Memory</a><a class="l3" href="#judged-checks">Judged checks</a><a class="l3" href="#marginal-passes">Marginal passes</a><a class="l2" href="#more">More</a><a class="l3" href="#data-tables">Data tables</a><a class="l3" href="#secrets">Secrets</a><a class="l3" href="#out-of-scope">Out of scope</a></aside>
+</div>
+</body>
+</html>

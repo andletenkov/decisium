@@ -1,12 +1,12 @@
 // `decisium lint <file.feature>`: what each Step will be taken as, read without a browser or Jev (task 0031).
 // Per Step: its kind, the quoted values Jev can pick from, the keys it presses, secret placeholders, and warnings for wordings that
-// docs/cookbook.md shows failing.
+// the docs mark as ones to avoid (docs/site/steps.md).
 import { readFileSync } from "node:fs";
 import { parseFeature } from "./feature.ts";
 import { KIND } from "./report.ts";
 import { placeholder, readStep, type ParsedStep } from "./step.ts";
 
-const SEE = "see docs/cookbook.md";
+const SEE = "see https://andletenkov.github.io/decisium/steps.html";
 
 /** Cookbook warnings for one Step. `before`: the scenario's earlier Steps. */
 export function warnings(step: ParsedStep, before: ParsedStep[], env: Record<string, string | undefined> = process.env): string[] {

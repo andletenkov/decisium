@@ -72,7 +72,8 @@ step definitions (`--import`, with `this.page` and `this.context`) keep working.
 
 - [Quick start](https://andletenkov.github.io/decisium/quick-start.html)
 - [Writing features](https://andletenkov.github.io/decisium/writing-features.html)
-- [Step cookbook](https://andletenkov.github.io/decisium/cookbook.html): wordings that pass and the ones to avoid, each backed by a replayed example
+- [Writing Steps](https://andletenkov.github.io/decisium/steps.html): every kind of action and check, and how to word it
+- [Client steps](https://andletenkov.github.io/decisium/client-steps.html) · [Browser context](https://andletenkov.github.io/decisium/browser-context.html) · [Network replay](https://andletenkov.github.io/decisium/network-replay.html)
 - [Record and replay](https://andletenkov.github.io/decisium/record-replay.html) · [CI](https://andletenkov.github.io/decisium/ci.html) · [Configuration](https://andletenkov.github.io/decisium/configuration.html)
 - [Examples](https://andletenkov.github.io/decisium/examples.html) against real public sites
 - An agent skill for coding agents ships in the package: `node_modules/decisium/skills/decisium/SKILL.md`

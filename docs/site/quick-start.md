@@ -23,7 +23,7 @@ value a Step types or a check compares.
 npx decisium lint features/campaign.feature
 ```
 
-No browser, no model: shows how each Step will be read and flags wordings the [Cookbook](cookbook.md) shows failing.
+No browser, no model: shows how each Step will be read and flags wordings [Writing Steps](steps.md) marks as ones to avoid.
 
 ## 3. Run it live
 
@@ -42,4 +42,4 @@ npx decisium run features/campaign.feature --record none
 Every Step replays its recorded resolution with zero model calls. Use this in [CI](ci.md).
 
 When a Step fails, read [Reports and debugging](reports.md). When a wording does not work, look it up in the
-[Cookbook](cookbook.md).
+[Writing Steps](steps.md) and [Troubleshooting](troubleshooting.md).

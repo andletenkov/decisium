@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.dataset.theme = localStorage.getItem("theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://github.com/andletenkov/decisium">GitHub</a><a href="https://www.npmjs.com/package/decisium">npm</a>
+    <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t)"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html" aria-current="page">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="troubleshooting">Troubleshooting</h1>
+<h2 id="a-step-fails-sometimes-passes-other-times">A Step fails sometimes, passes other times</h2>
+<p>A live run asks Jev every time, so a Step whose wording is borderline can end differently from run to run.</p>
+<ol>
+<li><strong>Replay in CI.</strong> Record once, check the outcomes, commit the cassettes and run CI with <code>--record none</code>: every Step
+replays what it resolved to, with the same outcome every run. Live variation only matters while recording. See
+<a href="record-replay.html">Record and replay</a>.</li>
+<li><strong>Read the reason, then reword.</strong> An <code>AMBIGUOUS</code> reason names what the Step could mean. Quote the one you mean:
+<code>I leave for the search page</code> can mean two links; <code>I leave by the &quot;Search page&quot; link</code> cannot. When it is unclear
+<em>how</em> (a Search button or Enter), say how: <code>… and press Enter</code>.</li>
+<li><strong>Keep together what the page cannot do separately.</strong> If a filter only applies when Search is clicked,
+<code>I filter the users by role &quot;Admin&quot;</code> clicks it; a following <code>I search</code> has nothing left to do.</li>
+<li><strong>Still unstable: a <a href="client-steps.html">client step</a>.</strong> Code can use any Playwright locator. Each one marks a gap
+worth reporting.</li>
+</ol>
+<h2 id="what-an-outcome-means-and-what-to-do">What an outcome means and what to do</h2>
+<table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th>Usually</th>
+<th>Do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ASSERTION_FAILED</code></td>
+<td>The app is wrong.</td>
+<td>Check the app, not the Step.</td>
+</tr>
+<tr>
+<td><code>AMBIGUOUS</code></td>
+<td>The Step could mean more than one thing.</td>
+<td>Name the element or area; quote its label.</td>
+</tr>
+<tr>
+<td><code>UNVERIFIABLE</code></td>
+<td>The check quotes nothing to compare.</td>
+<td>Quote the expected value or text.</td>
+</tr>
+<tr>
+<td><code>BLOCKED</code></td>
+<td>The task cannot be done on this page.</td>
+<td>Check the start URL and the Steps before it; a hover menu needs &quot;hover&quot;.</td>
+</tr>
+<tr>
+<td><code>ELEMENT_NOT_FOUND</code></td>
+<td>Nothing matches what the Step names.</td>
+<td>Use the page&#39;s own label.</td>
+</tr>
+<tr>
+<td><code>ACTION_FAILED</code></td>
+<td>The action ran but did not take effect (e.g. a field rejected the value).</td>
+<td>Check the value&#39;s format; for dates use ISO.</td>
+</tr>
+<tr>
+<td><code>STEP_TIMEOUT</code></td>
+<td>The Step did not finish in its allowed actions.</td>
+<td>Split it into smaller tasks.</td>
+</tr>
+<tr>
+<td><code>UI_CHANGED</code></td>
+<td>A replayed Step no longer matches the page.</td>
+<td>If the change is intended, re-record with <code>--record new</code>.</td>
+</tr>
+<tr>
+<td><code>PAGE_TOO_LARGE</code></td>
+<td>The page is over the model&#39;s size limit.</td>
+<td>Test a narrower page or state.</td>
+</tr>
+<tr>
+<td>marginal pass</td>
+<td>Passed, but the model was barely sure.</td>
+<td>Make the Step more specific.</td>
+</tr>
+</tbody></table>
+<p>Run <code>npx decisium lint</code> on the feature: it flags many of these wordings before you run.</p>
+<h2 id="why-not-selectors">Why not selectors</h2>
+<p>Selectors tie a test to markup, skip the model, and do not help with the most common failure: deciding when a Step is
+done. Quote what the page shows instead.</p>
+<div class="pager"><a class="prev" href="cucumber-js.html"><span>Previous</span>Running with cucumber-js</a><a class="next" href="agent-skill.html"><span>Next</span>Agent skill</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#a-step-fails-sometimes-passes-other-times">A Step fails sometimes, passes other times</a><a class="l2" href="#what-an-outcome-means-and-what-to-do">What an outcome means and what to do</a><a class="l2" href="#why-not-selectors">Why not selectors</a></aside>
+</div>
+</body>
+</html>

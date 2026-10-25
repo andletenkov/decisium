@@ -14,7 +14,7 @@ trap 'rm -rf "$tmp" "$tarball"' EXIT
 
 # Only files from "files" (plus package.json/README/LICENSE), and nothing secret-looking.
 contents=$(tar -tzf "$tarball")
-bad=$(grep -vE '^package/(dist/|skills/|docs/(cookbook|configuration)\.md$|package\.json$|README\.md$|LICENSE$)' <<<"$contents" || true)
+bad=$(grep -vE '^package/(dist/|skills/|docs/configuration\.md$|package\.json$|README\.md$|LICENSE$)' <<<"$contents" || true)
 [ -z "$bad" ] || { echo "unexpected files in tarball:"; echo "$bad"; exit 1; }
 ! grep -qiE '(^|/)\.env|\.cassette\.json$|\.ts$' <<<"$(grep -v '\.d\.ts$' <<<"$contents")" || { echo "tarball has .env/cassette/.ts files"; exit 1; }
 

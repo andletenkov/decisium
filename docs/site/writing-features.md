@@ -1,51 +1,46 @@
-# Writing features
+# Features and scenarios
 
-A Decisium feature is ordinary Gherkin. Any `Given`/`When`/`Then`/`And` line that no step definition of yours matches is
+A Decisium test is an ordinary Gherkin `.feature` file. Every line no [client step](client-steps.md) of yours matches is
 run by Decisium.
 
-## Start URL
+```gherkin
+@url:http://localhost:3000
+Feature: Campaigns
 
-`@url:<url|file>` on the feature or a scenario (a scenario's tag wins), or `--url` on the command line. A relative file
-path resolves from the directory you run in.
+  Background:
+    When I start a new campaign
 
-## Kinds of Step
+  Scenario: Schedule a campaign
+    When I enter "Winter Sale" as the campaign name
+    And I set the activation period to 2 weeks
+    And I schedule the campaign
+    Then the campaign status should be "Scheduled"
 
-Decisium reads each line as one of these:
+  Scenario Outline: Name validation
+    When I try to save the draft with the name "<name>"
+    Then the error should say "<error>"
 
-| Kind | Example | What happens |
-|---|---|---|
-| Step (action) | `I schedule the campaign` | Jev picks actions until the task is done. |
-| Navigation | `I go to "/settings"`, `I go back` | Done by code, no model. |
-| Value check | `the campaign status should be "Scheduled"` | Code compares the element's value with the quote. |
-| Presence | `"Saved" should appear` | Code looks for the text. |
-| Scoped presence | `"Banana" should appear in the cart` | The same, inside one area. |
-| State check | `"Banana" should be selected` | Code reads the element's state. |
-| Attempt | `I try to save the form` | A negative path: the action may be refused. |
-
-The [Cookbook](cookbook.md) lists, for each kind, the wordings that pass and the ones to avoid, each backed by a
-Step in the repository's `test/fixtures/`. Ready-to-run features are on the [Examples](examples.md) page.
-
-## Rules
-
-- One Step, one task, named by what the user wants: "I save the draft", not "I click Save draft".
-- Quote every value: what to type, the option to pick, the text a check expects.
-- Secrets go in as `"$NAME"`; the value comes from the environment or `.env`. Jev, logs, the trace and the cassette
-  only see the token. A value written literally in a Step is sent to the model and recorded.
-- Tables and doc strings work as in cucumber.
-
-## Your own step definitions
-
-Pass them with `--import`. A line one of them matches runs your code, not Jev. The World gives you `this.page` (the
-current tab) and `this.context` (the Playwright browser context).
-
-```js
-// steps/network.js
-import { When } from "@cucumber/cucumber";
-When("the API is offline", async function () {
-  await this.context.route("**/api/**", route => route.abort());
-});
+    Examples:
+      | name | error              |
+      | x    | Name is too short  |
 ```
 
-```sh
-npx decisium run features/offline.feature --import steps/network.js
-```
+- **Start URL:** `@url:` on the feature or a scenario (a URL or a local HTML file), or `--url`. More tags set the
+  viewport, locale, time zone and geolocation: [Browser context](browser-context.md).
+- **Isolation:** each scenario, and each Examples row of an outline, runs in a fresh browser. `Background` Steps run
+  before each scenario.
+- **Steps:** each line is an action (it changes the page) or a check (code verifies what the page shows). How to word
+  them: [Writing Steps](steps.md).
+- **Tables and doc strings** work as in cucumber: [Data tables](steps.md#data-tables).
+- **One scenario:** `npx decisium run file.feature:12` runs only the scenario (or Examples row) at line 12.
+
+## How a Step runs
+
+1. Decisium reads the page as text: its accessibility tree (roles, names, text, states).
+2. For an action, Jev picks one of the actions that page offers (click this button, type this quoted value into this
+   field, press a named key, go back, …). Decisium performs it and reads the page again, until the task is done.
+3. For a check, Jev picks the subject and the kind of check; code compares the quoted value with the page.
+4. What each Step resolved to is saved in a [cassette](record-replay.md), so the next run can replay it without Jev.
+
+Jev never writes code or selectors; it only chooses among options Decisium lists, so a Step can only act on what is
+really on the page.

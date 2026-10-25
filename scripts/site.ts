@@ -1,5 +1,5 @@
 // Builds the docs site into site/*.html (task 0050): static pages with relative links, so it opens from file:// and
-// deploys to GitHub Pages as is. Sources: docs/site/*.md, docs/cookbook.md, docs/configuration.md, the agent skill and
+// deploys to GitHub Pages as is. Sources: docs/site/*.md, docs/configuration.md, the agent skill and
 // the example features. Run: node scripts/site.ts
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -13,11 +13,14 @@ const read = (p: string) => readFileSync(join(root, p), "utf8");
 const NAV: [group: string, pages: [slug: string, title: string, source: string][]][] = [
   ["Getting started", [["index", "Introduction", "docs/site/index.md"], ["installation", "Installation", "docs/site/installation.md"],
     ["quick-start", "Quick start", "docs/site/quick-start.md"]]],
-  ["Usage", [["writing-features", "Writing features", "docs/site/writing-features.md"], ["cli", "Command line", "docs/site/cli.md"],
-    ["record-replay", "Record and replay", "docs/site/record-replay.md"], ["configuration", "Configuration", "docs/configuration.md"],
+  ["Writing tests", [["writing-features", "Features and scenarios", "docs/site/writing-features.md"],
+    ["steps", "Writing Steps", "docs/site/steps.md"], ["browser-context", "Browser context", "docs/site/browser-context.md"],
+    ["client-steps", "Client steps", "docs/site/client-steps.md"]]],
+  ["Running", [["cli", "Command line", "docs/site/cli.md"], ["record-replay", "Record and replay", "docs/site/record-replay.md"],
+    ["network-replay", "Network replay", "docs/site/network-replay.md"], ["configuration", "Configuration", "docs/configuration.md"],
     ["reports", "Reports and debugging", "docs/site/reports.md"], ["ci", "CI", "docs/site/ci.md"],
     ["cucumber-js", "Running with cucumber-js", "docs/site/cucumber-js.md"]]],
-  ["Guides", [["cookbook", "Step cookbook", "docs/cookbook.md"], ["agent-skill", "Agent skill", "skills/decisium/SKILL.md"]]],
+  ["Guides", [["troubleshooting", "Troubleshooting", "docs/site/troubleshooting.md"], ["agent-skill", "Agent skill", "skills/decisium/SKILL.md"]]],
   ["Reference", [["examples", "Examples", ""]]],
 ];
 const slugs = new Set(NAV.flatMap(([, ps]) => ps.map(([s]) => s)));
@@ -29,7 +32,7 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 export function siteHref(href: string): string | undefined {
   if (/^(https?:|mailto:|#)/.test(href)) return href;
   const example = /(?:^|\/)((?:examples|test\/fixtures)\/[\w./-]+\.(?:feature|ts|html))(#L\d+)?$/.exec(href);
-  if (example) return `${REPO}/blob/main/${example[1]}${example[2] ?? ""}`; // the cookbook's evidence, on GitHub
+  if (example) return `${REPO}/blob/main/${example[1]}${example[2] ?? ""}`; // a source file, on GitHub
   const page = /^(?:\.\/|\.\.\/)?(?:docs\/)?([\w-]+)\.md(#.*)?$/.exec(href);
   if (page && slugs.has(page[1])) return `${page[1]}.html${page[2] ?? ""}`;
   return undefined;
@@ -67,8 +70,8 @@ const EXAMPLES: [file: string, about: string][] = [
 function examples() {
   const md = "# Examples\n\nFeatures against real public sites. Copy one into your project and run it:\n\n" +
     "```sh\nnpx decisium run saucedemo.feature\n```\n\nThe first run calls Jev and writes `saucedemo.cassette.json` next to it; " +
-    "after that, `--record none` replays it with no model calls. More wordings, each with the Step that backs it, are in the " +
-    "[Cookbook](cookbook.md).\n";
+    "after that, `--record none` replays it with no model calls. How to word each kind of Step is in " +
+    "[Writing Steps](steps.md).\n";
   const toc: { level: number; id: string; text: string }[] = [];
   const blocks = EXAMPLES.map(([f, about]) => {
     const name = basename(f, ".feature");
@@ -82,7 +85,7 @@ function examples() {
 function source(path: string) {
   let md = read(path).replace(/^---\n[\s\S]*?\n---\n/, ""); // front matter
   if (path.startsWith("skills/")) md = "# Agent skill\n\nInstall it into your coding agent from `node_modules/decisium/skills/decisium/SKILL.md`.\n\n" +
-    md.replace(/node src\/cli\.ts/g, "npx decisium");
+    md;
   return md;
 }
 

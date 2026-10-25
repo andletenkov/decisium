@@ -16,34 +16,31 @@
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t)"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html" aria-current="page">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html" aria-current="page">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
 <main class="doc"><h1 id="agent-skill">Agent skill</h1>
 <p>Install it into your coding agent from <code>node_modules/decisium/skills/decisium/SKILL.md</code>.</p>
-<p>Decisium runs each Step by asking Jev, a model that only picks among offered answers. Code decides pass/fail. A
-Step&#39;s wording decides most outcomes, so write the wording from evidence: <code>docs/cookbook.md</code> lists the wordings that
-pass on the examples and the ones that fail, with why. Read it before writing a Step. It is the single source of
-the rules; this skill is the procedure.</p>
+<p>Decisium runs each Step by asking Jev, a decision model that only picks among offered answers; code decides pass/fail.
+A Step&#39;s wording decides most outcomes. The wording rules, per kind of Step, are in
+<a href="https://andletenkov.github.io/decisium/steps.html">https://andletenkov.github.io/decisium/steps.html</a>. Read it before writing a Step. This skill is the procedure.</p>
 <h2 id="write">Write</h2>
 <ol>
 <li>Write the feature: an <code>@url:&lt;start url&gt;</code> tag, then one Scenario per user journey, each starting from a fresh browser.
-Model each Step on a ✓ row of the cookbook for its kind (navigate, type, select, act, attempt, value / presence /
+Word each Step like a <strong>Write</strong> row of its kind (navigate, type, select, act, attempt, keys, value / presence /
 scoped / state check, memory, secrets). Quote every value the Step uses and every value a check compares.
 Credentials go in as <code>&quot;$NAME&quot;</code> placeholders, with the variables set in the environment or <code>.env</code>.</li>
-<li>Run <code>npx decisium lint &lt;file.feature&gt;</code>. It shows how each Step will be read (kind, quoted values,
-placeholders) and flags the cookbook&#39;s failing wordings with ⚠. Done when every ⚠ is reworded away, or kept on
-purpose with a <code>#</code> comment saying why (for example, a scenario meant to fail).</li>
+<li>Run <code>npx decisium lint &lt;file.feature&gt;</code>. It shows how each Step will be read (kind, quoted values, placeholders) and
+flags wordings to avoid with ⚠. Done when every ⚠ is reworded away, or kept on purpose with a <code>#</code> comment saying why.</li>
 </ol>
 <h2 id="run-and-repair">Run and repair</h2>
 <ol start="3">
 <li>Run <code>npx decisium run &lt;file.feature&gt;</code> (live Jev the first time; it records a cassette next to the feature).</li>
-<li>On a failure, read <code>runs/&lt;id&gt;/report.md</code>: the Step at <code>file:line</code>, Jev&#39;s answers with probabilities, the page
-text around the element, and a rerun command for that scenario. Classify each failure:<ul>
+<li>On a failure, read <code>runs/&lt;id&gt;/report.md</code>: the Step at <code>file:line</code>, Jev&#39;s answers, the page text around the element,
+and a rerun command for that scenario. Classify each failure:<ul>
 <li><strong>The app is wrong</strong> (ASSERTION_FAILED, BLOCKED with the expected control truly missing): keep the Step, and
 report the app behaviour.</li>
-<li><strong>The wording is unclear</strong> (AMBIGUOUS, UNVERIFIABLE, a check that picked the wrong element): reword using the
-cookbook row whose &quot;Why&quot; matches Jev&#39;s split, then rerun just that scenario.</li>
-<li>A <strong>marginal pass</strong> warning means the pass rested on a barely-confident answer. Treat it like an unclear
-wording.</li>
+<li><strong>The wording is unclear</strong> (AMBIGUOUS, UNVERIFIABLE, a check that picked the wrong element): reword using
+<a href="https://andletenkov.github.io/decisium/troubleshooting.html">https://andletenkov.github.io/decisium/troubleshooting.html</a>, then rerun just that scenario.</li>
+<li>A <strong>marginal pass</strong> warning means the pass rested on a barely-confident answer. Treat it like an unclear wording.</li>
 </ul>
 </li>
 <li>Keep the test&#39;s intent fixed while rewording. The quoted expected values and the area a check looks in stay as
@@ -53,7 +50,7 @@ means.</li>
 </ol>
 <p>Done when the run passes, or every remaining failure is classified as the app being wrong, with the evidence line from
 <code>report.md</code>.</p>
-<div class="pager"><a class="prev" href="cookbook.html"><span>Previous</span>Step cookbook</a><a class="next" href="examples.html"><span>Next</span>Examples</a></div></main>
+<div class="pager"><a class="prev" href="troubleshooting.html"><span>Previous</span>Troubleshooting</a><a class="next" href="examples.html"><span>Next</span>Examples</a></div></main>
 <aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#write">Write</a><a class="l2" href="#run-and-repair">Run and repair</a></aside>
 </div>
 </body>

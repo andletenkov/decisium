@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browser context · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.dataset.theme = localStorage.getItem("theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <nav class="top-links"><a href="https://github.com/andletenkov/decisium">GitHub</a><a href="https://www.npmjs.com/package/decisium">npm</a>
+    <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t)"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="browser-context.html" aria-current="page">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="browser-context">Browser context</h1>
+<p>Each scenario starts in a fresh browser. Tags on the feature or the scenario set up that browser before the first page
+opens. When the same tag is on both, the scenario&#39;s wins; when a tag repeats, the last one wins.</p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@url:&lt;url|file&gt;</code></td>
+<td>The start URL: a URL or a local HTML file (relative to where you run). <code>--url</code> overrides it.</td>
+</tr>
+<tr>
+<td><code>@viewport:390x844</code></td>
+<td>Window size in pixels.</td>
+</tr>
+<tr>
+<td><code>@viewport:iPhone-13</code></td>
+<td>A Playwright device (dashes for spaces): size, user agent and touch.</td>
+</tr>
+<tr>
+<td><code>@locale:de-DE</code></td>
+<td>Browser language and number/date formats.</td>
+</tr>
+<tr>
+<td><code>@timezone:Europe/Berlin</code></td>
+<td>Time zone.</td>
+</tr>
+<tr>
+<td><code>@geolocation:52.52,13.40</code></td>
+<td>Position (latitude, longitude); the location permission is granted.</td>
+</tr>
+<tr>
+<td><code>@replay-network:&lt;glob&gt;</code></td>
+<td>Records and replays matching browser requests. See <a href="network-replay.html">Network replay</a>.</td>
+</tr>
+</tbody></table>
+<pre><code class="language-gherkin">@url:https://shop.example.com @locale:de-DE
+Feature: Shop in German
+
+  @viewport:iPhone-13
+  Scenario: Checkout on a phone
+    When I add the &quot;Backpack&quot; to the cart
+    Then the cart badge should show &quot;1&quot;
+</code></pre>
+<p>Anything else about the browser (cookies, storage, permissions, mocked requests, a logged-in session) is set up with a
+<a href="client-steps.html">client step</a>.</p>
+<div class="pager"><a class="prev" href="steps.html"><span>Previous</span>Writing Steps</a><a class="next" href="client-steps.html"><span>Next</span>Client steps</a></div></main>
+
+</div>
+</body>
+</html>

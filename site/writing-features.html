@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Writing features · Decisium</title>
+<title>Features and scenarios · Decisium</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/nocturne.css">
 <link rel="stylesheet" href="assets/site.css">
@@ -16,82 +16,52 @@
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t)"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html" aria-current="page">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
-<main class="doc"><h1 id="writing-features">Writing features</h1>
-<p>A Decisium feature is ordinary Gherkin. Any <code>Given</code>/<code>When</code>/<code>Then</code>/<code>And</code> line that no step definition of yours matches is
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html" aria-current="page">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="features-and-scenarios">Features and scenarios</h1>
+<p>A Decisium test is an ordinary Gherkin <code>.feature</code> file. Every line no <a href="client-steps.html">client step</a> of yours matches is
 run by Decisium.</p>
-<h2 id="start-url">Start URL</h2>
-<p><code>@url:&lt;url|file&gt;</code> on the feature or a scenario (a scenario&#39;s tag wins), or <code>--url</code> on the command line. A relative file
-path resolves from the directory you run in.</p>
-<h2 id="kinds-of-step">Kinds of Step</h2>
-<p>Decisium reads each line as one of these:</p>
-<table>
-<thead>
-<tr>
-<th>Kind</th>
-<th>Example</th>
-<th>What happens</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Step (action)</td>
-<td><code>I schedule the campaign</code></td>
-<td>Jev picks actions until the task is done.</td>
-</tr>
-<tr>
-<td>Navigation</td>
-<td><code>I go to &quot;/settings&quot;</code>, <code>I go back</code></td>
-<td>Done by code, no model.</td>
-</tr>
-<tr>
-<td>Value check</td>
-<td><code>the campaign status should be &quot;Scheduled&quot;</code></td>
-<td>Code compares the element&#39;s value with the quote.</td>
-</tr>
-<tr>
-<td>Presence</td>
-<td><code>&quot;Saved&quot; should appear</code></td>
-<td>Code looks for the text.</td>
-</tr>
-<tr>
-<td>Scoped presence</td>
-<td><code>&quot;Banana&quot; should appear in the cart</code></td>
-<td>The same, inside one area.</td>
-</tr>
-<tr>
-<td>State check</td>
-<td><code>&quot;Banana&quot; should be selected</code></td>
-<td>Code reads the element&#39;s state.</td>
-</tr>
-<tr>
-<td>Attempt</td>
-<td><code>I try to save the form</code></td>
-<td>A negative path: the action may be refused.</td>
-</tr>
-</tbody></table>
-<p>The <a href="cookbook.html">Cookbook</a> lists, for each kind, the wordings that pass and the ones to avoid, each backed by a
-Step in the repository&#39;s <code>test/fixtures/</code>. Ready-to-run features are on the <a href="examples.html">Examples</a> page.</p>
-<h2 id="rules">Rules</h2>
+<pre><code class="language-gherkin">@url:http://localhost:3000
+Feature: Campaigns
+
+  Background:
+    When I start a new campaign
+
+  Scenario: Schedule a campaign
+    When I enter &quot;Winter Sale&quot; as the campaign name
+    And I set the activation period to 2 weeks
+    And I schedule the campaign
+    Then the campaign status should be &quot;Scheduled&quot;
+
+  Scenario Outline: Name validation
+    When I try to save the draft with the name &quot;&lt;name&gt;&quot;
+    Then the error should say &quot;&lt;error&gt;&quot;
+
+    Examples:
+      | name | error              |
+      | x    | Name is too short  |
+</code></pre>
 <ul>
-<li>One Step, one task, named by what the user wants: &quot;I save the draft&quot;, not &quot;I click Save draft&quot;.</li>
-<li>Quote every value: what to type, the option to pick, the text a check expects.</li>
-<li>Secrets go in as <code>&quot;$NAME&quot;</code>; the value comes from the environment or <code>.env</code>. Jev, logs, the trace and the cassette
-only see the token. A value written literally in a Step is sent to the model and recorded.</li>
-<li>Tables and doc strings work as in cucumber.</li>
+<li><strong>Start URL:</strong> <code>@url:</code> on the feature or a scenario (a URL or a local HTML file), or <code>--url</code>. More tags set the
+viewport, locale, time zone and geolocation: <a href="browser-context.html">Browser context</a>.</li>
+<li><strong>Isolation:</strong> each scenario, and each Examples row of an outline, runs in a fresh browser. <code>Background</code> Steps run
+before each scenario.</li>
+<li><strong>Steps:</strong> each line is an action (it changes the page) or a check (code verifies what the page shows). How to word
+them: <a href="steps.html">Writing Steps</a>.</li>
+<li><strong>Tables and doc strings</strong> work as in cucumber: <a href="steps.html#data-tables">Data tables</a>.</li>
+<li><strong>One scenario:</strong> <code>npx decisium run file.feature:12</code> runs only the scenario (or Examples row) at line 12.</li>
 </ul>
-<h2 id="your-own-step-definitions">Your own step definitions</h2>
-<p>Pass them with <code>--import</code>. A line one of them matches runs your code, not Jev. The World gives you <code>this.page</code> (the
-current tab) and <code>this.context</code> (the Playwright browser context).</p>
-<pre><code class="language-js">// steps/network.js
-import { When } from &quot;@cucumber/cucumber&quot;;
-When(&quot;the API is offline&quot;, async function () {
-  await this.context.route(&quot;**/api/**&quot;, route =&gt; route.abort());
-});
-</code></pre>
-<pre><code class="language-sh">npx decisium run features/offline.feature --import steps/network.js
-</code></pre>
-<div class="pager"><a class="prev" href="quick-start.html"><span>Previous</span>Quick start</a><a class="next" href="cli.html"><span>Next</span>Command line</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#start-url">Start URL</a><a class="l2" href="#kinds-of-step">Kinds of Step</a><a class="l2" href="#rules">Rules</a><a class="l2" href="#your-own-step-definitions">Your own step definitions</a></aside>
+<h2 id="how-a-step-runs">How a Step runs</h2>
+<ol>
+<li>Decisium reads the page as text: its accessibility tree (roles, names, text, states).</li>
+<li>For an action, Jev picks one of the actions that page offers (click this button, type this quoted value into this
+field, press a named key, go back, …). Decisium performs it and reads the page again, until the task is done.</li>
+<li>For a check, Jev picks the subject and the kind of check; code compares the quoted value with the page.</li>
+<li>What each Step resolved to is saved in a <a href="record-replay.html">cassette</a>, so the next run can replay it without Jev.</li>
+</ol>
+<p>Jev never writes code or selectors; it only chooses among options Decisium lists, so a Step can only act on what is
+really on the page.</p>
+<div class="pager"><a class="prev" href="quick-start.html"><span>Previous</span>Quick start</a><a class="next" href="steps.html"><span>Next</span>Writing Steps</a></div></main>
+
 </div>
 </body>
 </html>
