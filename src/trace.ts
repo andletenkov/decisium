@@ -16,13 +16,23 @@ export class RunDir {
   #ui = ""; // the scenario's last Observation, written next to the screenshots on failure
   /** `existing`: a run directory the CLI created, shared by parallel workers. */
   constructor(root = "runs", existing?: string) {
-    if (existing) { mkdirSync(existing, { recursive: true }); this.path = existing; return; }
+    if (existing) {
+      mkdirSync(existing, { recursive: true });
+      this.path = existing;
+      return;
+    }
     mkdirSync(root, { recursive: true });
     const base = join(root, new Date().toISOString().replace(/[:.]/g, "-"));
     // Parallel runs can start in the same millisecond: mkdir without `recursive` fails if the directory exists.
     for (let i = 1; ; i++) {
       const path = i === 1 ? base : `${base}-${i}`;
-      try { mkdirSync(path); this.path = path; return; } catch (err) { if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err; }
+      try {
+        mkdirSync(path);
+        this.path = path;
+        return;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+      }
     }
   }
 
@@ -50,19 +60,31 @@ export class RunDir {
   }
 
   event(type: string, data: Record<string, unknown> = {}) {
-    appendFileSync(join(this.path, "trace.jsonl"), JSON.stringify({ t: new Date().toISOString(), scenario: this.#scenario, type, ...data }) + "\n");
+    appendFileSync(
+      join(this.path, "trace.jsonl"),
+      JSON.stringify({ t: new Date().toISOString(), scenario: this.#scenario, type, ...data }) + "\n",
+    );
   }
 
   scenario(name: string): string {
     this.#scenario = name;
     this.#shot = 0;
     this.#ui = "";
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 60);
     // Numbered in start order across parallel workers: claim a number with an exclusive mkdir, then name the folder.
     mkdirSync(join(this.path, ".claimed"), { recursive: true });
     let i = 1;
     for (; ; i++) {
-      try { mkdirSync(join(this.path, ".claimed", String(i))); break; } catch (err) { if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err; }
+      try {
+        mkdirSync(join(this.path, ".claimed", String(i)));
+        break;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+      }
     }
     this.#dir = join(this.path, `${String(i).padStart(2, "0")}-${slug}`);
     mkdirSync(this.#dir, { recursive: true });

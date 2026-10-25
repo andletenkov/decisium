@@ -16,12 +16,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.95,
@@ -34,33 +29,9 @@
               },
               0.72
             ],
-            [
-              "none",
-              0.21
-            ]
+            ["none", 0.21]
           ],
-          "action": [
-            [
-              "type",
-              0.75
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ]
+          "action": [["type", 0.75], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]]
         }
       ]
     },
@@ -78,26 +49,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.89
-            ]
-          ],
-          "value": [
-            [
-              "Winter Sale",
-              1
-            ]
-          ]
+          "action": [["type", 0.89]],
+          "value": [["Winter Sale", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.66
-            ],
+            ["none", 0.66],
             [
               {
                 "role": "button",
@@ -107,12 +65,7 @@
               0.21
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.93
-            ]
-          ]
+          "action": [["type", 0.93]]
         }
       ]
     },
@@ -130,42 +83,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.62
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "2026-12-01",
-              1
-            ]
-          ]
+          "action": [["type", 0.62], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["2026-12-01", 1]]
         },
         {
           "done": 0.97,
           "target": [
-            [
-              "none",
-              0.57
-            ],
+            ["none", 0.57],
             [
               {
                 "role": "button",
@@ -175,12 +99,7 @@
               0.28
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.97
-            ]
-          ]
+          "action": [["type", 0.97]]
         }
       ]
     },
@@ -198,27 +117,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.92
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.9
-            ]
-          ]
+          "target": [["none", 0.92]],
+          "action": [["click", 0.9]]
         }
       ]
     },
@@ -236,27 +140,12 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.97
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.91
-            ]
-          ]
+          "target": [["none", 0.97]],
+          "action": [["click", 0.91]]
         }
       ]
     },
@@ -274,37 +163,17 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.83
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.9299999999999999
-            ]
-          ]
+          "target": [["none", 0.83]],
+          "action": [["click", 0.9299999999999999]]
         }
       ]
     },
     "The scheduled campaign appears in the calendar: the campaign should appear in the calendar": {
-      "recall": [
-        [
-          "Winter Sale",
-          0.89
-        ]
-      ],
+      "recall": [["Winter Sale", 0.89]],
       "check": {
         "kind": {
           "type": "choice",
@@ -344,10 +213,7 @@
             },
             0.6
           ],
-          [
-            "none",
-            0.18000000000000002
-          ],
+          ["none", 0.18000000000000002],
           [
             {
               "role": "listitem",
@@ -367,10 +233,7 @@
             },
             0.7
           ],
-          [
-            "page",
-            0.26
-          ]
+          ["page", 0.26]
         ]
       }
     },
@@ -388,12 +251,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.95,
@@ -406,33 +264,9 @@
               },
               0.73
             ],
-            [
-              "none",
-              0.21
-            ]
+            ["none", 0.21]
           ],
-          "action": [
-            [
-              "type",
-              0.79
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ]
+          "action": [["type", 0.79], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]]
         }
       ]
     },
@@ -450,26 +284,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.86
-            ]
-          ],
-          "value": [
-            [
-              "Summer Sale",
-              1
-            ]
-          ]
+          "action": [["type", 0.86]],
+          "value": [["Summer Sale", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.71
-            ],
+            ["none", 0.71],
             [
               {
                 "role": "button",
@@ -479,12 +300,7 @@
               0.17
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.96
-            ]
-          ]
+          "action": [["type", 0.96]]
         }
       ]
     },
@@ -502,27 +318,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.9
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.9]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -540,41 +341,17 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.86
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.86]],
+          "action": [["click", 0.92]]
         }
       ]
     },
     "An unscheduled draft does not appear in the calendar: the campaign should appear in the calendar": {
-      "recall": [
-        [
-          "Summer Sale",
-          0.7
-        ],
-        [
-          "none",
-          0.3
-        ]
-      ],
+      "recall": [["Summer Sale", 0.7], ["none", 0.3]],
       "check": {
         "kind": {
           "type": "choice",
@@ -641,37 +418,17 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.98,
-          "target": [
-            [
-              "none",
-              0.81
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.89
-            ]
-          ]
+          "target": [["none", 0.81]],
+          "action": [["click", 0.89]]
         }
       ]
     },
     "A check without a reference is unaffected: the schedule button should be enabled": {
-      "recall": [
-        [
-          "none",
-          0.94
-        ]
-      ],
+      "recall": [["none", 0.94]],
       "check": {
         "kind": {
           "type": "choice",
@@ -713,10 +470,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.68
-          ],
+          ["page", 0.68],
           [
             {
               "role": "main",

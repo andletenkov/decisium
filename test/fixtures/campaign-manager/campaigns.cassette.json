@@ -16,12 +16,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.93,
@@ -34,33 +29,9 @@
               },
               0.67
             ],
-            [
-              "none",
-              0.26
-            ]
+            ["none", 0.26]
           ],
-          "action": [
-            [
-              "type",
-              0.75
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ]
+          "action": [["type", 0.75], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]]
         }
       ]
     },
@@ -78,26 +49,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.87
-            ]
-          ],
-          "value": [
-            [
-              "Winter Sale",
-              1
-            ]
-          ]
+          "action": [["type", 0.87]],
+          "value": [["Winter Sale", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.68
-            ],
+            ["none", 0.68],
             [
               {
                 "role": "button",
@@ -107,12 +65,7 @@
               0.2
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.96
-            ]
-          ]
+          "action": [["type", 0.96]]
         }
       ]
     },
@@ -130,42 +83,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.64
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "2026-12-01",
-              1
-            ]
-          ]
+          "action": [["type", 0.64], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["2026-12-01", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.52
-            ],
+            ["none", 0.52],
             [
               {
                 "role": "button",
@@ -183,12 +107,7 @@
               0.2
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.97
-            ]
-          ]
+          "action": [["type", 0.97]]
         }
       ]
     },
@@ -206,26 +125,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "select",
-              0.83
-            ]
-          ],
-          "value": [
-            [
-              "2 weeks",
-              1
-            ]
-          ]
+          "action": [["select", 0.83]],
+          "value": [["2 weeks", 1]]
         },
         {
           "done": 0.95,
           "target": [
-            [
-              "none",
-              0.64
-            ],
+            ["none", 0.64],
             [
               {
                 "role": "combobox",
@@ -235,12 +141,7 @@
               0.2
             ]
           ],
-          "action": [
-            [
-              "select",
-              0.97
-            ]
-          ]
+          "action": [["select", 0.97]]
         }
       ]
     },
@@ -258,27 +159,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.9
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.9]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -333,10 +219,7 @@
             },
             0.61
           ],
-          [
-            "page",
-            0.39
-          ]
+          ["page", 0.39]
         ]
       }
     },
@@ -354,27 +237,12 @@
               0.98
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.96
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.96]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -421,10 +289,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.5
-          ],
+          ["page", 0.5],
           [
             {
               "role": "main",
@@ -478,10 +343,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.65
-          ],
+          ["page", 0.65],
           [
             {
               "role": "main",
@@ -507,27 +369,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.86
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "target": [["none", 0.86]],
+          "action": [["click", 0.97]]
         }
       ]
     },
@@ -582,10 +429,7 @@
             },
             0.79
           ],
-          [
-            "page",
-            0.17
-          ]
+          ["page", 0.17]
         ]
       }
     },
@@ -603,20 +447,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.99
-            ]
-          ]
+          "action": [["click", 0.99]]
         },
         {
           "done": 0.97,
           "target": [
-            [
-              "none",
-              0.79
-            ],
+            ["none", 0.79],
             [
               {
                 "role": "button",
@@ -626,12 +462,7 @@
               0.13
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.89
-            ]
-          ]
+          "action": [["click", 0.89]]
         }
       ]
     },
@@ -649,12 +480,7 @@
               0.98
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.92,
@@ -675,37 +501,10 @@
               },
               0.26
             ],
-            [
-              "page",
-              0.24
-            ],
-            [
-              "none",
-              0.18
-            ]
+            ["page", 0.24],
+            ["none", 0.18]
           ],
-          "action": [
-            [
-              "click",
-              0.61
-            ],
-            [
-              "double click",
-              0.07
-            ],
-            [
-              "hover",
-              0.03
-            ],
-            [
-              "right click",
-              0.01
-            ],
-            [
-              "upload",
-              0
-            ]
-          ]
+          "action": [["click", 0.61], ["double click", 0.07], ["hover", 0.03], ["right click", 0.01], ["upload", 0]]
         }
       ]
     },
@@ -751,10 +550,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.61
-          ],
+          ["page", 0.61],
           [
             {
               "role": "main",
@@ -809,10 +605,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.51
-          ],
+          ["page", 0.51],
           [
             {
               "role": "main",
@@ -838,27 +631,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.99
-            ]
-          ]
+          "action": [["click", 0.99]]
         },
         {
           "done": 0.98,
-          "target": [
-            [
-              "none",
-              0.82
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.88
-            ]
-          ]
+          "target": [["none", 0.82]],
+          "action": [["click", 0.88]]
         }
       ]
     },
@@ -876,12 +654,7 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.89
-            ]
-          ]
+          "action": [["click", 0.89]]
         },
         {
           "done": 0.02,
@@ -895,27 +668,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.99,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.86
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.86]]
         }
       ]
     },
@@ -959,10 +717,7 @@
             },
             0.41000000000000003
           ],
-          [
-            "none",
-            0.34
-          ],
+          ["none", 0.34],
           [
             {
               "role": "link",

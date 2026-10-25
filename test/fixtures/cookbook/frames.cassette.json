@@ -16,18 +16,8 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.86
-            ]
-          ],
-          "value": [
-            [
-              "ada@example.com",
-              1
-            ]
-          ]
+          "action": [["type", 0.86]],
+          "value": [["ada@example.com", 1]]
         },
         {
           "done": 0.99,
@@ -40,33 +30,9 @@
               },
               0.41
             ],
-            [
-              "none",
-              0.39
-            ]
+            ["none", 0.39]
           ],
-          "action": [
-            [
-              "click",
-              0.02
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.02], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         }
       ]
     },
@@ -84,20 +50,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.99,
           "target": [
-            [
-              "none",
-              0.62
-            ],
+            ["none", 0.62],
             [
               {
                 "role": "button",
@@ -107,12 +65,7 @@
               0.37
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.99
-            ]
-          ]
+          "action": [["click", 0.99]]
         }
       ]
     },
@@ -167,10 +120,7 @@
             },
             0.51
           ],
-          [
-            "page",
-            0.26
-          ],
+          ["page", 0.26],
           [
             {
               "role": "main",
@@ -232,10 +182,7 @@
             },
             0.78
           ],
-          [
-            "page",
-            0.14
-          ]
+          ["page", 0.14]
         ]
       }
     },
@@ -253,12 +200,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
@@ -271,17 +213,9 @@
               },
               0.72
             ],
-            [
-              "none",
-              0.28
-            ]
+            ["none", 0.28]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         }
       ]
     },
@@ -327,10 +261,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.79
-          ],
+          ["page", 0.79],
           [
             {
               "role": "main",
@@ -384,10 +315,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.68
-          ],
+          ["page", 0.68],
           [
             {
               "role": "main",

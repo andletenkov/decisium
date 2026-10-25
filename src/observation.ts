@@ -1,7 +1,18 @@
 // Renders Playwright's `ariaSnapshotJSON({ mode: "ai" })` as compact text and parses that into an Observation.
 
 /** A node of `ariaSnapshotJSON`: free-form, states as extra keys (`checked`, `level`, ...); text nodes are strings. */
-export type AriaNode = string | { role: string; name?: string; ref?: string; cursor?: string; url?: string; text?: string; children?: AriaNode[]; [state: string]: unknown };
+export type AriaNode =
+  | string
+  | {
+      role: string;
+      name?: string;
+      ref?: string;
+      cursor?: string;
+      url?: string;
+      text?: string;
+      children?: AriaNode[];
+      [state: string]: unknown;
+    };
 
 const KEYS = new Set(["role", "name", "ref", "cursor", "url", "text", "children", "box"]);
 const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -11,16 +22,23 @@ const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
  * (`- 'heading "Releases: x/y" [ref=e1]'`) and the line parser dropped them (task 0064). Names escape `\` and `"`.
  */
 export function renderSnapshot(nodes: AriaNode[], indent = ""): string {
-  return nodes.map(n => {
-    if (typeof n === "string") return `${indent}- text: ${oneLine(n)}`;
-    const states = Object.entries(n).filter(([k, v]) => !KEYS.has(k) && v !== false && v !== undefined)
-      .map(([k, v]) => v === true ? ` [${k}]` : ` [${k}=${v}]`).join("");
-    const head = `${indent}- ${n.role}${n.name ? ` "${n.name.replace(/[\\"]/g, "\\$&")}"` : ""}${states}${n.ref ? ` [ref=${n.ref}]` : ""}${n.cursor ? ` [cursor=${n.cursor}]` : ""}`;
-    const kids = [...n.url !== undefined ? [`${indent}  - /url: ${n.url}`] : [], ...n.children?.length && n.text ? [`${indent}  - text: ${oneLine(n.text)}`] : [],
-      ...n.children?.length ? [renderSnapshot(n.children, indent + "  ")] : []];
-    if (kids.length) return `${head}:\n${kids.join("\n")}`;
-    return n.text ? `${head}: ${oneLine(n.text)}` : head;
-  }).join("\n");
+  return nodes
+    .map((n) => {
+      if (typeof n === "string") return `${indent}- text: ${oneLine(n)}`;
+      const states = Object.entries(n)
+        .filter(([k, v]) => !KEYS.has(k) && v !== false && v !== undefined)
+        .map(([k, v]) => (v === true ? ` [${k}]` : ` [${k}=${v}]`))
+        .join("");
+      const head = `${indent}- ${n.role}${n.name ? ` "${n.name.replace(/[\\"]/g, "\\$&")}"` : ""}${states}${n.ref ? ` [ref=${n.ref}]` : ""}${n.cursor ? ` [cursor=${n.cursor}]` : ""}`;
+      const kids = [
+        ...(n.url !== undefined ? [`${indent}  - /url: ${n.url}`] : []),
+        ...(n.children?.length && n.text ? [`${indent}  - text: ${oneLine(n.text)}`] : []),
+        ...(n.children?.length ? [renderSnapshot(n.children, indent + "  ")] : []),
+      ];
+      if (kids.length) return `${head}:\n${kids.join("\n")}`;
+      return n.text ? `${head}: ${oneLine(n.text)}` : head;
+    })
+    .join("\n");
 }
 
 export type Verb = "CLICK" | "TYPE" | "SELECT";
@@ -52,11 +70,29 @@ export interface Observation {
 }
 
 /** A browser dialog: open, or the last one shown, readable until the next action Step (task 0040). */
-export interface Dialog { type: "alert" | "confirm" | "prompt" | "beforeunload"; message: string; state: "open" | "accepted" | "dismissed" }
+export interface Dialog {
+  type: "alert" | "confirm" | "prompt" | "beforeunload";
+  message: string;
+  state: "open" | "accepted" | "dismissed";
+}
 
 const ACTIONABLE = new Set([
-  "button", "link", "textbox", "searchbox", "spinbutton", "combobox", "option",
-  "checkbox", "radio", "switch", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "treeitem", "slider",
+  "button",
+  "link",
+  "textbox",
+  "searchbox",
+  "spinbutton",
+  "combobox",
+  "option",
+  "checkbox",
+  "radio",
+  "switch",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "tab",
+  "treeitem",
+  "slider",
 ]);
 const CELLS = new Set(["cell", "gridcell", "columnheader", "rowheader"]);
 const TYPEABLE = new Set(["textbox", "searchbox", "spinbutton", "slider"]); // slider: fill sets a range input (task 0045)
@@ -67,15 +103,19 @@ export const MASK = "\u2022\u2022\u2022\u2022";
 
 /** Longest `ui` line Jev reads (citation blobs, inline code); the full text stays in `value` and `pageText` (task 0021). */
 const MAX_LINE = 200;
-const cap = (line: string) => line.length > MAX_LINE ? line.slice(0, MAX_LINE) + "…" : line;
+const cap = (line: string) => (line.length > MAX_LINE ? line.slice(0, MAX_LINE) + "…" : line);
 
 /**
  * `secretRefs`: refs of password fields (the snapshot itself shows them as plain textboxes with their value).
  * `editableRefs`: comboboxes you type into (search boxes with suggestions); other comboboxes are clicked open.
  * `targetRefs`: non-controls with their own pointer cursor or tabindex: Turn targets (task 0064).
  */
-export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> = new Set(), editableRefs: ReadonlySet<string> = new Set(),
-  targetRefs: ReadonlySet<string> = new Set()): Observation {
+export function parseSnapshot(
+  snapshot: string,
+  secretRefs: ReadonlySet<string> = new Set(),
+  editableRefs: ReadonlySet<string> = new Set(),
+  targetRefs: ReadonlySet<string> = new Set(),
+): Observation {
   const elements: Element[] = [];
   const readable: Element[] = [];
   const kept: (string | undefined)[] = [];
@@ -90,12 +130,20 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
   for (let raw of snapshot.split("\n")) {
     // The snapshot marks only checked boxes. Without a mark for the other state, Jev never read "uncheck X" as done
     // (task 0031: 8 clicks, then STEP_TIMEOUT).
-    if (/^\s*- (checkbox|radio|switch|menuitemcheckbox|menuitemradio)\b/.test(raw) && !/\[checked/.test(raw)) raw = raw.replace(" [ref=", " [unchecked] [ref=");
+    if (/^\s*- (checkbox|radio|switch|menuitemcheckbox|menuitemradio)\b/.test(raw) && !/\[checked/.test(raw))
+      raw = raw.replace(" [ref=", " [unchecked] [ref=");
     const m = LINE.exec(raw);
     // `/url` lines repeat what the link's name already says: kept on the link, not in `ui`.
     const url = /^\s*- \/url: (.*)$/.exec(raw)?.[1];
-    if (url !== undefined) { const link = open.at(-1)?.el; if (link?.role === "link") link.url = url.replace(/^"(.*)"$/, "$1"); continue; }
-    if (!m) { if (raw.trim()) kept.push(cap(raw)); continue; }
+    if (url !== undefined) {
+      const link = open.at(-1)?.el;
+      if (link?.role === "link") link.url = url.replace(/^"(.*)"$/, "$1");
+      continue;
+    }
+    if (!m) {
+      if (raw.trim()) kept.push(cap(raw));
+      continue;
+    }
     const [, indent, role, name = "", attrs = "", rest = ""] = m;
     const ref = /\[ref=(\w+)\]/.exec(attrs)?.[1];
     const secret = ref !== undefined && secretRefs.has(ref);
@@ -118,7 +166,8 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       areas.add(o.el);
       if (ref && name) named.set(o.el, [...(named.get(o.el) ?? []), name]);
     }
-    const at = kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : cap(raw)) - 1;
+    const at =
+      kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : cap(raw)) - 1;
 
     // Text with no element of its own (a bare `- text:` line, or text split across children): the nearest ref'd
     // container is the only thing a check can read it from, so that container becomes readable (task 0006).
@@ -128,9 +177,18 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
       continue;
     }
     const description = /\[description="([^"]*)"\]/.exec(attrs)?.[1];
-    const state = attrs.replace(/\s*\[ref=\w+\]/, "").replace(/\s*\[description="[^"]*"\]/, "").trim();
+    const state = attrs
+      .replace(/\s*\[ref=\w+\]/, "")
+      .replace(/\s*\[description="[^"]*"\]/, "")
+      .trim();
     const el: Element = {
-      ref, role, name, value, description, state, secret,
+      ref,
+      role,
+      name,
+      value,
+      description,
+      state,
+      secret,
       line: "", // set below, once native select options have filled in the value
       verb: TYPEABLE.has(role) || editableRefs.has(ref) ? "TYPE" : "CLICK",
       options: [],
@@ -146,12 +204,19 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     // Draggable: a drag target (task 0045); scrollable: a scroll target (task 0061); own pointer cursor or tabindex:
     // a custom control (task 0064; an inherited pointer cursor proves nothing). Column headers: often sort on click
     // with no sign in the DOM but a click listener (the-internet); a CDP listener lookup found only that case.
-    if ((ACTIONABLE.has(role) || role === "columnheader" || targetRefs.has(ref) || /\[draggable\]|\[scrollable\]/.test(attrs)) && !/\[disabled\]/.test(attrs)) elements.push(el);
+    if (
+      (ACTIONABLE.has(role) ||
+        role === "columnheader" ||
+        targetRefs.has(ref) ||
+        /\[draggable\]|\[scrollable\]/.test(attrs)) &&
+      !/\[disabled\]/.test(attrs)
+    )
+      elements.push(el);
     lastCombobox = role === "combobox" ? { el, indent: indent.length } : undefined;
   }
   for (const [el, texts] of bare) {
     // Text that only names a control inside the container (a field's label) adds nothing a check can read.
-    if (texts.every(t => named.get(el)?.includes(t))) continue;
+    if (texts.every((t) => named.get(el)?.includes(t))) continue;
     el.value = el.text.trim(); // a check compares the container's full text, own and descendants'
     if (!readable.includes(el)) readable.push(el);
     wrappers.delete(el); // Jev must see its line to pick it
@@ -163,11 +228,11 @@ export function parseSnapshot(snapshot: string, secretRefs: ReadonlySet<string> 
     const value = clip(el.value);
     el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.description ? ` description="${el.description}"` : ""}${el.state ? " " + el.state : ""}`;
   }
-  return { text: kept.filter(l => l !== undefined).join("\n"), elements, readable, areas: [...areas], pageText };
+  return { text: kept.filter((l) => l !== undefined).join("\n"), elements, readable, areas: [...areas], pageText };
 }
 
 /** A value cut to 60 characters for an element's line. */
-const clip = (value: string) => value.length > 60 ? value.slice(0, 60) + "…" : value;
+const clip = (value: string) => (value.length > 60 ? value.slice(0, 60) + "…" : value);
 
 /**
  * Text an Assertion step compares against, or undefined when the element's text is only its label.
@@ -187,13 +252,27 @@ export function assertableText(el: Element): string | undefined {
  * `tabs` (task 0041): e.g. "2 open, this is tab 2", only while more than one is open, so one-tab pages read as before.
  */
 export function withPage(obs: Observation, url: string, title: string, tabs?: string): Observation {
-  const fields: [string, string][] = [["url", url], ["title", title], ...tabs ? [["tabs", tabs] as [string, string]] : []];
-  const page = fields.map(([role, value]): Element => ({
-    ref: role, role, name: "", value, state: "", secret: false, verb: "CLICK", options: [], text: value,
-    line: `${role} value="${clip(value)}"`,
-  }));
+  const fields: [string, string][] = [
+    ["url", url],
+    ["title", title],
+    ...(tabs ? [["tabs", tabs] as [string, string]] : []),
+  ];
+  const page = fields.map(
+    ([role, value]): Element => ({
+      ref: role,
+      role,
+      name: "",
+      value,
+      state: "",
+      secret: false,
+      verb: "CLICK",
+      options: [],
+      text: value,
+      line: `${role} value="${clip(value)}"`,
+    }),
+  );
   // The page as a target (task 0065): its line is what Jev compares "scroll up the Chat" with the Chat panel against.
-  const top = [cap(`- page "${title}" [ref=page]`), ...page.map(e => cap(`- ${e.role}: ${e.value}`))].join("\n");
+  const top = [cap(`- page "${title}" [ref=page]`), ...page.map((e) => cap(`- ${e.role}: ${e.value}`))].join("\n");
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [...page, ...obs.readable] };
 }
 
@@ -207,15 +286,27 @@ export function withDialog(obs: Observation, dialog?: Dialog): Observation {
   if (!dialog) return obs;
   const { type, message, state } = dialog;
   const el: Element = {
-    ref: "dialog", role: type, name: "browser dialog", value: message, state: `[${state}]`, secret: false, verb: "CLICK", options: [],
-    text: message, line: `${type} "browser dialog" value="${clip(message)}" [${state}]`,
+    ref: "dialog",
+    role: type,
+    name: "browser dialog",
+    value: message,
+    state: `[${state}]`,
+    secret: false,
+    verb: "CLICK",
+    options: [],
+    text: message,
+    line: `${type} "browser dialog" value="${clip(message)}" [${state}]`,
   };
   const top = cap(`- ${type} "browser dialog" [${state}]: ${message}`);
   return { ...obs, dialog, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
 }
 
 /** The last download of the scenario (task 0044), saved to its run folder. `text`: its contents, unless binary. */
-export interface Download { name: string; size: number; text?: string }
+export interface Download {
+  name: string;
+  size: number;
+  text?: string;
+}
 
 /**
  * Adds the last download as a readable pseudo-element (ref `download`): its value is the file name and, for a text file,
@@ -227,8 +318,16 @@ export function withDownload(obs: Observation, download?: Download): Observation
   const value = text ? `${name}\n${text}` : name;
   const state = size ? `[${size} bytes]` : "[empty]";
   const el: Element = {
-    ref: "download", role: "download", name: "downloaded file", value, state, secret: false, verb: "CLICK", options: [],
-    text: value, line: `download "downloaded file" value="${clip(value.replace(/\s+/g, " "))}" ${state}`,
+    ref: "download",
+    role: "download",
+    name: "downloaded file",
+    value,
+    state,
+    secret: false,
+    verb: "CLICK",
+    options: [],
+    text: value,
+    line: `download "downloaded file" value="${clip(value.replace(/\s+/g, " "))}" ${state}`,
   };
   const top = cap(`- download "downloaded file" ${state}: ${value.replace(/\s+/g, " ")}`);
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
@@ -238,8 +337,16 @@ export function withDownload(obs: Observation, download?: Download): Observation
 export function withClipboard(obs: Observation, text?: string): Observation {
   if (!text) return obs;
   const el: Element = {
-    ref: "clipboard", role: "clipboard", name: "copied text", value: text, state: "", secret: false, verb: "CLICK", options: [],
-    text, line: `clipboard "copied text" value="${clip(text.replace(/\s+/g, " "))}"`,
+    ref: "clipboard",
+    role: "clipboard",
+    name: "copied text",
+    value: text,
+    state: "",
+    secret: false,
+    verb: "CLICK",
+    options: [],
+    text,
+    line: `clipboard "copied text" value="${clip(text.replace(/\s+/g, " "))}"`,
   };
   const top = cap(`- clipboard "copied text": ${text.replace(/\s+/g, " ")}`);
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };

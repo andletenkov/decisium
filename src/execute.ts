@@ -37,27 +37,33 @@ export interface StepReport extends StepResult {
  * own Cassette entry. A page too large for Jev and a broken replay are Step outcomes; any other error is thrown (setup).
  */
 export async function executeStep(text: string, ctx: StepContext): Promise<StepReport> {
-  const { rt, live, cassette, key, kind, arg, earlier, log, trace = d => d } = ctx;
-  const start = Date.now(), before = { ...jevUsage };
+  const { rt, live, cassette, key, kind, arg, earlier, log, trace = (d) => d } = ctx;
+  const start = Date.now(),
+    before = { ...jevUsage };
   const { table, docString } = arg;
   const perRow = !!table && kind !== "assertion";
   const { rows } = readStep({ text, kind, ...arg });
   // A header row alone (an action table with 3+ columns) leaves no row to act on; otherwise the rows decide.
-  let r: StepResult = rows.length ? { outcome: "DONE" }
+  let r: StepResult = rows.length
+    ? { outcome: "DONE" }
     : { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
   const served: StepReport["cassette"][] = [];
   for (const [i, row] of rows.entries()) {
     const entry = cassette?.step(perRow ? `${key} (row ${i + 1})` : key, live, log);
     const decider = trace(entry ?? live);
     try {
-      r = kind === "assertion"
-        ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg)
-        : await runStep(row, rt, decider, log, kind === "attempt", docString);
+      r =
+        kind === "assertion"
+          ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg)
+          : await runStep(row, rt, decider, log, kind === "attempt", docString);
     } catch (err) {
       if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
         // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).
         log(`  => PAGE_TOO_LARGE`);
-        r = { outcome: "PAGE_TOO_LARGE", reason: "the page is too large for one Jev request, even reduced to the sections that matter" };
+        r = {
+          outcome: "PAGE_TOO_LARGE",
+          reason: "the page is too large for one Jev request, even reduced to the sections that matter",
+        };
       } else if (err instanceof UiChanged) {
         log(`  => UI_CHANGED`);
         r = { outcome: "UI_CHANGED", reason: err.reason };
@@ -67,12 +73,13 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     if (r.outcome !== "DONE" && perRow) r = { ...r, reason: `row ${i + 1} (${row})${r.reason ? `: ${r.reason}` : ""}` };
     if (r.outcome !== "DONE") break;
   }
-  if (r.marginal && ctx.strict) r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
+  if (r.marginal && ctx.strict)
+    r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
   for (const row of rows) for (const v of readStep({ text: row, kind }).quoted) earlier[v] = row;
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   return {
     ...r,
-    cassette: served.find(c => c !== "replayed") ?? served[0],
+    cassette: served.find((c) => c !== "replayed") ?? served[0],
     seconds: (Date.now() - start) / 1000,
     jevCalls: jevUsage.calls - before.calls,
     inputTokens: jevUsage.inputTokens - before.inputTokens,

@@ -16,42 +16,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.76
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Ada",
-              1
-            ]
-          ]
+          "action": [["type", 0.76], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Ada", 1]]
         },
         {
           "done": 0.98,
           "target": [
-            [
-              "none",
-              0.55
-            ],
+            ["none", 0.55],
             [
               {
                 "role": "textbox",
@@ -69,12 +40,7 @@
               0.18
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.99
-            ]
-          ]
+          "action": [["type", 0.99]]
         }
       ]
     },
@@ -92,34 +58,8 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.54
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Lovelace",
-              1
-            ]
-          ]
+          "action": [["type", 0.54], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Lovelace", 1]]
         },
         {
           "done": 0.98,
@@ -132,33 +72,9 @@
               },
               0.63
             ],
-            [
-              "none",
-              0.22
-            ]
+            ["none", 0.22]
           ],
-          "action": [
-            [
-              "click",
-              0.03
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.03], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         }
       ]
     },
@@ -176,12 +92,7 @@
               0.96
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "action": [["click", 0.97]]
         }
       ]
     },
@@ -199,22 +110,8 @@
               0.96
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.74
-            ],
-            [
-              "paste",
-              0.21
-            ]
-          ],
-          "value": [
-            [
-              "Wrote the first program.\nBorn in London.",
-              1
-            ]
-          ]
+          "action": [["type", 0.74], ["paste", 0.21]],
+          "value": [["Wrote the first program.\nBorn in London.", 1]]
         },
         {
           "done": 0.91,
@@ -227,33 +124,9 @@
               },
               0.58
             ],
-            [
-              "none",
-              0.28
-            ]
+            ["none", 0.28]
           ],
-          "action": [
-            [
-              "click",
-              0.12
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.12], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         }
       ]
     },
@@ -307,10 +180,7 @@
             },
             0.7
           ],
-          [
-            "page",
-            0.14
-          ]
+          ["page", 0.14]
         ]
       }
     },
@@ -328,20 +198,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "action": [["click", 0.97]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.67
-            ],
+            ["none", 0.67],
             [
               {
                 "role": "button",
@@ -351,12 +213,7 @@
               0.27
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.9
-            ]
-          ]
+          "action": [["click", 0.9]]
         }
       ]
     },
@@ -480,18 +337,8 @@
               0.98
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.86
-            ]
-          ],
-          "value": [
-            [
-              "Grace",
-              1
-            ]
-          ]
+          "action": [["type", 0.86]],
+          "value": [["Grace", 1]]
         },
         {
           "done": 0.02,
@@ -505,34 +352,8 @@
               0.85
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.73
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Hopper",
-              1
-            ]
-          ]
+          "action": [["type", 0.73], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Hopper", 1]]
         },
         {
           "done": 0.03,
@@ -546,12 +367,7 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "action": [["click", 0.97]]
         },
         {
           "done": 0.21,
@@ -565,31 +381,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.99,
-          "target": [
-            [
-              "none",
-              0.83
-            ]
-          ],
-          "action": [
-            [
-              "type",
-              0.77
-            ],
-            [
-              "click",
-              0.21
-            ]
-          ]
+          "target": [["none", 0.83]],
+          "action": [["type", 0.77], ["click", 0.21]]
         }
       ]
     },
@@ -607,18 +404,8 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.94
-            ]
-          ],
-          "value": [
-            [
-              "Alan",
-              1
-            ]
-          ]
+          "action": [["type", 0.94]],
+          "value": [["Alan", 1]]
         },
         {
           "done": 0.01,
@@ -632,34 +419,8 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.71
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Turing",
-              1
-            ]
-          ]
+          "action": [["type", 0.71], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Turing", 1]]
         },
         {
           "done": 0.04,
@@ -673,12 +434,7 @@
               0.97
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.96
-            ]
-          ]
+          "action": [["click", 0.96]]
         },
         {
           "done": 0.06,
@@ -692,31 +448,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.99,
-          "target": [
-            [
-              "none",
-              0.86
-            ]
-          ],
-          "action": [
-            [
-              "type",
-              0.76
-            ],
-            [
-              "click",
-              0.22
-            ]
-          ]
+          "target": [["none", 0.86]],
+          "action": [["type", 0.76], ["click", 0.22]]
         }
       ]
     },
@@ -840,42 +577,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.78
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Ada",
-              1
-            ]
-          ]
+          "action": [["type", 0.78], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Ada", 1]]
         },
         {
           "done": 0.98,
           "target": [
-            [
-              "none",
-              0.53
-            ],
+            ["none", 0.53],
             [
               {
                 "role": "textbox",
@@ -893,12 +601,7 @@
               0.13
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.98
-            ]
-          ]
+          "action": [["type", 0.98]]
         }
       ]
     },

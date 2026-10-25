@@ -16,35 +16,15 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
-          "dialog": [
-            [
-              "accept",
-              1
-            ]
-          ]
+          "dialog": [["accept", 1]]
         },
         {
           "done": 0.98,
-          "target": [
-            [
-              "none",
-              0.93
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.93]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -90,14 +70,8 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.41000000000000003
-          ],
-          [
-            "missing",
-            0.31
-          ],
+          ["page", 0.41000000000000003],
+          ["missing", 0.31],
           [
             {
               "role": "list",
@@ -151,14 +125,8 @@
           ]
         ],
         "area": [
-          [
-            "missing",
-            0.43
-          ],
-          [
-            "page",
-            0.29
-          ],
+          ["missing", 0.43],
+          ["page", 0.29],
           [
             {
               "role": "generic",
@@ -186,28 +154,15 @@
               0.9
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "action": [["click", 0.97]]
         },
         {
-          "dialog": [
-            [
-              "dismiss",
-              1
-            ]
-          ]
+          "dialog": [["dismiss", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.67
-            ],
+            ["none", 0.67],
             [
               {
                 "role": "button",
@@ -217,12 +172,7 @@
               0.26
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.94
-            ]
-          ]
+          "action": [["click", 0.94]]
         }
       ]
     },
@@ -294,27 +244,12 @@
               0.98
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.98
-            ]
-          ]
+          "action": [["click", 0.98]]
         },
         {
           "done": 0.94,
-          "target": [
-            [
-              "none",
-              0.9
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.93
-            ]
-          ]
+          "target": [["none", 0.9]],
+          "action": [["click", 0.93]]
         }
       ]
     },
@@ -359,16 +294,7 @@
             1
           ]
         ],
-        "area": [
-          [
-            "missing",
-            0.54
-          ],
-          [
-            "page",
-            0.35
-          ]
-        ]
+        "area": [["missing", 0.54], ["page", 0.35]]
       }
     },
     "Answer a prompt: I rename the list to \"Errands\"": {
@@ -385,28 +311,15 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.98
-            ]
-          ]
+          "action": [["click", 0.98]]
         },
         {
-          "dialog": [
-            [
-              "Errands",
-              1
-            ]
-          ]
+          "dialog": [["Errands", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.69
-            ],
+            ["none", 0.69],
             [
               {
                 "role": "button",
@@ -416,16 +329,7 @@
               0.27
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.55
-            ],
-            [
-              "click",
-              0.39
-            ]
-          ]
+          "action": [["type", 0.55], ["click", 0.39]]
         }
       ]
     },
@@ -479,10 +383,7 @@
             },
             0.7
           ],
-          [
-            "page",
-            0.13
-          ]
+          ["page", 0.13]
         ]
       }
     },
@@ -500,22 +401,8 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.79
-            ],
-            [
-              "paste",
-              0.02
-            ]
-          ],
-          "value": [
-            [
-              "half done",
-              1
-            ]
-          ]
+          "action": [["type", 0.79], ["paste", 0.02]],
+          "value": [["half done", 1]]
         },
         {
           "done": 0.98,
@@ -528,10 +415,7 @@
               },
               0.37
             ],
-            [
-              "none",
-              0.32
-            ],
+            ["none", 0.32],
             [
               {
                 "role": "button",
@@ -541,12 +425,7 @@
               0.31
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.99
-            ]
-          ]
+          "action": [["type", 0.99]]
         }
       ]
     },
@@ -564,35 +443,15 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
-          "dialog": [
-            [
-              "accept",
-              1
-            ]
-          ]
+          "dialog": [["accept", 1]]
         },
         {
           "done": 0.95,
-          "target": [
-            [
-              "none",
-              0.81
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.81]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -663,35 +522,15 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
-          "dialog": [
-            [
-              "accept",
-              1
-            ]
-          ]
+          "dialog": [["accept", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.93
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.95
-            ]
-          ]
+          "target": [["none", 0.93]],
+          "action": [["click", 0.95]]
         }
       ]
     },
@@ -700,10 +539,7 @@
         {
           "done": 0.02,
           "target": [
-            [
-              "none",
-              0.56
-            ],
+            ["none", 0.56],
             [
               {
                 "role": "button",
@@ -713,12 +549,7 @@
               0.26
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.88
-            ]
-          ]
+          "action": [["click", 0.88]]
         }
       ]
     }

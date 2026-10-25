@@ -16,34 +16,8 @@
               0.97
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.79
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Ada Lovelace",
-              1
-            ]
-          ]
+          "action": [["type", 0.79], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Ada Lovelace", 1]]
         },
         {
           "done": 0.04,
@@ -57,28 +31,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.6
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.6], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.14,
@@ -92,27 +45,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.77,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.89
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.89]]
         }
       ]
     },
@@ -166,10 +104,7 @@
             },
             0.73
           ],
-          [
-            "page",
-            0.24
-          ]
+          ["page", 0.24]
         ]
       }
     },
@@ -215,10 +150,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.63
-          ],
+          ["page", 0.63],
           [
             {
               "role": "main",
@@ -244,34 +176,8 @@
               0.94
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.76
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "Ada Lovelace",
-              1
-            ]
-          ]
+          "action": [["type", 0.76], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]],
+          "value": [["Ada Lovelace", 1]]
         },
         {
           "done": 0.05,
@@ -285,28 +191,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.55
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.55], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.18,
@@ -320,27 +205,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.73,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -386,10 +256,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.75
-          ],
+          ["page", 0.75],
           [
             {
               "role": "main",
@@ -415,18 +282,8 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.8
-            ]
-          ],
-          "value": [
-            [
-              "Ada Lovelace",
-              1
-            ]
-          ]
+          "action": [["type", 0.8]],
+          "value": [["Ada Lovelace", 1]]
         },
         {
           "done": 0.72,
@@ -440,28 +297,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.49
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.49], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.97,
@@ -474,17 +310,9 @@
               },
               0.51
             ],
-            [
-              "none",
-              0.45
-            ]
+            ["none", 0.45]
           ],
-          "action": [
-            [
-              "click",
-              0.84
-            ]
-          ]
+          "action": [["click", 0.84]]
         }
       ]
     },
@@ -538,10 +366,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.43
-          ],
+          ["page", 0.43],
           [
             {
               "role": "main",
@@ -567,18 +392,8 @@
               0.98
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.91
-            ]
-          ],
-          "value": [
-            [
-              "Ada",
-              1
-            ]
-          ]
+          "action": [["type", 0.91]],
+          "value": [["Ada", 1]]
         },
         {
           "done": 0.07,
@@ -592,36 +407,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.6
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.6], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.97,
           "target": [
-            [
-              "none",
-              0.6900000000000001
-            ],
+            ["none", 0.6900000000000001],
             [
               {
                 "role": "button",
@@ -631,16 +422,7 @@
               0.18
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.5700000000000001
-            ],
-            [
-              "click",
-              0.37
-            ]
-          ]
+          "action": [["type", 0.5700000000000001], ["click", 0.37]]
         }
       ]
     },
@@ -694,10 +476,7 @@
             },
             0.54
           ],
-          [
-            "page",
-            0.26
-          ]
+          ["page", 0.26]
         ]
       }
     },
@@ -733,10 +512,7 @@
           }
         },
         "subject": [
-          [
-            "none",
-            0.48
-          ],
+          ["none", 0.48],
           [
             {
               "role": "region",
@@ -763,10 +539,7 @@
             },
             0.32
           ],
-          [
-            "page",
-            0.26
-          ]
+          ["page", 0.26]
         ]
       }
     },
@@ -784,18 +557,8 @@
               0.97
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.9
-            ]
-          ],
-          "value": [
-            [
-              "Ada",
-              1
-            ]
-          ]
+          "action": [["type", 0.9]],
+          "value": [["Ada", 1]]
         },
         {
           "done": 0.06,
@@ -809,36 +572,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.61
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.61], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.98,
           "target": [
-            [
-              "none",
-              0.68
-            ],
+            ["none", 0.68],
             [
               {
                 "role": "button",
@@ -848,26 +587,12 @@
               0.18
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.59
-            ],
-            [
-              "click",
-              0.37
-            ]
-          ]
+          "action": [["type", 0.59], ["click", 0.37]]
         }
       ]
     },
     "A check that quotes nothing: the results should be shown": {
-      "recall": [
-        [
-          "none",
-          0.92
-        ]
-      ],
+      "recall": [["none", 0.92]],
       "check": {
         "kind": {
           "type": "choice",
@@ -917,10 +642,7 @@
             },
             0.78
           ],
-          [
-            "page",
-            0.15
-          ]
+          ["page", 0.15]
         ]
       }
     },
@@ -938,18 +660,8 @@
               0.96
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.84
-            ]
-          ],
-          "value": [
-            [
-              "Ada Lovelace",
-              1
-            ]
-          ]
+          "action": [["type", 0.84]],
+          "value": [["Ada Lovelace", 1]]
         },
         {
           "done": 0.04,
@@ -963,28 +675,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.54
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.54], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.21,
@@ -998,27 +689,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.84,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.91
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.91]]
         }
       ]
     },
@@ -1072,10 +748,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.75
-          ],
+          ["page", 0.75],
           [
             {
               "role": "main",
@@ -1101,18 +774,8 @@
               0.97
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.8
-            ]
-          ],
-          "value": [
-            [
-              "Ada Lovelace",
-              1
-            ]
-          ]
+          "action": [["type", 0.8]],
+          "value": [["Ada Lovelace", 1]]
         },
         {
           "done": 0.05,
@@ -1126,28 +789,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.6
-            ],
-            [
-              "upload",
-              0
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ]
+          "action": [["click", 0.6], ["upload", 0], ["hover", 0], ["double click", 0], ["right click", 0]]
         },
         {
           "done": 0.14,
@@ -1161,41 +803,17 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.67,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.9
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.9]]
         }
       ]
     },
     "A subjective check: the article should be well written": {
-      "recall": [
-        [
-          "Ada Lovelace",
-          0.66
-        ],
-        [
-          "none",
-          0.34
-        ]
-      ],
+      "recall": [["Ada Lovelace", 0.66], ["none", 0.34]],
       "check": {
         "kind": {
           "type": "choice",
@@ -1237,10 +855,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.79
-          ],
+          ["page", 0.79],
           [
             {
               "role": "main",
@@ -1266,12 +881,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         }
       ]
     },
@@ -1317,10 +927,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.58
-          ],
+          ["page", 0.58],
           [
             {
               "role": "main",
@@ -1382,10 +989,7 @@
             },
             0.47
           ],
-          [
-            "page",
-            0.4
-          ]
+          ["page", 0.4]
         ]
       }
     },
@@ -1403,12 +1007,7 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         }
       ]
     },
@@ -1454,10 +1053,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.55
-          ],
+          ["page", 0.55],
           [
             {
               "role": "main",

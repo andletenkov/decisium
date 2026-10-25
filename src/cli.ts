@@ -62,7 +62,6 @@ written literally in a Step is sent to Jev, recorded in the cassette and written
 
 Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`;
 
-
 async function main(): Promise<number> {
   const feature = (path: string) => path.replace(/:\d+$/, ""); // file.feature:line -> file.feature
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
@@ -70,22 +69,44 @@ async function main(): Promise<number> {
     allowPositionals: true,
     allowNegative: true,
     // No defaults: an option not given falls back to DECISIUM_* env, then worldParameters.decisium (src/options.ts).
-    options: { url: { type: "string" }, headed: { type: "boolean" }, judged: { type: "boolean" },
-      strict: { type: "boolean" }, "agent-report": { type: "boolean" }, record: { type: "string" }, parallel: { type: "string" },
-      format: { type: "string", multiple: true, default: [] }, import: { type: "string", multiple: true, default: [] },
+    options: {
+      url: { type: "string" },
+      headed: { type: "boolean" },
+      judged: { type: "boolean" },
+      strict: { type: "boolean" },
+      "agent-report": { type: "boolean" },
+      record: { type: "string" },
+      parallel: { type: "string" },
+      format: { type: "string", multiple: true, default: [] },
+      import: { type: "string", multiple: true, default: [] },
       profile: { type: "string", short: "p", multiple: true, default: [] },
-      verbose: { type: "boolean", short: "v" }, debug: { type: "boolean" } },
+      verbose: { type: "boolean", short: "v" },
+      debug: { type: "boolean" },
+    },
   });
   const env = process.env;
   const flag = (on?: boolean) => (on === undefined ? undefined : on ? "1" : "0");
-  for (const [name, value] of Object.entries({ URL: values.url, RECORD: values.record, HEADED: flag(values.headed), JUDGED: flag(values.judged),
-    STRICT: flag(values.strict), NO_AGENT_REPORT: flag(values["agent-report"] === undefined ? undefined : !values["agent-report"]),
-    VERBOSE: flag(values.verbose), DEBUG: flag(values.debug) })) if (value !== undefined) env[`DECISIUM_${name}`] = value;
+  for (const [name, value] of Object.entries({
+    URL: values.url,
+    RECORD: values.record,
+    HEADED: flag(values.headed),
+    JUDGED: flag(values.judged),
+    STRICT: flag(values.strict),
+    NO_AGENT_REPORT: flag(values["agent-report"] === undefined ? undefined : !values["agent-report"]),
+    VERBOSE: flag(values.verbose),
+    DEBUG: flag(values.debug),
+  }))
+    if (value !== undefined) env[`DECISIUM_${name}`] = value;
   const [cmd, arg] = positionals;
   if (cmd === "doctor") return doctor(positionals.slice(1));
   if (cmd === "lint" && arg) {
     try {
-      console.log(positionals.slice(1).map(f => lint(f)).join("\n\n"));
+      console.log(
+        positionals
+          .slice(1)
+          .map((f) => lint(f))
+          .join("\n\n"),
+      );
       return 0;
     } catch (err) {
       console.error((err as Error).message);
@@ -103,25 +124,38 @@ async function main(): Promise<number> {
       process.on("exit", () => rmSync(dir, { recursive: true, force: true })); // every exit path, early returns included
     } else if (cmd === "run" && arg) {
       files = positionals.slice(1);
-      const missing = files.find(f => !existsSync(feature(f)));
-      if (missing) { console.error(`File not found: ${missing}`); return 2; }
+      const missing = files.find((f) => !existsSync(feature(f)));
+      if (missing) {
+        console.error(`File not found: ${missing}`);
+        return 2;
+      }
     } else {
       console.error(USAGE);
       return 2;
     }
-    scenarios = files.flatMap(f => parseFeature(readFileSync(feature(f), "utf8"), feature(f))); // syntax and unsupported arguments: one line, before running
+    scenarios = files.flatMap((f) => parseFeature(readFileSync(feature(f), "utf8"), feature(f))); // syntax and unsupported arguments: one line, before running
   } catch (err) {
     console.error((err as Error).message);
     return 2;
   }
   const parallelSet = values.parallel === "auto" ? -1 : Number(values.parallel ?? 0); // -1: auto, resolved once --record is known
-  if (!Number.isInteger(parallelSet) || parallelSet < -1) { console.error(`--parallel must be a whole number or auto\n\n${USAGE}`); return 2; }
+  if (!Number.isInteger(parallelSet) || parallelSet < -1) {
+    console.error(`--parallel must be a whole number or auto\n\n${USAGE}`);
+    return 2;
+  }
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
   // The client's cucumber configuration and profiles, plus ours; `step` runs one line, so none of the client's features.
-  const { useConfiguration, runConfiguration } = await loadConfiguration({ file: cmd === "step" ? false : undefined, profiles: values.profile, provided: {
-    paths: files, import: [here(`./steps${EXT}`), ...values.import.map(f => resolve(f))], format: values.format,
-  } });
-  if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout)) runConfiguration.formats.stdout = here(`./formatter${EXT}`);
+  const { useConfiguration, runConfiguration } = await loadConfiguration({
+    file: cmd === "step" ? false : undefined,
+    profiles: values.profile,
+    provided: {
+      paths: files,
+      import: [here(`./steps${EXT}`), ...values.import.map((f) => resolve(f))],
+      format: values.format,
+    },
+  });
+  if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout))
+    runConfiguration.formats.stdout = here(`./formatter${EXT}`);
   try {
     applyOptions((runConfiguration.runtime.worldParameters as { decisium?: unknown } | undefined)?.decisium);
   } catch (err) {
@@ -130,14 +164,28 @@ async function main(): Promise<number> {
   }
   // Values after the merge: the configuration may set what no flag did.
   const record = env.DECISIUM_RECORD || "new";
-  if (!RECORD_MODES.includes(record as RecordMode)) { console.error(`--record must be one of ${RECORD_MODES.join(", ")}\n\n${USAGE}`); return 2; }
-  const missingUrl = scenarios.find(s => !(env.DECISIUM_URL || s.url));
-  if (missingUrl) { console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${USAGE}`); return 2; }
-  if (!env.TYPESAFE_API_KEY && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) { console.error("TYPESAFE_API_KEY is not set."); return 2; }
+  if (!RECORD_MODES.includes(record as RecordMode)) {
+    console.error(`--record must be one of ${RECORD_MODES.join(", ")}\n\n${USAGE}`);
+    return 2;
+  }
+  const missingUrl = scenarios.find((s) => !(env.DECISIUM_URL || s.url));
+  if (missingUrl) {
+    console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${USAGE}`);
+    return 2;
+  }
+  if (!env.TYPESAFE_API_KEY && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
+    console.error("TYPESAFE_API_KEY is not set.");
+    return 2;
+  }
   // Opt-in: features sharing one stateful app (campaign-manager) break each other's state when run side by side.
   // Workers only pay off across features (a feature's scenarios share its cassette and run in sequence).
-  if (values.parallel !== undefined) runConfiguration.runtime.parallel = files.length < 2 ? 0
-    : parallelSet === -1 ? Math.min(availableParallelism(), record === "none" ? Infinity : 4) : parallelSet;
+  if (values.parallel !== undefined)
+    runConfiguration.runtime.parallel =
+      files.length < 2
+        ? 0
+        : parallelSet === -1
+          ? Math.min(availableParallelism(), record === "none" ? Infinity : 4)
+          : parallelSet;
   const run = new RunDir(); // shared by every worker
   Object.assign(env, { DECISIUM_STEP: cmd === "step" ? "1" : "", DECISIUM_RUN_DIR: run.path });
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
@@ -149,7 +197,16 @@ async function main(): Promise<number> {
 }
 
 // No process.exit on success paths: a reporter (e.g. Qase's) may finish uploading after cucumber returns.
-main().then(code => { process.exitCode = code; }, err => {
-  console.error(process.env.DECISIUM_DEBUG ? err : `\nError: ${(err as Error).message.split("\n")[0]}\nRerun with --debug for details.`);
-  process.exitCode = 2;
-});
+main().then(
+  (code) => {
+    process.exitCode = code;
+  },
+  (err) => {
+    console.error(
+      process.env.DECISIUM_DEBUG
+        ? err
+        : `\nError: ${(err as Error).message.split("\n")[0]}\nRerun with --debug for details.`,
+    );
+    process.exitCode = 2;
+  },
+);

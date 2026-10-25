@@ -16,26 +16,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "upload",
-              0.86
-            ]
-          ],
-          "value": [
-            [
-              "notes.txt",
-              1
-            ]
-          ]
+          "action": [["upload", 0.86]],
+          "value": [["notes.txt", 1]]
         },
         {
           "done": 0.99,
           "target": [
-            [
-              "none",
-              0.62
-            ],
+            ["none", 0.62],
             [
               {
                 "role": "button",
@@ -45,12 +32,7 @@
               0.37
             ]
           ],
-          "action": [
-            [
-              "upload",
-              0.86
-            ]
-          ]
+          "action": [["upload", 0.86]]
         }
       ]
     },
@@ -96,10 +78,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.49
-          ],
+          ["page", 0.49],
           [
             {
               "role": "main",
@@ -125,27 +104,12 @@
               0.98
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.88
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.95
-            ]
-          ]
+          "target": [["none", 0.88]],
+          "action": [["click", 0.95]]
         }
       ]
     },
@@ -191,10 +155,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.78
-          ],
+          ["page", 0.78],
           [
             {
               "role": "main",
@@ -247,16 +208,7 @@
             1
           ]
         ],
-        "area": [
-          [
-            "page",
-            0.72
-          ],
-          [
-            "missing",
-            0.17
-          ]
-        ]
+        "area": [["page", 0.72], ["missing", 0.17]]
       }
     }
   }

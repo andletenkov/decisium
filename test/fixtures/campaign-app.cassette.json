@@ -16,26 +16,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.89
-            ]
-          ],
-          "value": [
-            [
-              "Autumn Sale",
-              1
-            ]
-          ]
+          "action": [["type", 0.89]],
+          "value": [["Autumn Sale", 1]]
         },
         {
           "done": 0.97,
           "target": [
-            [
-              "none",
-              0.57
-            ],
+            ["none", 0.57],
             [
               {
                 "role": "textbox",
@@ -45,12 +32,7 @@
               0.26
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.97
-            ]
-          ]
+          "action": [["type", 0.97]]
         }
       ]
     },
@@ -68,38 +50,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "select",
-              0.75
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ]
-          ],
-          "value": [
-            [
-              "2 weeks",
-              1
-            ]
-          ]
+          "action": [["select", 0.75], ["hover", 0], ["double click", 0], ["right click", 0]],
+          "value": [["2 weeks", 1]]
         },
         {
           "done": 0.98,
           "target": [
-            [
-              "none",
-              0.52
-            ],
+            ["none", 0.52],
             [
               {
                 "role": "combobox",
@@ -109,12 +66,7 @@
               0.35
             ]
           ],
-          "action": [
-            [
-              "select",
-              0.98
-            ]
-          ]
+          "action": [["select", 0.98]]
         }
       ]
     },
@@ -132,20 +84,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
           "target": [
-            [
-              "none",
-              0.58
-            ],
+            ["none", 0.58],
             [
               {
                 "role": "button",
@@ -155,12 +99,7 @@
               0.42
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         }
       ]
     },
@@ -205,12 +144,7 @@
             1
           ]
         ],
-        "area": [
-          [
-            "page",
-            0.89
-          ]
-        ]
+        "area": [["page", 0.89]]
       }
     },
     "Set the activation period: I set the activation period to 2 weeks": {
@@ -227,26 +161,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "select",
-              0.94
-            ]
-          ],
-          "value": [
-            [
-              "2 weeks",
-              1
-            ]
-          ]
+          "action": [["select", 0.94]],
+          "value": [["2 weeks", 1]]
         },
         {
           "done": 0.98,
           "target": [
-            [
-              "none",
-              0.58
-            ],
+            ["none", 0.58],
             [
               {
                 "role": "combobox",
@@ -256,12 +177,7 @@
               0.27
             ]
           ],
-          "action": [
-            [
-              "select",
-              0.99
-            ]
-          ]
+          "action": [["select", 0.99]]
         }
       ]
     },
@@ -307,14 +223,8 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.64
-          ],
-          [
-            "missing",
-            0.15
-          ],
+          ["page", 0.64],
+          ["missing", 0.15],
           [
             {
               "role": "generic",
@@ -369,12 +279,7 @@
             0.99
           ]
         ],
-        "area": [
-          [
-            "page",
-            0.87
-          ]
-        ]
+        "area": [["page", 0.87]]
       }
     }
   }

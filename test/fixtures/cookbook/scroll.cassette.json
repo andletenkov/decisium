@@ -15,25 +15,14 @@
               },
               0.65
             ],
-            [
-              "page",
-              0.16
-            ]
+            ["page", 0.16]
           ],
-          "action": [
-            [
-              "scroll down",
-              0.8200000000000001
-            ]
-          ]
+          "action": [["scroll down", 0.8200000000000001]]
         },
         {
           "done": 0.99,
           "target": [
-            [
-              "none",
-              0.67
-            ],
+            ["none", 0.67],
             [
               {
                 "role": "list",
@@ -43,12 +32,7 @@
               0.33
             ]
           ],
-          "action": [
-            [
-              "scroll down",
-              0.84
-            ]
-          ]
+          "action": [["scroll down", 0.84]]
         }
       ]
     },
@@ -120,24 +104,12 @@
               0.9
             ]
           ],
-          "action": [
-            [
-              "scroll up",
-              0.79
-            ],
-            [
-              "scroll down",
-              0.17
-            ]
-          ]
+          "action": [["scroll up", 0.79], ["scroll down", 0.17]]
         },
         {
           "done": 0.92,
           "target": [
-            [
-              "none",
-              0.58
-            ],
+            ["none", 0.58],
             [
               {
                 "role": "list",
@@ -147,12 +119,7 @@
               0.41
             ]
           ],
-          "action": [
-            [
-              "scroll up",
-              0.89
-            ]
-          ]
+          "action": [["scroll up", 0.89]]
         }
       ]
     },

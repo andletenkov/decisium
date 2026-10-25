@@ -16,12 +16,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.95,
@@ -34,33 +29,9 @@
               },
               0.67
             ],
-            [
-              "none",
-              0.25
-            ]
+            ["none", 0.25]
           ],
-          "action": [
-            [
-              "type",
-              0.71
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ]
+          "action": [["type", 0.71], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]]
         }
       ]
     },
@@ -78,26 +49,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.9
-            ]
-          ],
-          "value": [
-            [
-              "Summer Sale",
-              1
-            ]
-          ]
+          "action": [["type", 0.9]],
+          "value": [["Summer Sale", 1]]
         },
         {
           "done": 0.95,
           "target": [
-            [
-              "none",
-              0.75
-            ],
+            ["none", 0.75],
             [
               {
                 "role": "button",
@@ -107,12 +65,7 @@
               0.15
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.95
-            ]
-          ]
+          "action": [["type", 0.95]]
         }
       ]
     },
@@ -130,27 +83,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.92
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.9400000000000001
-            ]
-          ]
+          "target": [["none", 0.92]],
+          "action": [["click", 0.9400000000000001]]
         }
       ]
     },
@@ -168,27 +106,12 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.94,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.93
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.93]]
         }
       ]
     },
@@ -267,27 +190,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.81
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.92
-            ]
-          ]
+          "target": [["none", 0.81]],
+          "action": [["click", 0.92]]
         }
       ]
     },
@@ -333,14 +241,8 @@
           ]
         ],
         "area": [
-          [
-            "missing",
-            0.43
-          ],
-          [
-            "page",
-            0.34
-          ],
+          ["missing", 0.43],
+          ["page", 0.34],
           [
             {
               "role": "main",
@@ -366,12 +268,7 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
@@ -384,33 +281,9 @@
               },
               0.63
             ],
-            [
-              "none",
-              0.29
-            ]
+            ["none", 0.29]
           ],
-          "action": [
-            [
-              "type",
-              0.77
-            ],
-            [
-              "hover",
-              0
-            ],
-            [
-              "double click",
-              0
-            ],
-            [
-              "right click",
-              0
-            ],
-            [
-              "paste",
-              0
-            ]
-          ]
+          "action": [["type", 0.77], ["hover", 0], ["double click", 0], ["right click", 0], ["paste", 0]]
         }
       ]
     },
@@ -428,26 +301,13 @@
               1
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.89
-            ]
-          ],
-          "value": [
-            [
-              "Summer Sale",
-              1
-            ]
-          ]
+          "action": [["type", 0.89]],
+          "value": [["Summer Sale", 1]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.74
-            ],
+            ["none", 0.74],
             [
               {
                 "role": "button",
@@ -457,12 +317,7 @@
               0.13
             ]
           ],
-          "action": [
-            [
-              "type",
-              0.97
-            ]
-          ]
+          "action": [["type", 0.97]]
         }
       ]
     },
@@ -480,27 +335,12 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.92
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.91
-            ]
-          ]
+          "target": [["none", 0.92]],
+          "action": [["click", 0.91]]
         }
       ]
     },
@@ -518,27 +358,12 @@
               0.99
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.94,
-          "target": [
-            [
-              "none",
-              0.85
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.93
-            ]
-          ]
+          "target": [["none", 0.85]],
+          "action": [["click", 0.93]]
         }
       ]
     },
@@ -609,27 +434,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.86
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.93
-            ]
-          ]
+          "target": [["none", 0.86]],
+          "action": [["click", 0.93]]
         }
       ]
     },
@@ -675,10 +485,7 @@
           ]
         ],
         "area": [
-          [
-            "missing",
-            0.5
-          ],
+          ["missing", 0.5],
           [
             {
               "role": "main",
@@ -687,10 +494,7 @@
             },
             0.25
           ],
-          [
-            "page",
-            0.22
-          ]
+          ["page", 0.22]
         ]
       }
     },
@@ -708,27 +512,12 @@
               1
             ]
           ],
-          "action": [
-            [
-              "click",
-              1
-            ]
-          ]
+          "action": [["click", 1]]
         },
         {
           "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.82
-            ]
-          ],
-          "action": [
-            [
-              "click",
-              0.91
-            ]
-          ]
+          "target": [["none", 0.82]],
+          "action": [["click", 0.91]]
         }
       ]
     },
@@ -774,14 +563,8 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.39
-          ],
-          [
-            "missing",
-            0.3
-          ],
+          ["page", 0.39],
+          ["missing", 0.3],
           [
             {
               "role": "main",

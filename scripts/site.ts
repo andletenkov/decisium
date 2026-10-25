@@ -1,7 +1,7 @@
 // Builds the docs site into site/*.html (task 0050): static pages with relative links, so it opens from file:// and
 // deploys to GitHub Pages as is. Sources: docs/site/*.md, docs/configuration.md, the agent skill and
 // the example features. Run: node scripts/site.ts
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Marked } from "marked";
 
@@ -12,21 +12,53 @@ const root = join(import.meta.dirname, "..");
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 
 const NAV: [group: string, pages: [slug: string, title: string, source: string][]][] = [
-  ["Getting started", [["index", "Introduction", "docs/site/index.md"], ["installation", "Installation", "docs/site/installation.md"],
-    ["quick-start", "Quick start", "docs/site/quick-start.md"]]],
-  ["Writing tests", [["writing-features", "Features and scenarios", "docs/site/writing-features.md"],
-    ["steps", "Writing Steps", "docs/site/steps.md"], ["browser-context", "Browser context", "docs/site/browser-context.md"],
-    ["client-steps", "Client steps", "docs/site/client-steps.md"]]],
-  ["Running", [["cli", "Command line", "docs/site/cli.md"], ["record-replay", "Record and replay", "docs/site/record-replay.md"],
-    ["network-replay", "Network replay", "docs/site/network-replay.md"], ["configuration", "Configuration", "docs/configuration.md"],
-    ["reports", "Reports and debugging", "docs/site/reports.md"], ["ci", "CI", "docs/site/ci.md"],
-    ["cucumber-js", "Running with cucumber-js", "docs/site/cucumber-js.md"]]],
-  ["Guides", [["troubleshooting", "Troubleshooting", "docs/site/troubleshooting.md"], ["agent-skill", "Agent skill", "skills/decisium/SKILL.md"]]],
+  [
+    "Getting started",
+    [
+      ["index", "Introduction", "docs/site/index.md"],
+      ["installation", "Installation", "docs/site/installation.md"],
+      ["quick-start", "Quick start", "docs/site/quick-start.md"],
+    ],
+  ],
+  [
+    "Writing tests",
+    [
+      ["writing-features", "Features and scenarios", "docs/site/writing-features.md"],
+      ["steps", "Writing Steps", "docs/site/steps.md"],
+      ["browser-context", "Browser context", "docs/site/browser-context.md"],
+      ["client-steps", "Client steps", "docs/site/client-steps.md"],
+    ],
+  ],
+  [
+    "Running",
+    [
+      ["cli", "Command line", "docs/site/cli.md"],
+      ["record-replay", "Record and replay", "docs/site/record-replay.md"],
+      ["network-replay", "Network replay", "docs/site/network-replay.md"],
+      ["configuration", "Configuration", "docs/configuration.md"],
+      ["reports", "Reports and debugging", "docs/site/reports.md"],
+      ["ci", "CI", "docs/site/ci.md"],
+      ["cucumber-js", "Running with cucumber-js", "docs/site/cucumber-js.md"],
+    ],
+  ],
+  [
+    "Guides",
+    [
+      ["troubleshooting", "Troubleshooting", "docs/site/troubleshooting.md"],
+      ["agent-skill", "Agent skill", "skills/decisium/SKILL.md"],
+    ],
+  ],
   ["Reference", [["examples", "Examples", ""]]],
 ];
 const slugs = new Set(NAV.flatMap(([, ps]) => ps.map(([s]) => s)));
 
-export const slugify = (s: string) => s.toLowerCase().replace(/<[^>]+>|&\w+;/g, "").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-");
+export const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/<[^>]+>|&\w+;/g, "")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** A link from a source page to its place in the site; undefined drops the link and keeps its text. */
@@ -69,7 +101,8 @@ const EXAMPLES: [file: string, about: string][] = [
 
 /** The examples page: the EXAMPLES features with an anchor per line. */
 function examples() {
-  const md = "# Examples\n\nFeatures against real public sites. Copy one into your project and run it:\n\n" +
+  const md =
+    "# Examples\n\nFeatures against real public sites. Copy one into your project and run it:\n\n" +
     "```sh\nnpx decisium run saucedemo.feature\n```\n\nThe first run calls Jev and writes `saucedemo.cassette.json` next to it; " +
     "after that, `--record none` replays it with no model calls. How to word each kind of Step is in " +
     "[Writing Steps](steps.md).\n";
@@ -77,7 +110,11 @@ function examples() {
   const blocks = EXAMPLES.map(([f, about]) => {
     const name = basename(f, ".feature");
     toc.push({ level: 2, id: name, text: `${name}.feature` });
-    const lines = read(f).split("\n").map((l, i) => `<span class="ln" id="${name}-L${i + 1}"><a href="#${name}-L${i + 1}">${i + 1}</a>${esc(l)}</span>`);
+    const lines = read(f)
+      .split("\n")
+      .map(
+        (l, i) => `<span class="ln" id="${name}-L${i + 1}"><a href="#${name}-L${i + 1}">${i + 1}</a>${esc(l)}</span>`,
+      );
     return `<h2 id="${name}">${name}.feature</h2>\n<p>${about} <a href="${REPO}/blob/main/${f}">Source</a></p>\n<pre class="feature"><code>${lines.join("")}</code></pre>`;
   });
   return { html: render(md).html + blocks.join("\n"), toc };
@@ -85,8 +122,10 @@ function examples() {
 
 function source(path: string) {
   let md = read(path).replace(/^---\n[\s\S]*?\n---\n/, ""); // front matter
-  if (path.startsWith("skills/")) md = "# Agent skill\n\nInstall it into your coding agent from `node_modules/decisium/skills/decisium/SKILL.md`.\n\n" +
-    md;
+  if (path.startsWith("skills/"))
+    md =
+      "# Agent skill\n\nInstall it into your coding agent from `node_modules/decisium/skills/decisium/SKILL.md`.\n\n" +
+      md;
   return md;
 }
 
@@ -102,17 +141,31 @@ const GITHUB = `<svg width="18" height="18" viewBox="0 0 16 16" fill="currentCol
 const NPM = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg>`;
 const MOON = `<svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg>`;
 const SUN = `<svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg>`;
-const MARK = (size: number) => `<svg class="mark" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg>`;
+const MARK = (size: number) =>
+  `<svg class="mark" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg>`;
 const WORDMARK = `<span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span>`;
 
 function page(slug: string, title: string, html: string, toc: { level: number; id: string; text: string }[]) {
-  const nav = NAV.map(([group, ps]) => `<div class="nav-group"><span class="nav-title">${group}</span>${ps.map(([s, t]) =>
-    `<a href="${s}.html"${s === slug ? ' aria-current="page"' : ""}>${t}</a>`).join("")}</div>`).join("");
-  const flat = NAV.flatMap(([, ps]) => ps), i = flat.findIndex(([s]) => s === slug);
-  const pager = [flat[i - 1] && `<a class="prev" href="${flat[i - 1][0]}.html"><span>Previous</span>${flat[i - 1][1]}</a>`,
-    flat[i + 1] && `<a class="next" href="${flat[i + 1][0]}.html"><span>Next</span>${flat[i + 1][1]}</a>`].filter(Boolean).join("");
-  const onPage = toc.length > 1 ? `<aside class="toc"><span class="nav-title">On this page</span>${toc.map(h =>
-    `<a class="l${h.level}" href="#${h.id}">${esc(h.text)}</a>`).join("")}</aside>` : "";
+  const nav = NAV.map(
+    ([group, ps]) =>
+      `<div class="nav-group"><span class="nav-title">${group}</span>${ps
+        .map(([s, t]) => `<a href="${s}.html"${s === slug ? ' aria-current="page"' : ""}>${t}</a>`)
+        .join("")}</div>`,
+  ).join("");
+  const flat = NAV.flatMap(([, ps]) => ps),
+    i = flat.findIndex(([s]) => s === slug);
+  const pager = [
+    flat[i - 1] && `<a class="prev" href="${flat[i - 1][0]}.html"><span>Previous</span>${flat[i - 1][1]}</a>`,
+    flat[i + 1] && `<a class="next" href="${flat[i + 1][0]}.html"><span>Next</span>${flat[i + 1][1]}</a>`,
+  ]
+    .filter(Boolean)
+    .join("");
+  const onPage =
+    toc.length > 1
+      ? `<aside class="toc"><span class="nav-title">On this page</span>${toc
+          .map((h) => `<a class="l${h.level}" href="#${h.id}">${esc(h.text)}</a>`)
+          .join("")}</aside>`
+      : "";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,12 +198,28 @@ ${onPage}
 
 /** Search entries: one per page section (split at h2/h3), as plain text. */
 export function searchEntries(slug: string, title: string, html: string) {
-  const text = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
-  return html.split(/(?=<h[23] id=")/).map(part => {
-    const h = /^<h[23] id="([^"]+)">([\s\S]*?)<\/h[23]>/.exec(part);
-    return { url: `${slug}.html${h ? `#${h[1]}` : ""}`, page: title, section: h ? text(h[2]) : "", text: text(h ? part.slice(h[0].length) : part).slice(0, 2000) };
-  }).filter(e => e.section || e.text);
+  const text = (h: string) =>
+    h
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim();
+  return html
+    .split(/(?=<h[23] id=")/)
+    .map((part) => {
+      const h = /^<h[23] id="([^"]+)">([\s\S]*?)<\/h[23]>/.exec(part);
+      return {
+        url: `${slug}.html${h ? `#${h[1]}` : ""}`,
+        page: title,
+        section: h ? text(h[2]) : "",
+        text: text(h ? part.slice(h[0].length) : part).slice(0, 2000),
+      };
+    })
+    .filter((e) => e.section || e.text);
 }
 
 if (import.meta.main) {

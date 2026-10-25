@@ -19,7 +19,10 @@ export const urlFromTags = (tags: readonly { name: string }[]) => tagValue(tags,
 
 /** The value of the last `@<name>:<value>` tag. */
 export const tagValue = (tags: readonly { name: string }[], name: string) =>
-  tags.map(t => t.name.startsWith(`@${name}:`) ? t.name.slice(name.length + 2) : undefined).filter(Boolean).at(-1);
+  tags
+    .map((t) => (t.name.startsWith(`@${name}:`) ? t.name.slice(name.length + 2) : undefined))
+    .filter(Boolean)
+    .at(-1);
 
 /**
  * Browser context options from `@viewport:<w>x<h>` (or a Playwright device name, dashes for spaces: `@viewport:iPhone-13`),
@@ -27,13 +30,17 @@ export const tagValue = (tags: readonly { name: string }[], name: string) =>
  */
 export function contextFromTags(tags: readonly { name: string }[]): BrowserContextOptions {
   const o: BrowserContextOptions = {};
-  const viewport = tagValue(tags, "viewport"), geo = tagValue(tags, "geolocation");
+  const viewport = tagValue(tags, "viewport"),
+    geo = tagValue(tags, "geolocation");
   if (viewport) {
     const size = /^(\d+)x(\d+)$/.exec(viewport);
     const device = devices[viewport.replaceAll("-", " ")];
     if (size) o.viewport = { width: Number(size[1]), height: Number(size[2]) };
-    else if (device) { const { defaultBrowserType: _, ...d } = device; Object.assign(o, d); }
-    else throw new Error(`@viewport:${viewport}: expected <width>x<height> or a Playwright device name such as iPhone-13`);
+    else if (device) {
+      const { defaultBrowserType: _, ...d } = device;
+      Object.assign(o, d);
+    } else
+      throw new Error(`@viewport:${viewport}: expected <width>x<height> or a Playwright device name such as iPhone-13`);
   }
   if (geo) {
     const m = /^(-?[\d.]+),(-?[\d.]+)$/.exec(geo);
@@ -41,7 +48,8 @@ export function contextFromTags(tags: readonly { name: string }[]): BrowserConte
     o.geolocation = { latitude: Number(m[1]), longitude: Number(m[2]) };
     o.permissions = ["geolocation"];
   }
-  const locale = tagValue(tags, "locale"), timezoneId = tagValue(tags, "timezone");
+  const locale = tagValue(tags, "locale"),
+    timezoneId = tagValue(tags, "timezone");
   if (locale) o.locale = locale;
   if (timezoneId) o.timezoneId = timezoneId;
   return o;
@@ -49,12 +57,18 @@ export function contextFromTags(tags: readonly { name: string }[]): BrowserConte
 
 /** A pickle step's data table or doc string, only the one it has. */
 const stepArgument = ({ argument }: { argument?: PickleStepArgument }): StepArgument =>
-  argument?.dataTable ? { table: argument.dataTable.rows.map(r => r.cells.map(c => c.value)) }
-  : argument?.docString ? { docString: argument.docString.content } : {};
+  argument?.dataTable
+    ? { table: argument.dataTable.rows.map((r) => r.cells.map((c) => c.value)) }
+    : argument?.docString
+      ? { docString: argument.docString.content }
+      : {};
 
 /** A pickle step as a Step: its text, kind and Data table or Doc string. */
-export const fromPickle = (step: { text: string; type?: PickleStepType; argument?: PickleStepArgument }): ParsedStep =>
-  ({ text: step.text, kind: stepKind(step), ...stepArgument(step) });
+export const fromPickle = (step: {
+  text: string;
+  type?: PickleStepType;
+  argument?: PickleStepArgument;
+}): ParsedStep => ({ text: step.text, kind: stepKind(step), ...stepArgument(step) });
 
 /** Parses a `.feature` source. Throws on Gherkin syntax errors. */
 export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
@@ -62,20 +76,31 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   const doc = new Parser(new AstBuilder(newId), new GherkinClassicTokenMatcher()).parse(source);
   const pickles = compile(doc, uri, newId);
   // Gherkin reads keyword-less lines before the first step as a description, so a typo can leave no steps at all.
-  const empty = pickles.find(p => !p.steps.length);
-  if (empty) throw new Error(`Scenario "${empty.name}" has no steps (lines without Given/When/Then/And/But are read as description)`);
+  const empty = pickles.find((p) => !p.steps.length);
+  if (empty)
+    throw new Error(
+      `Scenario "${empty.name}" has no steps (lines without Given/When/Then/And/But are read as description)`,
+    );
   if (!pickles.length) throw new Error("No scenarios found");
-  const lines = new Map((doc.feature?.children ?? []).flatMap(c => c.rule ? c.rule.children : [c])
-    .flatMap(c => (c.background ?? c.scenario)?.steps ?? []).map(s => [s.id, s.location.line]));
-  for (const p of pickles) for (const s of p.steps) {
-    const cell = readStep(fromPickle(s)).badCell;
-    if (cell !== undefined) throw new Error(`Line ${lines.get(s.astNodeIds[0])}: an action's table cannot have ${cell.trim() ? `a cell with a double quote (${cell})` : "an empty cell"}; it becomes a quoted value`);
-  }
-  return pickles.map(pickle => ({
+  const lines = new Map(
+    (doc.feature?.children ?? [])
+      .flatMap((c) => (c.rule ? c.rule.children : [c]))
+      .flatMap((c) => (c.background ?? c.scenario)?.steps ?? [])
+      .map((s) => [s.id, s.location.line]),
+  );
+  for (const p of pickles)
+    for (const s of p.steps) {
+      const cell = readStep(fromPickle(s)).badCell;
+      if (cell !== undefined)
+        throw new Error(
+          `Line ${lines.get(s.astNodeIds[0])}: an action's table cannot have ${cell.trim() ? `a cell with a double quote (${cell})` : "an empty cell"}; it becomes a quoted value`,
+        );
+    }
+  return pickles.map((pickle) => ({
     name: pickle.name,
-    tags: pickle.tags.map(t => t.name),
+    tags: pickle.tags.map((t) => t.name),
     url: urlFromTags(pickle.tags),
-    steps: pickle.steps.map(step => ({ ...fromPickle(step), line: lines.get(step.astNodeIds[0]) })),
+    steps: pickle.steps.map((step) => ({ ...fromPickle(step), line: lines.get(step.astNodeIds[0]) })),
   }));
 }
 

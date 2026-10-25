@@ -28,7 +28,8 @@ export const ACTIONS = {
   "double click": "Double-click it (e.g. to edit it inline).",
   "right click": "Right-click it (e.g. to open its context menu).",
   drag: "Drag it with the mouse and drop it onto another element (e.g. to reorder it or move it to another list).",
-  "scroll down": "Scroll it down: show or load more of its content further down (the page: the needed element may load further down).",
+  "scroll down":
+    "Scroll it down: show or load more of its content further down (the page: the needed element may load further down).",
   "scroll up": "Scroll it up: show or load more of its content further up.",
   wait: "Wait: the page is still loading what is needed.",
   back: "Go back to the previous page in the browser history.",
@@ -46,19 +47,38 @@ export const ACTIONS = {
  * the focused text field's.
  */
 export function capabilities(target: Element | typeof PAGE, obs: Observation, keys: string[] = []): string[] {
-  if (target === PAGE) return ["scroll down", "scroll up", "wait", "back", "forward", "reload",
-    ...obs.readable.some(e => e.ref === "tabs") ? ["close tab", "switch tab"] : [],
-    ...keys.filter(k => k !== "Enter").map(k => `press ${k}`)];
+  if (target === PAGE)
+    return [
+      "scroll down",
+      "scroll up",
+      "wait",
+      "back",
+      "forward",
+      "reload",
+      ...(obs.readable.some((e) => e.ref === "tabs") ? ["close tab", "switch tab"] : []),
+      ...keys.filter((k) => k !== "Enter").map((k) => `press ${k}`),
+    ];
   // Enter goes to the focused field: offered there, so the field is the target (as the page, Jev split it with the
   // Search button: 0.47 / 0.29, AMBIGUOUS on Wikipedia).
-  const own = target.verb === "TYPE" ? ["type", "paste", ...(/\[active\]/.test(target.state) ? ["enter"] : [])]
-    : target.verb === "SELECT" ? ["select"] : ["click", "upload"];
-  return [...own, "hover", "double click", "right click",
-    ...(/\[draggable\]/.test(target.state) ? ["drag"] : []), ...(/\[scrollable\]/.test(target.state) ? ["scroll down", "scroll up"] : [])];
+  const own =
+    target.verb === "TYPE"
+      ? ["type", "paste", ...(/\[active\]/.test(target.state) ? ["enter"] : [])]
+      : target.verb === "SELECT"
+        ? ["select"]
+        : ["click", "upload"];
+  return [
+    ...own,
+    "hover",
+    "double click",
+    "right click",
+    ...(/\[draggable\]/.test(target.state) ? ["drag"] : []),
+    ...(/\[scrollable\]/.test(target.state) ? ["scroll down", "scroll up"] : []),
+  ];
 }
 
 /** Choice text of an action: ACTIONS, or a key the Step names. */
-export const describeAction = (a: string) => ACTIONS[a as keyof typeof ACTIONS] ?? `Press the ${a.slice(6)} key, as \`step\` says.`;
+export const describeAction = (a: string) =>
+  ACTIONS[a as keyof typeof ACTIONS] ?? `Press the ${a.slice(6)} key, as \`step\` says.`;
 
 /**
  * Equivalent targets sum their confidence before the gate (task 0065, 0057): links with the same name and URL lead to
@@ -69,7 +89,7 @@ export function grouped(p: Pick, obs: Observation): Pick {
   const first = new Map<string, string>();
   const probabilities: Record<string, number> = {};
   for (const [k, v] of Object.entries(p.probabilities)) {
-    const e = obs.elements.find(x => x.ref === k);
+    const e = obs.elements.find((x) => x.ref === k);
     const id = e?.role === "link" && e.url ? `${e.name}|${e.url}` : undefined;
     const into = id ? (first.get(id) ?? (first.set(id, k), k)) : k;
     probabilities[into] = (probabilities[into] ?? 0) + v;
@@ -88,11 +108,16 @@ export const ASSERTION_KINDS = {
 
 /** State labels Jev can pick; code reads the matching snapshot flag. */
 export const STATES = {
-  disabled: "disabled", enabled: "enabled (not disabled)",
-  checked: "checked", unchecked: "not checked",
-  expanded: "expanded / open", collapsed: "collapsed / closed",
-  selected: "selected", unselected: "not selected",
-  pressed: "pressed / toggled on", unpressed: "not pressed / toggled off",
+  disabled: "disabled",
+  enabled: "enabled (not disabled)",
+  checked: "checked",
+  unchecked: "not checked",
+  expanded: "expanded / open",
+  collapsed: "collapsed / closed",
+  selected: "selected",
+  unselected: "not selected",
+  pressed: "pressed / toggled on",
+  unpressed: "not pressed / toggled off",
 } as const;
 
 export interface Assessment {
@@ -107,18 +132,27 @@ export const AREA_PAGE = "page";
 export const AREA_MISSING = "missing";
 
 const SPECIAL: Record<string, string> = {
-  none: "nothing", [AREA_PAGE]: "anywhere on the page", [AREA_MISSING]: "an area not on this screen",
+  none: "nothing",
+  [AREA_PAGE]: "anywhere on the page",
+  [AREA_MISSING]: "an area not on this screen",
 };
 /** A Jev answer for people: element refs replaced by the element, top 3 as percentages. */
 export const named = (p: Pick, obs?: Observation) =>
-  Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => {
-    const el = obs && [...obs.readable, ...obs.areas, ...obs.elements].find(e => e.ref === k);
-    return `${el ? el.line : SPECIAL[k] ?? k} ${Math.round(v * 100)}%`;
-  }).join(", ");
+  Object.entries(p.probabilities)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k, v]) => {
+      const el = obs && [...obs.readable, ...obs.areas, ...obs.elements].find((e) => e.ref === k);
+      return `${el ? el.line : (SPECIAL[k] ?? k)} ${Math.round(v * 100)}%`;
+    })
+    .join(", ");
 
 export const fmt = (p: Pick) =>
-  Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 3)
-    .map(([k, v]) => `${k}=${v.toFixed(2)}`).join(" ");
+  Object.entries(p.probabilities)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k, v]) => `${k}=${v.toFixed(2)}`)
+    .join(" ");
 
 /** The seam to the decision model: Jev implements it (jev.ts); tests use a scripted fake. */
 export interface Decider {
@@ -143,7 +177,10 @@ export interface Decider {
  */
 export class NotYet extends Error {
   final: Error;
-  constructor(final: Error) { super(final.message); this.final = final; }
+  constructor(final: Error) {
+    super(final.message);
+    this.final = final;
+  }
 }
 
 /** Confidence gate: act only on a clear, confident top answer. */
@@ -186,8 +223,12 @@ export function traced(d: Decider, event: (type: string, data: Record<string, un
       return async (...args: unknown[]) => {
         const answer = await ask.apply(target, args);
         const el = args[2] as Element; // value(step, obs, el, candidates)
-        const extra = question === "value" ? { element: el.line, answer: el.secret ? "(secret)" : answer }
-          : question === "dialog" ? { dialog: (args[1] as Observation).dialog, answer } : { answer };
+        const extra =
+          question === "value"
+            ? { element: el.line, answer: el.secret ? "(secret)" : answer }
+            : question === "dialog"
+              ? { dialog: (args[1] as Observation).dialog, answer }
+              : { answer };
         event(question, { step: args[0], ...extra });
         return answer;
       };

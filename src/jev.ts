@@ -1,5 +1,17 @@
 import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { AREA_MISSING, AREA_PAGE, ASSERTION_KINDS, capabilities, describeAction, PAGE, STATES, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import {
+  AREA_MISSING,
+  AREA_PAGE,
+  ASSERTION_KINDS,
+  capabilities,
+  describeAction,
+  PAGE,
+  STATES,
+  type Assessment,
+  type Decider,
+  type Pick,
+  type TurnAnswer,
+} from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export const MODEL = "jev-1.14.0";
@@ -17,7 +29,7 @@ const DIALOG_ANSWERS = {
   },
 } as Record<string, Record<string, string>>;
 
-const refs = (els: Element[]): Record<string, string> => Object.fromEntries(els.map(e => [e.ref, e.line]));
+const refs = (els: Element[]): Record<string, string> => Object.fromEntries(els.map((e) => [e.ref, e.line]));
 
 /** Jev API limit: options per choice question. */
 const MAX_CHOICES = 255;
@@ -28,8 +40,12 @@ const FINALISTS = 3; // kept from each batch
  * batch's most likely candidates, repeat until they fit; the caller asks the real question over what is left, so the
  * confidence gate still reads one comparable distribution. `fixed` answers (none, scroll, ...) are in every batch.
  */
-export async function narrow(candidates: Record<string, string>, fixed: Record<string, string>,
-  ask: (criteria: Record<string, string>) => Promise<Pick>, max = MAX_CHOICES): Promise<Record<string, string>> {
+export async function narrow(
+  candidates: Record<string, string>,
+  fixed: Record<string, string>,
+  ask: (criteria: Record<string, string>) => Promise<Pick>,
+  max = MAX_CHOICES,
+): Promise<Record<string, string>> {
   let left = Object.entries(candidates);
   const size = max - Object.keys(fixed).length;
   while (left.length > size) {
@@ -37,7 +53,10 @@ export async function narrow(candidates: Record<string, string>, fixed: Record<s
     for (let i = 0; i < left.length; i += size) {
       const batch = left.slice(i, i + size);
       const { probabilities } = await ask({ ...Object.fromEntries(batch), ...fixed });
-      const best = batch.map(([k]) => k).sort((a, b) => (probabilities[b] ?? 0) - (probabilities[a] ?? 0)).slice(0, FINALISTS);
+      const best = batch
+        .map(([k]) => k)
+        .sort((a, b) => (probabilities[b] ?? 0) - (probabilities[a] ?? 0))
+        .slice(0, FINALISTS);
       kept.push(...batch.filter(([k]) => best.includes(k)));
     }
     left = kept;
@@ -57,27 +76,39 @@ const SECTION = 8_000; // a page over budget is read in sections of about this s
  * ancestor lines (so a list item keeps its list); narrow() keeps the likeliest ones per batch until they fit, so every
  * question of the Turn reads one reduced `ui` and their probabilities stay comparable.
  */
-export async function reduceUi(ui: string, ask: (sections: Record<string, string>) => Promise<Pick>,
-  budget = UI_BUDGET, section = SECTION): Promise<string> {
+export async function reduceUi(
+  ui: string,
+  ask: (sections: Record<string, string>) => Promise<Pick>,
+  budget = UI_BUDGET,
+  section = SECTION,
+): Promise<string> {
   if (ui.length <= budget) return ui;
   const lines = ui.split("\n");
   const indent = (l: string) => /^\s*/.exec(l)![0].length;
   const parts: number[][] = [];
   const open: number[] = []; // ancestors of the current line, by indentation
-  let part: number[] = [], size = 0;
+  let part: number[] = [],
+    size = 0;
   lines.forEach((l, i) => {
     while (open.length && indent(lines[open.at(-1)!]) >= indent(l)) open.pop();
     if (size + l.length > section && part.length) {
       parts.push(part);
-      part = [...open]; size = open.reduce((n, a) => n + lines[a].length + 1, 0);
+      part = [...open];
+      size = open.reduce((n, a) => n + lines[a].length + 1, 0);
     }
-    part.push(i); size += l.length + 1;
+    part.push(i);
+    size += l.length + 1;
     open.push(i);
   });
   parts.push(part);
-  const text = (p: number[]) => p.map(i => lines[i]).join("\n");
-  const kept = await narrow(Object.fromEntries(parts.map((p, i) => [`s${i}`, text(p)])), {}, ask, Math.floor(budget / (section * 1.5)));
-  const keep = new Set(Object.keys(kept).flatMap(k => parts[Number(k.slice(1))]));
+  const text = (p: number[]) => p.map((i) => lines[i]).join("\n");
+  const kept = await narrow(
+    Object.fromEntries(parts.map((p, i) => [`s${i}`, text(p)])),
+    {},
+    ask,
+    Math.floor(budget / (section * 1.5)),
+  );
+  const keep = new Set(Object.keys(kept).flatMap((k) => parts[Number(k.slice(1))]));
   return lines.filter((_, i) => keep.has(i)).join("\n");
 }
 
@@ -93,14 +124,22 @@ export class JevDecider implements Decider {
   #ui(obs: Observation, about: "step" | "check", step: string): Promise<string> {
     const byStep = this.#reduced.get(obs) ?? new Map<string, Promise<string>>();
     this.#reduced.set(obs, byStep);
-    if (!byStep.has(step)) byStep.set(step, reduceUi(obs.text, async sections => {
-      const res = await this.#ask({
-        state: { [about]: step, ...sections },
-        questions: { pick: choice(`Which of these sections of the page holds what \`${about}\` needs?`,
-          Object.fromEntries(Object.keys(sections).map(k => [k, `section \`${k}\``]))) },
-      });
-      return res.answers.pick;
-    }));
+    if (!byStep.has(step))
+      byStep.set(
+        step,
+        reduceUi(obs.text, async (sections) => {
+          const res = await this.#ask({
+            state: { [about]: step, ...sections },
+            questions: {
+              pick: choice(
+                `Which of these sections of the page holds what \`${about}\` needs?`,
+                Object.fromEntries(Object.keys(sections).map((k) => [k, `section \`${k}\``])),
+              ),
+            },
+          });
+          return res.answers.pick;
+        }),
+      );
     return byStep.get(step)!;
   }
 
@@ -118,24 +157,43 @@ export class JevDecider implements Decider {
       (await this.#ask({ state, questions: { pick: choice(question, criteria) } })).answers.pick;
   }
 
-  async turn(step: string, obs: Observation, recent: string[], attempt = false, keys: string[] = []): Promise<TurnAnswer> {
-    const state = { step, ui: await this.#ui(obs, "step", step), actions_taken_for_step: recent.length ? recent : "none yet" };
+  async turn(
+    step: string,
+    obs: Observation,
+    recent: string[],
+    attempt = false,
+    keys: string[] = [],
+  ): Promise<TurnAnswer> {
+    const state = {
+      step,
+      ui: await this.#ui(obs, "step", step),
+      actions_taken_for_step: recent.length ? recent : "none yet",
+    };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
-    const page = `page "${obs.readable.find(e => e.ref === "title")?.value ?? ""}": the page itself (scroll it, wait, history, tabs, keys)`;
-    const targets = await narrow(refs(obs.elements), { none: "No element on screen helps accomplish `step`.", [PAGE]: page },
-      this.#choose(state, question));
+    const page = `page "${obs.readable.find((e) => e.ref === "title")?.value ?? ""}": the page itself (scroll it, wait, history, tabs, keys)`;
+    const targets = await narrow(
+      refs(obs.elements),
+      { none: "No element on screen helps accomplish `step`.", [PAGE]: page },
+      this.#choose(state, question),
+    );
     // Every action some target offers; code keeps the chosen target's own (task 0065, ADR 0005).
-    const actions = [...new Set([PAGE as typeof PAGE | Element, ...obs.elements].flatMap(t => capabilities(t, obs, keys)))];
+    const actions = [
+      ...new Set([PAGE as typeof PAGE | Element, ...obs.elements].flatMap((t) => capabilities(t, obs, keys))),
+    ];
     const res = await this.#ask({
       state,
       questions: {
         done: attempt
-          ? noul("Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?")
+          ? noul(
+              "Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?",
+            )
           : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
         target: choice(question, targets),
         // Same request as target: one call per Turn (task 0065: as accurate as asking after the target, half the time).
-        action: choice("How should the element chosen to interact with next be used to accomplish `step`?",
-          Object.fromEntries(actions.map(a => [a, describeAction(a)]))),
+        action: choice(
+          "How should the element chosen to interact with next be used to accomplish `step`?",
+          Object.fromEntries(actions.map((a) => [a, describeAction(a)])),
+        ),
       },
     });
     return { done: res.answers.done.noul, target: res.answers.target, action: res.answers.action };
@@ -143,49 +201,80 @@ export class JevDecider implements Decider {
 
   async drop(step: string, obs: Observation, source: Element): Promise<Pick> {
     const state = { step, ui: await this.#ui(obs, "step", step), dragged: source.line };
-    const question = "`dragged` is being dragged with the mouse to accomplish `step`. Onto which element in `ui` should it be dropped?";
-    const among = [...new Set([...obs.readable, ...obs.areas])].filter(e => e !== source);
-    const targets = await narrow(refs(among), { none: "No element in `ui` is where `step` says to drop it." }, this.#choose(state, question));
+    const question =
+      "`dragged` is being dragged with the mouse to accomplish `step`. Onto which element in `ui` should it be dropped?";
+    const among = [...new Set([...obs.readable, ...obs.areas])].filter((e) => e !== source);
+    const targets = await narrow(
+      refs(among),
+      { none: "No element in `ui` is where `step` says to drop it." },
+      this.#choose(state, question),
+    );
     return (await this.#ask({ state, questions: { target: choice(question, targets) } })).answers.target;
   }
 
   async recall(step: string, earlier: Record<string, string>): Promise<Pick> {
     const values = Object.keys(earlier);
-    const criteria: Record<string, string> = Object.fromEntries(values.map((v, i) => [`v${i}`, `"${v}", from the earlier step: ${earlier[v]}`]));
+    const criteria: Record<string, string> = Object.fromEntries(
+      values.map((v, i) => [`v${i}`, `"${v}", from the earlier step: ${earlier[v]}`]),
+    );
     criteria.none = "`check` does not refer to any of these values.";
     const res = await this.#ask({
       state: { check: step },
-      questions: { value: choice("`check` quotes no value. Which value from an earlier step of the same test does it refer to (e.g. \"the campaign\" meaning the campaign named earlier)?", criteria) },
+      questions: {
+        value: choice(
+          '`check` quotes no value. Which value from an earlier step of the same test does it refer to (e.g. "the campaign" meaning the campaign named earlier)?',
+          criteria,
+        ),
+      },
     });
     const a: Pick = res.answers.value;
-    const name = (k: string) => k === "none" ? k : values[Number(k.slice(1))] ?? k;
-    return { choice: name(a.choice), probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])) };
+    const name = (k: string) => (k === "none" ? k : (values[Number(k.slice(1))] ?? k));
+    return {
+      choice: name(a.choice),
+      probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
+    };
   }
 
   async dialog(step: string, obs: Observation, answers: string[]): Promise<Pick> {
     const { type, message } = obs.dialog!;
-    const criteria = Object.fromEntries(answers.map((a, i) => a === "accept" || a === "dismiss"
-      ? [a, DIALOG_ANSWERS[a][type]] : [`v${i}`, `Enter "${a}" and click OK.`]));
+    const criteria = Object.fromEntries(
+      answers.map((a, i) =>
+        a === "accept" || a === "dismiss" ? [a, DIALOG_ANSWERS[a][type]] : [`v${i}`, `Enter "${a}" and click OK.`],
+      ),
+    );
     const res = await this.#ask({
       state: { step, dialog: message },
-      questions: { answer: choice(`A browser ${type === "beforeunload" ? "\"Leave site?\"" : type} dialog is open, saying \`dialog\`. How should it be answered to accomplish \`step\`?`, criteria) },
+      questions: {
+        answer: choice(
+          `A browser ${type === "beforeunload" ? '"Leave site?"' : type} dialog is open, saying \`dialog\`. How should it be answered to accomplish \`step\`?`,
+          criteria,
+        ),
+      },
     });
     const a: Pick = res.answers.answer;
-    const name = (k: string) => /^v\d+$/.test(k) ? answers[Number(k.slice(1))] : k;
-    return { choice: name(a.choice), probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])) };
+    const name = (k: string) => (/^v\d+$/.test(k) ? answers[Number(k.slice(1))] : k);
+    return {
+      choice: name(a.choice),
+      probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
+    };
   }
 
   async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
     const state = { step, ui: await this.#ui(obs, "step", step), element: el.line };
     // A clicked element gets a value only to upload a file (task 0044): "entered into a button" read as nothing.
-    const question = el.verb === "CLICK" ? "Which file should be uploaded with `element` to accomplish `step`?"
-      : "Which value should be entered into `element` to accomplish `step`?";
-    const criteria = await narrow(Object.fromEntries(candidates.map((c, i) => [`v${i}`, c])),
-      { none: "None of these values is what `step` asks for." }, this.#choose(state, question));
+    const question =
+      el.verb === "CLICK"
+        ? "Which file should be uploaded with `element` to accomplish `step`?"
+        : "Which value should be entered into `element` to accomplish `step`?";
+    const criteria = await narrow(
+      Object.fromEntries(candidates.map((c, i) => [`v${i}`, c])),
+      { none: "None of these values is what `step` asks for." },
+      this.#choose(state, question),
+    );
     const res = await this.#ask({ state, questions: { value: choice(question, criteria) } });
     const a: Pick = res.answers.value;
     // Map label keys back to the values so traces and execution use real text.
-    const name = (k: string) => criteria[k] !== undefined && k !== "none" ? criteria[k] : k;
+    const name = (k: string) => (criteria[k] !== undefined && k !== "none" ? criteria[k] : k);
     return {
       choice: name(a.choice),
       probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
@@ -195,13 +284,22 @@ export class JevDecider implements Decider {
   async assess(step: string, obs: Observation, judged: boolean): Promise<Assessment> {
     const state = { check: step, ui: await this.#ui(obs, "check", step) };
     const subjectQ = "Which element in `ui` is the one `check` is about, regardless of whether the check passes?";
-    const areaQ = "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.";
+    const areaQ =
+      "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.";
     const [subjects, areas] = await Promise.all([
-      narrow(refs(obs.readable), { none: "No element in `ui` is the one `check` is about." }, this.#choose(state, subjectQ)),
-      narrow(refs(obs.areas), {
-        [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
-        [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
-      }, this.#choose(state, areaQ)),
+      narrow(
+        refs(obs.readable),
+        { none: "No element in `ui` is the one `check` is about." },
+        this.#choose(state, subjectQ),
+      ),
+      narrow(
+        refs(obs.areas),
+        {
+          [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
+          [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
+        },
+        this.#choose(state, areaQ),
+      ),
     ]);
     const res = await this.#ask({
       state,
@@ -216,6 +314,4 @@ export class JevDecider implements Decider {
     const a = res.answers as typeof res.answers & { judged?: { noul: number } };
     return { kind: a.kind, subject: a.subject, area: a.area, state: a.state, judged: a.judged?.noul };
   }
-
 }
-

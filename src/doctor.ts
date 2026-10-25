@@ -14,23 +14,43 @@ export const nodeOk = (version = process.versions.node) => {
 
 export async function doctor(files: string[]): Promise<number> {
   let failed = false;
-  const line = (ok: boolean, what: string) => { failed ||= !ok; console.log(`[${ok ? "OK" : "FAIL"}] ${what}`); };
+  const line = (ok: boolean, what: string) => {
+    failed ||= !ok;
+    console.log(`[${ok ? "OK" : "FAIL"}] ${what}`);
+  };
   const attempt = async (what: string, fn: () => Promise<unknown>) => {
-    try { await fn(); line(true, what); } catch (err) { line(false, `${what}: ${(err as Error).message.split("\n")[0]}`); }
+    try {
+      await fn();
+      line(true, what);
+    } catch (err) {
+      line(false, `${what}: ${(err as Error).message.split("\n")[0]}`);
+    }
   };
 
   line(nodeOk(), `Node ${process.versions.node} (needs 22.18+ or 23.6+)`);
-  line(existsSync(chromium.executablePath()), `Chromium at ${chromium.executablePath()} (else: npx playwright install chromium)`);
+  line(
+    existsSync(chromium.executablePath()),
+    `Chromium at ${chromium.executablePath()} (else: npx playwright install chromium)`,
+  );
   if (!process.env.TYPESAFE_API_KEY) line(false, "TYPESAFE_API_KEY is not set");
-  else await attempt(`TYPESAFE_API_KEY accepted by Jev (${MODEL})`, () => new TypeSafeClient({ defaultModel: MODEL })
-    .systemOne({ state: { word: "yes" }, questions: { q: noul("Is `word` yes?") } }));
+  else
+    await attempt(`TYPESAFE_API_KEY accepted by Jev (${MODEL})`, () =>
+      new TypeSafeClient({ defaultModel: MODEL }).systemOne({
+        state: { word: "yes" },
+        questions: { q: noul("Is `word` yes?") },
+      }),
+    );
 
   const scenarios: Scenario[] = [];
   for (const f of files) {
-    try { scenarios.push(...parseFeature(readFileSync(f, "utf8"), f)); line(true, `${f} parses`); }
-    catch (err) { line(false, `${f}: ${(err as Error).message}`); }
+    try {
+      scenarios.push(...parseFeature(readFileSync(f, "utf8"), f));
+      line(true, `${f} parses`);
+    } catch (err) {
+      line(false, `${f}: ${(err as Error).message}`);
+    }
   }
-  for (const url of new Set(scenarios.map(s => s.url).filter(u => u !== undefined))) {
+  for (const url of new Set(scenarios.map((s) => s.url).filter((u) => u !== undefined))) {
     await attempt(`opens ${url}`, async () => (await Browser.open(toUrl(url))).close());
   }
   return failed ? 2 : 0;

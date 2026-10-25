@@ -16,20 +16,12 @@
               0.86
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "action": [["click", 0.97]]
         },
         {
           "done": 0.96,
           "target": [
-            [
-              "none",
-              0.68
-            ],
+            ["none", 0.68],
             [
               {
                 "role": "button",
@@ -39,12 +31,7 @@
               0.27
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.98
-            ]
-          ]
+          "action": [["click", 0.98]]
         }
       ]
     },
@@ -98,10 +85,7 @@
             },
             0.71
           ],
-          [
-            "page",
-            0.27
-          ]
+          ["page", 0.27]
         ]
       }
     },
@@ -138,10 +122,7 @@
           }
         },
         "subject": [
-          [
-            "none",
-            0.63
-          ],
+          ["none", 0.63],
           [
             {
               "role": "button",
@@ -151,53 +132,20 @@
             0.33
           ]
         ],
-        "area": [
-          [
-            "page",
-            0.91
-          ]
-        ]
+        "area": [["page", 0.91]]
       }
     },
     "Open the command palette with a shortcut: I open the command palette by pressing Ctrl+K": {
       "turns": [
         {
           "done": 0.02,
-          "target": [
-            [
-              "page",
-              0.79
-            ],
-            [
-              "none",
-              0.13
-            ]
-          ],
-          "action": [
-            [
-              "press Control+K",
-              0.99
-            ]
-          ]
+          "target": [["page", 0.79], ["none", 0.13]],
+          "action": [["press Control+K", 0.99]]
         },
         {
           "done": 0.98,
-          "target": [
-            [
-              "none",
-              0.75
-            ],
-            [
-              "page",
-              0.13
-            ]
-          ],
-          "action": [
-            [
-              "press Control+K",
-              0.96
-            ]
-          ]
+          "target": [["none", 0.75], ["page", 0.13]],
+          "action": [["press Control+K", 0.96]]
         }
       ]
     },
@@ -306,10 +254,7 @@
             },
             0.64
           ],
-          [
-            "page",
-            0.35
-          ]
+          ["page", 0.35]
         ]
       }
     },
@@ -363,10 +308,7 @@
             },
             0.68
           ],
-          [
-            "page",
-            0.31
-          ]
+          ["page", 0.31]
         ]
       }
     },
@@ -413,10 +355,7 @@
           ]
         ],
         "area": [
-          [
-            "page",
-            0.67
-          ],
+          ["page", 0.67],
           [
             {
               "role": "main",
@@ -442,20 +381,12 @@
               0.91
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.98
-            ]
-          ]
+          "action": [["click", 0.98]]
         },
         {
           "done": 0.94,
           "target": [
-            [
-              "none",
-              0.65
-            ],
+            ["none", 0.65],
             [
               {
                 "role": "button",
@@ -465,12 +396,7 @@
               0.29
             ]
           ],
-          "action": [
-            [
-              "click",
-              0.97
-            ]
-          ]
+          "action": [["click", 0.97]]
         }
       ]
     },
@@ -479,10 +405,7 @@
         {
           "done": 0.01,
           "target": [
-            [
-              "page",
-              0.76
-            ],
+            ["page", 0.76],
             [
               {
                 "role": "button",
@@ -493,39 +416,18 @@
             ]
           ],
           "action": [
-            [
-              "wait",
-              0.04
-            ],
-            [
-              "back",
-              0.02
-            ],
-            [
-              "scroll down",
-              0
-            ],
-            [
-              "scroll up",
-              0
-            ],
-            [
-              "forward",
-              0
-            ],
-            [
-              "reload",
-              0
-            ]
+            ["wait", 0.04],
+            ["back", 0.02],
+            ["scroll down", 0],
+            ["scroll up", 0],
+            ["forward", 0],
+            ["reload", 0]
           ]
         },
         {
           "done": 0.04,
           "target": [
-            [
-              "page",
-              0.72
-            ],
+            ["page", 0.72],
             [
               {
                 "role": "button",
@@ -536,30 +438,12 @@
             ]
           ],
           "action": [
-            [
-              "wait",
-              0.13
-            ],
-            [
-              "back",
-              0.01
-            ],
-            [
-              "scroll down",
-              0
-            ],
-            [
-              "scroll up",
-              0
-            ],
-            [
-              "forward",
-              0
-            ],
-            [
-              "reload",
-              0
-            ]
+            ["wait", 0.13],
+            ["back", 0.01],
+            ["scroll down", 0],
+            ["scroll up", 0],
+            ["forward", 0],
+            ["reload", 0]
           ]
         }
       ]
