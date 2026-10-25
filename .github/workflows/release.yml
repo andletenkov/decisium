@@ -26,8 +26,9 @@ jobs:
       - run: npm run pack:smoke
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-      - run: npm install -g npm@latest # trusted publishing (OIDC) needs npm 11.5.1+
-      - run: npm publish --access public # trusted publishing: no token, provenance attached automatically
+      - run: npm install -g npm@latest # trusted publishing (OIDC) needs npm 11.5.1+, staging a newer one
+      # The trusted publisher only allows staging: approve with 2FA via `npm stage list decisium` + `npm stage approve <id>`.
+      - run: npm stage publish --access public
   pages:
     needs: publish
     runs-on: ubuntu-latest
