@@ -4,6 +4,15 @@
   "description": "Semantic UI testing with decision models: plain-English Gherkin Steps executed by Jev in a real browser, pass/fail decided by code, record/replay cassettes",
   "type": "module",
   "license": "MIT",
+  "author": "andletenkov",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andletenkov/decisium.git"
+  },
+  "homepage": "https://andletenkov.github.io/decisium/",
+  "bugs": {
+    "url": "https://github.com/andletenkov/decisium/issues"
+  },
   "keywords": [
     "cucumber",
     "gherkin",

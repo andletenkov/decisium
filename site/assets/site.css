@@ -1,24 +1,47 @@
 /* Decisium identity on top of Nocturne: Ink/Paper carry the mark, Signal only on the decision diamond and tittles. */
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@500&family=Geist+Mono:wght@400;500&display=swap");
 
+/* Monochrome: Ink and Paper only. The Nocturne tokens are remapped to neutral greys; the ramp runs from the text colour
+   (100) to the ground (900) in both themes, so Nocturne's "light step on dark" rules hold in light mode too. */
+:root, :root[data-theme="dark"] {
+  --ink: #0A0A0B; --paper: #F4F3EF;
+  --color-bg: #0A0A0B; --color-surface: #141415; --color-text: #F4F3EF; --color-divider: #2A2A2C;
+  --color-neutral-100: #EDECE8; --color-neutral-200: #D6D5D1; --color-neutral-300: #B4B3AF; --color-neutral-400: #8C8B88;
+  --color-neutral-500: #6B6A68; --color-neutral-600: #4E4E4D; --color-neutral-700: #343435; --color-neutral-800: #232324;
+  --color-neutral-900: #161617;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --color-bg: #FAFAF7; --color-surface: #F1F0EC; --color-text: #0A0A0B; --color-divider: #DEDDD8;
+  --color-neutral-100: #17171A; --color-neutral-200: #2C2C2E; --color-neutral-300: #4A4A4C; --color-neutral-400: #6E6E6F;
+  --color-neutral-500: #8E8E8E; --color-neutral-600: #ABABA8; --color-neutral-700: #CFCEC9; --color-neutral-800: #E6E5E0;
+  --color-neutral-900: #F0EFEA;
+  color-scheme: light;
+}
 :root {
-  --ink: #121417;
-  --paper: #F4F3EF;
-  --signal: #3BE38F;
-  --signal-deep: #0E9F63;
+  --color-accent: var(--color-text); --color-accent-2: var(--color-text);
+  --color-accent-100: var(--color-neutral-100); --color-accent-200: var(--color-neutral-200); --color-accent-300: var(--color-neutral-200);
+  --color-accent-400: var(--color-neutral-300); --color-accent-500: var(--color-text); --color-accent-600: var(--color-neutral-300);
+  --color-accent-700: var(--color-neutral-700); --color-accent-800: var(--color-neutral-800); --color-accent-900: var(--color-neutral-900);
+  --color-accent-2-100: var(--color-neutral-100); --color-accent-2-800: var(--color-neutral-800);
+  --shadow-sm: none; --shadow-md: none; --shadow-lg: none;
+  --signal: var(--color-text);
   --font-mono: "Geist Mono", ui-monospace, monospace;
 }
 body { background: var(--color-bg); color: var(--color-text); }
-a { color: var(--color-accent-300); }
-a:hover { color: var(--color-accent-200); }
+a { color: var(--color-text); text-underline-offset: 3px; text-decoration-color: var(--color-neutral-500); }
+a:hover { text-decoration-color: var(--color-text); }
+::selection { background: var(--color-neutral-700); color: var(--color-text); }
+:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
+
+/* Mark (monochrome variant): the D and its node in the text colour, the aperture is the ground. */
+.mark { --a: currentColor; color: var(--color-text); flex: none; }
 
 
-/* Mark: currentColor is the D, --a the node. */
-.mark { --a: var(--signal); color: var(--paper); flex: none; }
 
 /* Wordmark: dotless ı with a diamond tittle sitting where the dot would. */
 .wordmark { display: inline-block; white-space: nowrap; font-family: "Geist", var(--font-heading); font-weight: 500;
-  letter-spacing: -0.045em; line-height: 1; color: var(--paper); --a: var(--signal); }
+  letter-spacing: -0.045em; line-height: 1; color: var(--color-text); --a: var(--color-text); }
 .wordmark .i { position: relative; display: inline-block; letter-spacing: 0; margin-right: -0.04em; }
 .wordmark .i::after { content: ""; position: absolute; left: 50%; top: 0.06em; width: 0.16em; height: 0.16em;
   background: var(--a); transform: translateX(-50%) rotate(45deg); }
@@ -79,3 +102,10 @@ pre.feature .ln:target a { color: var(--signal); }
   .layout { grid-template-columns: 1fr; gap: 0; }
   .sidebar { position: static; max-height: none; flex-direction: row; flex-wrap: wrap; padding: 16px 0; border-bottom: 1px solid var(--color-neutral-800); }
 }
+
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+  background: none; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); color: var(--color-text); cursor: pointer; }
+.theme-toggle:hover { background: var(--color-neutral-900); }
+.theme-toggle .sun, :root[data-theme="light"] .theme-toggle .moon { display: none; }
+:root[data-theme="light"] .theme-toggle .sun { display: block; }
+.top-links { align-items: center; }
