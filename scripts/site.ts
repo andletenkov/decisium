@@ -5,6 +5,8 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Marked } from "marked";
 
+const REPO = "https://github.com/andletenkov/decisium";
+
 const root = join(import.meta.dirname, "..");
 const read = (p: string) => readFileSync(join(root, p), "utf8");
 
@@ -26,8 +28,8 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 /** A link from a source page to its place in the site; undefined drops the link and keeps its text. */
 export function siteHref(href: string): string | undefined {
   if (/^(https?:|mailto:|#)/.test(href)) return href;
-  const example = /(?:^|\/)examples\/(?:[\w-]+\/)*([\w-]+)\.feature(?:#L(\d+))?$/.exec(href);
-  if (example) return `examples.html#${example[1]}${example[2] ? `-L${example[2]}` : ""}`;
+  const example = /(?:^|\/)(examples\/[\w./-]+\.(?:feature|ts|html))(#L\d+)?$/.exec(href);
+  if (example) return `${REPO}/blob/main/${example[1]}${example[2] ?? ""}`; // the cookbook's evidence, on GitHub
   const page = /^(?:\.\/|\.\.\/)?(?:docs\/)?([\w-]+)\.md(#.*)?$/.exec(href);
   if (page && slugs.has(page[1])) return `${page[1]}.html${page[2] ?? ""}`;
   return undefined;
@@ -53,19 +55,26 @@ function render(md: string) {
   return { html: marked.parse(md) as string, toc };
 }
 
-/** The examples page: every example feature with an anchor per line, the targets of the cookbook's links. */
+/** Real public sites a user can run as is, each replaying from its committed cassette. */
+const EXAMPLES: [file: string, about: string][] = [
+  ["examples/real/saucedemo.feature", "A shop: login, a locked-out user, sorting, the cart and checkout validation."],
+  ["examples/real/todomvc.feature", "List state: a Background, counters, filters and absence checks scoped to the list."],
+  ["examples/real/the-internet.feature", "Classic widgets: checkboxes, dropdowns, and a start URL per scenario."],
+  ["examples/real/github.feature", "A large live site with no login: tabs, headings and releases."],
+];
+
+/** The examples page: the EXAMPLES features with an anchor per line. */
 function examples() {
-  const dirs = ["examples/cookbook", "examples/campaign-manager", "examples/campaign-app"];
-  const files = dirs.flatMap(d => (readdirSync(join(root, d)).filter(f => f.endsWith(".feature")).map(f => `${d}/${f}`)))
-    .concat("examples/campaign-app.feature").filter((f, i, all) => all.indexOf(f) === i).filter(f => { try { read(f); return true; } catch { return false; } });
-  let md = "# Examples\n\nThe features behind the [Cookbook](cookbook.md). Each one runs from its committed cassette with " +
-    "`--record none`. Scenarios marked \"Should FAIL\" show a wording the cookbook warns against.\n\n";
+  const md = "# Examples\n\nFeatures against real public sites. Copy one into your project and run it:\n\n" +
+    "```sh\nnpx decisium run saucedemo.feature\n```\n\nThe first run calls Jev and writes `saucedemo.cassette.json` next to it; " +
+    "after that, `--record none` replays it with no model calls. More wordings, each with the Step that backs it, are in the " +
+    "[Cookbook](cookbook.md).\n";
   const toc: { level: number; id: string; text: string }[] = [];
-  const blocks = files.map(f => {
+  const blocks = EXAMPLES.map(([f, about]) => {
     const name = basename(f, ".feature");
     toc.push({ level: 2, id: name, text: `${name}.feature` });
     const lines = read(f).split("\n").map((l, i) => `<span class="ln" id="${name}-L${i + 1}"><a href="#${name}-L${i + 1}">${i + 1}</a>${esc(l)}</span>`);
-    return `<h2 id="${name}">${name}.feature</h2>\n<p class="path">${f}</p>\n<pre class="feature"><code>${lines.join("")}</code></pre>`;
+    return `<h2 id="${name}">${name}.feature</h2>\n<p>${about} <a href="${REPO}/blob/main/${f}">Source</a></p>\n<pre class="feature"><code>${lines.join("")}</code></pre>`;
   });
   return { html: render(md).html + blocks.join("\n"), toc };
 }
@@ -77,7 +86,6 @@ function source(path: string) {
   return md;
 }
 
-const REPO = "https://github.com/andletenkov/decisium";
 const MOON = `<svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg>`;
 const SUN = `<svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg>`;
 const MARK = (size: number) => `<svg class="mark" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg>`;

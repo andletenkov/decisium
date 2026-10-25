@@ -22,8 +22,8 @@ Decisium reads each line as one of these:
 | State check | `"Banana" should be selected` | Code reads the element's state. |
 | Attempt | `I try to save the form` | A negative path: the action may be refused. |
 
-The [Cookbook](cookbook.md) lists, for each kind, the wordings that pass and the ones to avoid, each backed by an
-[example](examples.md).
+The [Cookbook](cookbook.md) lists, for each kind, the wordings that pass and the ones to avoid, each backed by a
+Step in the repository's `examples/`. Ready-to-run features are on the [Examples](examples.md) page.
 
 ## Rules
 
