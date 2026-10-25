@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T15-51-59-361Z",
+  "run": "runs/2026-10-25T11-46-23-954Z",
   "entries": {
     "Confirm a deletion: I delete the \"Groceries\" note": {
       "turns": [
@@ -15,6 +15,12 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
@@ -26,11 +32,17 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.95
+              0.93
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
             ]
           ]
         }
@@ -53,18 +65,18 @@
         "state": {
           "type": "choice",
           "choice": "collapsed",
-          "confidence": 0.4,
+          "confidence": 0.38,
           "probabilities": {
-            "disabled": 0.02,
-            "enabled": 0.06,
+            "disabled": 0.03,
+            "enabled": 0.05,
             "checked": 0.05,
-            "unchecked": 0.16,
+            "unchecked": 0.13,
             "expanded": 0.03,
-            "collapsed": 0.46,
+            "collapsed": 0.44,
             "selected": 0.02,
-            "unselected": 0.15,
+            "unselected": 0.17,
             "pressed": 0.01,
-            "unpressed": 0.04
+            "unpressed": 0.07
           }
         },
         "subject": [
@@ -74,17 +86,17 @@
               "name": "browser dialog",
               "container": ""
             },
-            0.9
+            0.81
           ]
         ],
         "area": [
           [
-            "missing",
-            0.41
+            "page",
+            0.41000000000000003
           ],
           [
-            "page",
-            0.28
+            "missing",
+            0.31
           ],
           [
             {
@@ -92,7 +104,7 @@
               "name": "Notes",
               "container": ""
             },
-            0.2
+            0.15
           ]
         ]
       }
@@ -113,18 +125,18 @@
         },
         "state": {
           "type": "choice",
-          "choice": "expanded",
-          "confidence": 0.27,
+          "choice": "enabled",
+          "confidence": 0.24,
           "probabilities": {
-            "disabled": 0,
-            "enabled": 0.33,
-            "checked": 0.21,
+            "disabled": 0.01,
+            "enabled": 0.32,
+            "checked": 0.2,
             "unchecked": 0.01,
-            "expanded": 0.34,
-            "collapsed": 0.05,
-            "selected": 0.03,
+            "expanded": 0.32,
+            "collapsed": 0.08,
+            "selected": 0.02,
             "unselected": 0.01,
-            "pressed": 0.01,
+            "pressed": 0.02,
             "unpressed": 0.01
           }
         },
@@ -141,11 +153,21 @@
         "area": [
           [
             "missing",
-            0.58
+            0.43
           ],
           [
             "page",
-            0.32
+            0.29
+          ],
+          [
+            {
+              "role": "generic",
+              "name": "",
+              "container": "",
+              "nth": 0,
+              "of": 2
+            },
+            0.22
           ]
         ]
       }
@@ -153,7 +175,7 @@
     "Cancel a confirm: I start deleting the \"Ideas\" note but cancel": {
       "turns": [
         {
-          "done": 0.03,
+          "done": 0.04,
           "target": [
             [
               {
@@ -161,7 +183,13 @@
                 "name": "Delete Ideas",
                 "container": "list \"Notes\""
               },
-              0.86
+              0.9
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.97
             ]
           ]
         },
@@ -178,7 +206,7 @@
           "target": [
             [
               "none",
-              0.58
+              0.67
             ],
             [
               {
@@ -186,7 +214,13 @@
                 "name": "Delete Ideas",
                 "container": "list \"Notes\""
               },
-              0.38
+              0.26
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.94
             ]
           ]
         }
@@ -197,11 +231,11 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.9,
+          "confidence": 0.82,
           "probabilities": {
-            "value": 0.04,
-            "presence": 0.92,
-            "absence": 0.03,
+            "value": 0.08,
+            "presence": 0.86,
+            "absence": 0.05,
             "state": 0,
             "fuzzy": 0.01
           }
@@ -209,18 +243,18 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.2,
+          "confidence": 0.28,
           "probabilities": {
-            "disabled": 0.27,
-            "enabled": 0.27999999999999997,
-            "checked": 0.04,
-            "unchecked": 0.02,
+            "disabled": 0.28,
+            "enabled": 0.35,
+            "checked": 0.09,
+            "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0.01,
-            "selected": 0.11,
-            "unselected": 0.04,
-            "pressed": 0.13,
-            "unpressed": 0.09
+            "selected": 0.08,
+            "unselected": 0.03,
+            "pressed": 0.09,
+            "unpressed": 0.05
           }
         },
         "subject": [
@@ -231,7 +265,7 @@
               "container": "list \"Notes\"",
               "near": "Ideas Delete Ideas Delete"
             },
-            0.97
+            0.98
           ]
         ],
         "area": [
@@ -241,7 +275,7 @@
               "name": "Notes",
               "container": ""
             },
-            0.9400000000000001
+            0.92
           ]
         ]
       }
@@ -249,7 +283,7 @@
     "Read an alert: I save the settings": {
       "turns": [
         {
-          "done": 0.03,
+          "done": 0.04,
           "target": [
             [
               {
@@ -257,16 +291,28 @@
                 "name": "Save settings",
                 "container": ""
               },
-              0.97
+              0.98
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.98
             ]
           ]
         },
         {
-          "done": 0.93,
+          "done": 0.94,
           "target": [
             [
               "none",
-              0.89
+              0.9
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.93
             ]
           ]
         }
@@ -277,10 +323,10 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.89,
+          "confidence": 0.9,
           "probabilities": {
-            "value": 0.91,
-            "presence": 0.05,
+            "value": 0.92,
+            "presence": 0.04,
             "absence": 0.02,
             "state": 0,
             "fuzzy": 0.02
@@ -291,15 +337,15 @@
           "choice": "enabled",
           "confidence": 0.53,
           "probabilities": {
-            "disabled": 0.08,
+            "disabled": 0.11,
             "enabled": 0.58,
-            "checked": 0.08,
+            "checked": 0.07,
             "unchecked": 0,
-            "expanded": 0.04,
-            "collapsed": 0.06,
+            "expanded": 0.05,
+            "collapsed": 0.07,
             "selected": 0.01,
             "unselected": 0,
-            "pressed": 0.14,
+            "pressed": 0.1,
             "unpressed": 0.01
           }
         },
@@ -315,22 +361,12 @@
         ],
         "area": [
           [
-            "page",
-            0.46
-          ],
-          [
             "missing",
-            0.31
+            0.54
           ],
           [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 2
-            },
-            0.19
+            "page",
+            0.35
           ]
         ]
       }
@@ -346,7 +382,13 @@
                 "name": "Rename list",
                 "container": ""
               },
-              0.99
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.98
             ]
           ]
         },
@@ -363,7 +405,7 @@
           "target": [
             [
               "none",
-              0.68
+              0.69
             ],
             [
               {
@@ -372,6 +414,16 @@
                 "container": ""
               },
               0.27
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.55
+            ],
+            [
+              "click",
+              0.39
             ]
           ]
         }
@@ -393,18 +445,18 @@
         },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.38,
+          "choice": "checked",
+          "confidence": 0.4,
           "probabilities": {
-            "disabled": 0.01,
-            "enabled": 0.44,
-            "checked": 0.27999999999999997,
+            "disabled": 0,
+            "enabled": 0.36,
+            "checked": 0.45999999999999996,
             "unchecked": 0.02,
-            "expanded": 0.03,
+            "expanded": 0.01,
             "collapsed": 0.01,
-            "selected": 0.12,
+            "selected": 0.09,
             "unselected": 0.01,
-            "pressed": 0.07,
+            "pressed": 0.03,
             "unpressed": 0.01
           }
         },
@@ -415,7 +467,7 @@
               "name": "Errands",
               "container": ""
             },
-            0.99
+            1
           ]
         ],
         "area": [
@@ -425,19 +477,11 @@
               "name": "",
               "container": ""
             },
-            0.52
-          ],
-          [
-            {
-              "role": "list",
-              "name": "Notes",
-              "container": ""
-            },
-            0.24
+            0.7
           ],
           [
             "page",
-            0.17
+            0.13
           ]
         ]
       }
@@ -453,7 +497,17 @@
                 "name": "Draft",
                 "container": ""
               },
-              0.98
+              1
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.79
+            ],
+            [
+              "paste",
+              0.02
             ]
           ],
           "value": [
@@ -468,24 +522,38 @@
           "target": [
             [
               {
+                "role": "textbox",
+                "name": "Draft",
+                "container": ""
+              },
+              0.37
+            ],
+            [
+              "none",
+              0.32
+            ],
+            [
+              {
                 "role": "button",
                 "name": "Save settings",
                 "container": ""
               },
-              0.55
-            ],
+              0.31
+            ]
+          ],
+          "action": [
             [
-              "none",
-              0.35
+              "type",
+              0.99
             ]
           ]
         }
       ]
     },
-    "Leave a page with unsaved changes: I leave for the search page": {
+    "Leave a page with unsaved changes: I leave by the \"Search page\" link": {
       "turns": [
         {
-          "done": 0.04,
+          "done": 0.01,
           "target": [
             [
               {
@@ -493,15 +561,13 @@
                 "name": "Search page",
                 "container": ""
               },
-              0.6900000000000001
-            ],
+              1
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "link",
-                "name": "Search",
-                "container": "navigation \"Main\""
-              },
-              0.31
+              "click",
+              1
             ]
           ]
         },
@@ -514,11 +580,17 @@
           ]
         },
         {
-          "done": 0.94,
+          "done": 0.95,
           "target": [
             [
               "none",
-              0.8200000000000001
+              0.81
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
             ]
           ]
         }
@@ -541,15 +613,15 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.5,
+          "confidence": 0.4,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.55,
-            "checked": 0.11,
+            "enabled": 0.46,
+            "checked": 0.14,
             "unchecked": 0.01,
-            "expanded": 0.01,
+            "expanded": 0.02,
             "collapsed": 0,
-            "selected": 0.3,
+            "selected": 0.34,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0
@@ -572,7 +644,7 @@
               "name": "",
               "container": ""
             },
-            0.8
+            0.83
           ]
         ]
       }
@@ -580,7 +652,7 @@
     "A Step that only answers the dialog: I click the delete button of \"Groceries\"": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.01,
           "target": [
             [
               {
@@ -588,7 +660,13 @@
                 "name": "Delete Groceries",
                 "container": "list \"Notes\""
               },
-              0.99
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              1
             ]
           ]
         },
@@ -601,11 +679,17 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.96,
           "target": [
             [
               "none",
               0.93
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.95
             ]
           ]
         }
@@ -618,7 +702,7 @@
           "target": [
             [
               "none",
-              0.59
+              0.56
             ],
             [
               {
@@ -626,15 +710,13 @@
                 "name": "Delete Ideas",
                 "container": "list \"Notes\""
               },
-              0.19
-            ],
+              0.26
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "button",
-                "name": "Save settings",
-                "container": ""
-              },
-              0.09
+              "click",
+              0.88
             ]
           ]
         }

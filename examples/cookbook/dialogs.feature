@@ -21,7 +21,7 @@ Feature: Browser dialogs (task 0040)
 
   Scenario: Leave a page with unsaved changes
     When I write "half done" as the draft
-    And I leave for the search page
+    And I leave by the "Search page" link
     Then the page heading should be "Search"
 
   # Should FAIL: the Step that opened the confirm already answered it; nothing is open any more.

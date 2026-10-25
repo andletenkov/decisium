@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T10-59-08-933Z",
+  "run": "runs/2026-10-25T11-46-06-493Z",
   "entries": {
     "Create, schedule and find a campaign in the calendar: I start a new campaign": {
       "turns": [
@@ -15,10 +15,16 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.91,
+          "done": 0.93,
           "target": [
             [
               {
@@ -26,11 +32,33 @@
                 "name": "Campaign name",
                 "container": ""
               },
-              0.51
+              0.67
             ],
             [
               "none",
-              0.43
+              0.26
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.75
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ]
         }
@@ -50,6 +78,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.87
+            ]
+          ],
           "value": [
             [
               "Winter Sale",
@@ -58,11 +92,11 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.6
+              0.68
             ],
             [
               {
@@ -70,7 +104,13 @@
                 "name": "Save draft",
                 "container": ""
               },
-              0.32
+              0.2
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.96
             ]
           ]
         }
@@ -90,6 +130,28 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.64
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
           "value": [
             [
               "2026-12-01",
@@ -98,11 +160,11 @@
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.62
+              0.52
             ],
             [
               {
@@ -111,6 +173,20 @@
                 "container": ""
               },
               0.26
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "Activation date",
+                "container": ""
+              },
+              0.2
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.97
             ]
           ]
         }
@@ -130,6 +206,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "select",
+              0.83
+            ]
+          ],
           "value": [
             [
               "2 weeks",
@@ -138,19 +220,11 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.95,
           "target": [
             [
               "none",
-              0.58
-            ],
-            [
-              {
-                "role": "button",
-                "name": "Save draft",
-                "container": ""
-              },
-              0.22
+              0.64
             ],
             [
               {
@@ -159,6 +233,12 @@
                 "container": ""
               },
               0.2
+            ]
+          ],
+          "action": [
+            [
+              "select",
+              0.97
             ]
           ]
         }
@@ -177,14 +257,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.95
+              0.9
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
             ]
           ]
         }
@@ -206,16 +298,16 @@
         },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.26,
+          "choice": "checked",
+          "confidence": 0.28,
           "probabilities": {
             "disabled": 0.03,
-            "enabled": 0.33,
-            "checked": 0.3,
-            "unchecked": 0.03,
-            "expanded": 0.08,
-            "collapsed": 0.02,
-            "selected": 0.16,
+            "enabled": 0.29,
+            "checked": 0.35,
+            "unchecked": 0.02,
+            "expanded": 0.04,
+            "collapsed": 0.01,
+            "selected": 0.21,
             "unselected": 0.02,
             "pressed": 0.01,
             "unpressed": 0.02
@@ -239,11 +331,11 @@
               "name": "",
               "container": ""
             },
-            0.63
+            0.61
           ],
           [
             "page",
-            0.36
+            0.39
           ]
         ]
       }
@@ -251,7 +343,7 @@
     "Create, schedule and find a campaign in the calendar: I schedule the campaign": {
       "turns": [
         {
-          "done": 0.06,
+          "done": 0.07,
           "target": [
             [
               {
@@ -259,16 +351,28 @@
                 "name": "Schedule",
                 "container": ""
               },
-              0.99
+              0.98
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              1
             ]
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.96,
           "target": [
             [
               "none",
               0.96
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
             ]
           ]
         }
@@ -279,27 +383,27 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 1,
+          "confidence": 0.99,
           "probabilities": {
-            "value": 1,
+            "value": 0.99,
             "presence": 0,
             "absence": 0,
-            "state": 0,
+            "state": 0.01,
             "fuzzy": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "disabled",
-          "confidence": 0.54,
+          "confidence": 0.58,
           "probabilities": {
-            "disabled": 0.59,
+            "disabled": 0.62,
             "enabled": 0.11,
-            "checked": 0.17,
+            "checked": 0.16,
             "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.08,
+            "selected": 0.06,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0.01
@@ -319,7 +423,7 @@
         "area": [
           [
             "page",
-            0.55
+            0.5
           ],
           [
             {
@@ -327,7 +431,7 @@
               "name": "",
               "container": ""
             },
-            0.44
+            0.49
           ]
         ]
       }
@@ -376,7 +480,7 @@
         "area": [
           [
             "page",
-            0.58
+            0.65
           ],
           [
             {
@@ -384,7 +488,7 @@
               "name": "",
               "container": ""
             },
-            0.41
+            0.34
           ]
         ]
       }
@@ -402,22 +506,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.7
-            ],
+              0.86
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "link",
-                "name": "Calendar",
-                "container": "navigation \"Main\""
-              },
-              0.29
+              "click",
+              0.97
             ]
           ]
         }
@@ -428,10 +536,10 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.55,
+          "confidence": 0.59,
           "probabilities": {
-            "value": 0.36,
-            "presence": 0.64,
+            "value": 0.33,
+            "presence": 0.67,
             "absence": 0,
             "state": 0,
             "fuzzy": 0
@@ -440,15 +548,15 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.54,
+          "confidence": 0.58,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.17,
-            "checked": 0.59,
+            "checked": 0.62,
             "unchecked": 0.01,
-            "expanded": 0.08,
+            "expanded": 0.04,
             "collapsed": 0,
-            "selected": 0.14,
+            "selected": 0.15,
             "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
@@ -472,11 +580,11 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.72
+            0.79
           ],
           [
             "page",
-            0.23
+            0.17
           ]
         ]
       }
@@ -484,7 +592,7 @@
     "Scheduling needs an activation date: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
-          "done": 0.03,
+          "done": 0.04,
           "target": [
             [
               {
@@ -494,14 +602,34 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              0.99
+            ]
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.83
+              0.79
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Schedule",
+                "container": ""
+              },
+              0.13
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.89
             ]
           ]
         }
@@ -510,7 +638,7 @@
     "Scheduling needs an activation date: I try to schedule the campaign": {
       "turns": [
         {
-          "done": 0.01,
+          "done": 0.02,
           "target": [
             [
               {
@@ -520,26 +648,62 @@
               },
               0.98
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.94,
+          "done": 0.92,
           "target": [
-            [
-              "none",
-              0.44
-            ],
-            [
-              "scroll",
-              0.21
-            ],
             [
               {
                 "role": "link",
                 "name": "Calendar",
                 "container": "navigation \"Main\""
               },
-              0.19
+              0.29
+            ],
+            [
+              {
+                "role": "button",
+                "name": "More actions",
+                "container": ""
+              },
+              0.26
+            ],
+            [
+              "page",
+              0.24
+            ],
+            [
+              "none",
+              0.18
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.61
+            ],
+            [
+              "double click",
+              0.07
+            ],
+            [
+              "hover",
+              0.03
+            ],
+            [
+              "right click",
+              0.01
+            ],
+            [
+              "upload",
+              0
             ]
           ]
         }
@@ -550,10 +714,10 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.99,
+          "confidence": 1,
           "probabilities": {
-            "value": 0.99,
-            "presence": 0.01,
+            "value": 1,
+            "presence": 0,
             "absence": 0,
             "state": 0,
             "fuzzy": 0
@@ -562,16 +726,16 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.51,
+          "confidence": 0.46,
           "probabilities": {
-            "disabled": 0.29,
-            "enabled": 0.56,
-            "checked": 0.1,
+            "disabled": 0.32,
+            "enabled": 0.51,
+            "checked": 0.12,
             "unchecked": 0.01,
             "expanded": 0.02,
             "collapsed": 0.01,
-            "selected": 0,
-            "unselected": 0.01,
+            "selected": 0.01,
+            "unselected": 0,
             "pressed": 0,
             "unpressed": 0
           }
@@ -589,7 +753,7 @@
         "area": [
           [
             "page",
-            0.65
+            0.61
           ],
           [
             {
@@ -597,7 +761,7 @@
               "name": "",
               "container": ""
             },
-            0.34
+            0.38
           ]
         ]
       }
@@ -618,18 +782,18 @@
         },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.21,
+          "choice": "checked",
+          "confidence": 0.19,
           "probabilities": {
             "disabled": 0.2,
-            "enabled": 0.29,
-            "checked": 0.25,
-            "unchecked": 0.03,
+            "enabled": 0.26,
+            "checked": 0.27,
+            "unchecked": 0.02,
             "expanded": 0.02,
             "collapsed": 0.01,
-            "selected": 0.16,
+            "selected": 0.17,
             "unselected": 0.02,
-            "pressed": 0,
+            "pressed": 0.01,
             "unpressed": 0.02
           }
         },
@@ -641,21 +805,21 @@
               "container": "",
               "near": "Draft"
             },
-            0.99
+            1
           ]
         ],
         "area": [
+          [
+            "page",
+            0.51
+          ],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.58
-          ],
-          [
-            "page",
-            0.41
+            0.49
           ]
         ]
       }
@@ -663,7 +827,7 @@
     "Delete a campaign from its actions menu: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.03,
           "target": [
             [
               {
@@ -673,22 +837,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              0.99
+            ]
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.79
-            ],
+              0.82
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "button",
-                "name": "Schedule",
-                "container": ""
-              },
-              0.16
+              "click",
+              0.88
             ]
           ]
         }
@@ -697,7 +865,7 @@
     "Delete a campaign from its actions menu: I delete the campaign": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.03,
           "target": [
             [
               {
@@ -706,6 +874,12 @@
                 "container": ""
               },
               0.99
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.89
             ]
           ]
         },
@@ -720,14 +894,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.99,
           "target": [
             [
               "none",
-              0.92
+              0.85
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.86
             ]
           ]
         }
@@ -750,32 +936,32 @@
         "state": {
           "type": "choice",
           "choice": "unselected",
-          "confidence": 0.51,
+          "confidence": 0.44,
           "probabilities": {
             "disabled": 0.01,
             "enabled": 0.02,
-            "checked": 0.04,
-            "unchecked": 0.31,
+            "checked": 0.03,
+            "unchecked": 0.37,
             "expanded": 0,
-            "collapsed": 0.01,
+            "collapsed": 0.02,
             "selected": 0.01,
-            "unselected": 0.56,
+            "unselected": 0.5,
             "pressed": 0,
-            "unpressed": 0.03
+            "unpressed": 0.04
           }
         },
         "subject": [
-          [
-            "none",
-            0.38
-          ],
           [
             {
               "role": "status",
               "name": "",
               "container": ""
             },
-            0.33
+            0.41000000000000003
+          ],
+          [
+            "none",
+            0.34
           ],
           [
             {
@@ -783,7 +969,7 @@
               "name": "Autumn Sale",
               "container": ""
             },
-            0.23
+            0.2
           ]
         ],
         "area": [
@@ -793,7 +979,7 @@
               "name": "",
               "container": ""
             },
-            0.79
+            0.75
           ],
           [
             {

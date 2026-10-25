@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T11-08-13-401Z",
+  "run": "runs/2026-10-25T11-46-01-017Z",
   "entries": {
     "Schedule a campaign: I enter \"Autumn Sale\" as the campaign name": {
       "turns": [
@@ -16,6 +16,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.89
+            ]
+          ],
           "value": [
             [
               "Autumn Sale",
@@ -24,19 +30,25 @@
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.65
+              0.57
             ],
             [
               {
-                "role": "button",
-                "name": "Schedule",
+                "role": "textbox",
+                "name": "Campaign name",
                 "container": ""
               },
-              0.2
+              0.26
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.97
             ]
           ]
         }
@@ -56,6 +68,24 @@
               1
             ]
           ],
+          "action": [
+            [
+              "select",
+              0.75
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ]
+          ],
           "value": [
             [
               "2 weeks",
@@ -64,19 +94,25 @@
           ]
         },
         {
-          "done": 0.99,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.56
+              0.52
             ],
             [
               {
-                "role": "button",
-                "name": "Schedule",
+                "role": "combobox",
+                "name": "Activation period",
                 "container": ""
               },
-              0.24
+              0.35
+            ]
+          ],
+          "action": [
+            [
+              "select",
+              0.98
             ]
           ]
         }
@@ -95,6 +131,12 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
@@ -102,7 +144,21 @@
           "target": [
             [
               "none",
-              0.84
+              0.58
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Schedule",
+                "container": ""
+              },
+              0.42
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              1
             ]
           ]
         }
@@ -124,18 +180,18 @@
         },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.36,
+          "choice": "selected",
+          "confidence": 0.38,
           "probabilities": {
             "disabled": 0.01,
             "enabled": 0.42,
-            "checked": 0.1,
-            "unchecked": 0.01,
+            "checked": 0.09,
+            "unchecked": 0,
             "expanded": 0.01,
-            "collapsed": 0.01,
-            "selected": 0.4,
+            "collapsed": 0,
+            "selected": 0.44,
             "unselected": 0.01,
-            "pressed": 0.02,
+            "pressed": 0.01,
             "unpressed": 0.01
           }
         },
@@ -152,7 +208,7 @@
         "area": [
           [
             "page",
-            0.87
+            0.89
           ]
         ]
       }
@@ -171,6 +227,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "select",
+              0.94
+            ]
+          ],
           "value": [
             [
               "2 weeks",
@@ -179,11 +241,11 @@
           ]
         },
         {
-          "done": 0.99,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.63
+              0.58
             ],
             [
               {
@@ -191,7 +253,13 @@
                 "name": "Activation period",
                 "container": ""
               },
-              0.25
+              0.27
+            ]
+          ],
+          "action": [
+            [
+              "select",
+              0.99
             ]
           ]
         }
@@ -202,10 +270,10 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.52,
+          "confidence": 0.54,
           "probabilities": {
-            "value": 0.62,
-            "presence": 0.01,
+            "value": 0.63,
+            "presence": 0,
             "absence": 0,
             "state": 0.37,
             "fuzzy": 0
@@ -214,7 +282,7 @@
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 1,
+          "confidence": 0.99,
           "probabilities": {
             "disabled": 0,
             "enabled": 0,
@@ -222,8 +290,8 @@
             "unchecked": 0,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 1,
-            "unselected": 0,
+            "selected": 0.99,
+            "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
           }
@@ -241,7 +309,11 @@
         "area": [
           [
             "page",
-            0.44
+            0.64
+          ],
+          [
+            "missing",
+            0.15
           ],
           [
             {
@@ -251,21 +323,7 @@
               "nth": 1,
               "of": 4
             },
-            0.14
-          ],
-          [
-            "missing",
-            0.14
-          ],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 4
-            },
-            0.12
+            0.07
           ]
         ]
       }
@@ -275,29 +333,29 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.94,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 0.95,
+            "value": 0.97,
             "presence": 0,
             "absence": 0,
-            "state": 0.05,
+            "state": 0.03,
             "fuzzy": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 0.82,
+          "confidence": 0.9,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.03,
-            "checked": 0.03,
-            "unchecked": 0.01,
-            "expanded": 0.01,
+            "checked": 0.02,
+            "unchecked": 0,
+            "expanded": 0,
             "collapsed": 0,
-            "selected": 0.84,
-            "unselected": 0.07,
-            "pressed": 0.01,
+            "selected": 0.91,
+            "unselected": 0.04,
+            "pressed": 0,
             "unpressed": 0
           }
         },
@@ -308,22 +366,13 @@
               "name": "",
               "container": ""
             },
-            0.97
+            0.99
           ]
         ],
         "area": [
           [
             "page",
-            0.76
-          ],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "near": "Show campaigns Show campaigns"
-            },
-            0.08
+            0.87
           ]
         ]
       }

@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-24T17-12-24-876Z",
+  "run": "runs/2026-10-25T11-47-54-150Z",
   "entries": {
     "Context tags: the Viewport should be \"390x844\"": {
       "check": {
@@ -24,8 +24,8 @@
             "disabled": 0,
             "enabled": 0.26,
             "checked": 0.62,
-            "unchecked": 0.04,
-            "expanded": 0.02,
+            "unchecked": 0.03,
+            "expanded": 0.03,
             "collapsed": 0.01,
             "selected": 0.03,
             "unselected": 0.01,
@@ -41,7 +41,7 @@
               "container": "",
               "near": "390x844"
             },
-            0.98
+            0.96
           ]
         ],
         "area": [
@@ -51,11 +51,11 @@
               "name": "",
               "container": ""
             },
-            0.66
+            0.72
           ],
           [
             "page",
-            0.33
+            0.24
           ]
         ]
       }
@@ -77,18 +77,18 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.46,
+          "confidence": 0.62,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.28,
-            "checked": 0.51,
+            "enabled": 0.14,
+            "checked": 0.66,
             "unchecked": 0.04,
-            "expanded": 0.02,
+            "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.12,
+            "selected": 0.13,
             "unselected": 0.01,
             "pressed": 0.01,
-            "unpressed": 0.01
+            "unpressed": 0
           }
         },
         "subject": [
@@ -99,7 +99,7 @@
               "container": "",
               "near": "de-DE"
             },
-            0.99
+            0.98
           ]
         ],
         "area": [
@@ -109,11 +109,11 @@
               "name": "",
               "container": ""
             },
-            0.64
+            0.74
           ],
           [
             "page",
-            0.35
+            0.26
           ]
         ]
       }
@@ -132,19 +132,19 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "click",
               1
             ]
           ]
         },
         {
-          "done": 0.94,
+          "done": 0.99,
           "target": [
             [
               "none",
-              0.53
+              0.69
             ],
             [
               {
@@ -152,12 +152,12 @@
                 "name": "Load campaigns",
                 "container": ""
               },
-              0.46
+              0.29
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "click",
               1
             ]
           ]
@@ -168,11 +168,11 @@
       "check": {
         "kind": {
           "type": "choice",
-          "choice": "value",
-          "confidence": 0.45,
+          "choice": "presence",
+          "confidence": 0.41,
           "probabilities": {
-            "value": 0.56,
-            "presence": 0.44,
+            "value": 0.47,
+            "presence": 0.53,
             "absence": 0,
             "state": 0,
             "fuzzy": 0
@@ -181,18 +181,18 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.23,
+          "confidence": 0.2,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.31,
-            "checked": 0.18,
+            "enabled": 0.27999999999999997,
+            "checked": 0.21,
             "unchecked": 0.01,
-            "expanded": 0.21,
+            "expanded": 0.19,
             "collapsed": 0.01,
-            "selected": 0.23,
+            "selected": 0.24,
             "unselected": 0.04,
             "pressed": 0.01,
-            "unpressed": 0
+            "unpressed": 0.01
           }
         },
         "subject": [
@@ -216,7 +216,7 @@
           ],
           [
             "page",
-            0.42
+            0.41
           ]
         ]
       }
@@ -238,17 +238,17 @@
         "state": {
           "type": "choice",
           "choice": "pressed",
-          "confidence": 0.41,
+          "confidence": 0.5,
           "probabilities": {
-            "disabled": 0.12,
-            "enabled": 0.34,
-            "checked": 0.02,
+            "disabled": 0.09,
+            "enabled": 0.27,
+            "checked": 0.04,
             "unchecked": 0,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0,
+            "selected": 0.01,
             "unselected": 0,
-            "pressed": 0.47000000000000003,
+            "pressed": 0.55,
             "unpressed": 0.03
           }
         },
@@ -265,7 +265,7 @@
         "area": [
           [
             "page",
-            0.72
+            0.66
           ],
           [
             {
@@ -273,7 +273,7 @@
               "name": "",
               "container": ""
             },
-            0.2
+            0.25
           ]
         ]
       }
@@ -292,19 +292,19 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "click",
               1
             ]
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.99,
           "target": [
             [
               "none",
-              0.55
+              0.72
             ],
             [
               {
@@ -312,13 +312,13 @@
                 "name": "Load campaigns",
                 "container": ""
               },
-              0.44
+              0.27
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "click",
+              0.99
             ]
           ]
         }
@@ -328,11 +328,11 @@
       "check": {
         "kind": {
           "type": "choice",
-          "choice": "value",
-          "confidence": 0.37,
+          "choice": "presence",
+          "confidence": 0.4,
           "probabilities": {
-            "value": 0.5,
-            "presence": 0.5,
+            "value": 0.48,
+            "presence": 0.52,
             "absence": 0,
             "state": 0,
             "fuzzy": 0
@@ -340,16 +340,16 @@
         },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.2,
+          "choice": "checked",
+          "confidence": 0.23,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.28,
-            "checked": 0.23,
-            "unchecked": 0,
-            "expanded": 0.28,
+            "checked": 0.31,
+            "unchecked": 0.01,
+            "expanded": 0.17,
             "collapsed": 0.01,
-            "selected": 0.17,
+            "selected": 0.19,
             "unselected": 0.02,
             "pressed": 0.01,
             "unpressed": 0
@@ -360,8 +360,7 @@
             {
               "role": "listitem",
               "name": "",
-              "container": "list \"Campaigns\"",
-              "near": "Autumn Sale"
+              "container": "list \"Campaigns\""
             },
             1
           ]
@@ -369,7 +368,7 @@
         "area": [
           [
             "page",
-            0.53
+            0.52
           ],
           [
             {

@@ -35,10 +35,6 @@ export interface StepReading {
   pressOnly?: string;
   /** A Step that is only "go back", "go forward", "reload the page" or "go to <URL or path>" (task 0041). */
   navigation?: Navigation;
-  /** Upload wording (task 0044). Only translates older cassettes (ADR 0005); Jev now picks `upload` itself. */
-  upload: boolean;
-  /** Paste wording (task 0062). Only translates older cassettes (ADR 0005); Jev now picks `paste` itself. */
-  paste: boolean;
   /** A Step that only checks (true) or unchecks (false) one box; "and"/"then" mean more to do. */
   toggle?: boolean;
   /** A check of rows "exactly" or "in this order". */
@@ -74,8 +70,6 @@ export function readStep(step: ParsedStep): StepReading {
     pressOnly: isCheck ? undefined : pressOnly(text),
     navigation: isCheck ? undefined : navigation(text),
     toggle: isCheck ? undefined : toggleGoal(text),
-    upload: !isCheck && quotedText.length > 0 && /\b(upload|attach)/i.test(text),
-    paste: !isCheck && quotedText.length === 0 && /\bpaste\b/i.test(text),
     exact: /\b(exactly|in this order)\b/i.test(text),
     header,
     list,

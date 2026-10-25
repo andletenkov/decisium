@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { capabilities, NotYet, oldPageAction, PAGE, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { capabilities, NotYet, PAGE, plausible, type Assessment, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
@@ -20,7 +20,7 @@ type Target = Resolution | string; // a string: a non-element answer (scroll, wa
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
 type Answer = [Target, number][];
-type Turn = { done: number; target: Answer; action?: Answer; hover?: number; gesture?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
+type Turn = { done: number; target: Answer; action?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check { kind: Pick; state: Pick; subject: Answer; area: Answer }
 interface Entry { turns?: Turn[]; check?: Check; recall?: Answer }
 interface File { model: string; run?: string; entries: Record<string, Entry> } // run: id of the run that last saved it
@@ -170,6 +170,12 @@ export class Cassette {
       }
     };
 
+    /** Actions the answer's top target can do now (none known: undefined); the runner reads only these. */
+    const can = (a: TurnAnswer, obs: Observation, keys: string[]) => {
+      const top = a.target.choice === PAGE ? PAGE : obs.elements.find(e => e.ref === a.target.choice);
+      return top ? capabilities(top, obs, keys) : undefined;
+    };
+
     return {
       turn: async (step, obs, recent, attempt, keys) => {
         const i = turn; // advanced only once answered: a NotYet retries the same recorded turn
@@ -177,16 +183,20 @@ export class Cassette {
           const t = e.turns?.[i];
           if (!t) throw `recorded ${e.turns?.length ?? 0} turns, this is turn ${i + 1}`;
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
-          // Strings: "none", the page, or (older cassettes, task 0065) a page action, offered while the page has it now.
-          const offered = (k: string) => k === "none" || k === PAGE || capabilities(PAGE, obs, keys ?? []).includes(oldPageAction(k) ?? "")
-            || k === "enter" && obs.elements.some(e => capabilities(e, obs).includes("enter"));
-          const gone = t.target.find(([k]) => typeof k === "string" && !offered(k));
+          const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && k !== PAGE);
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
-          return { done: t.done, target: load(t.target, obs.elements), action: t.action && load(t.action), hover: t.hover, gesture: t.gesture && load(t.gesture) };
+          const a: TurnAnswer = { done: t.done, target: load(t.target, obs.elements), action: t.action && load(t.action) };
+          // The recorded action must still be one the recorded target can do (a key the Step names, Enter in a focused field).
+          const ok = can(a, obs, keys ?? []);
+          if (ok && a.action && !Object.keys(a.action.probabilities).some(k => ok.includes(k))) throw `recorded action "${a.action.choice}" is not offered now`;
+          return a;
         });
         turn = i + 1;
         const a = r ?? await live.turn(step, obs, recent, attempt, keys);
-        (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements), action: a.action && store(a.action), hover: a.hover, gesture: a.gesture && store(a.gesture) };
+        // Store the action restricted to what the target can do: Jev's top action may be one it cannot (task 0067).
+        const ok = can(a, obs, keys ?? []);
+        const action = a.action && ok ? { ...a.action, probabilities: Object.fromEntries(Object.entries(a.action.probabilities).filter(([k]) => ok.includes(k))) } : a.action;
+        (now.turns ??= [])[i] = { done: a.done, target: store(a.target, obs.elements), action: action && store(action) };
         return a;
       },
       value: async (step, obs, el, candidates) => {

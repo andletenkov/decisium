@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-24T12-12-20-104Z",
+  "run": "runs/2026-10-25T11-47-14-908Z",
   "entries": {
     "Edit a title inline: I double-click the note title and change it to \"Groceries\"": {
       "turns": [
@@ -16,7 +16,7 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
               "double click",
               0.99
@@ -24,7 +24,7 @@
           ]
         },
         {
-          "done": 0.04,
+          "done": 0.06,
           "target": [
             [
               {
@@ -32,13 +32,13 @@
                 "name": "Note title",
                 "container": ""
               },
-              0.96
+              0.99
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.8200000000000001
+              "type",
+              0.99
             ]
           ],
           "value": [
@@ -49,24 +49,28 @@
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.97,
           "target": [
             [
-              "enter",
-              0.54
+              "none",
+              0.71
             ],
             [
-              "none",
-              0.32
+              {
+                "role": "textbox",
+                "name": "Note title",
+                "container": ""
+              },
+              0.24
             ]
           ],
-          "gesture": [
+          "action": [
             [
               "double click",
-              0.77
+              0.73
             ],
             [
-              "default",
+              "type",
               0.23
             ]
           ]
@@ -90,15 +94,15 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.59,
+          "confidence": 0.64,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.63,
-            "checked": 0.2,
+            "enabled": 0.6799999999999999,
+            "checked": 0.14,
             "unchecked": 0.01,
             "expanded": 0.02,
             "collapsed": 0.01,
-            "selected": 0.09,
+            "selected": 0.1,
             "unselected": 0.02,
             "pressed": 0,
             "unpressed": 0.01
@@ -117,7 +121,7 @@
         "area": [
           [
             "page",
-            0.62
+            0.49
           ],
           [
             {
@@ -125,7 +129,7 @@
               "name": "",
               "container": ""
             },
-            0.26
+            0.41
           ]
         ]
       }
@@ -141,10 +145,10 @@
                 "name": "",
                 "container": "list \"Files\""
               },
-              0.97
+              0.95
             ]
           ],
-          "gesture": [
+          "action": [
             [
               "right click",
               0.99
@@ -152,7 +156,7 @@
           ]
         },
         {
-          "done": 0.06,
+          "done": 0.08,
           "target": [
             [
               {
@@ -163,33 +167,29 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.99
+              "click",
+              1
             ]
           ]
         },
         {
-          "done": 0.72,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.68
-            ],
-            [
-              "wait",
-              0.27
+              0.88
             ]
           ],
-          "gesture": [
-            [
-              "default",
-              0.51
-            ],
+          "action": [
             [
               "right click",
-              0.49
+              0.55
+            ],
+            [
+              "click",
+              0.38
             ]
           ]
         }
@@ -212,15 +212,15 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.58,
+          "confidence": 0.57,
           "probabilities": {
-            "disabled": 0.02,
-            "enabled": 0.62,
-            "checked": 0.18,
+            "disabled": 0.01,
+            "enabled": 0.61,
+            "checked": 0.22,
             "unchecked": 0.02,
             "expanded": 0.01,
             "collapsed": 0.01,
-            "selected": 0.11,
+            "selected": 0.09,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0.01
@@ -239,7 +239,7 @@
         "area": [
           [
             "page",
-            0.6
+            0.56
           ],
           [
             {
@@ -247,11 +247,15 @@
               "name": "",
               "container": ""
             },
-            0.18
+            0.19
           ],
           [
-            "missing",
-            0.1
+            {
+              "role": "paragraph",
+              "name": "",
+              "container": ""
+            },
+            0.12
           ]
         ]
       }
@@ -271,10 +275,10 @@
               0.98
             ]
           ],
-          "gesture": [
+          "action": [
             [
               "drag",
-              1
+              0.99
             ]
           ],
           "drop": [
@@ -284,30 +288,6 @@
                 "name": "Done",
                 "container": ""
               },
-              0.98
-            ]
-          ]
-        },
-        {
-          "done": 0.74,
-          "target": [
-            [
-              "none",
-              0.5
-            ],
-            [
-              {
-                "role": "listitem",
-                "name": "",
-                "container": "list \"Done\"",
-                "near": "Fix bug"
-              },
-              0.48
-            ]
-          ],
-          "gesture": [
-            [
-              "drag",
               0.99
             ]
           ]
@@ -319,28 +299,28 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.37,
+          "confidence": 0.42,
           "probabilities": {
-            "value": 0.5,
-            "presence": 0.49,
+            "value": 0.54,
+            "presence": 0.46,
             "absence": 0,
-            "state": 0.01,
+            "state": 0,
             "fuzzy": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.53,
+          "confidence": 0.52,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.15,
-            "checked": 0.58,
+            "enabled": 0.11,
+            "checked": 0.57,
             "unchecked": 0.01,
             "expanded": 0.1,
             "collapsed": 0.01,
-            "selected": 0.13,
-            "unselected": 0.01,
+            "selected": 0.17,
+            "unselected": 0.02,
             "pressed": 0.01,
             "unpressed": 0
           }
@@ -353,7 +333,7 @@
               "container": "list \"Done\"",
               "near": "Fix bug"
             },
-            0.99
+            0.98
           ]
         ],
         "area": [
@@ -384,17 +364,17 @@
         },
         "state": {
           "type": "choice",
-          "choice": "checked",
-          "confidence": 0.38,
+          "choice": "unchecked",
+          "confidence": 0.31,
           "probabilities": {
-            "disabled": 0,
+            "disabled": 0.01,
             "enabled": 0.01,
-            "checked": 0.44,
-            "unchecked": 0.26,
-            "expanded": 0.02,
-            "collapsed": 0.04,
-            "selected": 0.01,
-            "unselected": 0.2,
+            "checked": 0.26,
+            "unchecked": 0.38,
+            "expanded": 0.01,
+            "collapsed": 0.06,
+            "selected": 0,
+            "unselected": 0.25,
             "pressed": 0,
             "unpressed": 0.02
           }
@@ -407,7 +387,7 @@
               "container": "list \"Done\"",
               "near": "Fix bug"
             },
-            0.89
+            0.9400000000000001
           ]
         ],
         "area": [
@@ -436,14 +416,26 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.73
+              "type",
+              0.16
             ],
             [
-              "drag",
-              0.26
+              "double click",
+              0.01
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ],
           "value": [
@@ -454,24 +446,24 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.98,
           "target": [
-            [
-              "none",
-              0.51
-            ],
             [
               {
                 "role": "slider",
                 "name": "Volume",
                 "container": ""
               },
-              0.42
+              0.5700000000000001
+            ],
+            [
+              "none",
+              0.43
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "type",
               0.95
             ]
           ]
@@ -495,17 +487,17 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.64,
+          "confidence": 0.59,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.6799999999999999,
-            "checked": 0.18,
+            "enabled": 0.63,
+            "checked": 0.22,
             "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.04,
-            "unselected": 0,
-            "pressed": 0.07,
+            "selected": 0.05,
+            "unselected": 0.01,
+            "pressed": 0.06,
             "unpressed": 0.01
           }
         },
@@ -516,13 +508,13 @@
               "name": "",
               "container": ""
             },
-            0.99
+            1
           ]
         ],
         "area": [
           [
             "page",
-            0.67
+            0.61
           ],
           [
             {
@@ -530,7 +522,7 @@
               "name": "",
               "container": ""
             },
-            0.17
+            0.21
           ]
         ]
       }

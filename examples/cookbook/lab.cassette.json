@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T14-23-34-442Z",
+  "run": "runs/2026-10-25T11-47-30-673Z",
   "entries": {
     "Open an article through the search: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
@@ -13,7 +13,29 @@
                 "name": "Search articles",
                 "container": ""
               },
-              0.98
+              0.97
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.79
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ],
           "value": [
@@ -24,7 +46,7 @@
           ]
         },
         {
-          "done": 0.05,
+          "done": 0.04,
           "target": [
             [
               {
@@ -32,12 +54,34 @@
                 "name": "Search",
                 "container": ""
               },
-              0.8
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.6
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         },
         {
-          "done": 0.23,
+          "done": 0.14,
           "target": [
             [
               {
@@ -47,14 +91,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.77,
           "target": [
             [
               "none",
-              0.84
+              0.85
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.89
             ]
           ]
         }
@@ -80,9 +136,9 @@
           "confidence": 0.92,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.02,
+            "enabled": 0.03,
             "checked": 0.93,
-            "unchecked": 0.02,
+            "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
             "selected": 0.01,
@@ -108,16 +164,187 @@
               "name": "",
               "container": ""
             },
-            0.72
+            0.73
           ],
           [
             "page",
-            0.23
+            0.24
           ]
         ]
       }
     },
     "Open an article through the search: the article should say \"born 10 December 1815\"": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 1,
+          "probabilities": {
+            "value": 1,
+            "presence": 0,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "checked",
+          "confidence": 0.8,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.06,
+            "checked": 0.82,
+            "unchecked": 0.04,
+            "expanded": 0.03,
+            "collapsed": 0,
+            "selected": 0.03,
+            "unselected": 0.01,
+            "pressed": 0.01,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "paragraph",
+              "name": "",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            "page",
+            0.63
+          ],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.37
+          ]
+        ]
+      }
+    },
+    "A check on the article title: I open the \"Ada Lovelace\" article through the search": {
+      "turns": [
+        {
+          "done": 0.01,
+          "target": [
+            [
+              {
+                "role": "textbox",
+                "name": "Search articles",
+                "container": ""
+              },
+              0.94
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.76
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
+          "value": [
+            [
+              "Ada Lovelace",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.05,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Search",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.55
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ]
+          ]
+        },
+        {
+          "done": 0.18,
+          "target": [
+            [
+              {
+                "role": "link",
+                "name": "Ada Lovelace",
+                "container": "region \"Results\""
+              },
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.73,
+          "target": [
+            [
+              "none",
+              0.85
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
+            ]
+          ]
+        }
+      ]
+    },
+    "A check on the article title: the article title should be \"Ada Lovelace\"": {
       "check": {
         "kind": {
           "type": "choice",
@@ -134,16 +361,16 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.79,
+          "confidence": 0.53,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.08,
-            "checked": 0.81,
-            "unchecked": 0.03,
-            "expanded": 0.03,
+            "enabled": 0.02,
+            "checked": 0.58,
+            "unchecked": 0.36,
+            "expanded": 0,
             "collapsed": 0,
-            "selected": 0.03,
-            "unselected": 0.01,
+            "selected": 0.01,
+            "unselected": 0.02,
             "pressed": 0,
             "unpressed": 0.01
           }
@@ -151,140 +378,17 @@
         "subject": [
           [
             {
-              "role": "paragraph",
-              "name": "",
-              "container": ""
-            },
-            1
-          ]
-        ],
-        "area": [
-          [
-            "page",
-            0.53
-          ],
-          [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.46
-          ]
-        ]
-      }
-    },
-    "A check on the article title: I open the \"Ada Lovelace\" article through the search": {
-      "turns": [
-        {
-          "done": 0.01,
-          "target": [
-            [
-              {
-                "role": "textbox",
-                "name": "Search articles",
-                "container": ""
-              },
-              0.98
-            ]
-          ],
-          "value": [
-            [
-              "Ada Lovelace",
-              1
-            ]
-          ]
-        },
-        {
-          "done": 0.04,
-          "target": [
-            [
-              {
-                "role": "button",
-                "name": "Search",
-                "container": ""
-              },
-              0.8200000000000001
-            ]
-          ]
-        },
-        {
-          "done": 0.23,
-          "target": [
-            [
-              {
-                "role": "link",
-                "name": "Ada Lovelace",
-                "container": "region \"Results\""
-              },
-              1
-            ]
-          ]
-        },
-        {
-          "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.91
-            ]
-          ]
-        }
-      ]
-    },
-    "A check on the article title: the article title should be \"Ada Lovelace\"": {
-      "check": {
-        "kind": {
-          "type": "choice",
-          "choice": "value",
-          "confidence": 0.99,
-          "probabilities": {
-            "value": 0.99,
-            "presence": 0,
-            "absence": 0,
-            "state": 0,
-            "fuzzy": 0.01
-          }
-        },
-        "state": {
-          "type": "choice",
-          "choice": "checked",
-          "confidence": 0.86,
-          "probabilities": {
-            "disabled": 0,
-            "enabled": 0.04,
-            "checked": 0.87,
-            "unchecked": 0.05,
-            "expanded": 0.01,
-            "collapsed": 0,
-            "selected": 0.02,
-            "unselected": 0.01,
-            "pressed": 0,
-            "unpressed": 0
-          }
-        },
-        "subject": [
-          [
-            {
-              "role": "heading",
-              "name": "Ada Lovelace",
-              "container": ""
-            },
-            0.72
-          ],
-          [
-            {
               "role": "title",
               "name": "",
               "container": ""
             },
-            0.27
+            0.8
           ]
         ],
         "area": [
           [
             "page",
-            0.51
+            0.75
           ],
           [
             {
@@ -292,7 +396,7 @@
               "name": "",
               "container": ""
             },
-            0.43
+            0.18
           ]
         ]
       }
@@ -311,6 +415,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.8
+            ]
+          ],
           "value": [
             [
               "Ada Lovelace",
@@ -319,7 +429,7 @@
           ]
         },
         {
-          "done": 0.73,
+          "done": 0.72,
           "target": [
             [
               {
@@ -327,12 +437,34 @@
                 "name": "Search",
                 "container": ""
               },
-              0.82
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.49
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.97,
           "target": [
             [
               {
@@ -340,11 +472,17 @@
                 "name": "Ada Lovelace",
                 "container": "region \"Results\""
               },
-              0.54
+              0.51
             ],
             [
               "none",
-              0.42
+              0.45
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.84
             ]
           ]
         }
@@ -367,18 +505,18 @@
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 0.34,
+          "confidence": 0.33,
           "probabilities": {
-            "disabled": 0.01,
+            "disabled": 0,
             "enabled": 0.09,
-            "checked": 0.29,
-            "unchecked": 0.15,
+            "checked": 0.36,
+            "unchecked": 0.12,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.41,
-            "unselected": 0.03,
+            "selected": 0.4,
+            "unselected": 0.02,
             "pressed": 0,
-            "unpressed": 0.01
+            "unpressed": 0
           }
         },
         "subject": [
@@ -388,7 +526,7 @@
               "name": "Search",
               "container": ""
             },
-            0.65
+            0.74
           ],
           [
             {
@@ -396,13 +534,13 @@
               "name": "Ada Lovelace",
               "container": "region \"Results\""
             },
-            0.3
+            0.2
           ]
         ],
         "area": [
           [
             "page",
-            0.49
+            0.43
           ],
           [
             {
@@ -410,7 +548,7 @@
               "name": "",
               "container": ""
             },
-            0.32
+            0.39
           ]
         ]
       }
@@ -426,7 +564,13 @@
                 "name": "Search articles",
                 "container": ""
               },
-              0.95
+              0.98
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.91
             ]
           ],
           "value": [
@@ -437,7 +581,7 @@
           ]
         },
         {
-          "done": 0.06,
+          "done": 0.07,
           "target": [
             [
               {
@@ -445,7 +589,29 @@
                 "name": "Search",
                 "container": ""
               },
-              0.89
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.6
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         },
@@ -454,11 +620,25 @@
           "target": [
             [
               "none",
-              0.77
+              0.6900000000000001
             ],
             [
-              "wait",
-              0.08
+              {
+                "role": "button",
+                "name": "Search",
+                "container": ""
+              },
+              0.18
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.5700000000000001
+            ],
+            [
+              "click",
+              0.37
             ]
           ]
         }
@@ -469,27 +649,27 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.68,
+          "confidence": 0.77,
           "probabilities": {
-            "value": 0.26,
-            "presence": 0.74,
+            "value": 0.17,
+            "presence": 0.82,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0
+            "fuzzy": 0.01
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.48,
+          "confidence": 0.43,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.53,
-            "checked": 0.19,
+            "enabled": 0.49,
+            "checked": 0.17,
             "unchecked": 0.01,
-            "expanded": 0.09,
+            "expanded": 0.14,
             "collapsed": 0,
-            "selected": 0.15,
+            "selected": 0.16,
             "unselected": 0.02,
             "pressed": 0.01,
             "unpressed": 0
@@ -512,11 +692,11 @@
               "name": "Results",
               "container": ""
             },
-            0.62
+            0.54
           ],
           [
             "page",
-            0.25
+            0.26
           ]
         ]
       }
@@ -538,32 +718,32 @@
         "state": {
           "type": "choice",
           "choice": "unselected",
-          "confidence": 0.51,
+          "confidence": 0.48,
           "probabilities": {
             "disabled": 0.01,
             "enabled": 0.04,
-            "checked": 0.05,
+            "checked": 0.09,
             "unchecked": 0.26,
             "expanded": 0.01,
-            "collapsed": 0.04,
+            "collapsed": 0.03,
             "selected": 0.01,
-            "unselected": 0.56,
+            "unselected": 0.53,
             "pressed": 0,
             "unpressed": 0.02
           }
         },
         "subject": [
           [
+            "none",
+            0.48
+          ],
+          [
             {
               "role": "region",
               "name": "Results",
               "container": ""
             },
-            0.52
-          ],
-          [
-            "none",
-            0.43
+            0.47
           ]
         ],
         "area": [
@@ -573,11 +753,7 @@
               "name": "Results",
               "container": ""
             },
-            0.38
-          ],
-          [
-            "page",
-            0.32
+            0.41
           ],
           [
             {
@@ -585,7 +761,11 @@
               "name": "",
               "container": "region \"Results\""
             },
-            0.29
+            0.32
+          ],
+          [
+            "page",
+            0.26
           ]
         ]
       }
@@ -601,7 +781,13 @@
                 "name": "Search articles",
                 "container": ""
               },
-              0.96
+              0.97
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.9
             ]
           ],
           "value": [
@@ -620,16 +806,38 @@
                 "name": "Search",
                 "container": ""
               },
-              0.87
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.61
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.78
+              0.68
             ],
             [
               {
@@ -637,7 +845,17 @@
                 "name": "Search",
                 "container": ""
               },
-              0.07
+              0.18
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.59
+            ],
+            [
+              "click",
+              0.37
             ]
           ]
         }
@@ -647,32 +865,32 @@
       "recall": [
         [
           "none",
-          0.9
+          0.92
         ]
       ],
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.97,
+          "confidence": 0.99,
           "probabilities": {
             "value": 0,
-            "presence": 0.98,
+            "presence": 0.99,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.02
+            "fuzzy": 0.01
           }
         },
         "state": {
           "type": "choice",
           "choice": "expanded",
-          "confidence": 0.76,
+          "confidence": 0.77,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.14,
-            "checked": 0.06,
+            "enabled": 0.11,
+            "checked": 0.08,
             "unchecked": 0,
-            "expanded": 0.78,
+            "expanded": 0.79,
             "collapsed": 0.01,
             "selected": 0,
             "unselected": 0,
@@ -687,7 +905,7 @@
               "name": "Results",
               "container": ""
             },
-            0.96
+            0.9400000000000001
           ]
         ],
         "area": [
@@ -697,11 +915,11 @@
               "name": "Results",
               "container": ""
             },
-            0.76
+            0.78
           ],
           [
             "page",
-            0.16
+            0.15
           ]
         ]
       }
@@ -717,7 +935,13 @@
                 "name": "Search articles",
                 "container": ""
               },
-              0.98
+              0.96
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.84
             ]
           ],
           "value": [
@@ -728,7 +952,7 @@
           ]
         },
         {
-          "done": 0.06,
+          "done": 0.04,
           "target": [
             [
               {
@@ -736,12 +960,34 @@
                 "name": "Search",
                 "container": ""
               },
-              0.81
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.54
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         },
         {
-          "done": 0.2,
+          "done": 0.21,
           "target": [
             [
               {
@@ -751,14 +997,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.84,
           "target": [
             [
               "none",
-              0.89
+              0.85
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.91
             ]
           ]
         }
@@ -769,54 +1027,54 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.99,
+          "confidence": 0.97,
           "probabilities": {
-            "value": 0.99,
+            "value": 0.98,
             "presence": 0,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.01
+            "fuzzy": 0.02
           }
         },
         "state": {
           "type": "choice",
-          "choice": "checked",
-          "confidence": 0.58,
+          "choice": "unchecked",
+          "confidence": 0.59,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.02,
-            "checked": 0.62,
-            "unchecked": 0.29,
-            "expanded": 0.01,
+            "checked": 0.31,
+            "unchecked": 0.63,
+            "expanded": 0,
             "collapsed": 0,
-            "selected": 0.04,
-            "unselected": 0.01,
+            "selected": 0.02,
+            "unselected": 0.02,
             "pressed": 0,
-            "unpressed": 0.01
+            "unpressed": 0
           }
         },
         "subject": [
-          [
-            {
-              "role": "heading",
-              "name": "Ada Lovelace",
-              "container": ""
-            },
-            0.65
-          ],
           [
             {
               "role": "title",
               "name": "",
               "container": ""
             },
-            0.34
+            0.71
+          ],
+          [
+            {
+              "role": "heading",
+              "name": "Ada Lovelace",
+              "container": ""
+            },
+            0.28
           ]
         ],
         "area": [
           [
             "page",
-            0.52
+            0.75
           ],
           [
             {
@@ -824,7 +1082,7 @@
               "name": "",
               "container": ""
             },
-            0.42
+            0.2
           ]
         ]
       }
@@ -840,7 +1098,13 @@
                 "name": "Search articles",
                 "container": ""
               },
-              0.99
+              0.97
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.8
             ]
           ],
           "value": [
@@ -859,12 +1123,34 @@
                 "name": "Search",
                 "container": ""
               },
-              0.81
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.6
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         },
         {
-          "done": 0.22,
+          "done": 0.14,
           "target": [
             [
               {
@@ -874,14 +1160,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.67,
           "target": [
             [
               "none",
-              0.87
+              0.85
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.9
             ]
           ]
         }
@@ -891,41 +1189,41 @@
       "recall": [
         [
           "Ada Lovelace",
-          0.62
+          0.66
         ],
         [
           "none",
-          0.38
+          0.34
         ]
       ],
       "check": {
         "kind": {
           "type": "choice",
           "choice": "fuzzy",
-          "confidence": 1,
+          "confidence": 0.99,
           "probabilities": {
             "value": 0,
-            "presence": 0,
+            "presence": 0.01,
             "absence": 0,
             "state": 0,
-            "fuzzy": 1
+            "fuzzy": 0.99
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.62,
+          "confidence": 0.57,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.23,
-            "checked": 0.66,
+            "enabled": 0.29,
+            "checked": 0.61,
             "unchecked": 0.08,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.01,
-            "unselected": 0.01,
+            "selected": 0,
+            "unselected": 0,
             "pressed": 0,
-            "unpressed": 0
+            "unpressed": 0.01
           }
         },
         "subject": [
@@ -935,7 +1233,7 @@
               "name": "",
               "container": ""
             },
-            0.85
+            0.88
           ]
         ],
         "area": [
@@ -967,77 +1265,17 @@
               },
               1
             ]
-          ]
-        },
-        {
-          "done": 0.91,
-          "target": [
+          ],
+          "action": [
             [
-              "none",
-              0.83
+              "click",
+              1
             ]
           ]
         }
       ]
     },
     "Uncheck a labelled checkbox: \"Newsletter\" should be unchecked": {
-      "check": {
-        "kind": {
-          "type": "choice",
-          "choice": "state",
-          "confidence": 1,
-          "probabilities": {
-            "value": 0,
-            "presence": 0,
-            "absence": 0,
-            "state": 1,
-            "fuzzy": 0
-          }
-        },
-        "state": {
-          "type": "choice",
-          "choice": "unchecked",
-          "confidence": 1,
-          "probabilities": {
-            "disabled": 0,
-            "enabled": 0,
-            "checked": 0,
-            "unchecked": 1,
-            "expanded": 0,
-            "collapsed": 0,
-            "selected": 0,
-            "unselected": 0,
-            "pressed": 0,
-            "unpressed": 0
-          }
-        },
-        "subject": [
-          [
-            {
-              "role": "checkbox",
-              "name": "Newsletter",
-              "container": ""
-            },
-            1
-          ]
-        ],
-        "area": [
-          [
-            "page",
-            0.63
-          ],
-          [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.29
-          ]
-        ]
-      }
-    },
-    "Uncheck a labelled checkbox: \"Weekly digest\" should be unchecked": {
       "check": {
         "kind": {
           "type": "choice",
@@ -1072,7 +1310,7 @@
           [
             {
               "role": "checkbox",
-              "name": "Weekly digest",
+              "name": "Newsletter",
               "container": ""
             },
             1
@@ -1081,7 +1319,7 @@
         "area": [
           [
             "page",
-            0.49
+            0.58
           ],
           [
             {
@@ -1089,7 +1327,64 @@
               "name": "",
               "container": ""
             },
-            0.37
+            0.31
+          ]
+        ]
+      }
+    },
+    "Uncheck a labelled checkbox: \"Weekly digest\" should be unchecked": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "absence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "unchecked",
+          "confidence": 0.98,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0.02,
+            "unchecked": 0.98,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "checkbox",
+              "name": "Weekly digest",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.47
+          ],
+          [
+            "page",
+            0.4
           ]
         ]
       }
@@ -1107,6 +1402,12 @@
               },
               0.99
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         }
       ]
@@ -1116,24 +1417,24 @@
         "kind": {
           "type": "choice",
           "choice": "state",
-          "confidence": 0.86,
+          "confidence": 0.9,
           "probabilities": {
-            "value": 0.04,
-            "presence": 0.06,
+            "value": 0.03,
+            "presence": 0.05,
             "absence": 0,
-            "state": 0.89,
-            "fuzzy": 0.01
+            "state": 0.92,
+            "fuzzy": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.82,
+          "confidence": 0.88,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.02,
-            "checked": 0.84,
-            "unchecked": 0.14,
+            "enabled": 0.01,
+            "checked": 0.89,
+            "unchecked": 0.1,
             "expanded": 0,
             "collapsed": 0,
             "selected": 0,
@@ -1155,7 +1456,7 @@
         "area": [
           [
             "page",
-            0.58
+            0.55
           ],
           [
             {
@@ -1163,7 +1464,7 @@
               "name": "",
               "container": ""
             },
-            0.32
+            0.39
           ]
         ]
       }

@@ -9,12 +9,9 @@ export interface Pick {
 
 export interface TurnAnswer {
   done: number; // P(step already accomplished)
-  target: Pick; // element ref, PAGE, or "none" (older cassettes: a page-action key, see legacy())
-  /** How to use the target, an ACTIONS key or `press <key>` (task 0065); only the target's capabilities count. */
+  target: Pick; // element ref, PAGE, or "none"
+  /** How to use the target, an ACTIONS key or `press <key>` (task 0065); only the target's capabilities count. Absent: its first. */
   action?: Pick;
-  /** Older cassettes: P(only hover) (task 0042), or a gesture (task 0045); legacy() reads them. */
-  hover?: number;
-  gesture?: Pick;
 }
 
 /** The page itself as a target (task 0065): scrolling it, history, tabs, keys, waiting. */
@@ -62,41 +59,6 @@ export function capabilities(target: Element | typeof PAGE, obs: Observation, ke
 
 /** Choice text of an action: ACTIONS, or a key the Step names. */
 export const describeAction = (a: string) => ACTIONS[a as keyof typeof ACTIONS] ?? `Press the ${a.slice(6)} key, as \`step\` says.`;
-
-/** Before task 0065 page moves were target answers; they now are the page's actions. */
-const OLD_PAGE: Record<string, string> = { scroll: "scroll down", "scroll up": "scroll up", wait: "wait", back: "back", forward: "forward",
-  reload: "reload", "close tab": "close tab", "switch tab": "switch tab", enter: "enter" };
-const OLD_GESTURE: Record<string, string> = { hover: "hover", "double click": "double click", "right click": "right click", drag: "drag",
-  "scroll down": "scroll down", "scroll up": "scroll up" };
-const isOldPage = (k: string) => k in OLD_PAGE || k.startsWith("press ");
-/** The page action an older cassette's target key meant, if it was one. */
-export const oldPageAction = (k: string) => (isOldPage(k) ? OLD_PAGE[k] ?? k : undefined);
-
-/**
- * A Turn answer from an older cassette in today's shape (task 0065, decision 6): page-action targets summed into PAGE
- * with the likeliest as its action; a `default` gesture (or none) means the element's own verb, upload/paste as the
- * Step said then (`upload`, `paste`).
- */
-export function legacy(t: TurnAnswer, obs: Observation, read: { upload?: boolean; paste?: boolean } = {}): TurnAnswer {
-  if (t.action) return t;
-  // Enter was a page move; it now is the focused field's action.
-  const focused = obs.elements.find(e => e.verb === "TYPE" && /\[active\]/.test(e.state))?.ref;
-  const owner = (k: string) => (k === "enter" && focused ? focused : isOldPage(k) ? PAGE : k);
-  const probabilities: Record<string, number> = {};
-  let moved: [string, number] | undefined; // the likeliest old page move, as an action
-  for (const [k, v] of Object.entries(t.target.probabilities)) {
-    probabilities[owner(k)] = (probabilities[owner(k)] ?? 0) + v;
-    if (isOldPage(k) && (!moved || v > moved[1])) moved = [OLD_PAGE[k] ?? k, v];
-  }
-  const choice = owner(t.target.choice);
-  const target = { choice, probabilities };
-  const pick = (a: string): TurnAnswer => ({ done: t.done, target, action: { choice: a, probabilities: { [a]: 1 } } });
-  if (isOldPage(t.target.choice)) return pick(moved![0]);
-  const e = obs.elements.find(x => x.ref === choice);
-  const gesture = t.gesture ? OLD_GESTURE[t.gesture.choice] : (t.hover ?? 0) >= 0.5 ? "hover" : undefined;
-  const own = !e ? "click" : e.verb === "TYPE" ? (read.paste ? "paste" : "type") : e.verb === "SELECT" ? "select" : read.upload ? "upload" : "click";
-  return pick(gesture ?? own);
-}
 
 /**
  * Equivalent targets sum their confidence before the gate (task 0065, 0057): links with the same name and URL lead to

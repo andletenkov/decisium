@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { capabilities, grouped, legacy, PAGE } from "../src/decision.ts";
+import { capabilities, grouped, PAGE } from "../src/decision.ts";
 import { parseSnapshot, withPage } from "../src/observation.ts";
 
 const obs = withPage(parseSnapshot([
@@ -33,14 +33,3 @@ test("grouped: links with the same name and URL count as one; other URLs and but
   assert.deepEqual(b.probabilities, { e8: 0.5, e9: 0.5 });
 });
 
-test("legacy: older cassette answers read as page target + action, gestures as actions (task 0065)", () => {
-  const page = legacy({ done: 0, target: { choice: "scroll", probabilities: { scroll: 0.6, "scroll up": 0.1, e1: 0.3 } } }, obs);
-  assert.deepEqual(page.target.probabilities, { page: 0.7, e1: 0.3 });
-  assert.equal(page.action!.choice, "scroll down");
-  const enter = legacy({ done: 0, target: { choice: "enter", probabilities: { enter: 0.9, e8: 0.1 } } }, obs);
-  assert.deepEqual([enter.target.choice, enter.action!.choice], ["e1", "enter"]); // Enter now belongs to the focused field
-  const typed = legacy({ done: 0, target: { choice: "e1", probabilities: { e1: 1 } }, gesture: { choice: "default", probabilities: { default: 1 } } }, obs);
-  assert.equal(typed.action!.choice, "type");
-  assert.equal(legacy({ done: 0, target: { choice: "e8", probabilities: { e8: 1 } }, hover: 0.7 }, obs).action!.choice, "hover");
-  assert.equal(legacy({ done: 0, target: { choice: "e8", probabilities: { e8: 1 } } }, obs, { upload: true }).action!.choice, "upload");
-});

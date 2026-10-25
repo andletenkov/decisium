@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T09-42-35-858Z",
+  "run": "runs/2026-10-25T11-48-29-161Z",
   "entries": {
     "Draft is not in the calendar, toast mentions it: I start a new campaign": {
       "turns": [
@@ -15,10 +15,16 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.9,
+          "done": 0.95,
           "target": [
             [
               {
@@ -26,11 +32,33 @@
                 "name": "Campaign name",
                 "container": ""
               },
-              0.54
+              0.67
             ],
             [
               "none",
-              0.39
+              0.25
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.71
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ]
         }
@@ -50,9 +78,61 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.9
+            ]
+          ],
           "value": [
             [
               "Summer Sale",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.95,
+          "target": [
+            [
+              "none",
+              0.75
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Save draft",
+                "container": ""
+              },
+              0.15
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.95
+            ]
+          ]
+        }
+      ]
+    },
+    "Draft is not in the calendar, toast mentions it: I save the draft": {
+      "turns": [
+        {
+          "done": 0.03,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Save draft",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
               1
             ]
           ]
@@ -62,41 +142,13 @@
           "target": [
             [
               "none",
-              0.68
-            ],
-            [
-              {
-                "role": "button",
-                "name": "Save draft",
-                "container": ""
-              },
-              0.22
+              0.92
             ]
-          ]
-        }
-      ]
-    },
-    "Draft is not in the calendar, toast mentions it: I save the draft": {
-      "turns": [
-        {
-          "done": 0.02,
-          "target": [
+          ],
+          "action": [
             [
-              {
-                "role": "button",
-                "name": "Save draft",
-                "container": ""
-              },
-              1
-            ]
-          ]
-        },
-        {
-          "done": 0.96,
-          "target": [
-            [
-              "none",
-              0.97
+              "click",
+              0.9400000000000001
             ]
           ]
         }
@@ -105,7 +157,7 @@
     "Draft is not in the calendar, toast mentions it: I open the calendar": {
       "turns": [
         {
-          "done": 0.03,
+          "done": 0.02,
           "target": [
             [
               {
@@ -113,24 +165,28 @@
                 "name": "Calendar",
                 "container": "navigation \"Main\""
               },
+              0.99
+            ]
+          ],
+          "action": [
+            [
+              "click",
               1
             ]
           ]
         },
         {
-          "done": 0.9,
+          "done": 0.94,
           "target": [
             [
               "none",
-              0.75
-            ],
+              0.85
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "link",
-                "name": "Calendar",
-                "container": "navigation \"Main\""
-              },
-              0.23
+              "click",
+              0.93
             ]
           ]
         }
@@ -141,10 +197,10 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.85,
+          "confidence": 0.73,
           "probabilities": {
-            "value": 0.12,
-            "presence": 0.88,
+            "value": 0.22,
+            "presence": 0.78,
             "absence": 0,
             "state": 0,
             "fuzzy": 0
@@ -153,18 +209,18 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.36,
+          "confidence": 0.39,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.19,
-            "checked": 0.42,
+            "enabled": 0.22,
+            "checked": 0.45,
             "unchecked": 0.06,
-            "expanded": 0.11,
-            "collapsed": 0.01,
-            "selected": 0.16,
+            "expanded": 0.08,
+            "collapsed": 0,
+            "selected": 0.15,
             "unselected": 0.03,
             "pressed": 0.01,
-            "unpressed": 0.01
+            "unpressed": 0
           }
         },
         "subject": [
@@ -174,7 +230,7 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.6900000000000001
+            0.65
           ],
           [
             {
@@ -182,7 +238,7 @@
               "name": "",
               "container": "list \"Scheduled campaigns\""
             },
-            0.21
+            0.22
           ]
         ],
         "area": [
@@ -192,7 +248,7 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.9
+            0.89
           ]
         ]
       }
@@ -200,7 +256,7 @@
     "Detail heading is not the campaign list: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.05,
           "target": [
             [
               {
@@ -210,14 +266,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.8099999999999999
+              0.81
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
             ]
           ]
         }
@@ -228,28 +296,28 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.75,
+          "confidence": 0.76,
           "probabilities": {
             "value": 0.18,
-            "presence": 0.8,
+            "presence": 0.81,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.02
+            "fuzzy": 0.01
           }
         },
         "state": {
           "type": "choice",
-          "choice": "checked",
-          "confidence": 0.34,
+          "choice": "enabled",
+          "confidence": 0.24,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.22,
-            "checked": 0.41,
-            "unchecked": 0.02,
+            "enabled": 0.32,
+            "checked": 0.26,
+            "unchecked": 0.01,
             "expanded": 0.07,
             "collapsed": 0.01,
-            "selected": 0.23,
-            "unselected": 0.04,
+            "selected": 0.3,
+            "unselected": 0.03,
             "pressed": 0,
             "unpressed": 0
           }
@@ -261,17 +329,17 @@
               "name": "Spring Sale",
               "container": ""
             },
-            0.83
+            0.89
           ]
         ],
         "area": [
           [
             "missing",
-            0.57
+            0.43
           ],
           [
             "page",
-            0.21
+            0.34
           ],
           [
             {
@@ -279,7 +347,7 @@
               "name": "",
               "container": ""
             },
-            0.12
+            0.16
           ]
         ]
       }
@@ -287,7 +355,7 @@
     "Draft is not in the scheduled list, toast mentions it: I start a new campaign": {
       "turns": [
         {
-          "done": 0.01,
+          "done": 0.02,
           "target": [
             [
               {
@@ -297,22 +365,50 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.91,
+          "done": 0.97,
           "target": [
-            [
-              "none",
-              0.49
-            ],
             [
               {
                 "role": "textbox",
                 "name": "Campaign name",
                 "container": ""
               },
-              0.46
+              0.63
+            ],
+            [
+              "none",
+              0.29
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.77
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ]
         }
@@ -332,6 +428,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.89
+            ]
+          ],
           "value": [
             [
               "Summer Sale",
@@ -340,11 +442,11 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.62
+              0.74
             ],
             [
               {
@@ -352,7 +454,13 @@
                 "name": "Save draft",
                 "container": ""
               },
-              0.28
+              0.13
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.97
             ]
           ]
         }
@@ -361,7 +469,7 @@
     "Draft is not in the scheduled list, toast mentions it: I save the draft": {
       "turns": [
         {
-          "done": 0.03,
+          "done": 0.02,
           "target": [
             [
               {
@@ -369,6 +477,12 @@
                 "name": "Save draft",
                 "container": ""
               },
+              0.99
+            ]
+          ],
+          "action": [
+            [
+              "click",
               1
             ]
           ]
@@ -378,7 +492,13 @@
           "target": [
             [
               "none",
-              0.97
+              0.92
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.91
             ]
           ]
         }
@@ -395,24 +515,28 @@
                 "name": "Calendar",
                 "container": "navigation \"Main\""
               },
+              0.99
+            ]
+          ],
+          "action": [
+            [
+              "click",
               1
             ]
           ]
         },
         {
-          "done": 0.88,
+          "done": 0.94,
           "target": [
             [
               "none",
-              0.74
-            ],
+              0.85
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "link",
-                "name": "Calendar",
-                "container": "navigation \"Main\""
-              },
-              0.24
+              "click",
+              0.93
             ]
           ]
         }
@@ -423,10 +547,10 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.84,
+          "confidence": 0.87,
           "probabilities": {
-            "value": 0.12,
-            "presence": 0.87,
+            "value": 0.09,
+            "presence": 0.9,
             "absence": 0.01,
             "state": 0,
             "fuzzy": 0
@@ -435,15 +559,15 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.47,
+          "confidence": 0.52,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.1,
-            "checked": 0.52,
-            "unchecked": 0.15,
-            "expanded": 0.06,
-            "collapsed": 0.01,
-            "selected": 0.13,
+            "checked": 0.5700000000000001,
+            "unchecked": 0.1,
+            "expanded": 0.03,
+            "collapsed": 0,
+            "selected": 0.16,
             "unselected": 0.03,
             "pressed": 0,
             "unpressed": 0
@@ -456,7 +580,7 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.93
+            0.92
           ]
         ],
         "area": [
@@ -474,7 +598,7 @@
     "List check on the detail screen: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.03,
           "target": [
             [
               {
@@ -484,14 +608,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.83
+              0.86
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.93
             ]
           ]
         }
@@ -502,27 +638,27 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.57,
+          "confidence": 0.54,
           "probabilities": {
-            "value": 0.33,
-            "presence": 0.66,
-            "absence": 0,
+            "value": 0.35,
+            "presence": 0.63,
+            "absence": 0.01,
             "state": 0,
             "fuzzy": 0.01
           }
         },
         "state": {
           "type": "choice",
-          "choice": "selected",
-          "confidence": 0.29,
+          "choice": "checked",
+          "confidence": 0.38,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.18,
-            "checked": 0.35,
-            "unchecked": 0.01,
-            "expanded": 0.07,
+            "checked": 0.44,
+            "unchecked": 0.02,
+            "expanded": 0.04,
             "collapsed": 0.01,
-            "selected": 0.36,
+            "selected": 0.29,
             "unselected": 0.02,
             "pressed": 0,
             "unpressed": 0
@@ -535,17 +671,13 @@
               "name": "Spring Sale",
               "container": ""
             },
-            0.9400000000000001
+            0.89
           ]
         ],
         "area": [
           [
             "missing",
-            0.39999999999999997
-          ],
-          [
-            "page",
-            0.28
+            0.5
           ],
           [
             {
@@ -553,7 +685,11 @@
               "name": "",
               "container": ""
             },
-            0.24
+            0.25
+          ],
+          [
+            "page",
+            0.22
           ]
         ]
       }
@@ -571,14 +707,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.86
+              0.82
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.91
             ]
           ]
         }
@@ -589,10 +737,10 @@
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.7,
+          "confidence": 0.76,
           "probabilities": {
-            "value": 0.23,
-            "presence": 0.76,
+            "value": 0.17,
+            "presence": 0.81,
             "absence": 0,
             "state": 0,
             "fuzzy": 0.01
@@ -601,16 +749,16 @@
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 0.31,
+          "confidence": 0.29,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.24,
-            "checked": 0.2,
+            "enabled": 0.27,
+            "checked": 0.21,
             "unchecked": 0.01,
-            "expanded": 0.13,
+            "expanded": 0.12,
             "collapsed": 0.01,
-            "selected": 0.38,
-            "unselected": 0.03,
+            "selected": 0.36,
+            "unselected": 0.02,
             "pressed": 0,
             "unpressed": 0
           }
@@ -622,13 +770,17 @@
               "name": "Spring Sale",
               "container": ""
             },
-            0.93
+            0.95
           ]
         ],
         "area": [
           [
+            "page",
+            0.39
+          ],
+          [
             "missing",
-            0.38
+            0.3
           ],
           [
             {
@@ -636,10 +788,6 @@
               "name": "",
               "container": ""
             },
-            0.28
-          ],
-          [
-            "page",
             0.28
           ]
         ]

@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-24T17-45-16-747Z",
+  "run": "runs/2026-10-25T11-46-21-556Z",
   "entries": {
     "Copy an invite link and paste it: I copy the invite link": {
       "turns": [
@@ -16,25 +16,29 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.99
+              "click",
+              1
             ]
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.99,
           "target": [
             [
               "none",
               0.86
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "click",
+              0.75
+            ],
+            [
+              "paste",
+              0.23
             ]
           ]
         }
@@ -57,18 +61,18 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.6,
+          "confidence": 0.57,
           "probabilities": {
-            "disabled": 0.14,
-            "enabled": 0.64,
-            "checked": 0.16,
+            "disabled": 0.17,
+            "enabled": 0.61,
+            "checked": 0.15,
             "unchecked": 0,
             "expanded": 0.01,
             "collapsed": 0,
             "selected": 0.01,
             "unselected": 0,
-            "pressed": 0.03,
-            "unpressed": 0.01
+            "pressed": 0.05,
+            "unpressed": 0
           }
         },
         "subject": [
@@ -84,7 +88,7 @@
         "area": [
           [
             "page",
-            0.87
+            0.83
           ]
         ]
       }
@@ -92,7 +96,7 @@
     "Copy an invite link and paste it: I paste into the message box": {
       "turns": [
         {
-          "done": 0.17,
+          "done": 0.13,
           "target": [
             [
               {
@@ -100,34 +104,22 @@
                 "name": "Message",
                 "container": ""
               },
-              0.89
+              0.93
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.75
-            ],
-            [
-              "right click",
-              0.22
+              "paste",
+              0.9
             ]
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.94,
           "target": [
             [
               "none",
-              0.53
-            ],
-            [
-              {
-                "role": "button",
-                "name": "Copy invite link",
-                "container": ""
-              },
-              0.26
+              0.59
             ],
             [
               {
@@ -135,13 +127,13 @@
                 "name": "Message",
                 "container": ""
               },
-              0.14
+              0.32
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.95
+              "paste",
+              0.97
             ]
           ]
         }
@@ -164,17 +156,17 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.46,
+          "confidence": 0.43,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.51,
-            "checked": 0.12,
+            "enabled": 0.49,
+            "checked": 0.13,
             "unchecked": 0.01,
-            "expanded": 0.13,
+            "expanded": 0.17,
             "collapsed": 0.01,
-            "selected": 0.19,
+            "selected": 0.17,
             "unselected": 0.01,
-            "pressed": 0.01,
+            "pressed": 0,
             "unpressed": 0
           }
         },
@@ -185,25 +177,25 @@
               "name": "Message",
               "container": ""
             },
-            1
+            0.99
           ]
         ],
         "area": [
+          [
+            "missing",
+            0.37
+          ],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.39
-          ],
-          [
-            "missing",
-            0.31
+            0.35
           ],
           [
             "page",
-            0.21
+            0.2
           ]
         ]
       }

@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-24T11-58-27-910Z",
+  "run": "runs/2026-10-25T11-47-02-883Z",
   "entries": {
     "Upload through a hidden file input: I upload \"notes.txt\" with the Attach file button": {
       "turns": [
@@ -16,7 +16,12 @@
               1
             ]
           ],
-          "hover": 0.07,
+          "action": [
+            [
+              "upload",
+              0.86
+            ]
+          ],
           "value": [
             [
               "notes.txt",
@@ -25,11 +30,11 @@
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.99,
           "target": [
             [
               "none",
-              0.72
+              0.62
             ],
             [
               {
@@ -37,10 +42,15 @@
                 "name": "Attach file",
                 "container": ""
               },
-              0.26
+              0.37
             ]
           ],
-          "hover": 0.11
+          "action": [
+            [
+              "upload",
+              0.86
+            ]
+          ]
         }
       ]
     },
@@ -60,19 +70,19 @@
         },
         "state": {
           "type": "choice",
-          "choice": "pressed",
-          "confidence": 0.29,
+          "choice": "enabled",
+          "confidence": 0.26,
           "probabilities": {
-            "disabled": 0.07,
-            "enabled": 0.32,
-            "checked": 0.12,
+            "disabled": 0.1,
+            "enabled": 0.33,
+            "checked": 0.11,
             "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
             "selected": 0.09,
             "unselected": 0,
-            "pressed": 0.36,
-            "unpressed": 0.02
+            "pressed": 0.3,
+            "unpressed": 0.05
           }
         },
         "subject": [
@@ -88,7 +98,7 @@
         "area": [
           [
             "page",
-            0.55
+            0.49
           ],
           [
             {
@@ -96,7 +106,7 @@
               "name": "",
               "container": ""
             },
-            0.43
+            0.48
           ]
         ]
       }
@@ -112,20 +122,30 @@
                 "name": "Export CSV",
                 "container": ""
               },
-              1
+              0.98
             ]
           ],
-          "hover": 0.07
+          "action": [
+            [
+              "click",
+              1
+            ]
+          ]
         },
         {
-          "done": 0.91,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.84
+              0.88
             ]
           ],
-          "hover": 0.1
+          "action": [
+            [
+              "click",
+              0.95
+            ]
+          ]
         }
       ]
     },
@@ -134,28 +154,28 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.94,
+          "confidence": 0.91,
           "probabilities": {
-            "value": 0.95,
+            "value": 0.93,
             "presence": 0.01,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.04
+            "fuzzy": 0.06
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.27,
+          "confidence": 0.33,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.34,
-            "checked": 0.27,
+            "enabled": 0.4,
+            "checked": 0.29,
             "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.26,
-            "unselected": 0.01,
+            "selected": 0.19,
+            "unselected": 0,
             "pressed": 0.09,
             "unpressed": 0
           }
@@ -173,7 +193,7 @@
         "area": [
           [
             "page",
-            0.74
+            0.78
           ],
           [
             {
@@ -181,7 +201,7 @@
               "name": "",
               "container": ""
             },
-            0.2
+            0.13
           ]
         ]
       }
@@ -191,29 +211,29 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.91,
+          "confidence": 0.9,
           "probabilities": {
-            "value": 0.93,
+            "value": 0.92,
             "presence": 0.04,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.02
+            "fuzzy": 0.04
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.34,
+          "confidence": 0.46,
           "probabilities": {
-            "disabled": 0.01,
-            "enabled": 0.32,
-            "checked": 0.41,
+            "disabled": 0,
+            "enabled": 0.27,
+            "checked": 0.51,
             "unchecked": 0.02,
-            "expanded": 0.03,
+            "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.18,
+            "selected": 0.17,
             "unselected": 0.01,
-            "pressed": 0.02,
+            "pressed": 0.01,
             "unpressed": 0
           }
         },
@@ -224,21 +244,17 @@
               "name": "downloaded file",
               "container": ""
             },
-            0.99
+            1
           ]
         ],
         "area": [
           [
             "page",
-            0.69
+            0.72
           ],
           [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.18
+            "missing",
+            0.17
           ]
         ]
       }

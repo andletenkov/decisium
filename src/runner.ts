@@ -1,6 +1,6 @@
 import type { Action } from "./browser.ts";
 import { readStep, type StepArgument } from "./step.ts";
-import { capabilities, gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, grouped, legacy, NotYet, named, fmt, PAGE, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
+import { capabilities, gate, GATE_TARGET_MARGIN, GATE_TARGET_TOP, grouped, NotYet, named, fmt, PAGE, type Decider, type Pick, type TurnAnswer } from "./decision.ts";
 import { verdict as checkVerdict, type Verdict } from "./check.ts";
 import { changes } from "./change.ts";
 import { MASK, type Dialog, type Element, type Observation } from "./observation.ts";
@@ -200,7 +200,6 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
 
     let t: TurnAnswer;
     [obs, t] = await settled(rt, obs, o => decider.turn(said, o, recent, attempt, read.keys));
-    t = legacy(t, obs, read);
     t = { ...t, target: grouped(t.target, obs) }; // equivalent links count as one (task 0065)
     log(`  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
@@ -213,8 +212,8 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     if (t.target.choice !== PAGE && !el) return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
     // The likeliest action the target can do; not gated (task 0065: restricted, the right one can be far below 0.5).
     const can = capabilities(el ?? PAGE, obs, read.keys);
-    const how = Object.entries(t.action?.probabilities ?? {}).filter(([a]) => can.includes(a)).sort((a, b) => b[1] - a[1])[0]?.[0];
-    // Only a recorded answer can lack one (live answers rate every action): it was not offered this Turn.
+    const how = !t.action ? can[0] : Object.entries(t.action.probabilities).filter(([a]) => can.includes(a)).sort((a, b) => b[1] - a[1])[0]?.[0];
+    // Only a recorded answer can miss (live answers rate every action): it was not offered this Turn.
     if (!how) return end("ELEMENT_NOT_FOUND", `Jev chose ${t.action?.choice} on ${el?.line ?? "the page"}, which is not offered now`);
     const key = /^press (.+)$/.exec(how)?.[1];
     let action: Action;
@@ -239,7 +238,9 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
         // A file to upload is only ever one the Step quotes (task 0044).
         const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
         if (!candidates.length) return end("AMBIGUOUS", `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`);
-        const v = await decider.value(said, obs, el, candidates);
+        // A clear Step that quotes nothing allows only "": no question (task 0067: Jev's "" 79% missed the gate).
+        const v = candidates.length === 1 && candidates[0] === "" && action.verb === "TYPE" ? { choice: "", probabilities: { "": 1 } }
+          : await decider.value(said, obs, el, candidates);
         log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);
         if (!gate(v) || v.choice === "none") return end("AMBIGUOUS", `Jev is unsure which value to enter into ${el.line}${el.secret ? "" : `: ${named(v)}`}`);
         action.value = v.choice;
@@ -268,7 +269,8 @@ async function act(step: string, rt: Runtime, decider: Decider, log: typeof cons
     }
     const box = action.verb === "CLICK" ? next.elements.find(e => e.ref === action.ref && toggled(e, read.toggle)) : undefined;
     if (box) { log(`  Toggle: ${box.line}`); return end("DONE"); }
-    unchanged = next.text === obs.text ? unchanged + 1 : 0;
+    // By the effect, not the raw text: focus alone ([active]) is no change (task 0067, false DONE on the hover menu).
+    unchanged = effect === "no visible change" ? unchanged + 1 : 0;
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;
   }

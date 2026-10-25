@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T10-59-18-178Z",
+  "run": "runs/2026-10-25T11-48-15-840Z",
   "entries": {
     "The scheduled campaign appears in the calendar: I start a new campaign": {
       "turns": [
@@ -15,10 +15,16 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.91,
+          "done": 0.95,
           "target": [
             [
               {
@@ -26,11 +32,33 @@
                 "name": "Campaign name",
                 "container": ""
               },
-              0.51
+              0.72
             ],
             [
               "none",
-              0.42
+              0.21
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.75
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ]
         }
@@ -50,6 +78,12 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.89
+            ]
+          ],
           "value": [
             [
               "Winter Sale",
@@ -58,11 +92,11 @@
           ]
         },
         {
-          "done": 0.97,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.56
+              0.66
             ],
             [
               {
@@ -70,7 +104,13 @@
                 "name": "Save draft",
                 "container": ""
               },
-              0.36
+              0.21
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.93
             ]
           ]
         }
@@ -90,6 +130,28 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.62
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
           "value": [
             [
               "2026-12-01",
@@ -98,11 +160,11 @@
           ]
         },
         {
-          "done": 0.95,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.58
+              0.57
             ],
             [
               {
@@ -110,7 +172,13 @@
                 "name": "Save draft",
                 "container": ""
               },
-              0.31
+              0.28
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.97
             ]
           ]
         }
@@ -119,7 +187,7 @@
     "The scheduled campaign appears in the calendar: I save the draft": {
       "turns": [
         {
-          "done": 0.03,
+          "done": 0.02,
           "target": [
             [
               {
@@ -127,6 +195,12 @@
                 "name": "Save draft",
                 "container": ""
               },
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
               1
             ]
           ]
@@ -136,7 +210,13 @@
           "target": [
             [
               "none",
-              0.95
+              0.92
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.9
             ]
           ]
         }
@@ -145,7 +225,7 @@
     "The scheduled campaign appears in the calendar: I schedule the campaign": {
       "turns": [
         {
-          "done": 0.09,
+          "done": 0.11,
           "target": [
             [
               {
@@ -155,6 +235,12 @@
               },
               0.99
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
@@ -162,7 +248,13 @@
           "target": [
             [
               "none",
-              0.96
+              0.97
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.91
             ]
           ]
         }
@@ -171,7 +263,7 @@
     "The scheduled campaign appears in the calendar: I open the calendar": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.01,
           "target": [
             [
               {
@@ -181,22 +273,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.94,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.74
-            ],
+              0.83
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "link",
-                "name": "Calendar",
-                "container": "navigation \"Main\""
-              },
-              0.26
+              "click",
+              0.9299999999999999
             ]
           ]
         }
@@ -206,34 +302,34 @@
       "recall": [
         [
           "Winter Sale",
-          0.91
+          0.89
         ]
       ],
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.94,
+          "confidence": 0.91,
           "probabilities": {
             "value": 0.01,
-            "presence": 0.95,
+            "presence": 0.93,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.04
+            "fuzzy": 0.06
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.47,
+          "confidence": 0.46,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.15,
-            "checked": 0.52,
-            "unchecked": 0.01,
-            "expanded": 0.09,
+            "enabled": 0.21,
+            "checked": 0.51,
+            "unchecked": 0.02,
+            "expanded": 0.11,
             "collapsed": 0,
-            "selected": 0.21,
+            "selected": 0.13,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0
@@ -249,17 +345,17 @@
             0.6
           ],
           [
+            "none",
+            0.18000000000000002
+          ],
+          [
             {
               "role": "listitem",
               "name": "",
               "container": "list \"Scheduled campaigns\"",
               "near": "2026-10-20: Autumn Sale (1 week)"
             },
-            0.14
-          ],
-          [
-            "none",
-            0.12
+            0.1
           ]
         ],
         "area": [
@@ -269,11 +365,11 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.76
+            0.7
           ],
           [
             "page",
-            0.17
+            0.26
           ]
         ]
       }
@@ -281,7 +377,7 @@
     "An unscheduled draft does not appear in the calendar: I start a new campaign": {
       "turns": [
         {
-          "done": 0.01,
+          "done": 0.02,
           "target": [
             [
               {
@@ -291,10 +387,16 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.9,
+          "done": 0.95,
           "target": [
             [
               {
@@ -302,11 +404,33 @@
                 "name": "Campaign name",
                 "container": ""
               },
-              0.55
+              0.73
             ],
             [
               "none",
-              0.38
+              0.21
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.79
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ]
         }
@@ -326,43 +450,15 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.86
+            ]
+          ],
           "value": [
             [
               "Summer Sale",
-              1
-            ]
-          ]
-        },
-        {
-          "done": 0.97,
-          "target": [
-            [
-              "none",
-              0.61
-            ],
-            [
-              {
-                "role": "button",
-                "name": "Save draft",
-                "container": ""
-              },
-              0.28
-            ]
-          ]
-        }
-      ]
-    },
-    "An unscheduled draft does not appear in the calendar: I save the draft": {
-      "turns": [
-        {
-          "done": 0.03,
-          "target": [
-            [
-              {
-                "role": "button",
-                "name": "Save draft",
-                "container": ""
-              },
               1
             ]
           ]
@@ -372,7 +468,59 @@
           "target": [
             [
               "none",
-              0.97
+              0.71
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Save draft",
+                "container": ""
+              },
+              0.17
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.96
+            ]
+          ]
+        }
+      ]
+    },
+    "An unscheduled draft does not appear in the calendar: I save the draft": {
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Save draft",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
+          ]
+        },
+        {
+          "done": 0.97,
+          "target": [
+            [
+              "none",
+              0.9
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.92
             ]
           ]
         }
@@ -391,22 +539,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.9,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.66
-            ],
+              0.86
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "link",
-                "name": "Calendar",
-                "container": "navigation \"Main\""
-              },
-              0.32
+              "click",
+              0.92
             ]
           ]
         }
@@ -431,7 +583,7 @@
           "probabilities": {
             "value": 0.01,
             "presence": 0.93,
-            "absence": 0.01,
+            "absence": 0.02,
             "state": 0,
             "fuzzy": 0.04
           }
@@ -439,15 +591,15 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.23,
+          "confidence": 0.2,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.26,
-            "checked": 0.31,
-            "unchecked": 0.07,
-            "expanded": 0.15,
+            "enabled": 0.27,
+            "checked": 0.27999999999999997,
+            "unchecked": 0.05,
+            "expanded": 0.16,
             "collapsed": 0.01,
-            "selected": 0.15,
+            "selected": 0.18,
             "unselected": 0.03,
             "pressed": 0.01,
             "unpressed": 0.01
@@ -460,7 +612,7 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.86
+            0.81
           ]
         ],
         "area": [
@@ -470,7 +622,7 @@
               "name": "Scheduled campaigns",
               "container": ""
             },
-            0.9
+            0.85
           ]
         ]
       }
@@ -478,7 +630,7 @@
     "A check without a reference is unaffected: I open the \"Spring Sale\" campaign": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.03,
           "target": [
             [
               {
@@ -488,22 +640,26 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.79
-            ],
+              0.81
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "button",
-                "name": "Schedule",
-                "container": ""
-              },
-              0.16
+              "click",
+              0.89
             ]
           ]
         }
@@ -513,7 +669,7 @@
       "recall": [
         [
           "none",
-          0.92
+          0.94
         ]
       ],
       "check": {
@@ -559,7 +715,7 @@
         "area": [
           [
             "page",
-            0.63
+            0.68
           ],
           [
             {
@@ -567,7 +723,7 @@
               "name": "",
               "container": ""
             },
-            0.34
+            0.29
           ]
         ]
       }

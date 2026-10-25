@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-23T16-34-32-187Z",
+  "run": "runs/2026-10-25T11-48-01-043Z",
   "entries": {
     "Fill a form from a table and check the table on the page: I fill in the new contact: [First name=Ada, Last name=Lovelace] (row 1)": {
       "turns": [
@@ -16,6 +16,28 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.76
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
           "value": [
             [
               "Ada",
@@ -24,11 +46,19 @@
           ]
         },
         {
-          "done": 0.99,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.49
+              0.55
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "First name",
+                "container": "form \"New contact\""
+              },
+              0.22
             ],
             [
               {
@@ -36,15 +66,13 @@
                 "name": "Add contact",
                 "container": "form \"New contact\""
               },
-              0.24000000000000002
-            ],
+              0.18
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "textbox",
-                "name": "Last name",
-                "container": "form \"New contact\""
-              },
-              0.15
+              "type",
+              0.99
             ]
           ]
         }
@@ -64,6 +92,28 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.54
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
           "value": [
             [
               "Lovelace",
@@ -80,11 +130,33 @@
                 "name": "Add contact",
                 "container": "form \"New contact\""
               },
-              0.72
+              0.63
             ],
             [
               "none",
               0.22
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.03
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         }
@@ -101,7 +173,13 @@
                 "name": "Mathematician",
                 "container": "group \"Roles\""
               },
-              0.95
+              0.96
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.97
             ]
           ]
         }
@@ -118,7 +196,17 @@
                 "name": "Notes",
                 "container": "form \"New contact\""
               },
-              0.97
+              0.96
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.74
+            ],
+            [
+              "paste",
+              0.21
             ]
           ],
           "value": [
@@ -129,7 +217,7 @@
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.91,
           "target": [
             [
               {
@@ -137,7 +225,33 @@
                 "name": "Add contact",
                 "container": "form \"New contact\""
               },
-              0.8
+              0.58
+            ],
+            [
+              "none",
+              0.28
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.12
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         }
@@ -148,25 +262,25 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.96,
+          "confidence": 0.99,
           "probabilities": {
-            "value": 0.97,
+            "value": 0.99,
             "presence": 0,
-            "absence": 0.01,
+            "absence": 0,
             "state": 0,
-            "fuzzy": 0.02
+            "fuzzy": 0.01
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.61,
+          "confidence": 0.7,
           "probabilities": {
-            "disabled": 0.01,
-            "enabled": 0.65,
-            "checked": 0.28,
+            "disabled": 0,
+            "enabled": 0.73,
+            "checked": 0.21000000000000002,
             "unchecked": 0.03,
-            "expanded": 0.01,
+            "expanded": 0.02,
             "collapsed": 0,
             "selected": 0.01,
             "unselected": 0,
@@ -191,11 +305,11 @@
               "name": "New contact",
               "container": ""
             },
-            0.69
+            0.7
           ],
           [
             "page",
-            0.18
+            0.14
           ]
         ]
       }
@@ -213,14 +327,34 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              0.97
+            ]
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.96,
           "target": [
             [
               "none",
-              0.8200000000000001
+              0.67
+            ],
+            [
+              {
+                "role": "button",
+                "name": "Add contact",
+                "container": "form \"New contact\""
+              },
+              0.27
+            ]
+          ],
+          "action": [
+            [
+              "click",
+              0.9
             ]
           ]
         }
@@ -243,18 +377,18 @@
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.51,
+          "confidence": 0.63,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.17,
-            "checked": 0.5599999999999999,
-            "unchecked": 0.15,
-            "expanded": 0.01,
+            "enabled": 0.13,
+            "checked": 0.67,
+            "unchecked": 0.1,
+            "expanded": 0.02,
             "collapsed": 0,
-            "selected": 0.08,
+            "selected": 0.06,
             "unselected": 0.01,
             "pressed": 0.01,
-            "unpressed": 0.01
+            "unpressed": 0
           }
         },
         "subject": [
@@ -265,59 +399,6 @@
               "container": ""
             },
             1
-          ]
-        ],
-        "area": [
-          [
-            {
-              "role": "table",
-              "name": "Contacts",
-              "container": ""
-            },
-            1
-          ]
-        ]
-      }
-    },
-    "Fill a form from a table and check the table on the page: the contacts table should show: [Lovelace, Babbage]": {
-      "check": {
-        "kind": {
-          "type": "choice",
-          "choice": "value",
-          "confidence": 0.81,
-          "probabilities": {
-            "value": 0.85,
-            "presence": 0.13,
-            "absence": 0,
-            "state": 0,
-            "fuzzy": 0.02
-          }
-        },
-        "state": {
-          "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.27,
-          "probabilities": {
-            "disabled": 0,
-            "enabled": 0.34,
-            "checked": 0.13,
-            "unchecked": 0.19,
-            "expanded": 0.17,
-            "collapsed": 0.02,
-            "selected": 0.11,
-            "unselected": 0.02,
-            "pressed": 0.01,
-            "unpressed": 0.01
-          }
-        },
-        "subject": [
-          [
-            {
-              "role": "table",
-              "name": "Contacts",
-              "container": ""
-            },
-            0.98
           ]
         ],
         "area": [
@@ -328,6 +409,59 @@
               "container": ""
             },
             0.99
+          ]
+        ]
+      }
+    },
+    "Fill a form from a table and check the table on the page: the contacts table should show: [Lovelace, Babbage]": {
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "value",
+          "confidence": 0.75,
+          "probabilities": {
+            "value": 0.8,
+            "presence": 0.18,
+            "absence": 0,
+            "state": 0,
+            "fuzzy": 0.02
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "enabled",
+          "confidence": 0.26,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0.33,
+            "checked": 0.14,
+            "unchecked": 0.22,
+            "expanded": 0.13,
+            "collapsed": 0.02,
+            "selected": 0.13,
+            "unselected": 0.02,
+            "pressed": 0,
+            "unpressed": 0.01
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            0.99
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "table",
+              "name": "Contacts",
+              "container": ""
+            },
+            1
           ]
         ]
       }
@@ -346,6 +480,12 @@
               0.98
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.86
+            ]
+          ],
           "value": [
             [
               "Grace",
@@ -354,7 +494,7 @@
           ]
         },
         {
-          "done": 0.01,
+          "done": 0.02,
           "target": [
             [
               {
@@ -362,7 +502,29 @@
                 "name": "Last name",
                 "container": "form \"New contact\""
               },
-              0.88
+              0.85
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.73
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
             ]
           ],
           "value": [
@@ -373,7 +535,7 @@
           ]
         },
         {
-          "done": 0.02,
+          "done": 0.03,
           "target": [
             [
               {
@@ -383,10 +545,16 @@
               },
               0.99
             ]
+          ],
+          "action": [
+            [
+              "click",
+              0.97
+            ]
           ]
         },
         {
-          "done": 0.13,
+          "done": 0.21,
           "target": [
             [
               {
@@ -396,6 +564,12 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
@@ -403,7 +577,17 @@
           "target": [
             [
               "none",
-              0.96
+              0.83
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.77
+            ],
+            [
+              "click",
+              0.21
             ]
           ]
         }
@@ -421,6 +605,12 @@
                 "container": "form \"New contact\""
               },
               0.99
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.94
             ]
           ],
           "value": [
@@ -442,6 +632,28 @@
               0.99
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.71
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
           "value": [
             [
               "Turing",
@@ -450,7 +662,7 @@
           ]
         },
         {
-          "done": 0.03,
+          "done": 0.04,
           "target": [
             [
               {
@@ -458,12 +670,18 @@
                 "name": "Mathematician",
                 "container": "group \"Roles\""
               },
+              0.97
+            ]
+          ],
+          "action": [
+            [
+              "click",
               0.96
             ]
           ]
         },
         {
-          "done": 0.03,
+          "done": 0.06,
           "target": [
             [
               {
@@ -473,14 +691,30 @@
               },
               1
             ]
+          ],
+          "action": [
+            [
+              "click",
+              1
+            ]
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.99,
           "target": [
             [
               "none",
-              0.93
+              0.86
+            ]
+          ],
+          "action": [
+            [
+              "type",
+              0.76
+            ],
+            [
+              "click",
+              0.22
             ]
           ]
         }
@@ -491,28 +725,28 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.79,
+          "confidence": 0.77,
           "probabilities": {
-            "value": 0.83,
+            "value": 0.82,
             "presence": 0.05,
             "absence": 0,
             "state": 0,
-            "fuzzy": 0.12
+            "fuzzy": 0.13
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.23,
+          "confidence": 0.28,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.31,
-            "checked": 0.27,
-            "unchecked": 0.26,
-            "expanded": 0.05,
+            "enabled": 0.35,
+            "checked": 0.2,
+            "unchecked": 0.2,
+            "expanded": 0.11,
             "collapsed": 0.01,
-            "selected": 0.07,
-            "unselected": 0.01,
+            "selected": 0.09,
+            "unselected": 0.02,
             "pressed": 0.01,
             "unpressed": 0.01
           }
@@ -556,16 +790,16 @@
         "state": {
           "type": "choice",
           "choice": "unselected",
-          "confidence": 0.46,
+          "confidence": 0.48,
           "probabilities": {
-            "disabled": 0.02,
-            "enabled": 0.08,
+            "disabled": 0.01,
+            "enabled": 0.05,
             "checked": 0.02,
-            "unchecked": 0.27,
-            "expanded": 0.03,
-            "collapsed": 0.04,
-            "selected": 0.01,
-            "unselected": 0.51,
+            "unchecked": 0.28,
+            "expanded": 0.02,
+            "collapsed": 0.05,
+            "selected": 0.02,
+            "unselected": 0.53,
             "pressed": 0,
             "unpressed": 0.02
           }
@@ -577,7 +811,7 @@
               "name": "Contacts",
               "container": ""
             },
-            0.99
+            0.98
           ]
         ],
         "area": [
@@ -587,7 +821,7 @@
               "name": "Contacts",
               "container": ""
             },
-            0.98
+            0.99
           ]
         ]
       }
@@ -606,6 +840,28 @@
               1
             ]
           ],
+          "action": [
+            [
+              "type",
+              0.78
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
+            ],
+            [
+              "paste",
+              0
+            ]
+          ],
           "value": [
             [
               "Ada",
@@ -614,11 +870,19 @@
           ]
         },
         {
-          "done": 0.99,
+          "done": 0.98,
           "target": [
             [
               "none",
-              0.48
+              0.53
+            ],
+            [
+              {
+                "role": "textbox",
+                "name": "First name",
+                "container": "form \"New contact\""
+              },
+              0.26
             ],
             [
               {
@@ -626,15 +890,13 @@
                 "name": "Add contact",
                 "container": "form \"New contact\""
               },
-              0.24000000000000002
-            ],
+              0.13
+            ]
+          ],
+          "action": [
             [
-              {
-                "role": "textbox",
-                "name": "Last name",
-                "container": "form \"New contact\""
-              },
-              0.17
+              "type",
+              0.98
             ]
           ]
         }
@@ -646,29 +908,29 @@
         "kind": {
           "type": "choice",
           "choice": "absence",
-          "confidence": 0.99,
+          "confidence": 1,
           "probabilities": {
-            "value": 0.01,
+            "value": 0,
             "presence": 0,
-            "absence": 0.99,
+            "absence": 1,
             "state": 0,
             "fuzzy": 0
           }
         },
         "state": {
           "type": "choice",
-          "choice": "collapsed",
-          "confidence": 0.2,
+          "choice": "unselected",
+          "confidence": 0.39,
           "probabilities": {
-            "disabled": 0.05,
+            "disabled": 0.03,
             "enabled": 0.02,
-            "checked": 0.03,
-            "unchecked": 0.25,
+            "checked": 0.02,
+            "unchecked": 0.23,
             "expanded": 0.01,
-            "collapsed": 0.27999999999999997,
-            "selected": 0.04,
-            "unselected": 0.28,
-            "pressed": 0.01,
+            "collapsed": 0.19,
+            "selected": 0.02,
+            "unselected": 0.45,
+            "pressed": 0,
             "unpressed": 0.03
           }
         },
@@ -679,7 +941,7 @@
               "name": "Babbage",
               "container": "table \"Contacts\""
             },
-            0.81
+            0.84
           ]
         ],
         "area": [
@@ -689,7 +951,7 @@
               "name": "Contacts",
               "container": ""
             },
-            0.97
+            0.99
           ]
         ]
       }

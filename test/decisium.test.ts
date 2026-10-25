@@ -434,7 +434,7 @@ test("runStep refuses low-confidence targets and stops when actions change nothi
     const noop: Decider = { ...oracle, turn: async () => ({ done: 0, target: sure(draft) }) };
     assert.equal((await runStep("Save the draft", b, noop, () => {})).outcome, "BLOCKED");
 
-    const scrolling: Decider = { ...oracle, turn: async () => ({ done: 0, target: sure("scroll") }) };
+    const scrolling: Decider = { ...oracle, turn: async () => ({ done: 0, target: sure("page"), action: sure("scroll down") }) };
     assert.equal((await runStep("Load more", b, scrolling, () => {})).outcome, "BLOCKED"); // nothing more loads
   } finally {
     await b.close();
@@ -1060,7 +1060,7 @@ test("keys: a press-only Step is pressed by code; other Steps offer only the key
     assert.deepEqual(Object.keys(pageActions(obs, ["Control+K"])).filter(k => k.startsWith("press")), ["press Control+K"]);
     assert.deepEqual(Object.keys(pageActions(obs, ["Enter"])).filter(k => k.startsWith("press")), []);
     assert.deepEqual(Object.keys(pageActions(obs, [])).filter(k => k.startsWith("press")), []);
-    const picker: Decider = { ...oracle, turn: async (_s, o) => /Tab/.test(o.pageText) ? { done: 1, target: sure("none") } : { done: 0, target: sure("press Tab") } };
+    const picker: Decider = { ...oracle, turn: async (_s, o) => /Tab/.test(o.pageText) ? { done: 1, target: sure("none") } : { done: 0, target: sure("page"), action: sure("press Tab") } };
     assert.equal((await runStep("I move on by pressing Tab", b, picker, () => {})).outcome, "DONE");
     assert.match((await b.observe()).pageText, /^Tab$/m);
   } finally {
@@ -1124,7 +1124,7 @@ test("hover: Jev's hover answer hovers the element; titles are descriptions; a m
     <script>const m = document.getElementById("m"); m.onmouseenter = () => m.querySelector("ul").hidden = false; m.querySelector("button").onclick = () => m.querySelector("ul").hidden = true;</script>`);
   const b = await Browser.open(pathToFileURL(`${dir}/a.html`).href);
   const hover = (name: string): Decider => ({ ...oracle, turn: async (_s, o, recent) => recent.length ? { done: 1, target: sure("none") }
-    : { done: 0, hover: 0.9, target: sure(o.elements.find(e => e.name === name)!.ref) } });
+    : { done: 0, action: sure("hover"), target: sure(o.elements.find(e => e.name === name)!.ref) } });
   try {
     const obs = await b.observe();
     const save = obs.elements.find(e => e.name === "Save")!;
@@ -1145,7 +1145,7 @@ test("gestures: double-click, right-click and drag by Jev's gesture answer; drag
   const b = await Browser.open(pathToFileURL("examples/cookbook/index.html").href + "?gestures");
   const by = (o: Observation, text: string) => o.elements.find(e => e.name === text || e.value === text)!;
   const once = (text: string, gesture: string, drop?: string): Decider => ({ ...oracle,
-    turn: async (_s, o, recent) => recent.length ? { done: 1, target: sure("none") } : { done: 0, gesture: sure(gesture), target: sure(by(o, text).ref) },
+    turn: async (_s, o, recent) => recent.length ? { done: 1, target: sure("none") } : { done: 0, action: sure(gesture), target: sure(by(o, text).ref) },
     drop: async (_s, o) => sure([...o.readable, ...o.areas].find(e => e.name === drop)!.ref) });
   const status = async () => (await b.observe()).readable.find(e => e.role === "status")?.value;
   try {
@@ -1399,11 +1399,47 @@ test("keys: Jev is offered only the keys the Step text names, never one inside i
   const done: Action[] = [];
   const seen: unknown[] = [];
   const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(`- textbox "Notes" [ref=e1]`), execute: async a => { done.push(a); }, waitForChange: async () => false };
-  const pressing: Decider = { ...oracle, turn: async (...args) => { seen.push(args[4]); return { done: 0, target: sure("press Escape") }; } };
+  const pressing: Decider = { ...oracle, turn: async (...args) => { seen.push(args[4]); return { done: 0, target: sure("page"), action: sure("press Escape") }; } };
   const r = await runStep("I write the notes:", rt, pressing, () => {}, false, "He said “hi” — press Escape");
   assert.deepEqual(seen, [[]]);
   assert.deepEqual(done, []); // "press Escape" is no answer this Step was offered
   assert.equal(r.outcome, "ELEMENT_NOT_FOUND");
+});
+
+test("a clear Step that quotes nothing types \"\" without asking Jev the value (task 0067: '' 79% failed the gate)", async () => {
+  const done: Action[] = [];
+  const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(`- searchbox "Search" [ref=e1]: old query`), execute: async a => { done.push(a); }, waitForChange: async () => false };
+  let n = 0;
+  const jev: Decider = { ...oracle, turn: async () => n++ === 0 ? { done: 0.01, target: sure("e1"), action: sure("type") } : { done: 0.99, target: sure("none") },
+    value: async () => ({ choice: "", probabilities: { "": 0.79, none: 0.21 } }) };
+  const r = await runStep("I clear the Search field", rt, jev, () => {});
+  assert.equal(r.outcome, "DONE");
+  assert.equal(done[0]?.value, "");
+});
+
+test("an action whose only effect is focus is no change: a later unsure 'none' is not DONE (task 0067, hover menu)", async () => {
+  let clicked = false;
+  const rt: Runtime = { actionStep: run => run(), observe: async () => parseSnapshot(`- button "Products"${clicked ? " [active]" : ""} [ref=e1]`),
+    execute: async () => { clicked = true; }, waitForChange: async () => false };
+  let n = 0;
+  const jev: Decider = { ...oracle, turn: async () => n++ === 0 ? { done: 0.02, target: sure("e1"), action: sure("click") } : { done: 0.52, target: { choice: "none", probabilities: { none: 0.52, e1: 0.39 } } } };
+  const r = await runStep("I open the Products menu", rt, jev, () => {});
+  assert.notEqual(r.outcome, "DONE");
+});
+
+test("cassette: a live action the target cannot do is not stored, so replay still holds (task 0067)", async () => {
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { Cassette } = await import("../src/cassette.ts");
+  const obs = parseSnapshot(`- button "Subscribe" [ref=e1]`);
+  const path = `${mkdtempSync(`${tmpdir()}/cas-`)}/t.cassette.json`;
+  const rec = new Cassette(path, "m1", "new");
+  const d = rec.step("S", { ...oracle, turn: async () => ({ done: 0.99, target: sure("e1"), action: { choice: "type", probabilities: { type: 0.97, click: 0.02 } } }) });
+  await d.turn("I subscribe", obs, []);
+  d.done(true);
+  rec.save();
+  const a = await new Cassette(path, "m1", "none").step("S", { ...oracle, turn: async () => { throw new Error("Jev asked"); } }).turn("I subscribe", obs, []);
+  assert.deepEqual(Object.keys(a.action!.probabilities), ["click"]);
 });
 
 test("cassette: replay is the live question without Jev, so an answer it no longer offers heals, or is UI_CHANGED at once", async () => {
@@ -1414,7 +1450,7 @@ test("cassette: replay is the live question without Jev, so an answer it no long
   const el = obs.elements[0];
   // Per question: ask it with what is offered (as recorded, then no longer), the live answer, and why replay stops.
   const questions: [string, (d: Decider, offered: boolean) => Promise<unknown>, Partial<Decider>, RegExp][] = [
-    ["turn", (d, on) => d.turn("I close it", obs, [], false, on ? ["Escape"] : []), { turn: async () => ({ done: 0, target: sure("press Escape") }) }, /recorded answer "press Escape" is not offered now/],
+    ["turn", (d, on) => d.turn("I close it", obs, [], false, on ? ["Escape"] : []), { turn: async () => ({ done: 0, target: sure("page"), action: sure("press Escape") }) }, /recorded action "press Escape" is not offered now/],
     ["value", async (d, on) => { await d.turn("I name it", obs, []); return d.value("I name it", obs, el, on ? ["Ada"] : ["Bob"]); },
       { turn: async () => ({ done: 0, target: sure("e1") }), value: async () => sure("Ada") }, /recorded value "Ada" is not offered now/],
     ["dialog", (d, on) => d.dialog("I name it", obs, on ? ["Ada", "dismiss"] : ["Bob", "dismiss"]), { dialog: async () => sure("Ada") }, /recorded dialog answer "Ada" is not offered now/],
@@ -1450,7 +1486,8 @@ test("upload through a hidden input behind a button, never a missing file; downl
     <script>f.onchange=()=>o.textContent='got '+f.files[0].name</script>`, false, false, {}, dir, dir);
   const click = (name: string, value: Pick = sure("none")): Decider => ({ ...oracle, value: async () => value, turn: async (_s, o, recent) => {
     const el = o.elements.find(e => e.name === name)!;
-    return recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(el.ref) };
+    // Uploading is Jev's action choice (task 0065), not the Step's wording.
+    return recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(el.ref), action: sure(value.choice === "none" ? "click" : "upload") };
   } });
   const download = async () => (await b.observe()).readable.find(e => e.ref === "download");
   try {

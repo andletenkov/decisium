@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-24T17-05-18-967Z",
+  "run": "runs/2026-10-25T11-47-11-223Z",
   "entries": {
     "A form inside an iframe: I enter \"ada@example.com\" in Email": {
       "turns": [
@@ -13,13 +13,13 @@
                 "name": "Email",
                 "container": ""
               },
-              0.97
+              1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "type",
+              0.86
             ]
           ],
           "value": [
@@ -30,7 +30,7 @@
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.99,
           "target": [
             [
               {
@@ -38,17 +38,33 @@
                 "name": "Subscribe",
                 "container": ""
               },
-              0.5
+              0.41
             ],
             [
               "none",
-              0.36
+              0.39
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "click",
+              0.02
+            ],
+            [
+              "upload",
+              0
+            ],
+            [
+              "hover",
+              0
+            ],
+            [
+              "double click",
+              0
+            ],
+            [
+              "right click",
+              0
             ]
           ]
         }
@@ -68,9 +84,9 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "click",
               1
             ]
           ]
@@ -80,7 +96,7 @@
           "target": [
             [
               "none",
-              0.77
+              0.62
             ],
             [
               {
@@ -88,13 +104,13 @@
                 "name": "Subscribe",
                 "container": ""
               },
-              0.21
+              0.37
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "click",
+              0.99
             ]
           ]
         }
@@ -117,18 +133,18 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.46,
+          "confidence": 0.51,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.51,
-            "checked": 0.22,
+            "enabled": 0.56,
+            "checked": 0.24,
             "unchecked": 0,
-            "expanded": 0,
+            "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.16,
+            "selected": 0.12,
             "unselected": 0,
-            "pressed": 0.09,
-            "unpressed": 0.01
+            "pressed": 0.06,
+            "unpressed": 0
           }
         },
         "subject": [
@@ -149,11 +165,11 @@
               "name": "",
               "container": ""
             },
-            0.39
+            0.51
           ],
           [
             "page",
-            0.33
+            0.26
           ],
           [
             {
@@ -161,7 +177,7 @@
               "name": "",
               "container": ""
             },
-            0.22
+            0.2
           ]
         ]
       }
@@ -183,16 +199,16 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.78,
+          "confidence": 0.71,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.8,
-            "checked": 0.16,
+            "enabled": 0.74,
+            "checked": 0.19,
             "unchecked": 0.01,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.03,
-            "unselected": 0,
+            "selected": 0.05,
+            "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
           }
@@ -218,7 +234,7 @@
           ],
           [
             "page",
-            0.15
+            0.14
           ]
         ]
       }
@@ -237,32 +253,32 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "click",
               1
             ]
           ]
         },
         {
-          "done": 0.94,
+          "done": 0.96,
           "target": [
-            [
-              "none",
-              0.6900000000000001
-            ],
             [
               {
                 "role": "button",
                 "name": "Like",
                 "container": ""
               },
-              0.31
+              0.72
+            ],
+            [
+              "none",
+              0.28
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "click",
               1
             ]
           ]
@@ -286,7 +302,7 @@
         "state": {
           "type": "choice",
           "choice": "pressed",
-          "confidence": 0.98,
+          "confidence": 0.99,
           "probabilities": {
             "disabled": 0,
             "enabled": 0,
@@ -296,8 +312,8 @@
             "collapsed": 0,
             "selected": 0,
             "unselected": 0,
-            "pressed": 0.98,
-            "unpressed": 0.02
+            "pressed": 0.99,
+            "unpressed": 0.01
           }
         },
         "subject": [
@@ -313,7 +329,7 @@
         "area": [
           [
             "page",
-            0.76
+            0.79
           ],
           [
             {
@@ -321,7 +337,7 @@
               "name": "",
               "container": ""
             },
-            0.2
+            0.17
           ]
         ]
       }
@@ -331,10 +347,10 @@
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.99,
+          "confidence": 0.97,
           "probabilities": {
-            "value": 0.99,
-            "presence": 0.01,
+            "value": 0.98,
+            "presence": 0.02,
             "absence": 0,
             "state": 0,
             "fuzzy": 0
@@ -343,17 +359,17 @@
         "state": {
           "type": "choice",
           "choice": "pressed",
-          "confidence": 0.94,
+          "confidence": 0.92,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.03,
-            "checked": 0.01,
+            "checked": 0.02,
             "unchecked": 0,
             "expanded": 0,
             "collapsed": 0,
             "selected": 0,
             "unselected": 0,
-            "pressed": 0.95,
+            "pressed": 0.93,
             "unpressed": 0.01
           }
         },
@@ -370,7 +386,7 @@
         "area": [
           [
             "page",
-            0.72
+            0.68
           ],
           [
             {
@@ -378,7 +394,7 @@
               "name": "",
               "container": ""
             },
-            0.22
+            0.28
           ]
         ]
       }

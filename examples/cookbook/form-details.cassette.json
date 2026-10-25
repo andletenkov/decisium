@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-24T12-40-54-582Z",
+  "run": "runs/2026-10-25T12-05-51-477Z",
   "entries": {
     "Clear a populated search field: I clear the Search field": {
       "turns": [
@@ -16,39 +16,33 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.89
-            ]
-          ],
-          "value": [
-            [
-              "",
-              0.88
+              "type",
+              0.95
             ]
           ]
         },
         {
-          "done": 0.92,
+          "done": 0.85,
           "target": [
-            [
-              "none",
-              0.61
-            ],
             [
               {
                 "role": "searchbox",
                 "name": "Search",
                 "container": ""
               },
-              0.38
+              0.53
+            ],
+            [
+              "none",
+              0.47
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              0.97
+              "type",
+              1
             ]
           ]
         }
@@ -71,18 +65,18 @@
         "state": {
           "type": "choice",
           "choice": "unchecked",
-          "confidence": 0.23,
+          "confidence": 0.26,
           "probabilities": {
-            "disabled": 0.03,
-            "enabled": 0.25,
-            "checked": 0.03,
-            "unchecked": 0.31,
-            "expanded": 0.02,
+            "disabled": 0.02,
+            "enabled": 0.22,
+            "checked": 0.04,
+            "unchecked": 0.33,
+            "expanded": 0.04,
             "collapsed": 0.15,
             "selected": 0.01,
-            "unselected": 0.12,
+            "unselected": 0.07,
             "pressed": 0.01,
-            "unpressed": 0.07
+            "unpressed": 0.11
           }
         },
         "subject": [
@@ -99,16 +93,11 @@
         "area": [
           [
             "page",
-            0.74
+            0.79
           ],
           [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "near": "Start date Start date"
-            },
-            0.09
+            "missing",
+            0.1
           ]
         ]
       }
@@ -116,7 +105,7 @@
     "Native date and time fields: I set the Start date to \"2026-10-20\"": {
       "turns": [
         {
-          "done": 0.01,
+          "done": 0.02,
           "target": [
             [
               {
@@ -127,10 +116,10 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "type",
+              0.99
             ]
           ],
           "value": [
@@ -145,7 +134,7 @@
           "target": [
             [
               "none",
-              0.68
+              0.51
             ],
             [
               {
@@ -153,12 +142,12 @@
                 "name": "Start date",
                 "container": ""
               },
-              0.17
+              0.48
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "type",
               1
             ]
           ]
@@ -182,16 +171,16 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.6,
+          "confidence": 0.71,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.64,
-            "checked": 0.07,
-            "unchecked": 0.06,
+            "enabled": 0.74,
+            "checked": 0.09,
+            "unchecked": 0.08,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.22,
-            "unselected": 0.01,
+            "selected": 0.09,
+            "unselected": 0,
             "pressed": 0,
             "unpressed": 0
           }
@@ -209,25 +198,7 @@
         "area": [
           [
             "page",
-            0.54
-          ],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "near": "Start date Start date 2026-10-20"
-            },
-            0.22
-          ],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "near": "Start time Start time"
-            },
-            0.08
+            0.84
           ]
         ]
       }
@@ -246,9 +217,9 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "type",
               1
             ]
           ],
@@ -264,7 +235,7 @@
           "target": [
             [
               "none",
-              0.7
+              0.59
             ],
             [
               {
@@ -272,13 +243,13 @@
                 "name": "Start time",
                 "container": ""
               },
-              0.18
+              0.38
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "type",
+              0.99
             ]
           ]
         }
@@ -301,15 +272,15 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.84,
+          "confidence": 0.81,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.86,
-            "checked": 0.04,
-            "unchecked": 0.05,
+            "enabled": 0.83,
+            "checked": 0.08,
+            "unchecked": 0.06,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.05,
+            "selected": 0.03,
             "unselected": 0,
             "pressed": 0,
             "unpressed": 0
@@ -328,20 +299,11 @@
         "area": [
           [
             "page",
-            0.48
-          ],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "near": "Start time Start time 14:30"
-            },
-            0.22
+            0.73
           ],
           [
             "missing",
-            0.13
+            0.09
           ]
         ]
       }
@@ -357,13 +319,13 @@
                 "name": "Appointment",
                 "container": ""
               },
-              0.93
+              0.99
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "type",
+              0.91
             ]
           ],
           "value": [
@@ -374,11 +336,11 @@
           ]
         },
         {
-          "done": 0.98,
+          "done": 0.97,
           "target": [
             [
               "none",
-              0.64
+              0.53
             ],
             [
               {
@@ -386,13 +348,13 @@
                 "name": "Appointment",
                 "container": ""
               },
-              0.23
+              0.45
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "type",
+              0.99
             ]
           ]
         }
@@ -419,11 +381,11 @@
           "probabilities": {
             "disabled": 0,
             "enabled": 0.59,
-            "checked": 0.16,
-            "unchecked": 0.1,
+            "checked": 0.11,
+            "unchecked": 0.18000000000000002,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.15,
+            "selected": 0.12,
             "unselected": 0,
             "pressed": 0,
             "unpressed": 0
@@ -442,20 +404,7 @@
         "area": [
           [
             "page",
-            0.58
-          ],
-          [
-            "missing",
-            0.14
-          ],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "near": "Email Email"
-            },
-            0.1
+            0.8
           ]
         ]
       }
@@ -463,7 +412,7 @@
     "Validate when leaving a field: I enter \"invalid\" in Email": {
       "turns": [
         {
-          "done": 0.02,
+          "done": 0.01,
           "target": [
             [
               {
@@ -474,9 +423,9 @@
               1
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
+              "type",
               1
             ]
           ],
@@ -488,25 +437,25 @@
           ]
         },
         {
-          "done": 0.96,
+          "done": 0.95,
           "target": [
-            [
-              "none",
-              0.58
-            ],
             [
               {
                 "role": "textbox",
                 "name": "Email",
                 "container": ""
               },
-              0.27
+              0.59
+            ],
+            [
+              "none",
+              0.41
             ]
           ],
-          "gesture": [
+          "action": [
             [
-              "default",
-              1
+              "type",
+              0.98
             ]
           ]
         }
@@ -529,13 +478,13 @@
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.73,
+          "confidence": 0.72,
           "probabilities": {
-            "disabled": 0.06,
-            "enabled": 0.76,
+            "disabled": 0.08,
+            "enabled": 0.75,
             "checked": 0.08,
             "unchecked": 0.03,
-            "expanded": 0.02,
+            "expanded": 0.01,
             "collapsed": 0.01,
             "selected": 0.01,
             "unselected": 0.01,
@@ -551,13 +500,13 @@
               "container": "",
               "near": "Invalid email"
             },
-            0.92
+            0.93
           ]
         ],
         "area": [
           [
             "page",
-            0.81
+            0.88
           ]
         ]
       }
