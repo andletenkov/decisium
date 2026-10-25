@@ -12,7 +12,7 @@ jobs:
       contents: write # the GitHub release
       id-token: write # npm trusted publishing (OIDC)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -20,6 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 5 # fail fast when the runner's apt/CDN download hangs
       - run: npm run typecheck
       - run: npm test
         env:
