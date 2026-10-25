@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-dark.png">
-    <img alt="decisium" src="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-light.png" width="320">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-white.png">
+    <img alt="decisium" src="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-black.png" width="320">
   </picture>
 </p>
 
