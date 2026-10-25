@@ -52,6 +52,7 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "site": "node scripts/site.ts",
+    "version": "node scripts/site.ts && git add site",
     "pack:smoke": "scripts/pack-smoke.sh"
   },
   "dependencies": {

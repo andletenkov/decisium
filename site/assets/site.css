@@ -132,3 +132,5 @@ pre.feature .ln:target a { color: var(--signal); }
 .top-links { margin-left: 0; }
 @media (max-width: 760px) { .search kbd { display: none; } .topbar .brand .wordmark { display: none; } }
 .search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.npm-version { width: auto; gap: 6px; padding: 0 8px; font: 12px var(--font-mono); color: var(--color-neutral-300); text-decoration: none; }
+.npm-version:hover { color: var(--color-text); }

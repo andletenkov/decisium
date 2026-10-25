@@ -6,6 +6,7 @@ import { basename, join } from "node:path";
 import { Marked } from "marked";
 
 const REPO = "https://github.com/andletenkov/decisium";
+const VERSION: string = JSON.parse(readFileSync(join(import.meta.dirname, "..", "package.json"), "utf8")).version; // the release being documented
 
 const root = join(import.meta.dirname, "..");
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -129,7 +130,7 @@ function page(slug: string, title: string, html: string, toc: { level: number; i
 <header class="topbar">
   <a class="brand" href="index.html">${MARK(24)}${WORDMARK}</a>
   <div class="search"><input type="search" id="search" placeholder="Search docs" aria-label="Search docs" autocomplete="off"><kbd>/</kbd><div class="search-results" role="listbox" hidden></div></div>
-  <nav class="top-links"><a class="icon-link" href="${REPO}" aria-label="GitHub" title="GitHub">${GITHUB}</a><a class="icon-link" href="https://www.npmjs.com/package/decisium" aria-label="npm" title="npm">${NPM}</a>
+  <nav class="top-links"><a class="icon-link" href="${REPO}" aria-label="GitHub" title="GitHub">${GITHUB}</a><a class="icon-link npm-version" href="https://www.npmjs.com/package/decisium" aria-label="npm, version ${VERSION}" title="npm">${NPM}<span>v${VERSION}</span></a>
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')">${MOON}${SUN}</button></nav>
 </header>
 <div class="layout">
