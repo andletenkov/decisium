@@ -41,6 +41,10 @@ export default class DecisiumFormatter extends Formatter {
           if (failed) this.log(`  Error: ${result.message ?? "hook failed"}\n`);
           return;
         }
+        if (result.status === Status.UNDEFINED) { // no Decisium step definitions loaded (a wrong "import" path)
+          this.log(`  ? Step: ${step.text}\n  no step definition: is Decisium's steps file in "import"?\n`);
+          return;
+        }
         if (![Status.PASSED, Status.FAILED].includes(result.status)) return; // skipped after a failure
         const parsed = fromPickle(step);
         const { kind } = parsed;

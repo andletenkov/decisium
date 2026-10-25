@@ -1365,6 +1365,19 @@ test("raw cucumber-js: a failed BeforeAll hook is reported, not a silent 0/0", a
   assert.doesNotMatch(r.stdout, /0\/0 scenarios passed/);
 });
 
+test("raw cucumber-js: an undefined Step says the steps file is not loaded", async () => {
+  const { execFile } = await import("node:child_process");
+  const { mkdirSync, writeFileSync } = await import("node:fs");
+  const { promisify } = await import("node:util");
+  const config = "runs/no-steps.cucumber.mjs"; // cucumber resolves -c against the cwd
+  mkdirSync("runs", { recursive: true });
+  writeFileSync(config, `export default { import: [], format: ["./src/formatter.ts"] };`);
+  const r = await promisify(execFile)("npx", ["cucumber-js", "-c", config, "examples/cookbook/tables.feature:5"])
+    .then(o => ({ ...o, code: 0 }), (e: { stdout: string; code: number }) => ({ stdout: e.stdout, code: e.code }));
+  assert.notEqual(r.code, 0);
+  assert.match(r.stdout, /\? Step: .*\n  no step definition: is Decisium's steps file in "import"\?/);
+});
+
 test("executeStep: table rows, UI_CHANGED, PAGE_TOO_LARGE, setup errors, --strict and memory, without cucumber", async () => {
   const { executeStep } = await import("../src/execute.ts");
   const { Cassette } = await import("../src/cassette.ts");
