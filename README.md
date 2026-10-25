@@ -1,8 +1,6 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-white.png">
-    <img alt="decisium" src="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-black.png" width="320">
-  </picture>
+  <img alt="decisium" src="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-black.png#gh-light-mode-only" width="320">
+  <img alt="decisium" src="https://raw.githubusercontent.com/andletenkov/decisium/main/site/assets/logo-white.png#gh-dark-mode-only" width="320">
 </p>
 
 <p align="center"><b>Semantic UI testing with decision models.</b><br>Plain-English Gherkin, a real browser, pass/fail decided by code.</p>
