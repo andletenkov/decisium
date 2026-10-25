@@ -2,9 +2,12 @@
 
 **From behavioral specification to intelligent execution.**
 
-Decisium runs Gherkin features written in plain English against a real browser. You write
-`When I schedule the campaign`, not selectors. An AI model (Jev) only picks among the options Decisium shows it, and
-Decisium's code, not the model, decides whether each Step passed.
+Semantic UI testing with decision models. Decisium runs Gherkin features written in plain English against a real
+browser. You write `When I schedule the campaign`, not selectors.
+
+Each Step is executed by **Jev**, TypeSafe's decision model. Jev does not generate text or code: it picks among the
+options Decisium enumerates from the page (the elements, the actions, the check kinds) and returns a probability for
+each. Decisium's code, not the model, decides whether a Step passed. No LLM, no prompts, no hallucinated selectors.
 
 ```gherkin
 @url:https://shop.example.com
@@ -16,7 +19,7 @@ Feature: Checkout
     Then the order status should be "Confirmed"
 ```
 
-- **No selectors.** Steps name what the user wants. Decisium finds the element by meaning.
+- **No selectors.** Steps name what the user wants. Jev picks the element by meaning, among the ones on the page.
 - **Record and replay.** What each Step resolved to is saved in a cassette next to the feature. CI replays it with zero
   model calls, and a real UI change fails as `UI_CHANGED`.
 - **Built on cucumber-js and Playwright.** Your cucumber configuration, formatters, profiles and step definitions keep

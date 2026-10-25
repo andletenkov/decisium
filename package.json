@@ -1,7 +1,7 @@
 {
   "name": "decisium",
   "version": "0.1.0",
-  "description": "Plain-English Gherkin steps run against a real browser by an AI agent, with record/replay cassettes",
+  "description": "Semantic UI testing with decision models: plain-English Gherkin Steps executed by Jev in a real browser, pass/fail decided by code, record/replay cassettes",
   "type": "module",
   "license": "MIT",
   "keywords": [
@@ -10,7 +10,9 @@
     "playwright",
     "e2e",
     "testing",
-    "ai"
+    "decision-model",
+    "jev",
+    "semantic-testing"
   ],
   "engines": {
     "node": ">=22.18"

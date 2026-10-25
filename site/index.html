@@ -17,9 +17,11 @@
 <nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html" aria-current="page">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Usage</span><a href="writing-features.html">Writing features</a><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="cookbook.html">Step cookbook</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
 <main class="doc"><h1 id="decisium">Decisium</h1>
 <p><strong>From behavioral specification to intelligent execution.</strong></p>
-<p>Decisium runs Gherkin features written in plain English against a real browser. You write
-<code>When I schedule the campaign</code>, not selectors. An AI model (Jev) only picks among the options Decisium shows it, and
-Decisium&#39;s code, not the model, decides whether each Step passed.</p>
+<p>Semantic UI testing with decision models. Decisium runs Gherkin features written in plain English against a real
+browser. You write <code>When I schedule the campaign</code>, not selectors.</p>
+<p>Each Step is executed by <strong>Jev</strong>, TypeSafe&#39;s decision model. Jev does not generate text or code: it picks among the
+options Decisium enumerates from the page (the elements, the actions, the check kinds) and returns a probability for
+each. Decisium&#39;s code, not the model, decides whether a Step passed. No LLM, no prompts, no hallucinated selectors.</p>
 <pre><code class="language-gherkin">@url:https://shop.example.com
 Feature: Checkout
 
@@ -29,7 +31,7 @@ Feature: Checkout
     Then the order status should be &quot;Confirmed&quot;
 </code></pre>
 <ul>
-<li><strong>No selectors.</strong> Steps name what the user wants. Decisium finds the element by meaning.</li>
+<li><strong>No selectors.</strong> Steps name what the user wants. Jev picks the element by meaning, among the ones on the page.</li>
 <li><strong>Record and replay.</strong> What each Step resolved to is saved in a cassette next to the feature. CI replays it with zero
 model calls, and a real UI change fails as <code>UI_CHANGED</code>.</li>
 <li><strong>Built on cucumber-js and Playwright.</strong> Your cucumber configuration, formatters, profiles and step definitions keep

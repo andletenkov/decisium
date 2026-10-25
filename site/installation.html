@@ -20,8 +20,9 @@
 <pre><code class="language-sh">npm install --save-dev decisium
 npx playwright install chromium
 </code></pre>
-<p>Decisium calls Jev through the TypeSafe API. Set the key in the environment or in a <code>.env</code> file in the directory you
-run from:</p>
+<p>Live runs call Jev, TypeSafe&#39;s decision model, through the TypeSafe API: you need a TypeSafe API key. Decisium&#39;s code is
+MIT; Jev is TypeSafe&#39;s hosted service under its own terms. Set the key in the environment or in a <code>.env</code> file in the
+directory you run from:</p>
 <pre><code class="language-sh">echo &#39;TYPESAFE_API_KEY=...&#39; &gt;&gt; .env
 </code></pre>
 <p>A replay (<code>--record none</code>) makes no model calls and does not need the key.</p>
@@ -30,8 +31,17 @@ run from:</p>
 </code></pre>
 <p><code>doctor</code> checks Node, Chromium and the key (one tiny Jev call). Given features, it also opens every start URL. Each
 check prints <code>[OK]</code> or <code>[FAIL]</code>; the exit code is 2 when one fails.</p>
+<h2 id="what-is-sent-to-jev">What is sent to Jev</h2>
+<p>On a live run, per Turn: the Step&#39;s text and a text snapshot of the page (Playwright&#39;s accessibility tree: roles,
+names, visible text, link URLs), plus the message of an open browser dialog. No screenshots, no cookies, no network traffic.</p>
+<ul>
+<li><code>&quot;$NAME&quot;</code> secrets are sent as the token only; the value never leaves your machine, and is masked back wherever the
+page shows it.</li>
+<li>A value written literally in a Step is sent to Jev, recorded in the cassette and written to <code>log.txt</code>.</li>
+<li>Replays (<code>--record none</code>) send nothing.</li>
+</ul>
 <div class="pager"><a class="prev" href="index.html"><span>Previous</span>Introduction</a><a class="next" href="quick-start.html"><span>Next</span>Quick start</a></div></main>
-
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#check-the-setup">Check the setup</a><a class="l2" href="#what-is-sent-to-jev">What is sent to Jev</a></aside>
 </div>
 </body>
 </html>
