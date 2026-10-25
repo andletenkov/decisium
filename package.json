@@ -56,8 +56,9 @@
     "pack:smoke": "scripts/pack-smoke.sh",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "check": "npm run lint && npm run typecheck && npm test",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "check": "npm run lint && npm run typecheck",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "test:coverage": "node --env-file-if-exists=.env --test --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-lines=85 --test-coverage-branches=85 --test-coverage-functions=85 test/*.test.ts"
   },
   "dependencies": {
     "@cucumber/cucumber": "^13.3.0",

@@ -25,6 +25,6 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run test:coverage # fails under 85% lines/branches/functions of src/
       - run: node scripts/site.ts && git diff --exit-code site/ # committed site/ matches the markdown
       - run: npm run pack:smoke
