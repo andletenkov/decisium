@@ -6,3 +6,10 @@ logs/
 examples/real/*.cassette.json
 dist/
 *.tgz
+
+# internal, kept local only
+CONTEXT.md
+docs/tasks/
+docs/adr/
+docs/experiments/
+docs/roadmap.md

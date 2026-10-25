@@ -1,6 +1,6 @@
 # Configuration and reporters
 
-`decisium run` loads configuration exactly like cucumber-js ([ADR 0004](adr/0004-cucumber-native-configuration.md)):
+`decisium run` loads configuration exactly like cucumber-js:
 your `cucumber.{js,mjs,cjs,json,yaml}`, `-p <profile>`, and cucumber's `--format name[:path]` and `--import <file>`
 flags, added to the file's values. Decisium adds its own step definitions to `import`.
 
