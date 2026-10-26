@@ -237,7 +237,7 @@ After(async function (this: Scenario, { result }) {
       "The scenario typed a secret value; Playwright traces store typed text unmasked, so none is kept.\n",
     );
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
-  run.event("result", { passed: ok });
+  run.event("result", { passed: ok, perf: this.browser.perf });
   for (const { cassette } of deciders.values()) cassette?.save(); // per scenario, so a crash keeps what was recorded
   run.flush();
 });

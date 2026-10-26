@@ -400,6 +400,17 @@ export class Browser {
    */
   private async settle(): Promise<void> {
     const start = Date.now();
+    try {
+      await this.settleLoop(start);
+    } finally {
+      this.perf.settle = (this.perf.settle ?? 0) + Date.now() - start;
+    }
+  }
+
+  /** Milliseconds spent per phase this scenario (settle split by what held it: requests, due timers, DOM quiet window). */
+  readonly perf: Record<string, number> = {};
+
+  private async settleLoop(start: number): Promise<void> {
     while (Date.now() < start + SETTLE_CAP_MS) {
       if (this.open) return; // nothing changes until it is answered
       const [sinceMutation, soon] = (await this.unblocked(
@@ -413,11 +424,22 @@ export class Browser {
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
       if (this.inflight === 0 && soon === 0 && quiet >= QUIET_MS) return;
+      const why = this.inflight > 0 ? "settle:requests" : soon > 0 ? "settle:timers" : "settle:quiet";
+      this.perf[why] = (this.perf[why] ?? 0) + 25;
       await this.page.waitForTimeout(25);
     }
   }
 
   async observe(): Promise<Observation> {
+    const t0 = Date.now();
+    try {
+      return await this.observeNow();
+    } finally {
+      this.perf.observe = (this.perf.observe ?? 0) + Date.now() - t0;
+    }
+  }
+
+  private async observeNow(): Promise<Observation> {
     const page = this.open ? undefined : await this.unblocked(this.read());
     if (page) this.under = page;
     const clip = page ? await this.readClipboard() : undefined;
