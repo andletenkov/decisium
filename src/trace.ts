@@ -92,13 +92,19 @@ export class RunDir {
     return this.#dir;
   }
 
-  /** Every Observation is a Turn: screenshot it and log the Observation text. */
-  runtime(b: Browser): Runtime {
+  /** Screenshot the page as the scenario's next numbered image. */
+  async shoot(b: Browser): Promise<string> {
+    const screenshot = `${String(++this.#shot).padStart(3, "0")}.png`;
+    await b.screenshot(join(this.#dir, screenshot));
+    return screenshot;
+  }
+
+  /** Every Observation is a Turn: log the Observation text and screenshot it. `screenshots: false` (cassette replay): the caller shoots on failure. */
+  runtime(b: Browser, screenshots = true): Runtime {
     const rt: Runtime = {
       observe: async () => {
         const obs = await b.observe();
-        const screenshot = `${String(++this.#shot).padStart(3, "0")}.png`;
-        await b.screenshot(join(this.#dir, screenshot));
+        const screenshot = screenshots ? await this.shoot(b) : undefined;
         this.event("observe", { screenshot, ui: obs.text });
         this.#ui = obs.text;
         return obs;
