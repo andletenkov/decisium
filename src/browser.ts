@@ -8,6 +8,7 @@ import {
   type BrowserContextOptions,
   type Dialog as PwDialog,
   type Page,
+  type Request,
 } from "playwright";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import {
@@ -54,6 +55,8 @@ export interface Action {
 /** Chrome shows this for beforeunload; the page cannot set its own text. */
 const LEAVE = "Leave site? Changes you made may not be saved.";
 
+/** Request types that can change what the page shows: only these hold up settle(). */
+const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
 // quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
@@ -146,6 +149,7 @@ export class Browser {
   readonly networkMisses: string[] = [];
   private start: string; // GOTO paths resolve against it
   private inflight = 0;
+  private pending = new Set<Request>(); // the counted requests, by identity: finished or failed ones leave exactly once
   private last?: Observation; // refs are valid for the latest Observation only
   /**
    * Browser dialogs (task 0040). While one is open the page is blocked (snapshots, evaluate, screenshots and clicks
@@ -184,9 +188,16 @@ export class Browser {
       if (m.type() === "error") this.consoleErrors.push(m.text());
     });
     context.on("weberror", (e) => this.consoleErrors.push(`uncaught: ${e.error().message}`));
-    context.on("request", () => this.inflight++);
-    context.on("requestfinished", () => this.inflight--);
-    context.on("requestfailed", () => this.inflight--);
+    const done = (r: Request) => {
+      if (this.pending.delete(r)) this.inflight--;
+    };
+    context.on("request", (r) => {
+      if (!RENDERS.has(r.resourceType())) return; // images, fonts, media, beacons, sockets: Playwright does not wait, nor does the DOM depend on them
+      this.pending.add(r);
+      this.inflight++;
+    });
+    context.on("requestfinished", done);
+    context.on("requestfailed", done);
     context.on("page", (p) => {
       this.page = p;
       this.watchDownloads(p);
@@ -424,7 +435,12 @@ export class Browser {
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
       if (this.inflight === 0 && soon === 0 && quiet >= QUIET_MS) return;
-      const why = this.inflight > 0 ? "settle:requests" : soon > 0 ? "settle:timers" : "settle:quiet";
+      const why =
+        this.inflight > 0
+          ? `settle:requests:${[...this.pending][0]?.resourceType()}`
+          : soon > 0
+            ? "settle:timers"
+            : "settle:quiet";
       this.perf[why] = (this.perf[why] ?? 0) + 25;
       await this.page.waitForTimeout(25);
     }
