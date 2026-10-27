@@ -115,7 +115,6 @@ export class RunDir {
       },
       waitForChange: (since, ms) => b.waitForChange(since, ms),
       stale: () => b.stale(),
-      settle: () => b.settle(),
       actionStep: (run, log) => b.actionStep(run, log, rt.execute),
     };
     return rt;

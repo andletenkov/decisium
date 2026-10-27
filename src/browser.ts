@@ -57,9 +57,7 @@ const LEAVE = "Leave site? Changes you made may not be saved.";
 
 /** Request types that can change what the page shows: only these hold up settle(). */
 const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
-/** Cassette replay: a request pending longer than this stops holding settle(); the next Turn waits for its recorded target (NotYet) instead. A hung telemetry POST otherwise costs the full SETTLE_CAP_MS per action. */
-// shortcut: a check that already passes on the page as it is before a real request slower than this lands passes on replay
-// (live waits up to SETTLE_CAP_MS); raise it, or settle fully before checks, if replays pass what live runs fail.
+/** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full SETTLE_CAP_MS. */
 const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
@@ -152,7 +150,7 @@ export class Browser {
   /** `@replay-network` requests missing from the recording, until the Step that made them fails on them (task 0048). */
   readonly networkMisses: string[] = [];
   private start: string; // GOTO paths resolve against it
-  /** Cassette replay without Jev (--record none): typing does not wait for the page to settle, the next Turn does if needed. */
+  /** Cassette replay without Jev (--record none): actions do not wait for the page to settle; what comes next waits for what it needs. */
   replay = false;
   /** Milliseconds spent per phase this scenario (settle split by what held it: requests, due timers, DOM quiet window). */
   readonly perf: Record<string, number> = {};
@@ -417,13 +415,19 @@ export class Browser {
    * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
    * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
    */
-  async settle(): Promise<void> {
+  private async settle(): Promise<void> {
     const start = Date.now();
     try {
       await this.settleLoop(start);
     } finally {
       this.tally("settle", start);
     }
+  }
+
+  /** Requests that hold the page busy: all in flight, or on replay those pending under REPLAY_REQUEST_MS. */
+  private waiting(): Request[] {
+    const now = Date.now();
+    return [...this.pending].filter(([, t]) => !this.replay || now - t < REPLAY_REQUEST_MS).map(([r]) => r);
   }
 
   private tally(key: string, since: number) {
@@ -444,8 +448,7 @@ export class Browser {
       )) ?? [0, 1]; // mid-navigation: not settled yet
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
-      const now = Date.now();
-      const waiting = [...this.pending].filter(([, t]) => !this.replay || now - t < REPLAY_REQUEST_MS).map(([r]) => r);
+      const waiting = this.waiting();
       const held = this.inflight - this.pending.size + waiting.length; // downloads are in `inflight`, not `pending`
       if (held === 0 && soon === 0 && quiet >= QUIET_MS) return;
       const why =
@@ -709,8 +712,9 @@ export class Browser {
       await this.unblocked(this.perform(action));
       this.tally(`perform:${verb}`, t);
     }
-    // The next Turn's recorded target is waited for (NotYet) if the page needs time; a check settles first (Runtime.settle).
-    if (verb === "TYPE" && this.replay) return;
+    // Replay works like a Playwright spec: no wait after an action. The next Turn waits for its recorded target (NotYet),
+    // a check retries until it passes or the page goes idle (runAssertion), as expect() does.
+    if (this.replay) return;
     const t0 = Date.now();
     await this.settle();
     this.tally(`after:${verb}`, t0);
@@ -836,7 +840,7 @@ export class Browser {
   /** True when nothing pending in the page can change it without user input. */
   private async idle(): Promise<boolean> {
     if (this.open) return true; // blocked until answered
-    if (this.inflight > 0) return false;
+    if (this.inflight - this.pending.size + this.waiting().length > 0) return false;
     const pending =
       (await this.unblocked(
         this.page.evaluate(() => (window as unknown as { __pending?: () => number }).__pending?.() ?? 1).catch(() => 1),
