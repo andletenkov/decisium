@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { availableParallelism, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseArgs } from "node:util";
+import { parseArgs, type ParseArgsConfig } from "node:util";
 import { RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { applyOptions, ourStdout } from "./options.ts";
@@ -16,14 +16,19 @@ import { MODEL } from "./jev.ts";
 // ".ts" from source, ".js" from the built package in dist/.
 const EXT = import.meta.url.slice(-3);
 
-const USAGE = `Usage:
-  decisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]
-  decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]
-                [--parallel <n|auto>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]
-  decisium doctor [<file.feature>...]
-  decisium lint <file.feature>...
-
-The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
+const COMMANDS: Record<string, { synopsis: string; notes: string }> = {
+  step: {
+    synopsis: 'decisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]',
+    notes: `--url: start URL or file.
+--headed: show the browser.
+-v / --verbose prints every Observation and Jev answer; --debug shows stack traces.
+--judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
+--strict: a barely-confident passing check fails as AMBIGUOUS.`,
+  },
+  run: {
+    synopsis:
+      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
+    notes: `The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
   <file>.cassette.json and replayed without Jev while exactly one element still matches it.
@@ -31,10 +36,6 @@ the scenario (or Examples row) at that line.
   none: replay only, a missing or broken resolution fails as UI_CHANGED (CI); all: resolve everything live, rewrite.
 --parallel <n|auto>: worker processes. Features run side by side, a feature's scenarios one after another. Only for
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
-doctor: checks Node, Chromium and TYPESAFE_API_KEY (one tiny Jev call); given features, also opens
-  every start URL.
-lint: no browser, no Jev. Per Step: its kind, the quoted values, keys, secret placeholders, and warnings for wordings
-  the docs mark as ones to avoid (andletenkov.github.io/decisium/steps.html).
 Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (and -p profiles); --format, --import and
   -p (repeatable) are cucumber's flags, added to it. --format name[:path]: cucumber's junit, json, html, message or any
   formatter package, e.g. --format junit:junit.xml or --format cucumberjs-qase-reporter:/dev/null. Only one formatter may
@@ -61,16 +62,43 @@ the token; the value comes from the environment (or .env) and is typed into the 
 masked back to the token. A scenario that typed one keeps no Playwright trace (it would store the value). A value
 written literally in a Step is sent to Jev, recorded in the cassette and written to log.txt.
 
+Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`,
+  },
+  doctor: {
+    synopsis: "decisium doctor [<file.feature>...]",
+    notes:
+      "Checks Node, Chromium and TYPESAFE_API_KEY (one tiny Jev call); given features, also opens every start URL.",
+  },
+  lint: {
+    synopsis: "decisium lint <file.feature>...",
+    notes:
+      "Uses no browser, no Jev. Per Step: its kind, quoted values, keys, secret placeholders, and warnings for wordings\n  the docs mark as ones to avoid (andletenkov.github.io/decisium/steps.html).",
+  },
+};
+
+const USAGE = `Usage:
+${Object.values(COMMANDS)
+  .map(({ synopsis }) => `  ${synopsis}`)
+  .join("\n")}
+
+--help / -h: show help. decisium help <command>: show command-specific help.
+--version / -V: print installed version.
 Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`;
+
+function usage(command?: string): string {
+  const entry = command && Object.hasOwn(COMMANDS, command) ? COMMANDS[command] : undefined;
+  return entry ? `Usage:\n  ${entry.synopsis}\n\n${entry.notes}\n\n--help / -h: show this help.` : USAGE;
+}
 
 async function main(): Promise<number> {
   const feature = (path: string) => path.replace(/:\d+$/, ""); // file.feature:line -> file.feature
-  if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
-  const { positionals, values } = parseArgs({
+  const config = {
     allowPositionals: true,
     allowNegative: true,
     // No defaults: an option not given falls back to DECISIUM_* env, then worldParameters.decisium (src/options.ts).
     options: {
+      help: { type: "boolean", short: "h" },
+      version: { type: "boolean", short: "V" },
       url: { type: "string" },
       headed: { type: "boolean" },
       judged: { type: "boolean" },
@@ -84,7 +112,33 @@ async function main(): Promise<number> {
       verbose: { type: "boolean", short: "v" },
       debug: { type: "boolean" },
     },
-  });
+  } satisfies ParseArgsConfig;
+  let parsed: ReturnType<typeof parseArgs<typeof config>>;
+  try {
+    parsed = parseArgs(config);
+  } catch (err) {
+    const error = err as Error;
+    const { positionals } = parseArgs({ ...config, strict: false });
+    const command = positionals[0] === "help" ? positionals[1] : positionals[0];
+    console.error(`Error: ${error.message.split(". To specify")[0]}\n\n${usage(command)}`);
+    return 2;
+  }
+  const { positionals, values } = parsed;
+  const [cmd, arg] = positionals;
+  const command = cmd === "help" ? arg : cmd;
+  if (command && !Object.hasOwn(COMMANDS, command)) {
+    console.error(`Error: unknown command: ${command}\n\n${USAGE}`);
+    return 2;
+  }
+  if (values.version) {
+    console.log(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version);
+    return 0;
+  }
+  if (values.help || cmd === "help") {
+    console.log(usage(command));
+    return 0;
+  }
+  if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
   const env = process.env;
   const flag = (on?: boolean) => (on === undefined ? undefined : on ? "1" : "0");
   for (const [name, value] of Object.entries({
@@ -98,7 +152,6 @@ async function main(): Promise<number> {
     DEBUG: flag(values.debug),
   }))
     if (value !== undefined) env[`DECISIUM_${name}`] = value;
-  const [cmd, arg] = positionals;
   if (cmd === "doctor") return doctor(positionals.slice(1));
   if (cmd === "lint" && arg) {
     try {
@@ -131,7 +184,7 @@ async function main(): Promise<number> {
         return 2;
       }
     } else {
-      console.error(USAGE);
+      console.error(usage(cmd));
       return 2;
     }
     scenarios = files.flatMap((f) => parseFeature(readFileSync(feature(f), "utf8"), feature(f))); // syntax and unsupported arguments: one line, before running
@@ -141,7 +194,7 @@ async function main(): Promise<number> {
   }
   const parallelSet = values.parallel === "auto" ? -1 : Number(values.parallel ?? 0); // -1: auto, resolved once --record is known
   if (!Number.isInteger(parallelSet) || parallelSet < -1) {
-    console.error(`--parallel must be a whole number or auto\n\n${USAGE}`);
+    console.error(`--parallel must be a whole number or auto\n\n${usage(cmd)}`);
     return 2;
   }
   const here = (f: string) => fileURLToPath(import.meta.resolve(f));
@@ -166,12 +219,12 @@ async function main(): Promise<number> {
   // Values after the merge: the configuration may set what no flag did.
   const record = env.DECISIUM_RECORD || "new";
   if (!RECORD_MODES.includes(record as RecordMode)) {
-    console.error(`--record must be one of ${RECORD_MODES.join(", ")}\n\n${USAGE}`);
+    console.error(`--record must be one of ${RECORD_MODES.join(", ")}\n\n${usage(cmd)}`);
     return 2;
   }
   const missingUrl = scenarios.find((s) => !(env.DECISIUM_URL || s.url));
   if (missingUrl) {
-    console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${USAGE}`);
+    console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${usage(cmd)}`);
     return 2;
   }
   if (!env.TYPESAFE_API_KEY && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
