@@ -33,9 +33,9 @@ unclear wording, or fail it with <code>--strict</code>.</p>
 <h2 id="the-run-directory">The run directory</h2>
 <p>Each run writes <code>runs/&lt;timestamp&gt;/</code>:</p>
 <ul>
-<li><code>trace.jsonl</code>: Observations, Jev answers, actions and outcomes.</li>
+<li><code>trace.jsonl</code>: Observations, Jev answers, actions and outcomes. Each scenario&#39;s <code>result</code> event has <code>perf</code>: milliseconds spent in <code>observe</code>, <code>perform:&lt;verb&gt;</code>, <code>after:&lt;verb&gt;</code> (waiting after an action) and <code>settle</code>, split by what held it (<code>settle:requests:&lt;type&gt;</code>, <code>settle:timers</code>, <code>settle:quiet</code>).</li>
 <li><code>log.txt</code>: the full decision log (what <code>-v</code> prints).</li>
-<li>Per failed scenario: a screenshot per Turn, <code>playwright-trace.zip</code>, <code>console-errors.txt</code> and <code>ui.txt</code> (the page text).
+<li>Per failed scenario: a screenshot per Turn (with <code>--record none</code>, of the failed Step only), <code>playwright-trace.zip</code>, <code>console-errors.txt</code> and <code>ui.txt</code> (the page text).
 Passed scenarios keep none.</li>
 <li><code>report.md</code> when something failed: every failure with Jev&#39;s answers, the page text around it and a rerun command, for
 a coding agent. <code>--no-agent-report</code> turns it off.</li>
