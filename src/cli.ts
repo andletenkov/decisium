@@ -117,12 +117,9 @@ async function main(): Promise<number> {
   try {
     parsed = parseArgs(config);
   } catch (err) {
-    const error = err as Error & { code?: string };
-    let command = process.argv[2];
-    if (error.code === "ERR_PARSE_ARGS_UNKNOWN_OPTION") {
-      const { positionals } = parseArgs({ ...config, strict: false });
-      command = positionals[0] === "help" ? positionals[1] : positionals[0];
-    }
+    const error = err as Error;
+    const { positionals } = parseArgs({ ...config, strict: false });
+    const command = positionals[0] === "help" ? positionals[1] : positionals[0];
     console.error(`Error: ${error.message.split(". To specify")[0]}\n\n${usage(command)}`);
     return 2;
   }

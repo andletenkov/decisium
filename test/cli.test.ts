@@ -51,6 +51,14 @@ for (const command of ["", ...commands]) {
   });
 }
 
+test("cli: invalid option value shows command help with leading options", () => {
+  const result = invoke(["--url", "x", "run", "--headed=yes"]);
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /^Error: Option '--headed' does not take an argument\n\nUsage:\n {2}decisium run/);
+  assert.ok(!result.stderr.includes("decisium step"));
+  assert.equal(result.stdout, "");
+});
+
 test("cli: -v remains verbose, not version", () => {
   const result = invoke(["-v"]);
   assert.equal(result.status, 2);
