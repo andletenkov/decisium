@@ -47,8 +47,9 @@ Options in the configuration: worldParameters: { decisium: { url, record, headed
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 --strict: a check that passes on a barely-confident Jev answer (shown as "marginal pass") fails as AMBIGUOUS.
 
-Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes) and per failed scenario a
-screenshot per Turn, playwright-trace.zip, console-errors.txt and ui.txt (the page text). Passed scenarios keep none.
+Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes, time per phase) and per
+failed scenario a screenshot per Turn (--record none: of the failed Step), playwright-trace.zip, console-errors.txt and
+ui.txt (the page text). Passed scenarios keep none.
 A run with a failure writes report.md: every failure with Jev's answers, the page text around it and a rerun command,
 for a coding agent (--no-agent-report: off).
 
