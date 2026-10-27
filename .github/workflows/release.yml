@@ -20,7 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npx playwright install --with-deps chromium
-        timeout-minutes: 5 # fail fast when the runner's apt/CDN download hangs
+        timeout-minutes: 15 # fail fast when the runner's apt/CDN download hangs; 5 was too tight for slow Azure mirrors
       - run: npm run typecheck
       - run: npm test
         env:

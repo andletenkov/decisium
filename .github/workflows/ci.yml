@@ -24,7 +24,7 @@ jobs:
       - run: npm run lint
       - run: npm audit --omit=dev --audit-level=high
       - run: npx playwright install --with-deps chromium
-        timeout-minutes: 5 # fail fast when the runner's apt/CDN download hangs
+        timeout-minutes: 15 # fail fast when the runner's apt/CDN download hangs; 5 was too tight for slow Azure mirrors
       - run: npm run typecheck
       - run: npm run test:coverage # fails under 85% lines/branches/functions of src/
       - run: node scripts/site.ts && git diff --exit-code site/ # committed site/ matches the markdown
