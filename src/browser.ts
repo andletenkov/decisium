@@ -8,6 +8,7 @@ import {
   type BrowserContextOptions,
   type Dialog as PwDialog,
   type Page,
+  type Request,
 } from "playwright";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import {
@@ -54,6 +55,10 @@ export interface Action {
 /** Chrome shows this for beforeunload; the page cannot set its own text. */
 const LEAVE = "Leave site? Changes you made may not be saved.";
 
+/** Request types that can change what the page shows: only these hold up settle(). */
+const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
+/** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full SETTLE_CAP_MS. */
+const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
 // quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
@@ -145,7 +150,12 @@ export class Browser {
   /** `@replay-network` requests missing from the recording, until the Step that made them fails on them (task 0048). */
   readonly networkMisses: string[] = [];
   private start: string; // GOTO paths resolve against it
+  /** Cassette replay without Jev (--record none): actions do not wait for the page to settle; what comes next waits for what it needs. */
+  replay = false;
+  /** Milliseconds spent per phase this scenario (settle split by what held it: requests, due timers, DOM quiet window). */
+  readonly perf: Record<string, number> = {};
   private inflight = 0;
+  private pending = new Map<Request, number>(); // the counted requests, by identity: finished or failed ones leave exactly once
   private last?: Observation; // refs are valid for the latest Observation only
   /**
    * Browser dialogs (task 0040). While one is open the page is blocked (snapshots, evaluate, screenshots and clicks
@@ -184,9 +194,16 @@ export class Browser {
       if (m.type() === "error") this.consoleErrors.push(m.text());
     });
     context.on("weberror", (e) => this.consoleErrors.push(`uncaught: ${e.error().message}`));
-    context.on("request", () => this.inflight++);
-    context.on("requestfinished", () => this.inflight--);
-    context.on("requestfailed", () => this.inflight--);
+    const done = (r: Request) => {
+      if (this.pending.delete(r)) this.inflight--;
+    };
+    context.on("request", (r) => {
+      if (!RENDERS.has(r.resourceType())) return; // images, fonts, media, beacons, sockets: Playwright does not wait, nor does the DOM depend on them
+      this.pending.set(r, Date.now());
+      this.inflight++;
+    });
+    context.on("requestfinished", done);
+    context.on("requestfailed", done);
     context.on("page", (p) => {
       this.page = p;
       this.watchDownloads(p);
@@ -400,8 +417,27 @@ export class Browser {
    */
   private async settle(): Promise<void> {
     const start = Date.now();
+    try {
+      await this.settleLoop(start);
+    } finally {
+      this.tally("settle", start);
+    }
+  }
+
+  /** Requests that hold the page busy: all in flight, or on replay those pending under REPLAY_REQUEST_MS. */
+  private waiting(): Request[] {
+    const now = Date.now();
+    return [...this.pending].filter(([, t]) => !this.replay || now - t < REPLAY_REQUEST_MS).map(([r]) => r);
+  }
+
+  private tally(key: string, since: number) {
+    this.perf[key] = (this.perf[key] ?? 0) + Date.now() - since;
+  }
+
+  private async settleLoop(start: number): Promise<void> {
     while (Date.now() < start + SETTLE_CAP_MS) {
       if (this.open) return; // nothing changes until it is answered
+      const poll = Date.now();
       const [sinceMutation, soon] = (await this.unblocked(
         this.page
           .evaluate(() => {
@@ -412,12 +448,30 @@ export class Browser {
       )) ?? [0, 1]; // mid-navigation: not settled yet
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
-      if (this.inflight === 0 && soon === 0 && quiet >= QUIET_MS) return;
+      const waiting = this.waiting();
+      const held = this.inflight - this.pending.size + waiting.length; // downloads are in `inflight`, not `pending`
+      if (held === 0 && soon === 0 && quiet >= QUIET_MS) return;
+      const why =
+        held > 0
+          ? `settle:requests:${waiting[0]?.resourceType() ?? "download"}`
+          : soon > 0
+            ? "settle:timers"
+            : "settle:quiet";
       await this.page.waitForTimeout(25);
+      this.tally(why, poll);
     }
   }
 
   async observe(): Promise<Observation> {
+    const t0 = Date.now();
+    try {
+      return await this.observeNow();
+    } finally {
+      this.tally("observe", t0);
+    }
+  }
+
+  private async observeNow(): Promise<Observation> {
     const page = this.open ? undefined : await this.unblocked(this.read());
     if (page) this.under = page;
     const clip = page ? await this.readClipboard() : undefined;
@@ -455,34 +509,43 @@ export class Browser {
     // from a button-like one; ask the DOM.
     const secret = new Set<string>(),
       editable = new Set<string>();
-    for (const [, role, ref] of snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)) {
-      const kind = await this.page
-        .locator(`aria-ref=${ref}`)
-        .evaluate(
-          (el) =>
-            (el as HTMLInputElement).type === "password"
-              ? "secret"
-              : el instanceof HTMLInputElement ||
-                  el instanceof HTMLTextAreaElement ||
-                  (el as HTMLElement).isContentEditable
-                ? "editable"
-                : "",
-          undefined,
-          { timeout: 1000 },
-        )
-        .catch(() => "");
-      if (kind === "secret") secret.add(ref);
-      else if (kind === "editable" && role === "combobox") editable.add(ref);
-    }
+    // One round trip each, all at once: they only read, and the page snapshot above is already taken.
+    const fields = [...snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)];
+    const [kinds, current, collapsed, titles, title] = await Promise.all([
+      Promise.all(
+        fields.map(([, , ref]) =>
+          this.page
+            .locator(`aria-ref=${ref}`)
+            .evaluate(
+              (el) =>
+                (el as HTMLInputElement).type === "password"
+                  ? "secret"
+                  : el instanceof HTMLInputElement ||
+                      el instanceof HTMLTextAreaElement ||
+                      (el as HTMLElement).isContentEditable
+                    ? "editable"
+                    : "",
+              undefined,
+              { timeout: 1000 },
+            )
+            .catch(() => ""),
+        ),
+      ),
+      this.currentLinks(snapshot),
+      this.collapsed(),
+      this.titles(),
+      this.page.title().catch(() => ""), // mid-navigation
+    ]);
+    fields.forEach(([, role, ref], i) => {
+      if (kinds[i] === "secret") secret.add(ref);
+      else if (kinds[i] === "editable" && role === "combobox") editable.add(ref);
+    });
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(
       markRefs(
         markRefs(
-          markTitles(
-            markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()),
-            await this.titles(),
-          ),
+          markTitles(markCollapsed(markCurrent(snapshot, current), collapsed), titles),
           refs("draggable"),
           "draggable",
         ),
@@ -490,10 +553,10 @@ export class Browser {
         "scrollable",
       ),
     );
-    const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
+    const pageTitle = this.mask(title);
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
-    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), title, where);
+    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), pageTitle, where);
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -644,8 +707,17 @@ export class Browser {
       this.rearm(); // before answering: the next dialog may open at once
       if (value in this.secrets) this.typedSecret = true;
       await (verb === "ACCEPT" ? d.accept(this.secrets[value] ?? value) : d.dismiss());
-    } else await this.unblocked(this.perform(action));
+    } else {
+      const t = Date.now();
+      await this.unblocked(this.perform(action));
+      this.tally(`perform:${verb}`, t);
+    }
+    // Replay works like a Playwright spec: no wait after an action. The next Turn waits for its recorded target (NotYet),
+    // a check retries until it passes or the page goes idle (runAssertion), as expect() does.
+    if (this.replay) return;
+    const t0 = Date.now();
     await this.settle();
+    this.tally(`after:${verb}`, t0);
   }
 
   private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
@@ -768,7 +840,7 @@ export class Browser {
   /** True when nothing pending in the page can change it without user input. */
   private async idle(): Promise<boolean> {
     if (this.open) return true; // blocked until answered
-    if (this.inflight > 0) return false;
+    if (this.inflight - this.pending.size + this.waiting().length > 0) return false;
     const pending =
       (await this.unblocked(
         this.page.evaluate(() => (window as unknown as { __pending?: () => number }).__pending?.() ?? 1).catch(() => 1),

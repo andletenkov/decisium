@@ -131,6 +131,7 @@ Before(async function (this: Scenario, { pickle }) {
   } catch (err) {
     throw infra(err);
   }
+  this.browser.replay = record === "none";
   this.rt = run.runtime(this.browser);
   networkMissed(this.browser);
 });
@@ -200,6 +201,7 @@ async function step(this: Scenario, text: string) {
   if (r.marginal) this.attach(`${MARGINAL}${r.marginal}`, { mediaType: "text/plain", fileName: "marginal-pass.txt" });
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
     // Failed Step only; fileName carries the path to the console formatter.
+    if (this.browser?.replay) await run.shoot(this.browser);
     const shot = run.lastScreenshot;
     if (shot && existsSync(shot)) this.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
     const err = new Error(outcomeMessage(r));
@@ -236,7 +238,7 @@ After(async function (this: Scenario, { result }) {
       "The scenario typed a secret value; Playwright traces store typed text unmasked, so none is kept.\n",
     );
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
-  run.event("result", { passed: ok });
+  run.event("result", { passed: ok, perf: this.browser.perf });
   for (const { cassette } of deciders.values()) cassette?.save(); // per scenario, so a crash keeps what was recorded
   run.flush();
 });

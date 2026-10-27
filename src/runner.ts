@@ -370,7 +370,11 @@ async function act(
       return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
     }
 
-    const next = await rt.observe();
+    let next = await rt.observe();
+    // An effect can land a task or a request later (replay does not settle after actions): wait for it before calling
+    // the action ineffective. Returns at once on a page with nothing pending.
+    if (changes(before, next, action.ref) === "no visible change" && (await rt.waitForChange(next.text)))
+      next = await rt.observe();
     // What the action changed, for Jev's next `done` (task 0066: under-confident after working actions).
     const effect = changes(before, next, action.ref);
     log(`  Effect: ${effect}`);

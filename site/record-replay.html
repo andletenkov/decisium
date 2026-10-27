@@ -60,8 +60,18 @@ page still matches it.</p>
 </ol>
 <p>A live run asks Jev every time, so a Step close to the confidence gate can end differently from run to run. Replays
 do not. See <a href="troubleshooting.html">Troubleshooting</a>. Backend requests can be replayed too: <a href="network-replay.html">Network replay</a>.</p>
+<h2 id="waiting-on-replay">Waiting on replay</h2>
+<p>A replay waits the way a Playwright spec does, not after every action:</p>
+<ul>
+<li>An action does not wait for the page to settle. The next action waits until its recorded element is on the page.</li>
+<li>A check retries until it passes or the page has nothing left pending (up to 5 s).</li>
+<li>An action that shows no change yet waits for one before it counts as having done nothing.</li>
+<li>A request pending for over 1.5 s (a hung analytics or error-report call) stops counting as pending.</li>
+</ul>
+<p>A live run (<code>--record new</code> or <code>all</code>) also waits after each action for the requests it started (up to 5 s), so Jev
+sees the result.</p>
 <div class="pager"><a class="prev" href="cli.html"><span>Previous</span>Command line</a><a class="next" href="network-replay.html"><span>Next</span>Network replay</a></div></main>
-
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#workflow">Workflow</a><a class="l2" href="#waiting-on-replay">Waiting on replay</a></aside>
 </div>
 </body>
 </html>

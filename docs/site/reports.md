@@ -10,9 +10,9 @@ unclear wording, or fail it with `--strict`.
 
 Each run writes `runs/<timestamp>/`:
 
-- `trace.jsonl`: Observations, Jev answers, actions and outcomes.
+- `trace.jsonl`: Observations, Jev answers, actions and outcomes. Each scenario's `result` event has `perf`: milliseconds spent in `observe`, `perform:<verb>`, `after:<verb>` (waiting after an action) and `settle`, split by what held it (`settle:requests:<type>`, `settle:timers`, `settle:quiet`).
 - `log.txt`: the full decision log (what `-v` prints).
-- Per failed scenario: a screenshot per Turn, `playwright-trace.zip`, `console-errors.txt` and `ui.txt` (the page text).
+- Per failed scenario: a screenshot per Turn (with `--record none`, of the failed Step only), `playwright-trace.zip`, `console-errors.txt` and `ui.txt` (the page text).
   Passed scenarios keep none.
 - `report.md` when something failed: every failure with Jev's answers, the page text around it and a rerun command, for
   a coding agent. `--no-agent-report` turns it off.
