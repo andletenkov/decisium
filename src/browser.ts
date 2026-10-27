@@ -57,6 +57,8 @@ const LEAVE = "Leave site? Changes you made may not be saved.";
 
 /** Request types that can change what the page shows: only these hold up settle(). */
 const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
+/** Cassette replay: a request pending longer than this stops holding settle(); the next Turn waits for its recorded target (NotYet) instead. A hung telemetry POST otherwise costs the full SETTLE_CAP_MS per action. */
+const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
 // quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
@@ -151,7 +153,7 @@ export class Browser {
   /** Cassette replay without Jev (--record none): typing does not wait for the page to settle, the next Turn does if needed. */
   replay = false;
   private inflight = 0;
-  private pending = new Set<Request>(); // the counted requests, by identity: finished or failed ones leave exactly once
+  private pending = new Map<Request, number>(); // the counted requests, by identity: finished or failed ones leave exactly once
   private last?: Observation; // refs are valid for the latest Observation only
   /**
    * Browser dialogs (task 0040). While one is open the page is blocked (snapshots, evaluate, screenshots and clicks
@@ -195,7 +197,7 @@ export class Browser {
     };
     context.on("request", (r) => {
       if (!RENDERS.has(r.resourceType())) return; // images, fonts, media, beacons, sockets: Playwright does not wait, nor does the DOM depend on them
-      this.pending.add(r);
+      this.pending.set(r, Date.now());
       this.inflight++;
     });
     context.on("requestfinished", done);
@@ -436,10 +438,13 @@ export class Browser {
       )) ?? [0, 1]; // mid-navigation: not settled yet
       // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = Math.min(sinceMutation, Date.now() - start);
-      if (this.inflight === 0 && soon === 0 && quiet >= QUIET_MS) return;
+      const now = Date.now();
+      const waiting = [...this.pending].filter(([, t]) => !this.replay || now - t < REPLAY_REQUEST_MS).map(([r]) => r);
+      const held = this.inflight - this.pending.size + waiting.length; // downloads are in `inflight`, not `pending`
+      if (held === 0 && soon === 0 && quiet >= QUIET_MS) return;
       const why =
-        this.inflight > 0
-          ? `settle:requests:${[...this.pending][0]?.resourceType()}`
+        held > 0
+          ? `settle:requests:${waiting[0]?.resourceType() ?? "download"}`
           : soon > 0
             ? "settle:timers"
             : "settle:quiet";
