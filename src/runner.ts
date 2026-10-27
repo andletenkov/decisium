@@ -42,6 +42,8 @@ export interface Runtime {
   actionStep<T>(run: () => Promise<T>, log: typeof console.log): Promise<T>;
   /** True when the page changed since the latest Observation (task 0066); absent: assume it did not. */
   stale?(): Promise<boolean>;
+  /** Waits for the page to settle; a check starts with it, since replay skips some settles after actions. */
+  settle?(): Promise<void>;
 }
 
 export interface StepResult {
@@ -170,6 +172,7 @@ export async function runAssertion(
   // Like Playwright's expect: a check that does not pass is re-evaluated whenever the UI changes, until
   // the UI stops changing within the wait cap. Jev is asked again only after a change.
   const deadline = Date.now() + ASSERT_TIMEOUT_MS;
+  await rt.settle?.();
   let obs = await rt.observe();
   for (;;) {
     let verdict: Verdict;

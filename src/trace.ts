@@ -7,7 +7,7 @@ import type { Runtime } from "./runner.ts";
 /** File in the run directory marking an infrastructure error (exit 2), written by any worker, read by the CLI. */
 export const INFRA_MARKER = "infrastructure-error";
 
-/** runs/<timestamp>/: trace.jsonl for the whole run, one folder per scenario with a screenshot per Turn. */
+/** runs/<timestamp>/: trace.jsonl for the whole run, one folder per scenario with a screenshot per Turn (replay: per failed Step). */
 export class RunDir {
   readonly path: string;
   #scenario = "";
@@ -99,12 +99,12 @@ export class RunDir {
     return screenshot;
   }
 
-  /** Every Observation is a Turn: log the Observation text and screenshot it. `screenshots: false` (cassette replay): the caller shoots on failure. */
-  runtime(b: Browser, screenshots = true): Runtime {
+  /** Every Observation is a Turn: log the Observation text and screenshot it. Cassette replay (`b.replay`): only failing Steps are shot, by the caller; a green run would delete the PNGs. */
+  runtime(b: Browser): Runtime {
     const rt: Runtime = {
       observe: async () => {
         const obs = await b.observe();
-        const screenshot = screenshots ? await this.shoot(b) : undefined;
+        const screenshot = b.replay ? undefined : await this.shoot(b);
         this.event("observe", { screenshot, ui: obs.text });
         this.#ui = obs.text;
         return obs;
@@ -115,6 +115,7 @@ export class RunDir {
       },
       waitForChange: (since, ms) => b.waitForChange(since, ms),
       stale: () => b.stale(),
+      settle: () => b.settle(),
       actionStep: (run, log) => b.actionStep(run, log, rt.execute),
     };
     return rt;

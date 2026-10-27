@@ -1,11 +1,17 @@
-// Replay-speed regressions (issue #8). Generous bounds against a local server: they fail on the old behaviour by seconds.
+// Replay-speed regressions (issue #2). Generous bounds against a local server: they fail on the old behaviour by seconds.
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { Browser } from "../src/browser.ts";
+import type { Decider } from "../src/decision.ts";
+import { runAssertion } from "../src/runner.ts";
+import { RunDir } from "../src/trace.ts";
 
-const PAGE = `<input aria-label=name><button onclick="fetch('/hang',{method:'POST'});fetch('/ok').then(()=>o.textContent='done')">Go</button>
+const PAGE = `<input aria-label=name oninput="clearTimeout(window.d);d=setTimeout(()=>fetch('/ok').then(()=>v.textContent='valid'),50)"><p id=v></p><button onclick="fetch('/hang',{method:'POST'});fetch('/ok').then(()=>o.textContent='done')">Go</button>
 <button id=img onclick="document.body.append(Object.assign(new Image(),{src:'/slow.png'}))">Img</button><p id=o>idle</p>`;
 let server: Server;
 let url: string;
@@ -62,4 +68,28 @@ test("replay: typing does not settle; live typing does", async () => {
 test("perf tally splits settle by what held it", async () => {
   const { perf } = await timed(true, "CLICK", "Go");
   assert.ok((perf["settle:requests:fetch"] ?? 0) > 0 && perf["after:CLICK"] > 0 && perf["perform:CLICK"] >= 0);
+});
+
+test("replay: a check after typing sees what the typing triggered (it settles first)", async () => {
+  const b = await Browser.open(url);
+  b.replay = true;
+  const rt = new RunDir(mkdtempSync(join(tmpdir(), "perf-"))).runtime(b);
+  try {
+    const obs = await rt.observe();
+    await rt.execute({ verb: "TYPE", ref: obs.elements.find((e) => e.name === "name")!.ref, value: "x" });
+    let seen = "";
+    const spy = {
+      assess: async (_s: string, o: { pageText: string }) => {
+        seen = o.pageText;
+        throw new Error("stop");
+      },
+    } as unknown as Decider;
+    await assert.rejects(
+      runAssertion('"valid" is shown', rt, spy, () => {}),
+      /stop/,
+    );
+    assert.match(seen, /valid/, "the check observed the page before the debounced validation landed");
+  } finally {
+    await b.close();
+  }
 });

@@ -132,7 +132,7 @@ Before(async function (this: Scenario, { pickle }) {
     throw infra(err);
   }
   this.browser.replay = record === "none";
-  this.rt = run.runtime(this.browser, record !== "none"); // replay: a green run would delete the PNGs
+  this.rt = run.runtime(this.browser);
   networkMissed(this.browser);
 });
 
@@ -201,7 +201,7 @@ async function step(this: Scenario, text: string) {
   if (r.marginal) this.attach(`${MARGINAL}${r.marginal}`, { mediaType: "text/plain", fileName: "marginal-pass.txt" });
   if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
     // Failed Step only; fileName carries the path to the console formatter.
-    if (record === "none" && this.browser) await run.shoot(this.browser);
+    if (this.browser?.replay) await run.shoot(this.browser);
     const shot = run.lastScreenshot;
     if (shot && existsSync(shot)) this.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
     const err = new Error(outcomeMessage(r));

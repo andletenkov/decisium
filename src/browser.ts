@@ -58,6 +58,8 @@ const LEAVE = "Leave site? Changes you made may not be saved.";
 /** Request types that can change what the page shows: only these hold up settle(). */
 const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
 /** Cassette replay: a request pending longer than this stops holding settle(); the next Turn waits for its recorded target (NotYet) instead. A hung telemetry POST otherwise costs the full SETTLE_CAP_MS per action. */
+// shortcut: a check that already passes on the page as it is before a real request slower than this lands passes on replay
+// (live waits up to SETTLE_CAP_MS); raise it, or settle fully before checks, if replays pass what live runs fail.
 const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
@@ -152,6 +154,8 @@ export class Browser {
   private start: string; // GOTO paths resolve against it
   /** Cassette replay without Jev (--record none): typing does not wait for the page to settle, the next Turn does if needed. */
   replay = false;
+  /** Milliseconds spent per phase this scenario (settle split by what held it: requests, due timers, DOM quiet window). */
+  readonly perf: Record<string, number> = {};
   private inflight = 0;
   private pending = new Map<Request, number>(); // the counted requests, by identity: finished or failed ones leave exactly once
   private last?: Observation; // refs are valid for the latest Observation only
@@ -413,21 +417,23 @@ export class Browser {
    * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
    * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
    */
-  private async settle(): Promise<void> {
+  async settle(): Promise<void> {
     const start = Date.now();
     try {
       await this.settleLoop(start);
     } finally {
-      this.perf.settle = (this.perf.settle ?? 0) + Date.now() - start;
+      this.tally("settle", start);
     }
   }
 
-  /** Milliseconds spent per phase this scenario (settle split by what held it: requests, due timers, DOM quiet window). */
-  readonly perf: Record<string, number> = {};
+  private tally(key: string, since: number) {
+    this.perf[key] = (this.perf[key] ?? 0) + Date.now() - since;
+  }
 
   private async settleLoop(start: number): Promise<void> {
     while (Date.now() < start + SETTLE_CAP_MS) {
       if (this.open) return; // nothing changes until it is answered
+      const poll = Date.now();
       const [sinceMutation, soon] = (await this.unblocked(
         this.page
           .evaluate(() => {
@@ -448,8 +454,8 @@ export class Browser {
           : soon > 0
             ? "settle:timers"
             : "settle:quiet";
-      this.perf[why] = (this.perf[why] ?? 0) + 25;
       await this.page.waitForTimeout(25);
+      this.tally(why, poll);
     }
   }
 
@@ -458,7 +464,7 @@ export class Browser {
     try {
       return await this.observeNow();
     } finally {
-      this.perf.observe = (this.perf.observe ?? 0) + Date.now() - t0;
+      this.tally("observe", t0);
     }
   }
 
@@ -701,12 +707,13 @@ export class Browser {
     } else {
       const t = Date.now();
       await this.unblocked(this.perform(action));
-      this.perf[`perform:${verb}`] = (this.perf[`perform:${verb}`] ?? 0) + Date.now() - t;
+      this.tally(`perform:${verb}`, t);
     }
-    if (verb === "TYPE" && this.replay) return; // the next Turn's recorded target is waited for (NotYet) if the page needs time
+    // The next Turn's recorded target is waited for (NotYet) if the page needs time; a check settles first (Runtime.settle).
+    if (verb === "TYPE" && this.replay) return;
     const t0 = Date.now();
     await this.settle();
-    this.perf[`after:${verb}`] = (this.perf[`after:${verb}`] ?? 0) + Date.now() - t0;
+    this.tally(`after:${verb}`, t0);
   }
 
   private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
