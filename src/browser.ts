@@ -493,34 +493,43 @@ export class Browser {
     // from a button-like one; ask the DOM.
     const secret = new Set<string>(),
       editable = new Set<string>();
-    for (const [, role, ref] of snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)) {
-      const kind = await this.page
-        .locator(`aria-ref=${ref}`)
-        .evaluate(
-          (el) =>
-            (el as HTMLInputElement).type === "password"
-              ? "secret"
-              : el instanceof HTMLInputElement ||
-                  el instanceof HTMLTextAreaElement ||
-                  (el as HTMLElement).isContentEditable
-                ? "editable"
-                : "",
-          undefined,
-          { timeout: 1000 },
-        )
-        .catch(() => "");
-      if (kind === "secret") secret.add(ref);
-      else if (kind === "editable" && role === "combobox") editable.add(ref);
-    }
+    // One round trip each, all at once: they only read, and the page snapshot above is already taken.
+    const fields = [...snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)];
+    const [kinds, current, collapsed, titles, title] = await Promise.all([
+      Promise.all(
+        fields.map(([, , ref]) =>
+          this.page
+            .locator(`aria-ref=${ref}`)
+            .evaluate(
+              (el) =>
+                (el as HTMLInputElement).type === "password"
+                  ? "secret"
+                  : el instanceof HTMLInputElement ||
+                      el instanceof HTMLTextAreaElement ||
+                      (el as HTMLElement).isContentEditable
+                    ? "editable"
+                    : "",
+              undefined,
+              { timeout: 1000 },
+            )
+            .catch(() => ""),
+        ),
+      ),
+      this.currentLinks(snapshot),
+      this.collapsed(),
+      this.titles(),
+      this.page.title().catch(() => ""), // mid-navigation
+    ]);
+    fields.forEach(([, role, ref], i) => {
+      if (kinds[i] === "secret") secret.add(ref);
+      else if (kinds[i] === "editable" && role === "combobox") editable.add(ref);
+    });
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(
       markRefs(
         markRefs(
-          markTitles(
-            markCollapsed(markCurrent(snapshot, await this.currentLinks(snapshot)), await this.collapsed()),
-            await this.titles(),
-          ),
+          markTitles(markCollapsed(markCurrent(snapshot, current), collapsed), titles),
           refs("draggable"),
           "draggable",
         ),
@@ -528,10 +537,10 @@ export class Browser {
         "scrollable",
       ),
     );
-    const title = this.mask(await this.page.title().catch(() => "")); // mid-navigation
+    const pageTitle = this.mask(title);
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
-    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), title, where);
+    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), pageTitle, where);
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
