@@ -691,8 +691,14 @@ export class Browser {
       this.rearm(); // before answering: the next dialog may open at once
       if (value in this.secrets) this.typedSecret = true;
       await (verb === "ACCEPT" ? d.accept(this.secrets[value] ?? value) : d.dismiss());
-    } else await this.unblocked(this.perform(action));
+    } else {
+      const t = Date.now();
+      await this.unblocked(this.perform(action));
+      this.perf[`perform:${verb}`] = (this.perf[`perform:${verb}`] ?? 0) + Date.now() - t;
+    }
+    const t0 = Date.now();
     await this.settle();
+    this.perf[`after:${verb}`] = (this.perf[`after:${verb}`] ?? 0) + Date.now() - t0;
   }
 
   private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
