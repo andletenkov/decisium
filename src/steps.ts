@@ -131,6 +131,7 @@ Before(async function (this: Scenario, { pickle }) {
   } catch (err) {
     throw infra(err);
   }
+  this.browser.replay = record === "none";
   this.rt = run.runtime(this.browser, record !== "none"); // replay: a green run would delete the PNGs
   networkMissed(this.browser);
 });

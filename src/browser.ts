@@ -148,6 +148,8 @@ export class Browser {
   /** `@replay-network` requests missing from the recording, until the Step that made them fails on them (task 0048). */
   readonly networkMisses: string[] = [];
   private start: string; // GOTO paths resolve against it
+  /** Cassette replay without Jev (--record none): typing does not wait for the page to settle, the next Turn does if needed. */
+  replay = false;
   private inflight = 0;
   private pending = new Set<Request>(); // the counted requests, by identity: finished or failed ones leave exactly once
   private last?: Observation; // refs are valid for the latest Observation only
@@ -696,6 +698,7 @@ export class Browser {
       await this.unblocked(this.perform(action));
       this.perf[`perform:${verb}`] = (this.perf[`perform:${verb}`] ?? 0) + Date.now() - t;
     }
+    if (verb === "TYPE" && this.replay) return; // the next Turn's recorded target is waited for (NotYet) if the page needs time
     const t0 = Date.now();
     await this.settle();
     this.perf[`after:${verb}`] = (this.perf[`after:${verb}`] ?? 0) + Date.now() - t0;
