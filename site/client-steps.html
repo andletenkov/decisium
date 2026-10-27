@@ -99,7 +99,7 @@ click).</p>
 </tr>
 <tr>
 <td>Wait for a request</td>
-<td>Nothing to write: an action waits for the requests it started to finish (up to 5 s).</td>
+<td>Nothing to write: a live action waits for the requests it started (up to 5 s); on replay the next action waits for its element and a check retries until it passes.</td>
 </tr>
 </tbody></table>
 <p>Hooks (<code>Before</code>, <code>After</code>, …) and anything else cucumber offers work too.</p>

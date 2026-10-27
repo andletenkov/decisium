@@ -22,8 +22,8 @@ do and how to word it. `npx decisium lint <file.feature>` flags the wordings mar
 
 An action Step runs in Turns: each Turn Jev picks one action among the elements on the page, Decisium performs it,
 and the Step ends once the task is done. Several clicks in one Step are fine when they serve one task: `I delete the
-campaign` opens the "More actions" menu first. An action waits for the requests it started to finish (up to 5 s), so
-the next Step sees their result.
+campaign` opens the "More actions" menu first. A live action waits for the requests it started to finish (up to 5 s), so
+the next Step sees their result. A replay waits like a Playwright spec instead: see [Waiting on replay](record-replay.md#waiting-on-replay).
 
 ### Navigate
 
@@ -162,6 +162,10 @@ Elements inside iframes and open shadow roots are part of the page like any othe
 
 A check is decided by code, not by the model. Jev only identifies *what* to look at (the subject) and *what kind* of
 check it is; code then compares. A check that cannot be compared is `UNVERIFIABLE`, not passed.
+
+Like Playwright's `expect`, a check that does not pass yet is retried each time the page changes, until it passes or
+the page has nothing left pending (up to 5 s). A check that already holds passes at once, so check what only the new
+state shows.
 
 ### Value checks
 

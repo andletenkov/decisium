@@ -49,6 +49,6 @@ click).
 | Log in through the API | `await this.context.request.post(url, { data })` shares cookies with the page; then reload. Faster than the form. |
 | Permissions | `this.context.grantPermissions(["clipboard-read"])` |
 | A second user | `const other = await this.context.browser()!.newContext()`, then `await other.newPage()`. Steps act on `this.page` only; drive and check the other user's page in code. |
-| Wait for a request | Nothing to write: an action waits for the requests it started to finish (up to 5 s). |
+| Wait for a request | Nothing to write: a live action waits for the requests it started (up to 5 s); on replay the next action waits for its element and a check retries until it passes. |
 
 Hooks (`Before`, `After`, …) and anything else cucumber offers work too.
