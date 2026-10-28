@@ -125,7 +125,7 @@ function source(path: string) {
   let md = read(path).replace(/^---\n[\s\S]*?\n---\n/, ""); // front matter
   if (path.startsWith("skills/"))
     md =
-      "# Agent skill\n\nInstall it into your coding agent from `$(npm root -g)/decisium/skills/decisium/SKILL.md`.\n\n" +
+      "# Agent skill\n\nInstall it into your coding agent (Claude Code, Cursor, Codex, pi, …):\n\n```sh\nnpx skills add andletenkov/decisium\n```\n\nIt also ships in the npm package: `$(npm root -g)/decisium/skills/decisium/SKILL.md`.\n\n" +
       md;
   return md;
 }

@@ -26,10 +26,57 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <div class="layout">
 <nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html" aria-current="page">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
 <main class="doc"><h1 id="agent-skill">Agent skill</h1>
-<p>Install it into your coding agent from <code>$(npm root -g)/decisium/skills/decisium/SKILL.md</code>.</p>
+<p>Install it into your coding agent (Claude Code, Cursor, Codex, pi, …):</p>
+<pre><code class="language-sh">npx skills add andletenkov/decisium
+</code></pre>
+<p>It also ships in the npm package: <code>$(npm root -g)/decisium/skills/decisium/SKILL.md</code>.</p>
 <p>Decisium runs each Step by asking Jev, a decision model that only picks among offered answers; code decides pass/fail.
 A Step&#39;s wording decides most outcomes. The wording rules, per kind of Step, are in
 <a href="https://andletenkov.github.io/decisium/steps.html">https://andletenkov.github.io/decisium/steps.html</a>. Read it before writing a Step. This skill is the procedure.</p>
+<h2 id="design-when-generating-from-app-code-or-requirements">Design (when generating from app code or requirements)</h2>
+<p>Skip this when the user already gave the scenarios. App logic first, input fields last: a suite of form-validation
+cases that never completes a real journey is a failed design.</p>
+<ol>
+<li>Map critical user journeys (CUJs). From requirements and code (routes, handlers, domain services, models), list
+the end-to-end goals users come for (sign up → first value, search → buy → order confirmed, create → share →
+collaborator sees it). Rank by business impact × usage × how badly a break hurts (money, data loss, lock-out).
+Note the source (<code>file:line</code> or requirement id) of each.</li>
+<li>Cover each CUJ with app logic before inputs:<ul>
+<li><strong>Happy path end to end</strong>, checking the business outcome (order exists with the right total, item visible to
+the other role), not just &quot;a success message&quot;.</li>
+<li><strong>Business rules and variants</strong> that change the outcome: roles and permissions, plan/limit tiers, pricing,
+discounts, ownership. Use a <strong>decision table</strong> (one case per distinct outcome, not every combo).</li>
+<li><strong>State transitions</strong> of the domain objects the journey moves (draft → published, cart → order → refunded):
+each allowed transition, plus one disallowed one per state that the UI can attempt.</li>
+<li><strong>Journey breaks</strong>: abandon and resume, reload/back mid-flow, duplicate submit, already-used values, session
+expiry, permission denied.</li>
+</ul>
+</li>
+<li>Only then, input fields on the CUJ path: <strong>equivalence classes</strong> (one valid + one per distinct invalid class) and
+<strong>boundary values</strong> (at, just below, just above each limit found in code, e.g. <code>min(8)</code> → 7, 8 chars). Skip fields
+off the critical journeys unless asked.</li>
+<li>Prioritise in that order: CUJ happy paths, business rules and states, journey breaks, then inputs. Drop cases
+the UI cannot observe (pure backend, timing) and say so.</li>
+<li>Decide automate or not, per case. Automate when the value (CUJ, risk, how often it runs) beats the cost:<ul>
+<li><strong>Setup</strong>: can the precondition be reached through the UI or a seeded account in a few Steps? Needing a
+specific DB state, a past date, a paid plan, an admin action or a third party (payment, email/SMS code, OAuth,
+captcha) is a cost; prefer a test account or sandbox that already holds it.</li>
+<li><strong>Cleanup / repeatability</strong>: does the run leave data that breaks the next run (unique email taken, stock used,
+item already published)? Use unique values per run or a self-cleaning flow; irreversible side effects (real
+payment, real email to customers, deleting shared data) mean do not automate against that environment.</li>
+<li><strong>Determinism</strong>: time, randomness, async jobs, rate limits, A/B flags → flaky unless controllable.</li>
+<li><strong>Observability</strong>: the outcome must show in the UI; otherwise it is not a Decisium case.
+Mark each case <code>automate</code>, <code>automate later (needs: …)</code> or <code>manual (why)</code>. Write only <code>automate</code> cases; list the
+rest with what would unblock them. Tag Scenarios needing special setup (e.g. <code>@needs-seed-admin</code>).</li>
+</ul>
+</li>
+<li>Shape: one behaviour per Scenario, named by its expected outcome. Same flow with different data → a
+<code>Scenario Outline</code> with <code>Examples</code> (one row per class/boundary). Each Scenario is independent (fresh browser), so
+repeat setup Steps or use <code>Background</code>. Every Scenario ends with a check of the observable outcome (message text,
+value, page), never just an action. Use only data the app accepts or rejects deterministically.</li>
+<li>Show the user the CUJ list and case list (journey, behaviour, technique, source, automate decision) before
+writing, if long or requirements were ambiguous.</li>
+</ol>
 <h2 id="write">Write</h2>
 <ol>
 <li>Write the feature: an <code>@url:&lt;start url&gt;</code> tag, then one Scenario per user journey, each starting from a fresh browser.
@@ -61,7 +108,7 @@ means.</li>
 <p>Done when the run passes, or every remaining failure is classified as the app being wrong, with the evidence line from
 <code>report.md</code>.</p>
 <div class="pager"><a class="prev" href="troubleshooting.html"><span>Previous</span>Troubleshooting</a><a class="next" href="examples.html"><span>Next</span>Examples</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#write">Write</a><a class="l2" href="#run-and-repair">Run and repair</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#design-when-generating-from-app-code-or-requirements">Design (when generating from app code or requirements)</a><a class="l2" href="#write">Write</a><a class="l2" href="#run-and-repair">Run and repair</a></aside>
 </div>
 </body>
 </html>
