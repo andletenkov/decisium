@@ -6,6 +6,7 @@ decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [
              [--parallel <n|auto>] [--report-dir <dir>]
              [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]
              [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]
+decisium install [--with-deps] [--dry-run]
 decisium doctor [<file.feature>...]
 decisium lint <file.feature>...
 ```
@@ -40,8 +41,14 @@ Runs features. `file.feature:line` runs only the scenario (or Examples row) at t
 Runs one Step against a URL, without a feature file. Handy for trying a wording.
 
 ```sh
-npx decisium step "I open the calendar" --url http://localhost:3000
+decisium step "I open the calendar" --url http://localhost:3000
 ```
+
+## install
+
+Downloads the Chromium build Decisium's own Playwright drives, so the version always matches (`npx playwright install`
+may fetch a different Playwright). `--with-deps` also installs the system libraries Chromium needs (Linux, e.g. CI);
+`--dry-run` only prints what would be installed, and where.
 
 ## doctor
 

@@ -1,11 +1,26 @@
 # Installation
 
-Needs Node 22.18+ (or 23.6+).
+Needs Node 22.18+ (or 23.6+). Install it one of two ways:
+
+**Global**: one `decisium` command for every project on the machine.
+
+```sh
+npm install -g decisium
+decisium install
+```
+
+**Per project**: the version is pinned in `package.json`, so teammates and CI replay cassettes with the version that
+recorded them. Needed for [raw cucumber-js](cucumber-js.md). Run the commands through `npx`:
 
 ```sh
 npm install --save-dev decisium
-npx playwright install chromium
+npx decisium install
 ```
+
+These docs write `decisium …`; with a per-project install, type `npx decisium …`.
+
+`decisium install` downloads the Chromium build Decisium's Playwright drives; on Linux, `decisium install --with-deps`
+also installs the system libraries it needs.
 
 Live runs call Jev, TypeSafe's decision model, through the TypeSafe API: you need a TypeSafe API key. Decisium's code is
 MIT; Jev is TypeSafe's hosted service under its own terms. Set the key in the environment or in a `.env` file in the
@@ -20,7 +35,7 @@ A replay (`--record none`) makes no model calls and does not need the key.
 ## Check the setup
 
 ```sh
-npx decisium doctor features/checkout.feature
+decisium doctor features/checkout.feature
 ```
 
 `doctor` checks Node, Chromium and the key (one tiny Jev call). Given features, it also opens every start URL. Each

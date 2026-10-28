@@ -34,7 +34,7 @@ A live run asks Jev every time, so a Step whose wording is borderline can end di
 | marginal pass | Passed, but the model was barely sure. | Make the Step more specific; do not lower `confidence.answer`. |
 | check fails on a slow page | The expected state came after the check gave up. | Raise `checkTimeout` (and `actionTimeout` if actions finish too early). |
 
-Run `npx decisium lint` on the feature: it flags many of these wordings before you run.
+Run `decisium lint` on the feature: it flags many of these wordings before you run.
 
 ## Why not selectors
 

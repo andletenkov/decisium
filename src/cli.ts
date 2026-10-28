@@ -9,6 +9,7 @@ import { RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { applyOptions, ourStdout, settingWarnings, type Settings } from "./options.ts";
 import { doctor } from "./doctor.ts";
+import { install } from "./install.ts";
 import { lint } from "./lint.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
@@ -71,6 +72,12 @@ written literally in a Step is sent to Jev, recorded in the cassette and written
 
 Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`,
   },
+  install: {
+    synopsis: "decisium install [--with-deps] [--dry-run]",
+    notes: `Downloads the Chromium build this Decisium's Playwright drives (once per machine and version).
+--with-deps: also installs the system libraries Chromium needs (Linux, e.g. CI; may ask for sudo).
+--dry-run: only print what would be installed, and where.`,
+  },
   doctor: {
     synopsis: "decisium doctor [<file.feature>...]",
     notes:
@@ -124,6 +131,8 @@ async function main(): Promise<number> {
       "check-timeout": { type: "string" },
       "action-timeout": { type: "string" },
       "max-turns": { type: "string" },
+      "with-deps": { type: "boolean" },
+      "dry-run": { type: "boolean" },
     },
   } satisfies ParseArgsConfig;
   let parsed: ReturnType<typeof parseArgs<typeof config>>;
@@ -171,6 +180,7 @@ async function main(): Promise<number> {
     MAX_TURNS: values["max-turns"],
   }))
     if (value !== undefined) env[`DECISIUM_${name}`] = value;
+  if (cmd === "install") return install({ withDeps: values["with-deps"], dryRun: values["dry-run"] });
   if (cmd === "doctor") return doctor(positionals.slice(1));
   if (cmd === "lint" && arg) {
     try {

@@ -42,11 +42,25 @@ the same outcome every run; a real UI change fails as `UI_CHANGED`.
 
 ## Install
 
+Global, one `decisium` command for every project:
+
+```sh
+npm install -g decisium
+decisium install                     # the Chromium build Decisium drives
+```
+
+Or per project, with the version pinned in `package.json` (run commands as `npx decisium …`):
+
 ```sh
 npm install --save-dev decisium
-npx playwright install chromium
+npx decisium install
+```
+
+Then:
+
+```sh
 echo 'TYPESAFE_API_KEY=...' >> .env   # live runs only; replays need no key
-npx decisium doctor
+decisium doctor
 ```
 
 Node 22.18+ or 23.6+.
@@ -54,10 +68,10 @@ Node 22.18+ or 23.6+.
 ## Use
 
 ```sh
-npx decisium lint checkout.feature                 # how each Step will be read; flags known-bad wordings
-npx decisium run checkout.feature                  # live: asks Jev, records checkout.cassette.json
-npx decisium run checkout.feature --record none    # replay: zero model calls (CI)
-npx decisium step "I open the cart" --url https://www.saucedemo.com/   # try one wording
+decisium lint checkout.feature                 # how each Step will be read; flags known-bad wordings
+decisium run checkout.feature                  # live: asks Jev, records checkout.cassette.json
+decisium run checkout.feature --record none    # replay: zero model calls (CI)
+decisium step "I open the cart" --url https://www.saucedemo.com/   # try one wording
 ```
 
 A failed run prints the reason under each Step and writes `runs/<timestamp>/report.md`: the Step, Jev's answers, the
@@ -76,7 +90,7 @@ step definitions (`--import`, with `this.page` and `this.context`) keep working.
 - [Client steps](https://andletenkov.github.io/decisium/client-steps.html) · [Browser context](https://andletenkov.github.io/decisium/browser-context.html) · [Network replay](https://andletenkov.github.io/decisium/network-replay.html)
 - [Record and replay](https://andletenkov.github.io/decisium/record-replay.html) · [CI](https://andletenkov.github.io/decisium/ci.html) · [Configuration](https://andletenkov.github.io/decisium/configuration.html)
 - [Examples](https://andletenkov.github.io/decisium/examples.html) against real public sites
-- An agent skill for coding agents ships in the package: `node_modules/decisium/skills/decisium/SKILL.md`
+- An agent skill for coding agents ships in the package: `$(npm root -g)/decisium/skills/decisium/SKILL.md`
 
 ## Jev and your data
 

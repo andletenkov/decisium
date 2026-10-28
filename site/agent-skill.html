@@ -26,7 +26,7 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <div class="layout">
 <nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html" aria-current="page">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
 <main class="doc"><h1 id="agent-skill">Agent skill</h1>
-<p>Install it into your coding agent from <code>node_modules/decisium/skills/decisium/SKILL.md</code>.</p>
+<p>Install it into your coding agent from <code>$(npm root -g)/decisium/skills/decisium/SKILL.md</code>.</p>
 <p>Decisium runs each Step by asking Jev, a decision model that only picks among offered answers; code decides pass/fail.
 A Step&#39;s wording decides most outcomes. The wording rules, per kind of Step, are in
 <a href="https://andletenkov.github.io/decisium/steps.html">https://andletenkov.github.io/decisium/steps.html</a>. Read it before writing a Step. This skill is the procedure.</p>
@@ -36,12 +36,12 @@ A Step&#39;s wording decides most outcomes. The wording rules, per kind of Step,
 Word each Step like a <strong>Write</strong> row of its kind (navigate, type, select, act, attempt, keys, value / presence /
 scoped / state check, memory, secrets). Quote every value the Step uses and every value a check compares.
 Credentials go in as <code>&quot;$NAME&quot;</code> placeholders, with the variables set in the environment or <code>.env</code>.</li>
-<li>Run <code>npx decisium lint &lt;file.feature&gt;</code>. It shows how each Step will be read (kind, quoted values, placeholders) and
+<li>Run <code>decisium lint &lt;file.feature&gt;</code>. It shows how each Step will be read (kind, quoted values, placeholders) and
 flags wordings to avoid with ⚠. Done when every ⚠ is reworded away, or kept on purpose with a <code>#</code> comment saying why.</li>
 </ol>
 <h2 id="run-and-repair">Run and repair</h2>
 <ol start="3">
-<li>Run <code>npx decisium run &lt;file.feature&gt;</code> (live Jev the first time; it records a cassette next to the feature).</li>
+<li>Run <code>decisium run &lt;file.feature&gt;</code> (live Jev the first time; it records a cassette next to the feature).</li>
 <li>On a failure, read <code>runs/&lt;id&gt;/report.md</code>: the Step at <code>file:line</code>, Jev&#39;s answers, the page text around the element,
 and a rerun command for that scenario. Classify each failure:<ul>
 <li><strong>The app is wrong</strong> (ASSERTION_FAILED, BLOCKED with the expected control truly missing): keep the Step, and

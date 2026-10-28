@@ -37,13 +37,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npm ci # decisium in devDependencies: replays with the version that recorded
+      - run: npx decisium install --with-deps
       - run: npx decisium run features/*.feature --record none --parallel auto --format junit:reports/junit.xml
       - if: failure()
         uses: actions/upload-artifact@v4
         with: { name: decisium-runs, path: runs/ }
 </code></pre>
+<p>With a global install instead, replace <code>npm ci</code> with <code>npm install -g decisium@0.1.4</code> (the version that recorded the
+cassettes) and drop <code>npx</code>.</p>
 <p>Upload <code>runs/</code> (or your <code>reportDir</code>) on failure: it holds the screenshots, Playwright trace and <code>report.md</code> for every failed scenario.</p>
 <div class="pager"><a class="prev" href="reports.html"><span>Previous</span>Reports and debugging</a><a class="next" href="cucumber-js.html"><span>Next</span>Running with cucumber-js</a></div></main>
 

@@ -35,6 +35,7 @@ export default { import: ["node_modules/decisium/dist/steps.js"], format: ["deci
 EOF
 
 (npx decisium 2>&1 || true) | grep Usage: >/dev/null
+npx decisium install --dry-run | grep -q 'chromium-' # resolves its own Playwright from dist/
 if [ -z "${TYPESAFE_API_KEY:-}" ]; then
   echo "TYPESAFE_API_KEY unset: skipping doctor and live/replay runs (install and bin checked)"
   exit 0
