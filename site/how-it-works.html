@@ -91,8 +91,10 @@ now&quot;) is <code>AMBIGUOUS</code>, and nothing is clicked.</li>
 </tbody></table>
 <p><code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code> ask nothing: code does them directly.</p>
 <h3 id="example">Example</h3>
-<p>From a live run of <code>When I delete the campaign</code> in the demo app (<code>npm run example:server</code>,
-<code>test/fixtures/campaign-manager</code>):</p>
+<p>Suppose you are testing a campaign-management app. You are viewing a campaign, and its delete command is inside a
+&quot;More actions&quot; menu. Your Step is <code>When I delete the campaign</code>.</p>
+<p>Decisium can carry out the whole task without a separate Step for each click. Here is one recorded run; the
+probabilities illustrate what Jev answered, not fixed values every run will produce:</p>
 <table>
 <thead>
 <tr>
@@ -125,8 +127,9 @@ now&quot;) is <code>AMBIGUOUS</code>, and nothing is clicked.</li>
 <td><code>DONE</code></td>
 </tr>
 </tbody></table>
-<p>3 requests. <code>done</code> stayed low with the menu open because nothing was deleted yet: a Step continues until its task is
-done, so a following <code>I click &quot;Delete campaign&quot;</code> would have nothing left to do.</p>
+<p>This took 3 requests: open the menu, choose delete, then check whether the task is complete. Opening the menu alone
+did not finish the Step. You do not need to add <code>I click &quot;Delete campaign&quot;</code> afterward—the first Step already did that.
+To verify the result explicitly, follow it with a check that the campaign is no longer listed.</p>
 <h2 id="a-check">A check</h2>
 <p>A check is one request with four questions; Jev only says <em>what</em> to look at, code compares:</p>
 <table>
@@ -190,8 +193,9 @@ the questions above. More requests, once per Step and page.</li>
 <td>1</td>
 </tr>
 </tbody></table>
-<p>The demo app&#39;s first scenario (create, schedule and find a campaign; 11 Steps), run live: <strong>21 requests</strong>, about 24,000
-input and 4,400 output tokens. Each typed or selected value took 3 (act, value, done).</p>
+<p>Request counts depend on the path through your app, not just the number of Steps. Typing one value typically takes
+3 requests: choose the field, choose the value, then confirm the task is complete. Menus, loading states and retries
+can add requests. Token usage also depends on how much page text each request includes.</p>
 <p>Replays (<code>--record none</code>) send no request: the cassette holds each Step&#39;s answers. See
 <a href="record-replay.html">Record and replay</a>.</p>
 <h2 id="where-to-see-it">Where to see it</h2>

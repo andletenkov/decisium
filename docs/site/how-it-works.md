@@ -40,8 +40,11 @@ A Step gets at most 8 Turns (`maxTurns`; then `STEP_TIMEOUT`). After each action
 
 ### Example
 
-From a live run of `When I delete the campaign` in the demo app (`npm run example:server`,
-`test/fixtures/campaign-manager`):
+Suppose you are testing a campaign-management app. You are viewing a campaign, and its delete command is inside a
+"More actions" menu. Your Step is `When I delete the campaign`.
+
+Decisium can carry out the whole task without a separate Step for each click. Here is one recorded run; the
+probabilities illustrate what Jev answered, not fixed values every run will produce:
 
 | Turn | Page | done | target | Code |
 |---|---|---|---|---|
@@ -49,8 +52,9 @@ From a live run of `When I delete the campaign` in the demo app (`npm run exampl
 | 2 | Menu open: "Delete campaign" | 0.03 | menuitem "Delete campaign" 1.00 | click "Delete campaign" |
 | 3 | Campaign list, toast "deleted" | 0.98 | none 0.86 | `DONE` |
 
-3 requests. `done` stayed low with the menu open because nothing was deleted yet: a Step continues until its task is
-done, so a following `I click "Delete campaign"` would have nothing left to do.
+This took 3 requests: open the menu, choose delete, then check whether the task is complete. Opening the menu alone
+did not finish the Step. You do not need to add `I click "Delete campaign"` afterward—the first Step already did that.
+To verify the result explicitly, follow it with a check that the campaign is no longer listed.
 
 ## A check
 
@@ -86,8 +90,9 @@ Typical counts:
 | Type into a field | + 1 per value typed |
 | Check that passes at once | 1 |
 
-The demo app's first scenario (create, schedule and find a campaign; 11 Steps), run live: **21 requests**, about 24,000
-input and 4,400 output tokens. Each typed or selected value took 3 (act, value, done).
+Request counts depend on the path through your app, not just the number of Steps. Typing one value typically takes
+3 requests: choose the field, choose the value, then confirm the task is complete. Menus, loading states and retries
+can add requests. Token usage also depends on how much page text each request includes.
 
 Replays (`--record none`) send no request: the cassette holds each Step's answers. See
 [Record and replay](record-replay.md).
