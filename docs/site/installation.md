@@ -1,11 +1,23 @@
 # Installation
 
-Needs Node 22.18+ (or 23.6+).
+Needs Node 22.18+ (or 23.6+). Install it one of two ways:
+
+**Global**: one `decisium` command for every project on the machine.
 
 ```sh
 npm install -g decisium
 decisium install
 ```
+
+**Per project**: the version is pinned in `package.json`, so teammates and CI replay cassettes with the version that
+recorded them. Needed for [raw cucumber-js](cucumber-js.md). Run the commands through `npx`:
+
+```sh
+npm install --save-dev decisium
+npx decisium install
+```
+
+These docs write `decisium …`; with a per-project install, type `npx decisium …`.
 
 `decisium install` downloads the Chromium build Decisium's Playwright drives; on Linux, `decisium install --with-deps`
 also installs the system libraries it needs.

@@ -3,7 +3,7 @@
 `decisium run` already runs inside cucumber-js and loads your `cucumber.{js,mjs,cjs,json,yaml}`. Use raw
 `npx cucumber-js` only when your project already runs cucumber that way (CI scripts, IDE run buttons) and you want
 Decisium Steps in the same run as your own step definitions. cucumber-js imports Decisium from the project, so this
-needs it installed there too: `npm install --save-dev decisium`.
+needs the [per-project install](installation.md): `npm install --save-dev decisium`.
 
 ```js
 // cucumber.mjs

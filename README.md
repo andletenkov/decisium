@@ -42,9 +42,23 @@ the same outcome every run; a real UI change fails as `UI_CHANGED`.
 
 ## Install
 
+Global, one `decisium` command for every project:
+
 ```sh
 npm install -g decisium
 decisium install                     # the Chromium build Decisium drives
+```
+
+Or per project, with the version pinned in `package.json` (run commands as `npx decisium …`):
+
+```sh
+npm install --save-dev decisium
+npx decisium install
+```
+
+Then:
+
+```sh
 echo 'TYPESAFE_API_KEY=...' >> .env   # live runs only; replays need no key
 decisium doctor
 ```
