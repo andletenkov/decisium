@@ -193,8 +193,8 @@ export async function runAssertion(
 
 /**
  * A click on a lookalike of what the Step quotes: the target's name shares a word with a quote and adds one the quote
- * lacks, and neither it nor its row/card (nearest ref'd parent) contains any quote ("Run again" for "Run workflow").
- * Returns the quotes it misses. A name made only of the quote's words may lead to it ("Run" opens "Run workflow").
+ * lacks, and neither it nor its row/card (nearest ref'd parent) contains any quote ("Publish again" for "Publish now").
+ * Returns the quotes it misses. A name made only of the quote's words may lead to it ("Publish" opens "Publish now").
  * A target sharing no word is left to Jev: the quote may be a value to type later ("Rename" for "Ada"). Quotes shown
  * as a field's value were typed, and secrets name no control: neither counts.
  */

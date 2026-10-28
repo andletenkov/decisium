@@ -2647,16 +2647,16 @@ test("runStep: a click must land on what the Step quotes, not on a lookalike", a
       recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(ref) },
   });
 
-  // The ai-platform case: the dialog is gone, only "Run again" is left; clicking it would start another run.
-  const after = page(`- button "Refresh" [ref=e1]\n- button "Run again" [ref=e2]`);
-  const r = await runStep(`I confirm with "Run workflow"`, after.rt, picks("e2"), () => {});
+  // The previous Step already confirmed the dialog; only "Publish again" is left, and clicking it would publish twice.
+  const after = page(`- button "Refresh" [ref=e1]\n- button "Publish again" [ref=e2]`);
+  const r = await runStep(`I confirm with "Publish now"`, after.rt, picks("e2"), () => {});
   assert.equal(r.outcome, "AMBIGUOUS");
-  assert.match(r.reason!, /Run workflow/);
+  assert.match(r.reason!, /Publish now/);
   assert.deepEqual(after.clicked, [], "nothing clicked");
 
   // The quoted control itself.
-  const dialog = page(`- button "Cancel" [ref=e1]\n- button "Run workflow" [ref=e2]`);
-  assert.equal((await runStep(`I confirm with "Run workflow"`, dialog.rt, picks("e2"), () => {})).outcome, "DONE");
+  const dialog = page(`- button "Cancel" [ref=e1]\n- button "Publish now" [ref=e2]`);
+  assert.equal((await runStep(`I confirm with "Publish now"`, dialog.rt, picks("e2"), () => {})).outcome, "DONE");
   assert.deepEqual(dialog.clicked, ["e2"]);
 
   // A quote naming the row: its Delete button is fine.
@@ -2669,10 +2669,10 @@ test("runStep: a click must land on what the Step quotes, not on a lookalike", a
   const save = page(`- button "Save as template" [ref=e1]\n- button "Cancel" [ref=e2]`);
   assert.equal((await runStep(`I click "Save draft"`, save.rt, picks("e1"), () => {})).outcome, "AMBIGUOUS");
   assert.deepEqual(save.clicked, []);
-  // A name made of the quote's words leads to it: "Run" opens the dialog holding "Run workflow".
-  const run = page(`- button "Edit" [ref=e1]\n- button "Run" [ref=e2]`);
+  // A name made of the quote's words leads to it: "Publish" opens the dialog holding "Publish now".
+  const run = page(`- button "Edit" [ref=e1]\n- button "Publish" [ref=e2]`);
   assert.equal(
-    (await runStep(`I run it, confirming with "Run workflow"`, run.rt, picks("e2"), () => {})).outcome,
+    (await runStep(`I publish it, confirming with "Publish now"`, run.rt, picks("e2"), () => {})).outcome,
     "DONE",
   );
   // A value typed later (a prompt, a field that opens): the control sharing no word with it is left to Jev.
@@ -2686,6 +2686,6 @@ test("runStep: a click must land on what the Step quotes, not on a lookalike", a
   const login = page(`- textbox "Password" [ref=e1]\n- button "Sign in" [ref=e2]`);
   assert.equal((await runStep(`I log in with password "$PASSWORD"`, login.rt, picks("e2"), () => {})).outcome, "DONE");
   // No quote: no constraint.
-  const plain = page(`- button "Run again" [ref=e1]`);
-  assert.equal((await runStep("I run it again", plain.rt, picks("e1"), () => {})).outcome, "DONE");
+  const plain = page(`- button "Publish again" [ref=e1]`);
+  assert.equal((await runStep("I publish it again", plain.rt, picks("e1"), () => {})).outcome, "DONE");
 });

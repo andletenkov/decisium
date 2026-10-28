@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a Step runs · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/search-index.js" defer></script>
+<script src="assets/search.js" defer></script>
+<script>const q = new URLSearchParams(location.search).get("theme");
+let saved = null; try { saved = localStorage.getItem("theme"); } catch {}
+document.documentElement.dataset.theme = q || saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("theme", t); } catch {} }
+document.addEventListener("click", e => { const a = e.target.closest("a[href]"); if (!a || /^(https?:|#)/.test(a.getAttribute("href"))) return;
+  const u = new URL(a.href); u.searchParams.set("theme", document.documentElement.dataset.theme); a.href = u.href; });</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <div class="search"><input type="search" id="search" placeholder="Search docs" aria-label="Search docs" autocomplete="off"><kbd>/</kbd><div class="search-results" role="listbox" hidden></div></div>
+  <nav class="top-links"><a class="icon-link" href="https://github.com/andletenkov/decisium" aria-label="GitHub" title="GitHub"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a><a class="icon-link npm-version" href="https://www.npmjs.com/package/decisium" aria-label="npm, version 0.1.4" title="npm"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>v0.1.4</span></a>
+    <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html" aria-current="page">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="how-a-step-runs">How a Step runs</h1>
+<p>Decisium reads the page, lists what is on it, and asks <strong>Jev</strong> questions whose answers are picks among that list. Jev
+never writes code or values; every answer comes back as a probability per option. Decisium&#39;s code then checks the
+confidence, performs the action with Playwright and decides pass or fail.</p>
+<p>A question is asked in a <strong>request</strong>: one call to Jev carrying the Step&#39;s text, a text snapshot of the page (<code>ui</code>) and
+one or more questions. Questions in the same request read the same page, so their answers are consistent.</p>
+<h2 id="an-action-step">An action Step</h2>
+<p>An action Step runs in <strong>Turns</strong>. Each Turn is one request with three questions:</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Options</th>
+<th>Answer used for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Given the actions taken for the Step so far, does <code>ui</code> show the Step is fully accomplished?</td>
+<td>yes/no, as a probability</td>
+<td>ending the Step</td>
+</tr>
+<tr>
+<td>Which element in <code>ui</code> should be interacted with next?</td>
+<td>every actionable element, plus &quot;the page itself&quot; and &quot;none&quot;</td>
+<td>the target</td>
+</tr>
+<tr>
+<td>How should that element be used?</td>
+<td>click, type, select, hover, press a key, scroll…</td>
+<td>the action</td>
+</tr>
+</tbody></table>
+<p>Then code decides, in this order:</p>
+<ol>
+<li><strong>Done?</strong> <code>done ≥ 0.8</code> ends the Step. After an action that changed the page, <code>done ≥ 0.5</code> with target &quot;none&quot; is
+enough.</li>
+<li><strong>Sure of the target?</strong> The top element needs ≥ 0.5 and a lead of ≥ 0.1 over the next; otherwise <code>AMBIGUOUS</code>. Target
+&quot;none&quot; is <code>BLOCKED</code>.</li>
+<li><strong>The right control?</strong> A click on a lookalike of a quoted control (&quot;Publish again&quot; when the Step quotes &quot;Publish
+now&quot;) is <code>AMBIGUOUS</code>, and nothing is clicked.</li>
+<li><strong>Act.</strong> Playwright performs it, waits for the requests it started, and the next Turn reads the new page.</li>
+</ol>
+<p>A Step gets at most 8 Turns (<code>STEP_TIMEOUT</code>). Some actions add one request:</p>
+<table>
+<thead>
+<tr>
+<th>When</th>
+<th>Extra question</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The action types, selects or uploads</td>
+<td>Which value should be entered into the element? Options: the Step&#39;s quoted values, numbers and Doc string, plus &quot;none&quot;.</td>
+</tr>
+<tr>
+<td>A browser dialog is open</td>
+<td>How should it be answered? Options: OK / Cancel, or one of the quoted values for a prompt.</td>
+</tr>
+<tr>
+<td>The action is a drag</td>
+<td>Onto which element should it be dropped?</td>
+</tr>
+</tbody></table>
+<p><code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code> ask nothing: code does them directly.</p>
+<h3 id="example">Example</h3>
+<p>From a live run of <code>When I delete the campaign</code> in the demo app (<code>npm run example:server</code>,
+<code>test/fixtures/campaign-manager</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Turn</th>
+<th>Page</th>
+<th>done</th>
+<th>target</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Campaign page</td>
+<td>0.04</td>
+<td>button &quot;More actions&quot; 0.99</td>
+<td>click &quot;More actions&quot;</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Menu open: &quot;Delete campaign&quot;</td>
+<td>0.03</td>
+<td>menuitem &quot;Delete campaign&quot; 1.00</td>
+<td>click &quot;Delete campaign&quot;</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Campaign list, toast &quot;deleted&quot;</td>
+<td>0.98</td>
+<td>none 0.86</td>
+<td><code>DONE</code></td>
+</tr>
+</tbody></table>
+<p>3 requests. <code>done</code> stayed low with the menu open because nothing was deleted yet: a Step continues until its task is
+done, so a following <code>I click &quot;Delete campaign&quot;</code> would have nothing left to do.</p>
+<h2 id="a-check">A check</h2>
+<p>A check is one request with four questions; Jev only says <em>what</em> to look at, code compares:</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Options</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>What kind of check is it?</td>
+<td>value, presence, absence, state, fuzzy</td>
+</tr>
+<tr>
+<td>Which element is the check about?</td>
+<td>every element with text, plus &quot;none&quot;</td>
+</tr>
+<tr>
+<td>Which control state does it require?</td>
+<td>checked, disabled, expanded, selected…</td>
+</tr>
+<tr>
+<td>Where does it say to look?</td>
+<td>the page&#39;s lists, tables, sections, dialogs; &quot;anywhere&quot; or &quot;named area missing&quot;</td>
+</tr>
+</tbody></table>
+<p>Code then reads the element and compares it with the quoted value. A check that does not pass yet is asked again each
+time the page changes, up to 5 s: one more request per change. A check that quotes nothing first asks which value from
+an earlier Step it refers to (one more request). A <a href="steps.html#judged-checks">judged check</a> adds a fifth question: does
+<code>ui</code> satisfy the check?</p>
+<h2 id="large-pages">Large pages</h2>
+<ul>
+<li><strong>More than 255 candidates</strong> (a choice question&#39;s limit): they are asked in batches, the top 3 of each batch are kept,
+and the real question is asked over what is left. A page with 336 links costs 2 more requests.</li>
+<li><strong>A snapshot over about 80,000 characters</strong>: it is cut into sections and Jev picks the sections the Step needs, before
+the questions above. More requests, once per Step and page.</li>
+</ul>
+<h2 id="how-many-requests">How many requests</h2>
+<p>Typical counts:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Requests</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Action done in one click</td>
+<td>2 (act, then confirm done)</td>
+</tr>
+<tr>
+<td>Action through a menu or dialog</td>
+<td>3 or more</td>
+</tr>
+<tr>
+<td>Type into a field</td>
+<td>+ 1 per value typed</td>
+</tr>
+<tr>
+<td>Check that passes at once</td>
+<td>1</td>
+</tr>
+</tbody></table>
+<p>The demo app&#39;s first scenario (create, schedule and find a campaign; 11 Steps), run live: <strong>21 requests</strong>, about 24,000
+input and 4,400 output tokens. Each typed or selected value took 3 (act, value, done).</p>
+<p>Replays (<code>--record none</code>) send no request: the cassette holds each Step&#39;s answers. See
+<a href="record-replay.html">Record and replay</a>.</p>
+<h2 id="where-to-see-it">Where to see it</h2>
+<ul>
+<li><code>log.txt</code> in the run directory: every Turn&#39;s page, <code>Decision: done=… action: … target: …</code> and what was executed.</li>
+<li><code>trace.jsonl</code>: per Step <code>jevCalls</code>, <code>inputTokens</code> and <code>outputTokens</code>.</li>
+<li><code>report.md</code>: for a failed Step, Jev&#39;s answers with the top three options each.</li>
+</ul>
+<div class="pager"><a class="prev" href="steps.html"><span>Previous</span>Writing Steps</a><a class="next" href="browser-context.html"><span>Next</span>Browser context</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#an-action-step">An action Step</a><a class="l3" href="#example">Example</a><a class="l2" href="#a-check">A check</a><a class="l2" href="#large-pages">Large pages</a><a class="l2" href="#how-many-requests">How many requests</a><a class="l2" href="#where-to-see-it">Where to see it</a></aside>
+</div>
+</body>
+</html>
