@@ -109,9 +109,27 @@ export default {
 <td>Turns an action Step may take before <code>STEP_TIMEOUT</code>, 1-20.</td>
 </tr>
 </tbody></table>
+<h3 id="reportdir">reportDir</h3>
+<p>Default <code>&quot;runs&quot;</code>; <code>--report-dir</code>, <code>DECISIUM_REPORT_DIR</code>. Non-empty path containing timestamped run folders.
+Change it to match your CI artifact upload path.</p>
+<h3 id="confidencetarget">confidence.target</h3>
+<p>Default <code>0.5</code>; <code>--confidence-target</code>, <code>DECISIUM_CONFIDENCE_TARGET</code>. Top probability in (0, 1] for action and drop targets.
+Reword ambiguous Steps first; tune this only when the intended control is clear.</p>
+<h3 id="confidenceanswer">confidence.answer</h3>
+<p>Default <code>0.8</code>; <code>--confidence-answer</code>, <code>DECISIUM_CONFIDENCE_ANSWER</code>. Probability in (0, 1] for other answers and plausible
+check readings. Marginal-pass line is this value + 0.1. Lowering it warns once per run; prefer rewording.</p>
+<h3 id="checktimeout">checkTimeout</h3>
+<p>Default <code>5000</code> ms; <code>--check-timeout</code>, <code>DECISIUM_CHECK_TIMEOUT</code>. Positive integer; how long checks wait for the expected
+state. Raise for slow pages.</p>
+<h3 id="actiontimeout">actionTimeout</h3>
+<p>Default <code>5000</code> ms; <code>--action-timeout</code>, <code>DECISIUM_ACTION_TIMEOUT</code>. Positive integer; how long actions wait for requests
+and DOM changes to settle. Raise when slow actions finish too early.</p>
+<h3 id="maxturns">maxTurns</h3>
+<p>Default <code>8</code>; <code>--max-turns</code>, <code>DECISIUM_MAX_TURNS</code>. Integer 1–20; action Turns before <code>STEP_TIMEOUT</code>.
+Raise for long wizards, or split them into smaller Steps.</p>
 <p>Only the top probability is configurable; the lead over the runner-up stays fixed (0.1 target, 0.3 answer): it is
 what catches &quot;two controls look the same&quot;. Confidence affects live answers only (a replay reuses recorded
-resolutions); timeouts and <code>maxTurns</code> apply to replays too. The effective values go into the run event in
+resolutions with their recorded confidence; older cassettes use the original defaults); timeouts and <code>maxTurns</code> apply to replays too. The effective values go into the run event in
 <code>trace.jsonl</code>, and <code>report.md</code> says when confidence was not the default.</p>
 <p>When to change them:</p>
 <ul>
@@ -144,7 +162,7 @@ export default {
 <code>JUDGED_FAILED</code>, <code>BLOCKED</code>, <code>ACTION_FAILED</code>) report as <code>failed</code>, every other outcome as <code>invalid</code>. A marginal pass
 reaches every reporter as a <code>text/plain</code> attachment <code>marginal-pass.txt</code> on its Step (Qase stores it as <code>file.txt</code>).</p>
 <div class="pager"><a class="prev" href="network-replay.html"><span>Previous</span>Network replay</a><a class="next" href="reports.html"><span>Next</span>Reports and debugging</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#decisium-options">Decisium options</a><a class="l3" href="#tuning">Tuning</a><a class="l2" href="#reporters">Reporters</a><a class="l3" href="#qase">Qase</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#decisium-options">Decisium options</a><a class="l3" href="#tuning">Tuning</a><a class="l3" href="#reportdir">reportDir</a><a class="l3" href="#confidencetarget">confidence.target</a><a class="l3" href="#confidenceanswer">confidence.answer</a><a class="l3" href="#checktimeout">checkTimeout</a><a class="l3" href="#actiontimeout">actionTimeout</a><a class="l3" href="#maxturns">maxTurns</a><a class="l2" href="#reporters">Reporters</a><a class="l3" href="#qase">Qase</a></aside>
 </div>
 </body>
 </html>

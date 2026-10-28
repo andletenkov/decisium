@@ -79,7 +79,8 @@ BeforeAll(function () {
   run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
   if (cliOwnsRun) return; // the CLI warned and wrote the run event
   run.event("run", { settings });
-  for (const w of settingWarnings(settings)) console.warn(w);
+  if (!env.CUCUMBER_WORKER_ID || env.CUCUMBER_WORKER_ID === "0")
+    for (const w of settingWarnings(settings)) console.warn(w);
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
 

@@ -5,6 +5,7 @@ import {
   capabilities,
   gate,
   GATE_TARGET_MARGIN,
+  confidence,
   grouped,
   NotYet,
   named,
@@ -79,7 +80,7 @@ function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined)
   for (const [c, p] of Object.entries(pick.probabilities))
     merged[done(c) ? "none" : c] = (merged[done(c) ? "none" : c] ?? 0) + p;
   return (
-    gate({ choice: "none", probabilities: merged }, settings().confidence.target, GATE_TARGET_MARGIN) &&
+    gate({ ...pick, choice: "none", probabilities: merged }, confidence(pick).target, GATE_TARGET_MARGIN) &&
     Object.entries(merged).every(([c, p]) => c === "none" || p < merged.none)
   );
 }
@@ -315,7 +316,7 @@ async function act(
       log("  Toggle: already done");
       return end("DONE");
     }
-    if (!gate(t.target, settings().confidence.target, GATE_TARGET_MARGIN))
+    if (!gate(t.target, confidence(t.target).target, GATE_TARGET_MARGIN))
       return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
     if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
@@ -354,7 +355,7 @@ async function act(
       if (action.verb === "DRAG") {
         const d = await decider.drop(said, obs, el);
         log(`  Drop: ${fmt(d)}`);
-        if (!gate(d, settings().confidence.target, GATE_TARGET_MARGIN) || d.choice === "none")
+        if (!gate(d, confidence(d).target, GATE_TARGET_MARGIN) || d.choice === "none")
           return end("AMBIGUOUS", `Jev is unsure where to drop ${el.line}: ${named(d, obs)}`);
         action.to = d.choice;
         const to = (dropOn = [...obs.readable, ...obs.areas].find((e) => e.ref === d.choice)!);

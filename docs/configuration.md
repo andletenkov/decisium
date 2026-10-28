@@ -48,9 +48,39 @@ export default {
 | `actionTimeout` | `5000` | `--action-timeout` | `DECISIUM_ACTION_TIMEOUT` | Ms after an action to wait for requests and DOM changes to settle. |
 | `maxTurns` | `8` | `--max-turns` | `DECISIUM_MAX_TURNS` | Turns an action Step may take before `STEP_TIMEOUT`, 1-20. |
 
+### reportDir
+
+Default `"runs"`; `--report-dir`, `DECISIUM_REPORT_DIR`. Non-empty path containing timestamped run folders.
+Change it to match your CI artifact upload path.
+
+### confidence.target
+
+Default `0.5`; `--confidence-target`, `DECISIUM_CONFIDENCE_TARGET`. Top probability in (0, 1] for action and drop targets.
+Reword ambiguous Steps first; tune this only when the intended control is clear.
+
+### confidence.answer
+
+Default `0.8`; `--confidence-answer`, `DECISIUM_CONFIDENCE_ANSWER`. Probability in (0, 1] for other answers and plausible
+check readings. Marginal-pass line is this value + 0.1. Lowering it warns once per run; prefer rewording.
+
+### checkTimeout
+
+Default `5000` ms; `--check-timeout`, `DECISIUM_CHECK_TIMEOUT`. Positive integer; how long checks wait for the expected
+state. Raise for slow pages.
+
+### actionTimeout
+
+Default `5000` ms; `--action-timeout`, `DECISIUM_ACTION_TIMEOUT`. Positive integer; how long actions wait for requests
+and DOM changes to settle. Raise when slow actions finish too early.
+
+### maxTurns
+
+Default `8`; `--max-turns`, `DECISIUM_MAX_TURNS`. Integer 1–20; action Turns before `STEP_TIMEOUT`.
+Raise for long wizards, or split them into smaller Steps.
+
 Only the top probability is configurable; the lead over the runner-up stays fixed (0.1 target, 0.3 answer): it is
 what catches "two controls look the same". Confidence affects live answers only (a replay reuses recorded
-resolutions); timeouts and `maxTurns` apply to replays too. The effective values go into the run event in
+resolutions with their recorded confidence; older cassettes use the original defaults); timeouts and `maxTurns` apply to replays too. The effective values go into the run event in
 `trace.jsonl`, and `report.md` says when confidence was not the default.
 
 When to change them:
