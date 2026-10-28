@@ -28,7 +28,8 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <main class="doc"><h1 id="running-with-cucumber-js">Running with cucumber-js</h1>
 <p><code>decisium run</code> already runs inside cucumber-js and loads your <code>cucumber.{js,mjs,cjs,json,yaml}</code>. Use raw
 <code>npx cucumber-js</code> only when your project already runs cucumber that way (CI scripts, IDE run buttons) and you want
-Decisium Steps in the same run as your own step definitions.</p>
+Decisium Steps in the same run as your own step definitions. cucumber-js imports Decisium from the project, so this
+needs it installed there too: <code>npm install --save-dev decisium</code>.</p>
 <pre><code class="language-js">// cucumber.mjs
 export default {
   import: [&quot;node_modules/decisium/dist/steps.js&quot;, &quot;steps/**/*.js&quot;],

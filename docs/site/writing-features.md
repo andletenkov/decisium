@@ -32,7 +32,7 @@ Feature: Campaigns
 - **Steps:** each line is an action (it changes the page) or a check (code verifies what the page shows). How to word
   them: [Writing Steps](steps.md).
 - **Tables and doc strings** work as in cucumber: [Data tables](steps.md#data-tables).
-- **One scenario:** `npx decisium run file.feature:12` runs only the scenario (or Examples row) at line 12.
+- **One scenario:** `decisium run file.feature:12` runs only the scenario (or Examples row) at line 12.
 
 ## How a Step runs
 

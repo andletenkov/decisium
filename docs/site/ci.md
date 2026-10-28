@@ -13,9 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npx decisium run features/*.feature --record none --parallel auto --format junit:reports/junit.xml
+      - run: npm install -g decisium # pin it (decisium@0.1.4) to replay with the version that recorded
+      - run: decisium install --with-deps
+      - run: decisium run features/*.feature --record none --parallel auto --format junit:reports/junit.xml
       - if: failure()
         uses: actions/upload-artifact@v4
         with: { name: decisium-runs, path: runs/ }

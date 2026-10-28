@@ -27,9 +27,11 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html" aria-current="page">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
 <main class="doc"><h1 id="installation">Installation</h1>
 <p>Needs Node 22.18+ (or 23.6+).</p>
-<pre><code class="language-sh">npm install --save-dev decisium
-npx playwright install chromium
+<pre><code class="language-sh">npm install -g decisium
+decisium install
 </code></pre>
+<p><code>decisium install</code> downloads the Chromium build Decisium&#39;s Playwright drives; on Linux, <code>decisium install --with-deps</code>
+also installs the system libraries it needs.</p>
 <p>Live runs call Jev, TypeSafe&#39;s decision model, through the TypeSafe API: you need a TypeSafe API key. Decisium&#39;s code is
 MIT; Jev is TypeSafe&#39;s hosted service under its own terms. Set the key in the environment or in a <code>.env</code> file in the
 directory you run from:</p>
@@ -37,7 +39,7 @@ directory you run from:</p>
 </code></pre>
 <p>A replay (<code>--record none</code>) makes no model calls and does not need the key.</p>
 <h2 id="check-the-setup">Check the setup</h2>
-<pre><code class="language-sh">npx decisium doctor features/checkout.feature
+<pre><code class="language-sh">decisium doctor features/checkout.feature
 </code></pre>
 <p><code>doctor</code> checks Node, Chromium and the key (one tiny Jev call). Given features, it also opens every start URL. Each
 check prints <code>[OK]</code> or <code>[FAIL]</code>; the exit code is 2 when one fails.</p>

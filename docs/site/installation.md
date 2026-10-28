@@ -3,9 +3,12 @@
 Needs Node 22.18+ (or 23.6+).
 
 ```sh
-npm install --save-dev decisium
-npx playwright install chromium
+npm install -g decisium
+decisium install
 ```
+
+`decisium install` downloads the Chromium build Decisium's Playwright drives; on Linux, `decisium install --with-deps`
+also installs the system libraries it needs.
 
 Live runs call Jev, TypeSafe's decision model, through the TypeSafe API: you need a TypeSafe API key. Decisium's code is
 MIT; Jev is TypeSafe's hosted service under its own terms. Set the key in the environment or in a `.env` file in the
@@ -20,7 +23,7 @@ A replay (`--record none`) makes no model calls and does not need the key.
 ## Check the setup
 
 ```sh
-npx decisium doctor features/checkout.feature
+decisium doctor features/checkout.feature
 ```
 
 `doctor` checks Node, Chromium and the key (one tiny Jev call). Given features, it also opens every start URL. Each

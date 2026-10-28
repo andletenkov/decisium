@@ -40,15 +40,15 @@ Feature: Campaigns
 <p>The <code>@url:</code> tag is the start URL (a URL or a local HTML file). Each Scenario starts from a fresh browser. Quote every
 value a Step types or a check compares.</p>
 <h2 id="2-lint-it">2. Lint it</h2>
-<pre><code class="language-sh">npx decisium lint features/campaign.feature
+<pre><code class="language-sh">decisium lint features/campaign.feature
 </code></pre>
 <p>No browser, no model: shows how each Step will be read and flags wordings <a href="steps.html">Writing Steps</a> marks as ones to avoid.</p>
 <h2 id="3-run-it-live">3. Run it live</h2>
-<pre><code class="language-sh">npx decisium run features/campaign.feature
+<pre><code class="language-sh">decisium run features/campaign.feature
 </code></pre>
 <p>The first run asks Jev for every Step and records the answers in <code>features/campaign.cassette.json</code>. Commit it.</p>
 <h2 id="4-replay-it">4. Replay it</h2>
-<pre><code class="language-sh">npx decisium run features/campaign.feature --record none
+<pre><code class="language-sh">decisium run features/campaign.feature --record none
 </code></pre>
 <p>Every Step replays its recorded resolution with zero model calls. Use this in <a href="ci.html">CI</a>.</p>
 <p>When a Step fails, read <a href="reports.html">Reports and debugging</a>. When a wording does not work, look it up in the

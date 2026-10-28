@@ -20,7 +20,7 @@ value a Step types or a check compares.
 ## 2. Lint it
 
 ```sh
-npx decisium lint features/campaign.feature
+decisium lint features/campaign.feature
 ```
 
 No browser, no model: shows how each Step will be read and flags wordings [Writing Steps](steps.md) marks as ones to avoid.
@@ -28,7 +28,7 @@ No browser, no model: shows how each Step will be read and flags wordings [Writi
 ## 3. Run it live
 
 ```sh
-npx decisium run features/campaign.feature
+decisium run features/campaign.feature
 ```
 
 The first run asks Jev for every Step and records the answers in `features/campaign.cassette.json`. Commit it.
@@ -36,7 +36,7 @@ The first run asks Jev for every Step and records the answers in `features/campa
 ## 4. Replay it
 
 ```sh
-npx decisium run features/campaign.feature --record none
+decisium run features/campaign.feature --record none
 ```
 
 Every Step replays its recorded resolution with zero model calls. Use this in [CI](ci.md).
