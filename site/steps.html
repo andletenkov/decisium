@@ -47,11 +47,11 @@ name something else; &quot;title&quot; can also mean the browser tab&#39;s title
 <p>An action Step runs in Turns: each Turn Jev picks one action among the elements on the page, Decisium performs it,
 and the Step ends once the task is done. Several clicks in one Step are fine when they serve one task: <code>I delete the campaign</code> opens the &quot;More actions&quot; menu first. A live action waits for the requests it started to finish (up to 5 s), so
 the next Step sees their result. A replay waits like a Playwright spec instead: see <a href="record-replay.html#waiting-on-replay">Waiting on replay</a>.</p>
-<p>A Step may finish the task in the Step after it: <code>I run the workflow</code> also confirms its dialog. Do not split what one
-task covers; quote the control instead: <code>I run the workflow, confirming with &quot;Run workflow&quot;</code>. A click never lands on a
-lookalike of a quoted control: when the Step quotes &quot;Run workflow&quot; and Jev picks &quot;Run again&quot; (a shared word, plus one
-the quote lacks), the Step fails as <code>AMBIGUOUS</code> and nothing is clicked. A control made only of the quote&#39;s words
-(&quot;Run&quot;) may lead to it, and a control in the quoted row or card (its &quot;Delete&quot;) is that row&#39;s.</p>
+<p>A Step may finish the task in the Step after it: <code>I publish the post</code> also confirms its dialog. Do not split what one
+task covers; quote the control instead: <code>I publish the post, confirming with &quot;Publish now&quot;</code>. A click never lands on a
+lookalike of a quoted control: when the Step quotes &quot;Publish now&quot; and Jev picks &quot;Publish again&quot; (a shared word, plus
+one the quote lacks), the Step fails as <code>AMBIGUOUS</code> and nothing is clicked. A control made only of the quote&#39;s words
+(&quot;Publish&quot;) may lead to it, and a control in the quoted row or card (its &quot;Delete&quot;) is that row&#39;s.</p>
 <h3 id="navigate">Navigate</h3>
 <table>
 <thead>

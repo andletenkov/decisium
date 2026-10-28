@@ -23,8 +23,8 @@ Then code decides, in this order:
    enough.
 2. **Sure of the target?** The top element needs ≥ 0.5 and a lead of ≥ 0.1 over the next; otherwise `AMBIGUOUS`. Target
    "none" is `BLOCKED`.
-3. **The right control?** A click on a lookalike of a quoted control ("Run again" when the Step quotes "Run workflow")
-   is `AMBIGUOUS`, and nothing is clicked.
+3. **The right control?** A click on a lookalike of a quoted control ("Publish again" when the Step quotes "Publish
+   now") is `AMBIGUOUS`, and nothing is clicked.
 4. **Act.** Playwright performs it, waits for the requests it started, and the next Turn reads the new page.
 
 A Step gets at most 8 Turns (`STEP_TIMEOUT`). Some actions add one request:
@@ -39,16 +39,17 @@ A Step gets at most 8 Turns (`STEP_TIMEOUT`). Some actions add one request:
 
 ### Example
 
-From a live run of `When I run the workflow, confirming with "Run workflow"`:
+From a live run of `When I delete the campaign` in the demo app (`npm run example:server`,
+`test/fixtures/campaign-manager`):
 
 | Turn | Page | done | target | Code |
 |---|---|---|---|---|
-| 1 | Workflow page | 0.43 | button "Run" 1.00 | click "Run" |
-| 2 | Dialog: Run / Dry run, Cancel, "Run workflow" | 0.15 | button "Run workflow" 1.00 | click "Run workflow" |
-| 3 | Execution page, status "In progress" | 0.87 | none | `DONE` |
+| 1 | Campaign page | 0.04 | button "More actions" 0.99 | click "More actions" |
+| 2 | Menu open: "Delete campaign" | 0.03 | menuitem "Delete campaign" 1.00 | click "Delete campaign" |
+| 3 | Campaign list, toast "deleted" | 0.98 | none 0.86 | `DONE` |
 
-3 requests. `done` stayed low at the dialog because the run had not started yet: a Step continues until its task is
-done, which is why a following `I confirm with "Run workflow"` has nothing left to do.
+3 requests. `done` stayed low with the menu open because nothing was deleted yet: a Step continues until its task is
+done, so a following `I click "Delete campaign"` would have nothing left to do.
 
 ## A check
 
@@ -84,8 +85,8 @@ Typical counts:
 | Type into a field | + 1 per value typed |
 | Check that passes at once | 1 |
 
-The live run the [example](#example) comes from: 9 Steps, **23 requests**, about 92,000 input and 18,000
-output tokens. The login Step alone took 7 (two fields, a value question each, three clicks).
+The demo app's first scenario (create, schedule and find a campaign; 11 Steps), run live: **21 requests**, about 24,000
+input and 4,400 output tokens. Each typed or selected value took 3 (act, value, done).
 
 Replays (`--record none`) send no request: the cassette holds each Step's answers. See
 [Record and replay](record-replay.md).

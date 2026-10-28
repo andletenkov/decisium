@@ -13,8 +13,8 @@ A live run asks Jev every time, so a Step whose wording is borderline can end di
 3. **Keep together what the page cannot do separately.** If a filter only applies when Search is clicked,
    `I filter the users by role "Admin"` clicks it; a following `I search` has nothing left to do.
 4. **`AMBIGUOUS: Jev chose … which is not "…"`** after a Step that already did the task: the Step before it finished
-   the job (`I run the workflow` confirmed the dialog), so `I confirm with "Run workflow"` only finds a lookalike.
-   Merge them: `I run the workflow, confirming with "Run workflow"`.
+   the job (`I publish the post` confirmed the dialog), so `I confirm with "Publish now"` only finds a lookalike.
+   Merge them: `I publish the post, confirming with "Publish now"`.
 5. **Still unstable: a [client step](client-steps.md).** Code can use any Playwright locator. Each one marks a gap
    worth reporting.
 
