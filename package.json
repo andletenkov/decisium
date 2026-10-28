@@ -1,6 +1,6 @@
 {
   "name": "decisium",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Semantic UI testing with decision models: plain-English Gherkin Steps executed by Jev in a real browser, pass/fail decided by code, record/replay cassettes",
   "type": "module",
   "license": "MIT",
