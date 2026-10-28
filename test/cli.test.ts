@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
-const commands = ["run", "step", "lint", "doctor"];
+const commands = ["run", "step", "lint", "doctor", "install"];
 const cli = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -105,6 +105,7 @@ for (const command of commands) {
         step: ["--url", "--headed", "--judged", "--strict"],
         lint: ["no browser", "no Jev"],
         doctor: ["Node", "Chromium", "TYPESAFE_API_KEY"],
+        install: ["Chromium", "--with-deps"],
       };
       for (const detail of details[command]) assert.ok(result.stdout.includes(detail), detail);
       assert.equal(result.stderr, "");
@@ -120,3 +121,12 @@ for (const flag of ["--version", "-V"]) {
     assert.equal(result.stderr, "");
   });
 }
+
+test("cli: install fetches the Chromium Decisium launches (its own Playwright, not npx's)", async () => {
+  const { chromium } = await import("playwright");
+  const result = invoke(["install", "--dry-run"]);
+  assert.equal(result.status, 0, result.stderr);
+  // e.g. .../ms-playwright/chromium-1248/chrome-mac-arm64/... -> the chromium-1248 directory
+  const dir = /^(.*[\\/]chromium-\d+)/.exec(chromium.executablePath())![1];
+  assert.ok(result.stdout.includes(dir), `${dir} not in:\n${result.stdout}`);
+});

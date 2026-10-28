@@ -28,10 +28,7 @@ export async function doctor(files: string[]): Promise<number> {
   };
 
   line(nodeOk(), `Node ${process.versions.node} (needs 22.18+ or 23.6+)`);
-  line(
-    existsSync(chromium.executablePath()),
-    `Chromium at ${chromium.executablePath()} (else: npx playwright install chromium)`,
-  );
+  line(existsSync(chromium.executablePath()), `Chromium at ${chromium.executablePath()} (else: decisium install)`);
   if (!process.env.TYPESAFE_API_KEY) line(false, "TYPESAFE_API_KEY is not set");
   else
     await attempt(`TYPESAFE_API_KEY accepted by Jev (${MODEL})`, () =>
