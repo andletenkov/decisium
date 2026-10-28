@@ -48,6 +48,8 @@ and a rerun command for that scenario. Classify each failure:<ul>
 report the app behaviour.</li>
 <li><strong>The wording is unclear</strong> (AMBIGUOUS, UNVERIFIABLE, a check that picked the wrong element): reword using
 <a href="https://andletenkov.github.io/decisium/troubleshooting.html">https://andletenkov.github.io/decisium/troubleshooting.html</a>, then rerun just that scenario.</li>
+<li><strong><code>AMBIGUOUS: Jev chose … which is not &quot;X&quot;</code></strong> usually means the Step before already used X (it finished the task):
+merge the two Steps, not an app bug.</li>
 <li>A <strong>marginal pass</strong> warning means the pass rested on a barely-confident answer. Treat it like an unclear wording.</li>
 </ul>
 </li>

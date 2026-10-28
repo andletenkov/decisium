@@ -37,6 +37,9 @@ replays what it resolved to, with the same outcome every run. Live variation onl
 <em>how</em> (a Search button or Enter), say how: <code>… and press Enter</code>.</li>
 <li><strong>Keep together what the page cannot do separately.</strong> If a filter only applies when Search is clicked,
 <code>I filter the users by role &quot;Admin&quot;</code> clicks it; a following <code>I search</code> has nothing left to do.</li>
+<li><strong><code>AMBIGUOUS: Jev chose … which is not &quot;…&quot;</code></strong> after a Step that already did the task: the Step before it finished
+the job (<code>I run the workflow</code> confirmed the dialog), so <code>I confirm with &quot;Run workflow&quot;</code> only finds a lookalike.
+Merge them: <code>I run the workflow, confirming with &quot;Run workflow&quot;</code>.</li>
 <li><strong>Still unstable: a <a href="client-steps.html">client step</a>.</strong> Code can use any Playwright locator. Each one marks a gap
 worth reporting.</li>
 </ol>

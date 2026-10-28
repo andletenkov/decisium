@@ -25,6 +25,8 @@ https://andletenkov.github.io/decisium/steps.html. Read it before writing a Step
      report the app behaviour.
    - **The wording is unclear** (AMBIGUOUS, UNVERIFIABLE, a check that picked the wrong element): reword using
      https://andletenkov.github.io/decisium/troubleshooting.html, then rerun just that scenario.
+   - **`AMBIGUOUS: Jev chose … which is not "X"`** usually means the Step before already used X (it finished the task):
+     merge the two Steps, not an app bug.
    - A **marginal pass** warning means the pass rested on a barely-confident answer. Treat it like an unclear wording.
 5. Keep the test's intent fixed while rewording. The quoted expected values and the area a check looks in stay as
    written. A rewording that makes a check pass by reading a different element (a link instead of the heading, a

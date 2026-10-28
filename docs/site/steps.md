@@ -25,6 +25,12 @@ and the Step ends once the task is done. Several clicks in one Step are fine whe
 campaign` opens the "More actions" menu first. A live action waits for the requests it started to finish (up to 5 s), so
 the next Step sees their result. A replay waits like a Playwright spec instead: see [Waiting on replay](record-replay.md#waiting-on-replay).
 
+A Step may finish the task in the Step after it: `I run the workflow` also confirms its dialog. Do not split what one
+task covers; quote the control instead: `I run the workflow, confirming with "Run workflow"`. A click never lands on a
+lookalike of a quoted control: when the Step quotes "Run workflow" and Jev picks "Run again" (a shared word, plus one
+the quote lacks), the Step fails as `AMBIGUOUS` and nothing is clicked. A control made only of the quote's words
+("Run") may lead to it, and a control in the quoted row or card (its "Delete") is that row's.
+
 ### Navigate
 
 | Write | Why |
