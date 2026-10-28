@@ -119,7 +119,7 @@ environment variable, and reporter setup.
 - [Client steps](https://andletenkov.github.io/decisium/client-steps.html) · [Browser context](https://andletenkov.github.io/decisium/browser-context.html) · [Network replay](https://andletenkov.github.io/decisium/network-replay.html)
 - [Record and replay](https://andletenkov.github.io/decisium/record-replay.html) · [CI](https://andletenkov.github.io/decisium/ci.html) · [Configuration](https://andletenkov.github.io/decisium/configuration.html)
 - [Examples](https://andletenkov.github.io/decisium/examples.html) against real public sites
-- An agent skill for coding agents ships in the package: `$(npm root -g)/decisium/skills/decisium/SKILL.md`
+- [Agent skill](https://andletenkov.github.io/decisium/agent-skill.html) for coding agents: designs CUJ-first scenarios from app code or requirements, writes and repairs features. Install with `npx skills add andletenkov/decisium` (also ships in the package: `$(npm root -g)/decisium/skills/decisium/SKILL.md`)
 
 ## Jev and your data
 
