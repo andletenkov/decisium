@@ -1,4 +1,5 @@
 // cucumber-js console formatter: one ✓/✗ line per Step, the reason under a failed one, and an end-of-run Failures block.
+import { DEFAULTS, settings } from "./options.ts";
 import { Formatter, formatterHelpers, Status, type IFormatterOptions } from "@cucumber/cucumber";
 import type { Envelope } from "@cucumber/messages";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -29,6 +30,16 @@ function rerun(target: string[]): string {
     env.DECISIUM_URL && `--url ${q(env.DECISIUM_URL)}`,
     env.DECISIUM_JUDGED === "1" && "--judged",
     env.DECISIUM_STRICT === "1" && "--strict",
+    ...(
+      [
+        ["REPORT_DIR", "report-dir"],
+        ["CONFIDENCE_TARGET", "confidence-target"],
+        ["CONFIDENCE_ANSWER", "confidence-answer"],
+        ["CHECK_TIMEOUT", "check-timeout"],
+        ["ACTION_TIMEOUT", "action-timeout"],
+        ["MAX_TURNS", "max-turns"],
+      ] as const
+    ).map(([name, flag]) => env[`DECISIUM_${name}`] && `--${flag} ${q(env[`DECISIUM_${name}`]!)}`),
   ];
   return ["node", cli, ...target.map(q), ...flags].filter(Boolean).join(" ");
 }
@@ -163,11 +174,21 @@ export default class DecisiumFormatter extends Formatter {
           const path = join(runDir, "report.md");
           writeFileSync(
             path,
-            agentReport(failed.map((f) => ({ ...f, events: stepEvents(events, f.scenario, f.step) }))),
+            agentReport(
+              failed.map((f) => ({ ...f, events: stepEvents(events, f.scenario, f.step) })),
+              nonDefaultConfidence(),
+            ),
           );
           this.log(`Agent report: ${path}\n`);
         }
       }
     });
   }
+}
+
+/** "target 0.6, answer 0.85" when either differs from its default, for report.md. */
+function nonDefaultConfidence(): string | undefined {
+  const { target, answer } = settings().confidence;
+  const d = DEFAULTS.confidence;
+  return target !== d.target || answer !== d.answer ? `target ${target}, answer ${answer}` : undefined;
 }

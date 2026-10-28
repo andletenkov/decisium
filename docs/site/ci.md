@@ -21,4 +21,4 @@ jobs:
         with: { name: decisium-runs, path: runs/ }
 ```
 
-Upload `runs/` on failure: it holds the screenshots, Playwright trace and `report.md` for every failed scenario.
+Upload `runs/` (or your `reportDir`) on failure: it holds the screenshots, Playwright trace and `report.md` for every failed scenario.

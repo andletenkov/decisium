@@ -21,13 +21,14 @@ Then code decides, in this order:
 
 1. **Done?** `done ≥ 0.8` ends the Step. After an action that changed the page, `done ≥ 0.5` with target "none" is
    enough.
-2. **Sure of the target?** The top element needs ≥ 0.5 and a lead of ≥ 0.1 over the next; otherwise `AMBIGUOUS`. Target
+2. **Sure of the target?** The top element needs ≥ 0.5 (`confidence.target`) and a lead of ≥ 0.1 over the next; otherwise `AMBIGUOUS`. Target
    "none" is `BLOCKED`.
 3. **The right control?** A click on a lookalike of a quoted control ("Publish again" when the Step quotes "Publish
    now") is `AMBIGUOUS`, and nothing is clicked.
 4. **Act.** Playwright performs it, waits for the requests it started, and the next Turn reads the new page.
 
-A Step gets at most 8 Turns (`STEP_TIMEOUT`). Some actions add one request:
+A Step gets at most 8 Turns (`maxTurns`; then `STEP_TIMEOUT`). After each action Decisium waits up to 5 s
+(`actionTimeout`) for requests and DOM changes to settle. Some actions add one request:
 
 | When | Extra question |
 |---|---|
@@ -63,7 +64,7 @@ A check is one request with four questions; Jev only says *what* to look at, cod
 | Where does it say to look? | the page's lists, tables, sections, dialogs; "anywhere" or "named area missing" |
 
 Code then reads the element and compares it with the quoted value. A check that does not pass yet is asked again each
-time the page changes, up to 5 s: one more request per change. A check that quotes nothing first asks which value from
+time the page changes, up to 5 s (`checkTimeout`): one more request per change. A check that quotes nothing first asks which value from
 an earlier Step it refers to (one more request). A [judged check](steps.md#judged-checks) adds a fifth question: does
 `ui` satisfy the check?
 

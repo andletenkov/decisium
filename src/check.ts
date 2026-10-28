@@ -3,7 +3,6 @@ import {
   AREA_PAGE,
   gate,
   GATE_MARGIN,
-  GATE_TOP,
   plausible,
   type STATES,
   named,
@@ -11,6 +10,7 @@ import {
   type Assessment,
   type Pick,
 } from "./decision.ts";
+import { settings } from "./options.ts";
 import { assertableText, type Element, type Observation } from "./observation.ts";
 import type { StepOutcome } from "./runner.ts";
 
@@ -85,12 +85,14 @@ const MARGINAL_BAND = 0.1;
 
 /** Readings that agree (`agreeing`) carry the pass together; under gate + band they are a marginal answer. */
 const weakMass = (what: string, pick: Pick, agreeing: string[], obs?: Observation): string[] =>
-  agreeing.reduce((s, k) => s + (pick.probabilities[k] ?? 0), 0) < GATE_TOP + MARGINAL_BAND
+  agreeing.reduce((s, k) => s + (pick.probabilities[k] ?? 0), 0) < settings().confidence.answer + MARGINAL_BAND
     ? [`${what}: ${named(pick, obs)}`]
     : [];
 /** A gated answer (state, recall) that cleared its gate by less than the band. */
 const weakGate = (what: string, pick: Pick): string[] =>
-  gate(pick, GATE_TOP + MARGINAL_BAND, GATE_MARGIN + MARGINAL_BAND) ? [] : [`${what}: ${named(pick)}`];
+  gate(pick, settings().confidence.answer + MARGINAL_BAND, GATE_MARGIN + MARGINAL_BAND)
+    ? []
+    : [`${what}: ${named(pick)}`];
 
 type Reading = { outcome: StepOutcome; reason?: string; inapplicable?: true; marginal?: string[] };
 

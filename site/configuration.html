@@ -35,9 +35,91 @@ and <code>DECISIUM_*</code> env (<code>DECISIUM_URL</code>, <code>DECISIUM_RECOR
 <pre><code class="language-js">// cucumber.mjs
 export default {
   worldParameters: { decisium: { record: &quot;none&quot;, strict: true } },
-  // url, record, headed, judged, strict, verbose, debug, agentReport
+  // url, record, headed, judged, strict, verbose, debug, agentReport,
+  // reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns
 };
 </code></pre>
+<p>Precedence: flag &gt; <code>DECISIUM_*</code> env &gt; <code>worldParameters.decisium</code> &gt; default. A value of the wrong type or out of range
+fails at startup (exit 2). <code>--parallel</code> workers read the same values.</p>
+<h3 id="tuning">Tuning</h3>
+<pre><code class="language-js">// cucumber.mjs
+export default {
+  worldParameters: {
+    decisium: {
+      url: &quot;http://localhost:3000&quot;,
+      reportDir: &quot;e2e/runs&quot;,
+      confidence: { target: 0.6, answer: 0.85 },
+      checkTimeout: 10000,
+      actionTimeout: 10000,
+      maxTurns: 12,
+    },
+  },
+};
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Flag</th>
+<th>Env</th>
+<th>Affects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>reportDir</code></td>
+<td><code>&quot;runs&quot;</code></td>
+<td><code>--report-dir</code></td>
+<td><code>DECISIUM_REPORT_DIR</code></td>
+<td>Where <code>&lt;reportDir&gt;/&lt;timestamp&gt;/</code> (log, trace, screenshots, <code>report.md</code>) is written.</td>
+</tr>
+<tr>
+<td><code>confidence.target</code></td>
+<td><code>0.5</code></td>
+<td><code>--confidence-target</code></td>
+<td><code>DECISIUM_CONFIDENCE_TARGET</code></td>
+<td>How sure Jev must be of the element an action acts on (and a drag&#39;s drop target). In (0, 1].</td>
+</tr>
+<tr>
+<td><code>confidence.answer</code></td>
+<td><code>0.8</code></td>
+<td><code>--confidence-answer</code></td>
+<td><code>DECISIUM_CONFIDENCE_ANSWER</code></td>
+<td>Every other answer: a check&#39;s required state, the value to type or select, which earlier value a check refers to, a dialog answer. A pass under <code>answer</code> + 0.1 is marginal. In (0, 1].</td>
+</tr>
+<tr>
+<td><code>checkTimeout</code></td>
+<td><code>5000</code></td>
+<td><code>--check-timeout</code></td>
+<td><code>DECISIUM_CHECK_TIMEOUT</code></td>
+<td>Ms a check waits for the page to reach the expected state.</td>
+</tr>
+<tr>
+<td><code>actionTimeout</code></td>
+<td><code>5000</code></td>
+<td><code>--action-timeout</code></td>
+<td><code>DECISIUM_ACTION_TIMEOUT</code></td>
+<td>Ms after an action to wait for requests and DOM changes to settle.</td>
+</tr>
+<tr>
+<td><code>maxTurns</code></td>
+<td><code>8</code></td>
+<td><code>--max-turns</code></td>
+<td><code>DECISIUM_MAX_TURNS</code></td>
+<td>Turns an action Step may take before <code>STEP_TIMEOUT</code>, 1-20.</td>
+</tr>
+</tbody></table>
+<p>Only the top probability is configurable; the lead over the runner-up stays fixed (0.1 target, 0.3 answer): it is
+what catches &quot;two controls look the same&quot;. Confidence affects live answers only (a replay reuses recorded
+resolutions); timeouts and <code>maxTurns</code> apply to replays too. The effective values go into the run event in
+<code>trace.jsonl</code>, and <code>report.md</code> says when confidence was not the default.</p>
+<p>When to change them:</p>
+<ul>
+<li>Slow app: raise <code>checkTimeout</code> and <code>actionTimeout</code>.</li>
+<li>Long flow in one Step (a wizard): raise <code>maxTurns</code>, or split the Step.</li>
+<li><code>AMBIGUOUS</code> on a clear page: reword the Step first, then raise or lower <code>confidence.target</code>.</li>
+<li>Marginal passes: reword. Lowering <code>confidence.answer</code> below 0.8 prints a warning: a wrong reading can then pass.</li>
+</ul>
 <h2 id="reporters">Reporters</h2>
 <p>Any cucumber formatter: cucumber&#39;s own <code>junit</code>, <code>json</code>, <code>html</code>, <code>message</code>, or a package such as the official Qase
 reporter. Only one formatter may write to stdout: one configured without a path takes it; otherwise Decisium&#39;s console
@@ -62,7 +144,7 @@ export default {
 <code>JUDGED_FAILED</code>, <code>BLOCKED</code>, <code>ACTION_FAILED</code>) report as <code>failed</code>, every other outcome as <code>invalid</code>. A marginal pass
 reaches every reporter as a <code>text/plain</code> attachment <code>marginal-pass.txt</code> on its Step (Qase stores it as <code>file.txt</code>).</p>
 <div class="pager"><a class="prev" href="network-replay.html"><span>Previous</span>Network replay</a><a class="next" href="reports.html"><span>Next</span>Reports and debugging</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#decisium-options">Decisium options</a><a class="l2" href="#reporters">Reporters</a><a class="l3" href="#qase">Qase</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#decisium-options">Decisium options</a><a class="l3" href="#tuning">Tuning</a><a class="l2" href="#reporters">Reporters</a><a class="l3" href="#qase">Qase</a></aside>
 </div>
 </body>
 </html>

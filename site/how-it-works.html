@@ -61,13 +61,14 @@ one or more questions. Questions in the same request read the same page, so thei
 <ol>
 <li><strong>Done?</strong> <code>done ≥ 0.8</code> ends the Step. After an action that changed the page, <code>done ≥ 0.5</code> with target &quot;none&quot; is
 enough.</li>
-<li><strong>Sure of the target?</strong> The top element needs ≥ 0.5 and a lead of ≥ 0.1 over the next; otherwise <code>AMBIGUOUS</code>. Target
+<li><strong>Sure of the target?</strong> The top element needs ≥ 0.5 (<code>confidence.target</code>) and a lead of ≥ 0.1 over the next; otherwise <code>AMBIGUOUS</code>. Target
 &quot;none&quot; is <code>BLOCKED</code>.</li>
 <li><strong>The right control?</strong> A click on a lookalike of a quoted control (&quot;Publish again&quot; when the Step quotes &quot;Publish
 now&quot;) is <code>AMBIGUOUS</code>, and nothing is clicked.</li>
 <li><strong>Act.</strong> Playwright performs it, waits for the requests it started, and the next Turn reads the new page.</li>
 </ol>
-<p>A Step gets at most 8 Turns (<code>STEP_TIMEOUT</code>). Some actions add one request:</p>
+<p>A Step gets at most 8 Turns (<code>maxTurns</code>; then <code>STEP_TIMEOUT</code>). After each action Decisium waits up to 5 s
+(<code>actionTimeout</code>) for requests and DOM changes to settle. Some actions add one request:</p>
 <table>
 <thead>
 <tr>
@@ -153,7 +154,7 @@ done, so a following <code>I click &quot;Delete campaign&quot;</code> would have
 </tr>
 </tbody></table>
 <p>Code then reads the element and compares it with the quoted value. A check that does not pass yet is asked again each
-time the page changes, up to 5 s: one more request per change. A check that quotes nothing first asks which value from
+time the page changes, up to 5 s (<code>checkTimeout</code>): one more request per change. A check that quotes nothing first asks which value from
 an earlier Step it refers to (one more request). A <a href="steps.html#judged-checks">judged check</a> adds a fifth question: does
 <code>ui</code> satisfy the check?</p>
 <h2 id="large-pages">Large pages</h2>

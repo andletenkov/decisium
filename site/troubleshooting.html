@@ -85,7 +85,7 @@ worth reporting.</li>
 <tr>
 <td><code>STEP_TIMEOUT</code></td>
 <td>The Step did not finish in its allowed actions.</td>
-<td>Split it into smaller tasks.</td>
+<td>Split it into smaller tasks, or raise <code>maxTurns</code> for a long flow.</td>
 </tr>
 <tr>
 <td><code>UI_CHANGED</code></td>
@@ -100,7 +100,12 @@ worth reporting.</li>
 <tr>
 <td>marginal pass</td>
 <td>Passed, but the model was barely sure.</td>
-<td>Make the Step more specific.</td>
+<td>Make the Step more specific; do not lower <code>confidence.answer</code>.</td>
+</tr>
+<tr>
+<td>check fails on a slow page</td>
+<td>The expected state came after the check gave up.</td>
+<td>Raise <code>checkTimeout</code> (and <code>actionTimeout</code> if actions finish too early).</td>
 </tr>
 </tbody></table>
 <p>Run <code>npx decisium lint</code> on the feature: it flags many of these wordings before you run.</p>

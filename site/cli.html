@@ -28,7 +28,9 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <main class="doc"><h1 id="command-line">Command line</h1>
 <pre><code class="language-text">decisium step &quot;&lt;step&gt;&quot; --url &lt;url|file&gt; [--headed] [--judged] [--strict] [-v] [--debug]
 decisium run &lt;file.feature[:line]&gt;... [--url &lt;url|file&gt;] [--headed] [--judged] [--strict] [--record &lt;mode&gt;]
-             [--parallel &lt;n|auto&gt;] [--format &lt;name[:path]&gt;] [--import &lt;file&gt;] [-p &lt;profile&gt;] [--no-agent-report] [-v] [--debug]
+             [--parallel &lt;n|auto&gt;] [--report-dir &lt;dir&gt;]
+             [--confidence-target &lt;p&gt;] [--confidence-answer &lt;p&gt;] [--check-timeout &lt;ms&gt;] [--action-timeout &lt;ms&gt;]
+             [--max-turns &lt;n&gt;] [--format &lt;name[:path]&gt;] [--import &lt;file&gt;] [-p &lt;profile&gt;] [--no-agent-report] [-v] [--debug]
 decisium doctor [&lt;file.feature&gt;...]
 decisium lint &lt;file.feature&gt;...
 </code></pre>
@@ -52,6 +54,30 @@ decisium lint &lt;file.feature&gt;...
 <tr>
 <td><code>--parallel &lt;n|auto&gt;</code></td>
 <td>Worker processes. Features run side by side, a feature&#39;s scenarios in order. Only for features that do not share app state. <code>auto</code>: min(CPUs, 4) with Jev, every CPU with <code>--record none</code>.</td>
+</tr>
+<tr>
+<td><code>--report-dir &lt;dir&gt;</code></td>
+<td>Where run folders are written. Default <code>runs</code>.</td>
+</tr>
+<tr>
+<td><code>--confidence-target &lt;p&gt;</code></td>
+<td>How sure Jev must be of the element an action acts on, in (0, 1]. Default 0.5.</td>
+</tr>
+<tr>
+<td><code>--confidence-answer &lt;p&gt;</code></td>
+<td>How sure Jev must be of every other answer, in (0, 1]. Default 0.8; lower warns.</td>
+</tr>
+<tr>
+<td><code>--check-timeout &lt;ms&gt;</code></td>
+<td>How long a check waits for the expected state. Default 5000.</td>
+</tr>
+<tr>
+<td><code>--action-timeout &lt;ms&gt;</code></td>
+<td>How long after an action to wait for the page to settle. Default 5000.</td>
+</tr>
+<tr>
+<td><code>--max-turns &lt;n&gt;</code></td>
+<td>Actions a Step may take before <code>STEP_TIMEOUT</code>, 1-20. Default 8.</td>
 </tr>
 <tr>
 <td><code>--headed</code></td>

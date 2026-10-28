@@ -8,7 +8,7 @@ unclear wording, or fail it with `--strict`.
 
 ## The run directory
 
-Each run writes `runs/<timestamp>/`:
+Each run writes `<reportDir>/<timestamp>/` (`reportDir` defaults to `runs`, see [configuration](https://github.com/andletenkov/decisium/blob/main/docs/configuration.md)):
 
 - `trace.jsonl`: Observations, Jev answers, actions and outcomes. Each scenario's `result` event has `perf`: milliseconds spent in `observe`, `perform:<verb>`, `after:<verb>` (waiting after an action) and `settle`, split by what held it (`settle:requests:<type>`, `settle:timers`, `settle:quiet`).
 - `log.txt`: the full decision log (what `-v` prints).

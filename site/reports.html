@@ -31,7 +31,7 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 scenario. A marginal pass (the check passed, but Jev was barely confident) is listed separately; treat it like an
 unclear wording, or fail it with <code>--strict</code>.</p>
 <h2 id="the-run-directory">The run directory</h2>
-<p>Each run writes <code>runs/&lt;timestamp&gt;/</code>:</p>
+<p>Each run writes <code>&lt;reportDir&gt;/&lt;timestamp&gt;/</code> (<code>reportDir</code> defaults to <code>runs</code>, see <a href="https://github.com/andletenkov/decisium/blob/main/docs/configuration.md">configuration</a>):</p>
 <ul>
 <li><code>trace.jsonl</code>: Observations, Jev answers, actions and outcomes. Each scenario&#39;s <code>result</code> event has <code>perf</code>: milliseconds spent in <code>observe</code>, <code>perform:&lt;verb&gt;</code>, <code>after:&lt;verb&gt;</code> (waiting after an action) and <code>settle</code>, split by what held it (<code>settle:requests:&lt;type&gt;</code>, <code>settle:timers</code>, <code>settle:quiet</code>).</li>
 <li><code>log.txt</code>: the full decision log (what <code>-v</code> prints).</li>
