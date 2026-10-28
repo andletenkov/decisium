@@ -104,7 +104,7 @@ const EXAMPLES: [file: string, about: string][] = [
 function examples() {
   const md =
     "# Examples\n\nFeatures against real public sites. Copy one into your project and run it:\n\n" +
-    "```sh\nnpx decisium run saucedemo.feature\n```\n\nThe first run calls Jev and writes `saucedemo.cassette.json` next to it; " +
+    "```sh\ndecisium run saucedemo.feature\n```\n\nThe first run calls Jev and writes `saucedemo.cassette.json` next to it; " +
     "after that, `--record none` replays it with no model calls. How to word each kind of Step is in " +
     "[Writing Steps](steps.md).\n";
   const toc: { level: number; id: string; text: string }[] = [];
@@ -125,7 +125,7 @@ function source(path: string) {
   let md = read(path).replace(/^---\n[\s\S]*?\n---\n/, ""); // front matter
   if (path.startsWith("skills/"))
     md =
-      "# Agent skill\n\nInstall it into your coding agent from `node_modules/decisium/skills/decisium/SKILL.md`.\n\n" +
+      "# Agent skill\n\nInstall it into your coding agent from `$(npm root -g)/decisium/skills/decisium/SKILL.md`.\n\n" +
       md;
   return md;
 }

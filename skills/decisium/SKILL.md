@@ -13,12 +13,12 @@ https://andletenkov.github.io/decisium/steps.html. Read it before writing a Step
    Word each Step like a **Write** row of its kind (navigate, type, select, act, attempt, keys, value / presence /
    scoped / state check, memory, secrets). Quote every value the Step uses and every value a check compares.
    Credentials go in as `"$NAME"` placeholders, with the variables set in the environment or `.env`.
-2. Run `npx decisium lint <file.feature>`. It shows how each Step will be read (kind, quoted values, placeholders) and
+2. Run `decisium lint <file.feature>`. It shows how each Step will be read (kind, quoted values, placeholders) and
    flags wordings to avoid with ⚠. Done when every ⚠ is reworded away, or kept on purpose with a `#` comment saying why.
 
 ## Run and repair
 
-3. Run `npx decisium run <file.feature>` (live Jev the first time; it records a cassette next to the feature).
+3. Run `decisium run <file.feature>` (live Jev the first time; it records a cassette next to the feature).
 4. On a failure, read `runs/<id>/report.md`: the Step at `file:line`, Jev's answers, the page text around the element,
    and a rerun command for that scenario. Classify each failure:
    - **The app is wrong** (ASSERTION_FAILED, BLOCKED with the expected control truly missing): keep the Step, and

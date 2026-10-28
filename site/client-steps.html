@@ -43,7 +43,7 @@ Given(&quot;the campaigns API returns {string}&quot;, async function (this: { co
   Then &quot;Mocked Sale&quot; should be shown
 </code></pre>
 <p>Load them with <code>--import</code> (repeatable) or <code>import</code> in your <a href="configuration.html">configuration</a>:</p>
-<pre><code class="language-sh">npx decisium run features/campaigns.feature --import steps/campaigns.steps.ts
+<pre><code class="language-sh">decisium run features/campaigns.feature --import steps/campaigns.steps.ts
 </code></pre>
 <p>A client step makes no model call and is not recorded in the cassette.</p>
 <h2 id="the-world">The World</h2>

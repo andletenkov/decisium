@@ -28,7 +28,7 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <main class="doc"><h1 id="writing-steps">Writing Steps</h1>
 <p>A Step is one line of a scenario, written the way a user would describe the task. Decisium reads each line as an
 <strong>action</strong> (it changes the page) or a <strong>check</strong> (it verifies what the page shows). This page lists what each kind can
-do and how to word it. <code>npx decisium lint &lt;file.feature&gt;</code> flags the wordings marked <strong>Avoid</strong> below.</p>
+do and how to word it. <code>decisium lint &lt;file.feature&gt;</code> flags the wordings marked <strong>Avoid</strong> below.</p>
 <h2 id="rules-of-thumb">Rules of thumb</h2>
 <ol>
 <li><strong>One Step, one task</strong>, named by what the user wants, not by the clicks: <code>I save the draft</code>, not

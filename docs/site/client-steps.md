@@ -24,7 +24,7 @@ Scenario: The list shows what the API returns
 Load them with `--import` (repeatable) or `import` in your [configuration](configuration.md):
 
 ```sh
-npx decisium run features/campaigns.feature --import steps/campaigns.steps.ts
+decisium run features/campaigns.feature --import steps/campaigns.steps.ts
 ```
 
 A client step makes no model call and is not recorded in the cassette.

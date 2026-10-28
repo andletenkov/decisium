@@ -2,7 +2,7 @@
 
 A Step is one line of a scenario, written the way a user would describe the task. Decisium reads each line as an
 **action** (it changes the page) or a **check** (it verifies what the page shows). This page lists what each kind can
-do and how to word it. `npx decisium lint <file.feature>` flags the wordings marked **Avoid** below.
+do and how to word it. `decisium lint <file.feature>` flags the wordings marked **Avoid** below.
 
 ## Rules of thumb
 

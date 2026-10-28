@@ -33,7 +33,7 @@ A live run asks Jev every time, so a Step whose wording is borderline can end di
 | `PAGE_TOO_LARGE` | The page is over the model's size limit. | Test a narrower page or state. |
 | marginal pass | Passed, but the model was barely sure. | Make the Step more specific. |
 
-Run `npx decisium lint` on the feature: it flags many of these wordings before you run.
+Run `decisium lint` on the feature: it flags many of these wordings before you run.
 
 ## Why not selectors
 

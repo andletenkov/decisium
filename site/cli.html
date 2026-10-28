@@ -29,6 +29,7 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <pre><code class="language-text">decisium step &quot;&lt;step&gt;&quot; --url &lt;url|file&gt; [--headed] [--judged] [--strict] [-v] [--debug]
 decisium run &lt;file.feature[:line]&gt;... [--url &lt;url|file&gt;] [--headed] [--judged] [--strict] [--record &lt;mode&gt;]
              [--parallel &lt;n|auto&gt;] [--format &lt;name[:path]&gt;] [--import &lt;file&gt;] [-p &lt;profile&gt;] [--no-agent-report] [-v] [--debug]
+decisium install [--with-deps] [--dry-run]
 decisium doctor [&lt;file.feature&gt;...]
 decisium lint &lt;file.feature&gt;...
 </code></pre>
@@ -92,8 +93,12 @@ decisium lint &lt;file.feature&gt;...
 </tbody></table>
 <h2 id="step">step</h2>
 <p>Runs one Step against a URL, without a feature file. Handy for trying a wording.</p>
-<pre><code class="language-sh">npx decisium step &quot;I open the calendar&quot; --url http://localhost:3000
+<pre><code class="language-sh">decisium step &quot;I open the calendar&quot; --url http://localhost:3000
 </code></pre>
+<h2 id="install">install</h2>
+<p>Downloads the Chromium build Decisium&#39;s own Playwright drives, so the version always matches (<code>npx playwright install</code>
+may fetch a different Playwright). <code>--with-deps</code> also installs the system libraries Chromium needs (Linux, e.g. CI);
+<code>--dry-run</code> only prints what would be installed, and where.</p>
 <h2 id="doctor">doctor</h2>
 <p>Checks Node, Chromium and <code>TYPESAFE_API_KEY</code>; given features, also opens every start URL.</p>
 <h2 id="lint">lint</h2>
@@ -102,7 +107,7 @@ decisium lint &lt;file.feature&gt;...
 <h2 id="exit-codes">Exit codes</h2>
 <p><code>0</code> passed, <code>1</code> a scenario failed, <code>2</code> configuration or infrastructure error.</p>
 <div class="pager"><a class="prev" href="client-steps.html"><span>Previous</span>Client steps</a><a class="next" href="record-replay.html"><span>Next</span>Record and replay</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#run">run</a><a class="l2" href="#step">step</a><a class="l2" href="#doctor">doctor</a><a class="l2" href="#lint">lint</a><a class="l2" href="#exit-codes">Exit codes</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#run">run</a><a class="l2" href="#step">step</a><a class="l2" href="#install">install</a><a class="l2" href="#doctor">doctor</a><a class="l2" href="#lint">lint</a><a class="l2" href="#exit-codes">Exit codes</a></aside>
 </div>
 </body>
 </html>
