@@ -117,7 +117,7 @@ Change it to match your CI artifact upload path.</p>
 Reword ambiguous Steps first; tune this only when the intended control is clear.</p>
 <h3 id="confidenceanswer">confidence.answer</h3>
 <p>Default <code>0.8</code>; <code>--confidence-answer</code>, <code>DECISIUM_CONFIDENCE_ANSWER</code>. Probability in (0, 1] for other answers and plausible
-check readings. Marginal-pass line is this value + 0.1. Lowering it warns once per run; prefer rewording.</p>
+check readings. Marginal-pass line is this value + 0.1. Lowering it below 0.6 warns once per run; prefer rewording.</p>
 <h3 id="checktimeout">checkTimeout</h3>
 <p>Default <code>5000</code> ms; <code>--check-timeout</code>, <code>DECISIUM_CHECK_TIMEOUT</code>. Positive integer; how long checks wait for the expected
 state. Raise for slow pages.</p>
@@ -136,7 +136,7 @@ resolutions with their recorded confidence; older cassettes use the original def
 <li>Slow app: raise <code>checkTimeout</code> and <code>actionTimeout</code>.</li>
 <li>Long flow in one Step (a wizard): raise <code>maxTurns</code>, or split the Step.</li>
 <li><code>AMBIGUOUS</code> on a clear page: reword the Step first, then raise or lower <code>confidence.target</code>.</li>
-<li>Marginal passes: reword. Lowering <code>confidence.answer</code> below 0.8 prints a warning: a wrong reading can then pass.</li>
+<li>Marginal passes: reword. Lowering <code>confidence.answer</code> below 0.6 prints a warning: a wrong reading can then pass.</li>
 </ul>
 <h2 id="reporters">Reporters</h2>
 <p>Any cucumber formatter: cucumber&#39;s own <code>junit</code>, <code>json</code>, <code>html</code>, <code>message</code>, or a package such as the official Qase

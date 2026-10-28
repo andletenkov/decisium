@@ -22,7 +22,7 @@ Runs features. `file.feature:line` runs only the scenario (or Examples row) at t
 | `--parallel <n\|auto>` | Worker processes. Features run side by side, a feature's scenarios in order. Only for features that do not share app state. `auto`: min(CPUs, 4) with Jev, every CPU with `--record none`. |
 | `--report-dir <dir>` | Where run folders are written. Default `runs`. |
 | `--confidence-target <p>` | How sure Jev must be of the element an action acts on, in (0, 1]. Default 0.5. |
-| `--confidence-answer <p>` | How sure Jev must be of every other answer, in (0, 1]. Default 0.8; lower warns. |
+| `--confidence-answer <p>` | How sure Jev must be of every other answer, in (0, 1]. Default 0.8; below 0.6 warns. |
 | `--check-timeout <ms>` | How long a check waits for the expected state. Default 5000. |
 | `--action-timeout <ms>` | How long after an action to wait for the page to settle. Default 5000. |
 | `--max-turns <n>` | Actions a Step may take before `STEP_TIMEOUT`, 1-20. Default 8. |

@@ -64,9 +64,9 @@ export function settings(env: Record<string, string | undefined> = process.env):
 /** Warnings for settings that let a wrong reading pass; print once per run. */
 export function settingWarnings(s: Settings): string[] {
   const { answer } = s.confidence;
-  return answer < DEFAULTS.confidence.answer
+  return answer < 0.6
     ? [
-        `Warning: confidence.answer ${answer} is below the default ${DEFAULTS.confidence.answer}: checks, typed values and dialog answers will accept less certain answers, so a wrong reading can pass. Prefer rewording the Step.`,
+        `Warning: confidence.answer ${answer} is below 0.6: checks, typed values and dialog answers will accept less certain answers, so a wrong reading can pass. Prefer rewording the Step.`,
       ]
     : [];
 }
