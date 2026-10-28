@@ -1,4 +1,5 @@
 // Browser runtime: the only module that knows about Playwright. Swap for CDP behind the same surface.
+import { settings } from "./options.ts";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
@@ -57,15 +58,13 @@ const LEAVE = "Leave site? Changes you made may not be saved.";
 
 /** Request types that can change what the page shows: only these hold up settle(). */
 const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
-/** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full SETTLE_CAP_MS. */
+/** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full `actionTimeout`. */
 const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
 // quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
-// WAIT_CAP_MS; ignore such work by URL/type when the waiting costs too much.
+// `checkTimeout`; ignore such work by URL/type when the waiting costs too much.
 // Not tracked: Web Workers, and timers inside cross-origin iframes.
-const SETTLE_CAP_MS = 5000; // pages that never go quiet continue after this
-const WAIT_CAP_MS = 5000; // WAIT and assertion retries give up after this
 
 /** Snapshot links with their `/url` line: [ref, url]. */
 const links = (snapshot: string): [string, string][] =>
@@ -435,7 +434,8 @@ export class Browser {
   }
 
   private async settleLoop(start: number): Promise<void> {
-    while (Date.now() < start + SETTLE_CAP_MS) {
+    while (Date.now() < start + settings().actionTimeout) {
+      // pages that never go quiet continue after `actionTimeout`
       if (this.open) return; // nothing changes until it is answered
       const poll = Date.now();
       const [sinceMutation, soon] = (await this.unblocked(
@@ -727,7 +727,7 @@ export class Browser {
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
     else if (verb === "PRESS")
       await this.page.keyboard.press(value); // to whatever has focus
-    else if (verb === "WAIT") await this.waitForChange((await this.observe()).text, WAIT_CAP_MS);
+    else if (verb === "WAIT") await this.waitForChange((await this.observe()).text, settings().actionTimeout);
     else if (verb === "GOTO") await this.page.goto(new URL(value, this.start).href);
     else if (verb === "BACK") await this.page.goBack();
     else if (verb === "FORWARD") await this.page.goForward();
@@ -812,7 +812,7 @@ export class Browser {
    * Waits until the Observation differs from `since` (true), the timeout passes, or the page cannot change on its
    * own any more (false): no request, timer, animation frame or socket pending on two polls in a row.
    */
-  async waitForChange(since: string, timeoutMs = WAIT_CAP_MS): Promise<boolean> {
+  async waitForChange(since: string, timeoutMs = settings().actionTimeout): Promise<boolean> {
     const deadline = Date.now() + timeoutMs;
     let idleBefore = false;
     let seen: number | undefined; // __lastMutation at the last snapshot: no DOM mutation since means no new snapshot

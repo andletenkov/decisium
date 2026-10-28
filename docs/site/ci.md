@@ -24,4 +24,4 @@ jobs:
 With a global install instead, replace `npm ci` with `npm install -g decisium@0.1.4` (the version that recorded the
 cassettes) and drop `npx`.
 
-Upload `runs/` on failure: it holds the screenshots, Playwright trace and `report.md` for every failed scenario.
+Upload `runs/` (or your `reportDir`) on failure: it holds the screenshots, Playwright trace and `report.md` for every failed scenario.

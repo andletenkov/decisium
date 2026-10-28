@@ -1,10 +1,11 @@
+import { settings } from "./options.ts";
 import type { Action } from "./browser.ts";
 import { placeholder, readStep, type StepArgument } from "./step.ts";
 import {
   capabilities,
   gate,
   GATE_TARGET_MARGIN,
-  GATE_TARGET_TOP,
+  confidence,
   grouped,
   NotYet,
   named,
@@ -57,7 +58,7 @@ async function settled<T>(
   obs: Observation,
   ask: (obs: Observation) => Promise<T>,
 ): Promise<[Observation, T]> {
-  const deadline = Date.now() + ASSERT_TIMEOUT_MS;
+  const deadline = Date.now() + settings().checkTimeout;
   for (;;) {
     try {
       return [obs, await ask(obs)];
@@ -70,8 +71,6 @@ async function settled<T>(
   }
 }
 
-const MAX_TURNS = 8;
-
 const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
 /** Jev torn between "nothing to do" and a toggle already in the wanted state (task 0043): both mean done. */
 function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined): boolean {
@@ -81,7 +80,7 @@ function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined)
   for (const [c, p] of Object.entries(pick.probabilities))
     merged[done(c) ? "none" : c] = (merged[done(c) ? "none" : c] ?? 0) + p;
   return (
-    gate({ choice: "none", probabilities: merged }, GATE_TARGET_TOP, GATE_TARGET_MARGIN) &&
+    gate({ ...pick, choice: "none", probabilities: merged }, confidence(pick).target, GATE_TARGET_MARGIN) &&
     Object.entries(merged).every(([c, p]) => c === "none" || p < merged.none)
   );
 }
@@ -121,7 +120,6 @@ const VERBS: Record<string, Action["verb"]> = {
   "switch tab": "SWITCH_TAB",
   enter: "ENTER",
 };
-const ASSERT_TIMEOUT_MS = 5000; // total time an Assertion step may wait for the UI to reach the expected state
 const DONE_THRESHOLD = 0.8;
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
@@ -169,7 +167,7 @@ export async function runAssertion(
 
   // Like Playwright's expect: a check that does not pass is re-evaluated whenever the UI changes, until
   // the UI stops changing within the wait cap. Jev is asked again only after a change.
-  const deadline = Date.now() + ASSERT_TIMEOUT_MS;
+  const deadline = Date.now() + settings().checkTimeout;
   let obs = await rt.observe();
   for (;;) {
     let verdict: Verdict;
@@ -286,7 +284,8 @@ async function act(
   let unchanged = 0;
   let obs = await rt.observe();
 
-  for (let turn = 1; turn <= MAX_TURNS; turn++) {
+  const { maxTurns } = settings();
+  for (let turn = 1; turn <= maxTurns; turn++) {
     log(`\n  Observation #${turn}:`);
     for (const e of obs.elements) log(`    [${e.ref}] ${e.line}`);
 
@@ -317,7 +316,7 @@ async function act(
       log("  Toggle: already done");
       return end("DONE");
     }
-    if (!gate(t.target, GATE_TARGET_TOP, GATE_TARGET_MARGIN))
+    if (!gate(t.target, confidence(t.target).target, GATE_TARGET_MARGIN))
       return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
     if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
@@ -356,7 +355,7 @@ async function act(
       if (action.verb === "DRAG") {
         const d = await decider.drop(said, obs, el);
         log(`  Drop: ${fmt(d)}`);
-        if (!gate(d, GATE_TARGET_TOP, GATE_TARGET_MARGIN) || d.choice === "none")
+        if (!gate(d, confidence(d).target, GATE_TARGET_MARGIN) || d.choice === "none")
           return end("AMBIGUOUS", `Jev is unsure where to drop ${el.line}: ${named(d, obs)}`);
         action.to = d.choice;
         const to = (dropOn = [...obs.readable, ...obs.areas].find((e) => e.ref === d.choice)!);
@@ -420,5 +419,5 @@ async function act(
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;
   }
-  return end("STEP_TIMEOUT", `not done after ${MAX_TURNS} actions (${recent.join(", ")})`);
+  return end("STEP_TIMEOUT", `not done after ${maxTurns} actions (${recent.join(", ")})`);
 }

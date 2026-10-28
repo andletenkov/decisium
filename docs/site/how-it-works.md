@@ -21,13 +21,14 @@ Then code decides, in this order:
 
 1. **Done?** `done ≥ 0.8` ends the Step. After an action that changed the page, `done ≥ 0.5` with target "none" is
    enough.
-2. **Sure of the target?** The top element needs ≥ 0.5 and a lead of ≥ 0.1 over the next; otherwise `AMBIGUOUS`. Target
+2. **Sure of the target?** The top element needs ≥ 0.5 (`confidence.target`) and a lead of ≥ 0.1 over the next; otherwise `AMBIGUOUS`. Target
    "none" is `BLOCKED`.
 3. **The right control?** A click on a lookalike of a quoted control ("Publish again" when the Step quotes "Publish
    now") is `AMBIGUOUS`, and nothing is clicked.
 4. **Act.** Playwright performs it, waits for the requests it started, and the next Turn reads the new page.
 
-A Step gets at most 8 Turns (`STEP_TIMEOUT`). Some actions add one request:
+A Step gets at most 8 Turns (`maxTurns`; then `STEP_TIMEOUT`). After each action Decisium waits up to 5 s
+(`actionTimeout`) for requests and DOM changes to settle. Some actions add one request:
 
 | When | Extra question |
 |---|---|
@@ -39,8 +40,11 @@ A Step gets at most 8 Turns (`STEP_TIMEOUT`). Some actions add one request:
 
 ### Example
 
-From a live run of `When I delete the campaign` in the demo app (`npm run example:server`,
-`test/fixtures/campaign-manager`):
+Suppose you are testing a campaign-management app. You are viewing a campaign, and its delete command is inside a
+"More actions" menu. Your Step is `When I delete the campaign`.
+
+Decisium can carry out the whole task without a separate Step for each click. Here is one recorded run; the
+probabilities illustrate what Jev answered, not fixed values every run will produce:
 
 | Turn | Page | done | target | Code |
 |---|---|---|---|---|
@@ -48,8 +52,9 @@ From a live run of `When I delete the campaign` in the demo app (`npm run exampl
 | 2 | Menu open: "Delete campaign" | 0.03 | menuitem "Delete campaign" 1.00 | click "Delete campaign" |
 | 3 | Campaign list, toast "deleted" | 0.98 | none 0.86 | `DONE` |
 
-3 requests. `done` stayed low with the menu open because nothing was deleted yet: a Step continues until its task is
-done, so a following `I click "Delete campaign"` would have nothing left to do.
+This took 3 requests: open the menu, choose delete, then check whether the task is complete. Opening the menu alone
+did not finish the Step. You do not need to add `I click "Delete campaign"` afterward—the first Step already did that.
+To verify the result explicitly, follow it with a check that the campaign is no longer listed.
 
 ## A check
 
@@ -63,7 +68,7 @@ A check is one request with four questions; Jev only says *what* to look at, cod
 | Where does it say to look? | the page's lists, tables, sections, dialogs; "anywhere" or "named area missing" |
 
 Code then reads the element and compares it with the quoted value. A check that does not pass yet is asked again each
-time the page changes, up to 5 s: one more request per change. A check that quotes nothing first asks which value from
+time the page changes, up to 5 s (`checkTimeout`): one more request per change. A check that quotes nothing first asks which value from
 an earlier Step it refers to (one more request). A [judged check](steps.md#judged-checks) adds a fifth question: does
 `ui` satisfy the check?
 
@@ -85,8 +90,9 @@ Typical counts:
 | Type into a field | + 1 per value typed |
 | Check that passes at once | 1 |
 
-The demo app's first scenario (create, schedule and find a campaign; 11 Steps), run live: **21 requests**, about 24,000
-input and 4,400 output tokens. Each typed or selected value took 3 (act, value, done).
+Request counts depend on the path through your app, not just the number of Steps. Typing one value typically takes
+3 requests: choose the field, choose the value, then confirm the task is complete. Menus, loading states and retries
+can add requests. Token usage also depends on how much page text each request includes.
 
 Replays (`--record none`) send no request: the cassette holds each Step's answers. See
 [Record and replay](record-replay.md).

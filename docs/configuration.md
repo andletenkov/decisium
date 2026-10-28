@@ -13,9 +13,82 @@ and `DECISIUM_*` env (`DECISIUM_URL`, `DECISIUM_RECORD`, `DECISIUM_STRICT=1`, ..
 // cucumber.mjs
 export default {
   worldParameters: { decisium: { record: "none", strict: true } },
-  // url, record, headed, judged, strict, verbose, debug, agentReport
+  // url, record, headed, judged, strict, verbose, debug, agentReport,
+  // reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns
 };
 ```
+
+Precedence: flag > `DECISIUM_*` env > `worldParameters.decisium` > default. A value of the wrong type or out of range
+fails at startup (exit 2). `--parallel` workers read the same values.
+
+### Tuning
+
+```js
+// cucumber.mjs
+export default {
+  worldParameters: {
+    decisium: {
+      url: "http://localhost:3000",
+      reportDir: "e2e/runs",
+      confidence: { target: 0.6, answer: 0.85 },
+      checkTimeout: 10000,
+      actionTimeout: 10000,
+      maxTurns: 12,
+    },
+  },
+};
+```
+
+| Option | Default | Flag | Env | Affects |
+|---|---|---|---|---|
+| `reportDir` | `"runs"` | `--report-dir` | `DECISIUM_REPORT_DIR` | Where `<reportDir>/<timestamp>/` (log, trace, screenshots, `report.md`) is written. |
+| `confidence.target` | `0.5` | `--confidence-target` | `DECISIUM_CONFIDENCE_TARGET` | How sure Jev must be of the element an action acts on (and a drag's drop target). In (0, 1]. |
+| `confidence.answer` | `0.8` | `--confidence-answer` | `DECISIUM_CONFIDENCE_ANSWER` | Every other answer: a check's required state, the value to type or select, which earlier value a check refers to, a dialog answer. A pass under `answer` + 0.1 is marginal. In (0, 1]. |
+| `checkTimeout` | `5000` | `--check-timeout` | `DECISIUM_CHECK_TIMEOUT` | Ms a check waits for the page to reach the expected state. |
+| `actionTimeout` | `5000` | `--action-timeout` | `DECISIUM_ACTION_TIMEOUT` | Ms after an action to wait for requests and DOM changes to settle. |
+| `maxTurns` | `8` | `--max-turns` | `DECISIUM_MAX_TURNS` | Turns an action Step may take before `STEP_TIMEOUT`, 1-20. |
+
+### reportDir
+
+Default `"runs"`; `--report-dir`, `DECISIUM_REPORT_DIR`. Non-empty path containing timestamped run folders.
+Change it to match your CI artifact upload path.
+
+### confidence.target
+
+Default `0.5`; `--confidence-target`, `DECISIUM_CONFIDENCE_TARGET`. Top probability in (0, 1] for action and drop targets.
+Reword ambiguous Steps first; tune this only when the intended control is clear.
+
+### confidence.answer
+
+Default `0.8`; `--confidence-answer`, `DECISIUM_CONFIDENCE_ANSWER`. Probability in (0, 1] for other answers and plausible
+check readings. Marginal-pass line is this value + 0.1. Lowering it warns once per run; prefer rewording.
+
+### checkTimeout
+
+Default `5000` ms; `--check-timeout`, `DECISIUM_CHECK_TIMEOUT`. Positive integer; how long checks wait for the expected
+state. Raise for slow pages.
+
+### actionTimeout
+
+Default `5000` ms; `--action-timeout`, `DECISIUM_ACTION_TIMEOUT`. Positive integer; how long actions wait for requests
+and DOM changes to settle. Raise when slow actions finish too early.
+
+### maxTurns
+
+Default `8`; `--max-turns`, `DECISIUM_MAX_TURNS`. Integer 1–20; action Turns before `STEP_TIMEOUT`.
+Raise for long wizards, or split them into smaller Steps.
+
+Only the top probability is configurable; the lead over the runner-up stays fixed (0.1 target, 0.3 answer): it is
+what catches "two controls look the same". Confidence affects live answers only (a replay reuses recorded
+resolutions with their recorded confidence; older cassettes use the original defaults); timeouts and `maxTurns` apply to replays too. The effective values go into the run event in
+`trace.jsonl`, and `report.md` says when confidence was not the default.
+
+When to change them:
+
+- Slow app: raise `checkTimeout` and `actionTimeout`.
+- Long flow in one Step (a wizard): raise `maxTurns`, or split the Step.
+- `AMBIGUOUS` on a clear page: reword the Step first, then raise or lower `confidence.target`.
+- Marginal passes: reword. Lowering `confidence.answer` below 0.8 prints a warning: a wrong reading can then pass.
 
 ## Reporters
 

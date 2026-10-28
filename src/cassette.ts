@@ -1,7 +1,9 @@
+import { DEFAULTS, settings, type Settings } from "./options.ts";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import {
   capabilities,
+  confidence,
   NotYet,
   PAGE,
   plausible,
@@ -32,10 +34,10 @@ export interface Resolution {
 }
 type Target = Resolution | string; // a string: a non-element answer (scroll, wait, enter, none, page, missing)
 /**
- * A Jev answer with element refs as Resolutions, only its plausible part (most likely first, until together 0.8):
+ * A Jev answer with element refs as Resolutions, covering at least 0.8 so lowering confidence cannot erase a close runner-up:
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
-type Answer = [Target, number][];
+type Answer = [Target, number, Settings["confidence"]?][];
 type Turn = { done: number; target: Answer; action?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check {
   kind: Pick;
@@ -44,6 +46,7 @@ interface Check {
   area: Answer;
 }
 interface Entry {
+  confidence?: Settings["confidence"];
   turns?: Turn[];
   check?: Check;
   recall?: Answer;
@@ -110,9 +113,11 @@ export const describe = (t: Target) =>
 
 /** A live answer for the cassette: refs (looked up in `among`) become Resolutions. */
 const store = (p: Pick, among: Element[] = []): Answer =>
-  plausible(p).map((k) => {
+  plausible(p, Math.max(DEFAULTS.confidence.answer, confidence(p).answer)).map((k) => {
     const el = among.find((e) => e.ref === k);
-    return [el ? resolve(el, among) : k, p.probabilities[k]];
+    const target = el ? resolve(el, among) : k;
+    // A healed Step can mix replayed answers with live ones using different confidence.
+    return p.recordedConfidence ? [target, p.probabilities[k], p.recordedConfidence] : [target, p.probabilities[k]];
   });
 /** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
 class NotOnPage {
@@ -132,7 +137,11 @@ const load = (a: Answer, among: Element[] = []): Pick => {
       return [el.ref, v];
     }),
   );
-  return { choice: Object.keys(probabilities)[0], probabilities };
+  return {
+    choice: Object.keys(probabilities)[0],
+    probabilities,
+    ...(a[0]?.[2] ? { recordedConfidence: a[0][2] } : {}),
+  };
 };
 
 /**
@@ -195,7 +204,12 @@ export class Cassette {
     log: (line: string) => void = () => {},
   ): Decider & { done(keep: boolean): "replayed" | "recorded" | "healed" | undefined } {
     const old = this.mode === "all" ? undefined : this.#file.entries[key];
-    const now: Entry = {};
+    const now: Entry = { confidence: settings().confidence };
+    const recorded = (pick: Pick): Pick => ({
+      ...pick,
+      recordedConfidence: pick.recordedConfidence ?? old?.confidence ?? DEFAULTS.confidence,
+    });
+    const loadRecorded = (a: Answer, among: Element[] = []) => recorded(load(a, among));
     let broken: string | undefined; // why replay stopped
     let turn = 0;
     const replayOnly = this.mode === "none";
@@ -247,8 +261,8 @@ export class Cassette {
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
           const a: TurnAnswer = {
             done: t.done,
-            target: load(t.target, obs.elements),
-            action: t.action && load(t.action),
+            target: loadRecorded(t.target, obs.elements),
+            action: t.action && loadRecorded(t.action),
           };
           // The recorded action must still be one the recorded target can do (a key the Step names, Enter in a focused field).
           const ok = can(a, obs, keys ?? []);
@@ -284,7 +298,7 @@ export class Cassette {
           const gone = v?.find(([k]) => k !== "none" && !candidates.includes(k as string));
           if (!v) throw "no recorded value";
           if (gone) throw `recorded value "${gone[0]}" is not offered now`;
-          return load(v);
+          return loadRecorded(v);
         });
         const a = r ?? (await live.value(step, obs, el, candidates));
         (now.turns![i] as { value?: Answer }).value = store(a);
@@ -297,7 +311,7 @@ export class Cassette {
           const t = e.turns?.[i];
           const d = t && "drop" in t ? t.drop : undefined;
           if (!d) throw "no recorded drop target";
-          return load(d, among);
+          return loadRecorded(d, among);
         });
         const a = r ?? (await live.drop(step, obs, source));
         (now.turns![i] as { drop?: Answer }).drop = store(a, among);
@@ -310,7 +324,7 @@ export class Cassette {
           if (!t || !("dialog" in t)) throw `turn ${i + 1} did not answer a browser dialog when recorded`;
           const gone = t.dialog.find(([k]) => !answers.includes(k as string));
           if (gone) throw `recorded dialog answer "${gone[0]}" is not offered now`;
-          return load(t.dialog);
+          return loadRecorded(t.dialog);
         });
         turn = i + 1;
         const a = r ?? (await live.dialog(step, obs, answers));
@@ -326,10 +340,10 @@ export class Cassette {
         const r = replay((e): Assessment => {
           if (!e.check) throw "no recorded check";
           return {
-            kind: e.check.kind,
-            state: e.check.state,
-            subject: load(e.check.subject, obs.readable),
-            area: load(e.check.area, obs.areas),
+            kind: recorded(e.check.kind),
+            state: recorded(e.check.state),
+            subject: loadRecorded(e.check.subject, obs.readable),
+            area: loadRecorded(e.check.area, obs.areas),
           };
         });
         const a = r ?? (await live.assess(step, obs, judged));
@@ -346,7 +360,7 @@ export class Cassette {
           if (!e.recall) throw "no recorded recall";
           const gone = e.recall.find(([k]) => k !== "none" && !((k as string) in earlier));
           if (gone) throw `recorded earlier value "${gone[0]}" is not in this scenario now`;
-          return load(e.recall);
+          return loadRecorded(e.recall);
         });
         const a = r ?? (await live.recall(step, earlier));
         now.recall = store(a);

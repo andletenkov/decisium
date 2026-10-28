@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import { RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
-import { applyOptions, ourStdout } from "./options.ts";
+import { applyOptions, ourStdout, settingWarnings, type Settings } from "./options.ts";
 import { doctor } from "./doctor.ts";
 import { install } from "./install.ts";
 import { lint } from "./lint.ts";
@@ -28,7 +28,7 @@ const COMMANDS: Record<string, { synopsis: string; notes: string }> = {
   },
   run: {
     synopsis:
-      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
+      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--report-dir <dir>]\n                [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]\n                [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
     notes: `The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
@@ -44,12 +44,19 @@ Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (
 --import: your own cucumber step definitions or hooks. A line one of them matches runs it, not Jev; the World gives them
   this.page (the current tab) and this.context (Playwright). See andletenkov.github.io/decisium/client-steps.html.
 Options in the configuration: worldParameters: { decisium: { url, record, headed, judged, strict, verbose, debug,
-  agentReport } }; flags and DECISIUM_* env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, ...) override them.
--v prints every Observation and Jev answer (always saved to runs/<timestamp>/log.txt); --debug shows stack traces.
+  agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns } }; flags and DECISIUM_*
+  env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, DECISIUM_MAX_TURNS, ...) override them.
+--report-dir <dir>: where run folders go (default runs).
+--confidence-target <p>: how sure Jev must be of the element an action acts on (default 0.5).
+--confidence-answer <p>: how sure Jev must be of every other answer (default 0.8; lower lets a wrong reading pass).
+--check-timeout <ms>: how long a check waits for the expected state (default 5000).
+--action-timeout <ms>: how long after an action to wait for the page to settle (default 5000).
+--max-turns <n>: actions a Step may take before STEP_TIMEOUT (1-20, default 8).
+-v prints every Observation and Jev answer (always saved to <report-dir>/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
 --strict: a check that passes on a barely-confident Jev answer (shown as "marginal pass") fails as AMBIGUOUS.
 
-Each run writes runs/<timestamp>/: trace.jsonl (Observations, Jev answers, actions, outcomes, time per phase) and per
+Each run writes <report-dir>/<timestamp>/ (default runs/): trace.jsonl (Observations, Jev answers, actions, outcomes, time per phase) and per
 failed scenario a screenshot per Turn (--record none: of the failed Step), playwright-trace.zip, console-errors.txt and
 ui.txt (the page text). Passed scenarios keep none.
 A run with a failure writes report.md: every failure with Jev's answers, the page text around it and a rerun command,
@@ -118,6 +125,12 @@ async function main(): Promise<number> {
       profile: { type: "string", short: "p", multiple: true, default: [] },
       verbose: { type: "boolean", short: "v" },
       debug: { type: "boolean" },
+      "report-dir": { type: "string" },
+      "confidence-target": { type: "string" },
+      "confidence-answer": { type: "string" },
+      "check-timeout": { type: "string" },
+      "action-timeout": { type: "string" },
+      "max-turns": { type: "string" },
       "with-deps": { type: "boolean" },
       "dry-run": { type: "boolean" },
     },
@@ -159,6 +172,12 @@ async function main(): Promise<number> {
     NO_AGENT_REPORT: flag(values["agent-report"] === undefined ? undefined : !values["agent-report"]),
     VERBOSE: flag(values.verbose),
     DEBUG: flag(values.debug),
+    REPORT_DIR: values["report-dir"],
+    CONFIDENCE_TARGET: values["confidence-target"],
+    CONFIDENCE_ANSWER: values["confidence-answer"],
+    CHECK_TIMEOUT: values["check-timeout"],
+    ACTION_TIMEOUT: values["action-timeout"],
+    MAX_TURNS: values["max-turns"],
   }))
     if (value !== undefined) env[`DECISIUM_${name}`] = value;
   if (cmd === "install") return install({ withDeps: values["with-deps"], dryRun: values["dry-run"] });
@@ -220,8 +239,9 @@ async function main(): Promise<number> {
   });
   if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout))
     runConfiguration.formats.stdout = here(`./formatter${EXT}`);
+  let settings: Settings;
   try {
-    applyOptions((runConfiguration.runtime.worldParameters as { decisium?: unknown } | undefined)?.decisium);
+    settings = applyOptions((runConfiguration.runtime.worldParameters as { decisium?: unknown } | undefined)?.decisium);
   } catch (err) {
     console.error((err as Error).message);
     return 2;
@@ -250,8 +270,10 @@ async function main(): Promise<number> {
         : parallelSet === -1
           ? Math.min(availableParallelism(), record === "none" ? Infinity : 4)
           : parallelSet;
-  const run = new RunDir(); // shared by every worker
+  const run = new RunDir(settings.reportDir); // shared by every worker
   Object.assign(env, { DECISIUM_STEP: cmd === "step" ? "1" : "", DECISIUM_RUN_DIR: run.path });
+  run.event("run", { settings });
+  for (const w of settingWarnings(settings)) console.warn(w);
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);
   run.done();

@@ -1,11 +1,15 @@
 // The Decision module (task 0053): the seam to the decision model (Decider), the answers its questions can have, the
 // confidence gates, and the tracing every answer gets. Jev (jev.ts) and the tests' scripted fakes are its adapters; cassette.ts replays answers across it.
+import { settings, type Settings } from "./options.ts";
 import type { Element, Observation } from "./observation.ts";
 
 export interface Pick {
   choice: string;
   probabilities: Record<string, number>;
+  /** Replay keeps the confidence used to record this answer, not the current run’s gates. */
+  recordedConfidence?: Settings["confidence"];
 }
+export const confidence = (pick: Pick) => pick.recordedConfidence ?? settings().confidence;
 
 export interface TurnAnswer {
   done: number; // P(step already accomplished)
@@ -95,7 +99,7 @@ export function grouped(p: Pick, obs: Observation): Pick {
     probabilities[into] = (probabilities[into] ?? 0) + v;
   }
   const choice = Object.entries(probabilities).sort((a, b) => b[1] - a[1])[0]?.[0] ?? p.choice;
-  return { choice, probabilities };
+  return { ...p, choice, probabilities };
 }
 
 export const ASSERTION_KINDS = {
@@ -173,7 +177,7 @@ export interface Decider {
 
 /**
  * Thrown by a Decider that needs a later Observation (a replayed control not on a still-loading page): the runner
- * waits for the page to change and asks again, and throws `final` once ASSERT_TIMEOUT_MS has passed.
+ * waits for the page to change and asks again, and throws `final` once `checkTimeout` has passed.
  */
 export class NotYet extends Error {
   final: Error;
@@ -183,7 +187,7 @@ export class NotYet extends Error {
   }
 }
 
-/** Confidence gate: act only on a clear, confident top answer. */
+/** Confidence gate: act only on a clear, confident top answer. The top is `confidence.answer` (default 0.8, src/options.ts). */
 export const GATE_TOP = 0.8;
 export const GATE_MARGIN = 0.3;
 /**
@@ -191,19 +195,19 @@ export const GATE_MARGIN = 0.3;
  * while a wrong check can pass falsely. Fitted on 26 labelled AMBIGUOUS Turns from the real-site corpus, where
  * every top answer naming an element was the right one down to 0.47; below 0.1 margin the two answers are a coin flip.
  */
-export const GATE_TARGET_TOP = 0.5;
+export const GATE_TARGET_TOP = 0.5; // default of `confidence.target`
 export const GATE_TARGET_MARGIN = 0.1;
-export function gate(pick: Pick, minTop = GATE_TOP, minMargin = GATE_MARGIN): boolean {
+export function gate(pick: Pick, minTop = confidence(pick).answer, minMargin = GATE_MARGIN): boolean {
   const [top = 0, second = 0] = Object.values(pick.probabilities).sort((a, b) => b - a);
   return top >= minTop && top - second >= minMargin;
 }
 
 /** Most likely answers first, until together they cover the gate's confidence (cassette.ts stores exactly these). */
-export function plausible(pick: Pick): string[] {
+export function plausible(pick: Pick, coverage = confidence(pick).answer): string[] {
   const out: string[] = [];
   let covered = 0;
   for (const [k, p] of Object.entries(pick.probabilities).sort((x, y) => y[1] - x[1])) {
-    if (covered >= GATE_TOP) break;
+    if (covered >= coverage) break;
     out.push(k);
     covered += p;
   }

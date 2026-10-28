@@ -1,4 +1,5 @@
 // cucumber-js console formatter: one ✓/✗ line per Step, the reason under a failed one, and an end-of-run Failures block.
+import { DEFAULTS, settings, type Settings } from "./options.ts";
 import { Formatter, formatterHelpers, Status, type IFormatterOptions } from "@cucumber/cucumber";
 import type { Envelope } from "@cucumber/messages";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -23,12 +24,35 @@ const env = process.env;
 /** Shell-quoted for a copy-paste command line. */
 const q = (s: string) => (/^[\w./:@%+=,-]+$/.test(s) ? s : `'${s.replace(/'/g, `'\\''`)}'`);
 /** The command that reruns one scenario (or the one command-line Step) with this run's options. */
-function rerun(target: string[]): string {
+function rerun(target: string[], tuning?: Settings): string {
   const cli = relative(process.cwd(), fileURLToPath(import.meta.resolve(`./cli${import.meta.url.slice(-3)}`)));
+  const effective = tuning
+    ? {
+        REPORT_DIR: tuning.reportDir,
+        CONFIDENCE_TARGET: tuning.confidence.target,
+        CONFIDENCE_ANSWER: tuning.confidence.answer,
+        CHECK_TIMEOUT: tuning.checkTimeout,
+        ACTION_TIMEOUT: tuning.actionTimeout,
+        MAX_TURNS: tuning.maxTurns,
+      }
+    : undefined;
   const flags = [
     env.DECISIUM_URL && `--url ${q(env.DECISIUM_URL)}`,
     env.DECISIUM_JUDGED === "1" && "--judged",
     env.DECISIUM_STRICT === "1" && "--strict",
+    ...(
+      [
+        ["REPORT_DIR", "report-dir"],
+        ["CONFIDENCE_TARGET", "confidence-target"],
+        ["CONFIDENCE_ANSWER", "confidence-answer"],
+        ["CHECK_TIMEOUT", "check-timeout"],
+        ["ACTION_TIMEOUT", "action-timeout"],
+        ["MAX_TURNS", "max-turns"],
+      ] as const
+    ).map(([name, flag]) => {
+      const value = effective?.[name] ?? env[`DECISIUM_${name}`];
+      return value !== undefined && `--${flag} ${q(String(value))}`;
+    }),
   ];
   return ["node", cli, ...target.map(q), ...flags].filter(Boolean).join(" ");
 }
@@ -114,7 +138,10 @@ export default class DecisiumFormatter extends Formatter {
                   ? `not kept: ${readFileSync(noTrace, "utf8").trim()}`
                   : undefined,
             ui: ui && existsSync(ui) ? ui : undefined,
-            rerun: rerun(cmdLine ? ["step", step.text] : ["run", `${pickle.uri}:${scenarioLine}`]),
+            rerun: rerun(
+              cmdLine ? ["step", step.text] : ["run", `${pickle.uri}:${scenarioLine}`],
+              screenshot ? runEvents(dirname(dirname(screenshot))).find((e) => e.type === "run")?.settings : undefined,
+            ),
           };
         });
       } else if (e.testCaseFinished && !e.testCaseFinished.willBeRetried) {
@@ -149,25 +176,43 @@ export default class DecisiumFormatter extends Formatter {
           `\n${scenarios.length - failedNames.length}/${scenarios.length} scenarios passed${failedNames.length ? `; failed: ${failedNames.join(", ")}` : ""}\n`,
         );
         // The run directory: the CLI's, or (raw cucumber-js) the one the screenshots are in.
-        const shot = failed.find((f) => f.screenshot)?.screenshot;
-        const runDir = env.DECISIUM_RUN_DIR || (shot && dirname(dirname(shot)));
-        if (failed.length && runDir && env.DECISIUM_NO_AGENT_REPORT !== "1") {
-          const tracePath = join(runDir, "trace.jsonl");
-          const events: TraceEvent[] = existsSync(tracePath)
-            ? readFileSync(tracePath, "utf8")
-                .trim()
-                .split("\n")
-                .filter(Boolean)
-                .map((l) => JSON.parse(l))
-            : [];
+        const dirs = new Set(
+          failed.map((f) => env.DECISIUM_RUN_DIR || (f.screenshot && dirname(dirname(f.screenshot)))),
+        );
+        for (const runDir of dirs) {
+          if (!runDir || env.DECISIUM_NO_AGENT_REPORT === "1") continue;
+          const events = runEvents(runDir);
+          const local = failed.filter(
+            (f) => env.DECISIUM_RUN_DIR || (f.screenshot && dirname(dirname(f.screenshot)) === runDir),
+          );
           const path = join(runDir, "report.md");
           writeFileSync(
             path,
-            agentReport(failed.map((f) => ({ ...f, events: stepEvents(events, f.scenario, f.step) }))),
+            agentReport(
+              local.map((f) => ({ ...f, events: stepEvents(events, f.scenario, f.step) })),
+              nonDefaultConfidence(events.find((e) => e.type === "run")?.settings),
+            ),
           );
           this.log(`Agent report: ${path}\n`);
         }
       }
     });
   }
+}
+
+function runEvents(dir: string): TraceEvent[] {
+  const path = join(dir, "trace.jsonl");
+  return existsSync(path)
+    ? readFileSync(path, "utf8")
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+    : [];
+}
+
+/** "target 0.6, answer 0.85" when either differs from its default, for report.md. */
+function nonDefaultConfidence(tuning: Settings = settings()): string | undefined {
+  const { target, answer } = tuning.confidence;
+  const d = DEFAULTS.confidence;
+  return target !== d.target || answer !== d.answer ? `target ${target}, answer ${answer}` : undefined;
 }

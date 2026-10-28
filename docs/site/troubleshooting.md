@@ -28,10 +28,11 @@ A live run asks Jev every time, so a Step whose wording is borderline can end di
 | `BLOCKED` | The task cannot be done on this page. | Check the start URL and the Steps before it; a hover menu needs "hover". |
 | `ELEMENT_NOT_FOUND` | Nothing matches what the Step names. | Use the page's own label. |
 | `ACTION_FAILED` | The action ran but did not take effect (e.g. a field rejected the value). | Check the value's format; for dates use ISO. |
-| `STEP_TIMEOUT` | The Step did not finish in its allowed actions. | Split it into smaller tasks. |
+| `STEP_TIMEOUT` | The Step did not finish in its allowed actions. | Split it into smaller tasks, or raise `maxTurns` for a long flow. |
 | `UI_CHANGED` | A replayed Step no longer matches the page. | If the change is intended, re-record with `--record new`. |
 | `PAGE_TOO_LARGE` | The page is over the model's size limit. | Test a narrower page or state. |
-| marginal pass | Passed, but the model was barely sure. | Make the Step more specific. |
+| marginal pass | Passed, but the model was barely sure. | Make the Step more specific; do not lower `confidence.answer`. |
+| check fails on a slow page | The expected state came after the check gave up. | Raise `checkTimeout` (and `actionTimeout` if actions finish too early). |
 
 Run `decisium lint` on the feature: it flags many of these wordings before you run.
 

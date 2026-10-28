@@ -29,13 +29,13 @@ import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
-import { applyOptions } from "./options.ts";
+import { applyOptions, settingWarnings } from "./options.ts";
 
 const env = process.env;
 const opt = (name: string) => env[`DECISIUM_${name}`] === "1";
 let record: RecordMode; // set in BeforeAll, once worldParameters are known
 
-// Jev steps take seconds per Turn; the runner has its own caps (8 Turns, 5 s waits).
+// Jev steps take seconds per Turn; the runner has its own caps (maxTurns, checkTimeout, actionTimeout).
 setDefaultTimeout(10 * 60_000);
 
 // Parallel workers (`--parallel`) are separate processes: the CLI creates the run directory (DECISIUM_RUN_DIR) and an
@@ -71,13 +71,17 @@ setParallelCanAssign((pickle, running) => !running.some((p) => p.uri === pickle.
 
 BeforeAll(function () {
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
-  applyOptions(this.parameters.decisium);
+  const settings = applyOptions(this.parameters.decisium);
   record = (env.DECISIUM_RECORD || "new") as RecordMode;
   if (!RECORD_MODES.includes(record)) throw new Error(`DECISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED")))
     throw new Error("TYPESAFE_API_KEY is not set.");
-  run = new RunDir("runs", env.DECISIUM_RUN_DIR || undefined);
-  if (!cliOwnsRun) console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
+  run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
+  if (cliOwnsRun) return; // the CLI warned and wrote the run event
+  run.event("run", { settings });
+  if (!env.CUCUMBER_WORKER_ID || env.CUCUMBER_WORKER_ID === "0")
+    for (const w of settingWarnings(settings)) console.warn(w);
+  console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
 
 Before(async function (this: Scenario, { pickle }) {
