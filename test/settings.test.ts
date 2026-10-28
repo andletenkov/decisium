@@ -174,7 +174,7 @@ test("settings: CLI precedence and raw parallel reports carry effective settings
             url: join(dir, "page.html"),
             record: "none",
             reportDir: "artifacts",
-            confidence: { answer: 0.6 },
+            confidence: { answer: 0.5 },
             maxTurns: 12,
           },
         },
@@ -202,10 +202,10 @@ test("settings: CLI precedence and raw parallel reports carry effective settings
     assert.ok(runs.some((run) => existsSync(join(dir, "artifacts", run, "report.md"))));
     for (const run of runs.filter((run) => existsSync(join(dir, "artifacts", run, "report.md")))) {
       const report = readFileSync(join(dir, "artifacts", run, "report.md"), "utf8");
-      assert.match(report, /non-default confidence: target 0.5, answer 0.6/);
+      assert.match(report, /non-default confidence: target 0.5, answer 0.5/);
       assert.match(report, /--report-dir artifacts/);
       assert.match(report, /--max-turns 12/);
-      assert.match(report, /--confidence-answer 0.6/);
+      assert.match(report, /--confidence-answer 0.5/);
     }
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -281,9 +281,10 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
   assert.throws(() => applyOptions(undefined, { DECISIUM_CHECK_TIMEOUT: "soon" }), /checkTimeout must be/); // a flag
 });
 
-test("settings: lowering confidence.answer warns; the default, higher, or a lower target do not", () => {
+test("settings: confidence.answer warns only below 0.6, not for a lower target", () => {
   const warn = (env: Record<string, string>) => settingWarnings(settings(env));
-  assert.match(warn({ DECISIUM_CONFIDENCE_ANSWER: "0.6" })[0], /confidence.answer 0.6 is below the default 0.8/);
+  assert.match(warn({ DECISIUM_CONFIDENCE_ANSWER: "0.599" })[0], /confidence.answer 0.599 is below 0.6/);
+  for (const answer of ["0.6", "0.7", "0.8"]) assert.deepEqual(warn({ DECISIUM_CONFIDENCE_ANSWER: answer }), []);
   assert.deepEqual(warn({}), []);
   assert.deepEqual(warn({ DECISIUM_CONFIDENCE_ANSWER: "0.9" }), []);
   assert.deepEqual(warn({ DECISIUM_CONFIDENCE_TARGET: "0.2" }), []);

@@ -104,7 +104,7 @@ Precedence: **CLI flag > `DECISIUM_*` environment variable > configuration > def
 `--check-timeout 15000` overrides both `DECISIUM_CHECK_TIMEOUT` and `checkTimeout` in the file.
 
 Raise timeouts for slow apps; raise `maxTurns` for long flows, or split the Step. Reword ambiguous Steps before
-changing confidence. Lowering `confidence.answer` below 0.8 warns because a wrong reading can pass.
+changing confidence. Lowering `confidence.answer` below 0.6 warns because a wrong reading can pass.
 
 See [Configuration](https://andletenkov.github.io/decisium/configuration.html) for every option, default, flag,
 environment variable, and reporter setup.

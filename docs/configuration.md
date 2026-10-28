@@ -61,7 +61,7 @@ Reword ambiguous Steps first; tune this only when the intended control is clear.
 ### confidence.answer
 
 Default `0.8`; `--confidence-answer`, `DECISIUM_CONFIDENCE_ANSWER`. Probability in (0, 1] for other answers and plausible
-check readings. Marginal-pass line is this value + 0.1. Lowering it warns once per run; prefer rewording.
+check readings. Marginal-pass line is this value + 0.1. Lowering it below 0.6 warns once per run; prefer rewording.
 
 ### checkTimeout
 
@@ -88,7 +88,7 @@ When to change them:
 - Slow app: raise `checkTimeout` and `actionTimeout`.
 - Long flow in one Step (a wizard): raise `maxTurns`, or split the Step.
 - `AMBIGUOUS` on a clear page: reword the Step first, then raise or lower `confidence.target`.
-- Marginal passes: reword. Lowering `confidence.answer` below 0.8 prints a warning: a wrong reading can then pass.
+- Marginal passes: reword. Lowering `confidence.answer` below 0.6 prints a warning: a wrong reading can then pass.
 
 ## Reporters
 
