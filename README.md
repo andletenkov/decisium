@@ -74,11 +74,40 @@ decisium run checkout.feature --record none    # replay: zero model calls (CI)
 decisium step "I open the cart" --url https://www.saucedemo.com/   # try one wording
 ```
 
-A failed run prints the reason under each Step and writes `runs/<timestamp>/report.md`: the Step, Jev's answers, the
+A failed run prints the reason under each Step and writes `<reportDir>/<timestamp>/report.md` (`reportDir` defaults to `runs`): the Step, Jev's answers, the
 page text around the element, a screenshot, a Playwright trace and a rerun command, ready for you or a coding agent.
 
 Decisium runs inside cucumber-js: your `cucumber.mjs`, profiles, formatters (`--format junit:junit.xml`) and your own
 step definitions (`--import`, with `this.page` and `this.context`) keep working.
+
+## Configuration
+
+Put Decisium options in `worldParameters.decisium` in your project's `cucumber.mjs`. `decisium run` loads it automatically:
+
+```js
+// cucumber.mjs
+export default {
+  worldParameters: {
+    decisium: {
+      url: "http://localhost:3000",
+      reportDir: "e2e/runs",
+      checkTimeout: 10000, // milliseconds to wait for the expected state
+      actionTimeout: 10000, // milliseconds to wait for the page to settle after an action
+      maxTurns: 12, // action Turns allowed per Step
+      confidence: { target: 0.5, answer: 0.8 }, // default confidence thresholds
+    },
+  },
+};
+```
+
+Precedence: **CLI flag > `DECISIUM_*` environment variable > configuration > default**. For example,
+`--check-timeout 15000` overrides both `DECISIUM_CHECK_TIMEOUT` and `checkTimeout` in the file.
+
+Raise timeouts for slow apps; raise `maxTurns` for long flows, or split the Step. Reword ambiguous Steps before
+changing confidence. Lowering `confidence.answer` below 0.8 warns because a wrong reading can pass.
+
+See [Configuration](https://andletenkov.github.io/decisium/configuration.html) for every option, default, flag,
+environment variable, and reporter setup.
 
 ## Docs
 
