@@ -8,6 +8,7 @@ browser. You write `When I schedule the campaign`, not selectors.
 Each Step is executed by **Jev**, TypeSafe's decision model. Jev does not generate text or code: it picks among the
 options Decisium enumerates from the page (the elements, the actions, the check kinds) and returns a probability for
 each. Decisium's code, not the model, decides whether a Step passed. No LLM, no prompts, no hallucinated selectors.
+See [How a Step runs](how-it-works.md) for the questions it is asked and how many requests a Step takes.
 
 ```gherkin
 @url:https://shop.example.com

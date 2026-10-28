@@ -25,6 +25,7 @@ const NAV: [group: string, pages: [slug: string, title: string, source: string][
     [
       ["writing-features", "Features and scenarios", "docs/site/writing-features.md"],
       ["steps", "Writing Steps", "docs/site/steps.md"],
+      ["how-it-works", "How a Step runs", "docs/site/how-it-works.md"],
       ["browser-context", "Browser context", "docs/site/browser-context.md"],
       ["client-steps", "Client steps", "docs/site/client-steps.md"],
     ],
