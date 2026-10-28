@@ -2625,3 +2625,67 @@ test("parseSnapshot: own pointer, tabindex or a column header makes a target; an
   const refs = parseSnapshot(snap, new Set(), new Set(), new Set(["e4", "e5"])).elements.map((e) => e.ref);
   assert.deepEqual(refs, ["e1", "e5"]); // e2 has only the cursor hint; e3 a plain cell; e4 disabled
 });
+
+test("runStep: a click must land on what the Step quotes, not on a lookalike", async () => {
+  // Fake page from a snapshot; records clicks; the page never changes.
+  const page = (snap: string) => {
+    const clicked: string[] = [];
+    const rt: Runtime = {
+      actionStep: (run) => run(),
+      observe: async () => parseSnapshot(snap),
+      execute: async (a) => {
+        clicked.push(a.ref ?? a.verb);
+      },
+      waitForChange: async () => false,
+    };
+    return { rt, clicked };
+  };
+  // Scripted Jev: picks `ref` until something was clicked, then is done.
+  const picks = (ref: string): Decider => ({
+    ...oracle,
+    turn: async (_s, _o, recent) =>
+      recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure(ref) },
+  });
+
+  // The ai-platform case: the dialog is gone, only "Run again" is left; clicking it would start another run.
+  const after = page(`- button "Refresh" [ref=e1]\n- button "Run again" [ref=e2]`);
+  const r = await runStep(`I confirm with "Run workflow"`, after.rt, picks("e2"), () => {});
+  assert.equal(r.outcome, "AMBIGUOUS");
+  assert.match(r.reason!, /Run workflow/);
+  assert.deepEqual(after.clicked, [], "nothing clicked");
+
+  // The quoted control itself.
+  const dialog = page(`- button "Cancel" [ref=e1]\n- button "Run workflow" [ref=e2]`);
+  assert.equal((await runStep(`I confirm with "Run workflow"`, dialog.rt, picks("e2"), () => {})).outcome, "DONE");
+  assert.deepEqual(dialog.clicked, ["e2"]);
+
+  // A quote naming the row: its Delete button is fine.
+  const rows = page(
+    `- row "Spring Sale 10%" [ref=r1]:\n  - button "Delete" [ref=e1]\n- row "Winter Sale 20%" [ref=r2]:\n  - button "Delete" [ref=e2]`,
+  );
+  assert.equal((await runStep(`I delete "Spring Sale"`, rows.rt, picks("e1"), () => {})).outcome, "DONE");
+  assert.deepEqual(rows.clicked, ["e1"]);
+  // A lookalike: shares "save", adds "template".
+  const save = page(`- button "Save as template" [ref=e1]\n- button "Cancel" [ref=e2]`);
+  assert.equal((await runStep(`I click "Save draft"`, save.rt, picks("e1"), () => {})).outcome, "AMBIGUOUS");
+  assert.deepEqual(save.clicked, []);
+  // A name made of the quote's words leads to it: "Run" opens the dialog holding "Run workflow".
+  const run = page(`- button "Edit" [ref=e1]\n- button "Run" [ref=e2]`);
+  assert.equal(
+    (await runStep(`I run it, confirming with "Run workflow"`, run.rt, picks("e2"), () => {})).outcome,
+    "DONE",
+  );
+  // A value typed later (a prompt, a field that opens): the control sharing no word with it is left to Jev.
+  const rename = page(`- button "Rename" [ref=e1]`);
+  assert.equal((await runStep(`I rename it to "Ada"`, rename.rt, picks("e1"), () => {})).outcome, "DONE");
+
+  // A quote that is a value to type does not bind the clicks: the search box shows it, then Search is clicked.
+  const search = page(`- textbox "Search" [ref=e1]: playwright\n- button "Search" [ref=e2]`);
+  assert.equal((await runStep(`I search for "playwright"`, search.rt, picks("e2"), () => {})).outcome, "DONE");
+  // Secrets never bind clicks.
+  const login = page(`- textbox "Password" [ref=e1]\n- button "Sign in" [ref=e2]`);
+  assert.equal((await runStep(`I log in with password "$PASSWORD"`, login.rt, picks("e2"), () => {})).outcome, "DONE");
+  // No quote: no constraint.
+  const plain = page(`- button "Run again" [ref=e1]`);
+  assert.equal((await runStep("I run it again", plain.rt, picks("e1"), () => {})).outcome, "DONE");
+});

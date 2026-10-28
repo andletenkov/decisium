@@ -1,5 +1,5 @@
 import type { Action } from "./browser.ts";
-import { readStep, type StepArgument } from "./step.ts";
+import { placeholder, readStep, type StepArgument } from "./step.ts";
 import {
   capabilities,
   gate,
@@ -191,6 +191,29 @@ export async function runAssertion(
   }
 }
 
+/**
+ * A click on a lookalike of what the Step quotes: the target's name shares a word with a quote and adds one the quote
+ * lacks, and neither it nor its row/card (nearest ref'd parent) contains any quote ("Run again" for "Run workflow").
+ * Returns the quotes it misses. A name made only of the quote's words may lead to it ("Run" opens "Run workflow").
+ * A target sharing no word is left to Jev: the quote may be a value to type later ("Rename" for "Ada"). Quotes shown
+ * as a field's value were typed, and secrets name no control: neither counts.
+ */
+function offQuote(el: Element, quoted: string[], obs: Observation): string | undefined {
+  const has = (text: string | undefined, q: string) => !!text && text.toLowerCase().includes(q.toLowerCase());
+  const words = (s: string) => s.toLowerCase().match(/\p{L}{3,}/gu) ?? [];
+  const names = quoted.filter(
+    (q) => !placeholder(q) && !obs.elements.some((e) => e.verb !== "CLICK" && has(e.value, q)),
+  );
+  if (names.some((q) => has(el.text, q) || has(el.parent?.text, q))) return undefined;
+  const own = new Set(words(el.name));
+  const lookalike = (q: string) => {
+    const qw = new Set(words(q));
+    return [...own].some((w) => qw.has(w)) && [...own].some((w) => !qw.has(w));
+  };
+  const like = names.filter(lookalike);
+  return like.length ? like.map((q) => `"${q}"`).join(" or ") : undefined;
+}
+
 const finish =
   (log: typeof console.log) =>
   (outcome: StepOutcome, reason?: string, weak: string[] = []): StepResult => {
@@ -326,6 +349,8 @@ async function act(
         log(`  Toggle: already ${el.line}`);
         return end("DONE");
       }
+      const off = VERBS[how] === "CLICK" && offQuote(el, read.quoted, obs);
+      if (off) return end("AMBIGUOUS", `Jev chose ${el.line}, which is not ${off}`);
       action = { verb: VERBS[how], ref: el.ref };
       let onto = "";
       if (action.verb === "DRAG") {
