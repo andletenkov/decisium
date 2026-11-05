@@ -31,6 +31,17 @@ import { placeholder, readStep, type StepArgument, type StepKind } from "./step.
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { applyOptions, settingWarnings } from "./options.ts";
 
+// Issue 8: a client cucumber configuration importing decisium's steps from another path (source while the CLI uses
+// dist) loads this module twice; the two catch-all definitions then defer to each other forever and the run collects
+// 0 scenarios. Fail loudly instead.
+const LOADED = Symbol.for("decisium.steps");
+const loaded = globalThis as unknown as Record<symbol, string | undefined>;
+if (loaded[LOADED] && loaded[LOADED] !== import.meta.url)
+  throw new Error(
+    `Decisium's step definitions are loaded twice (${loaded[LOADED]} and ${import.meta.url}): drop the decisium import from your cucumber configuration, "decisium run" adds it.`,
+  );
+loaded[LOADED] = import.meta.url;
+
 const env = process.env;
 const opt = (name: string) => env[`DECISIUM_${name}`] === "1";
 let record: RecordMode; // set in BeforeAll, once worldParameters are known

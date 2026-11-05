@@ -18,6 +18,13 @@ A live run asks Jev every time, so a Step whose wording is borderline can end di
 5. **Still unstable: a [client step](client-steps.md).** Code can use any Playwright locator. Each one marks a gap
    worth reporting.
 
+## "step definitions are loaded twice" / "No scenario ran from …"
+
+`decisium run` adds its own step definitions, so a `cucumber.{mjs,ts,json}` that also imports them (from a different
+path, e.g. from source) loads them twice: drop that import from the configuration, or run raw `npx cucumber-js`, which
+uses the configuration alone. `No scenario ran from <file>` means the named features yielded nothing — a tag
+expression or profile filtered them out, or `file.feature:<line>` points at no scenario. Both exit 2, never 0.
+
 ## What an outcome means and what to do
 
 | Outcome | Usually | Do |

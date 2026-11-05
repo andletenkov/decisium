@@ -395,10 +395,18 @@ export class JevDecider implements Decider {
         subject: choice(subjectQ, subjects),
         state: choice("Which control state does `check` require?", STATES),
         area: choice(areaQ, areas),
-        ...(judged ? { judged: noul("Does `ui` satisfy `check`?") } : {}),
+        // Asked in the same call whether or not --judged: code uses it only to veto an inexact text match.
+        satisfied: noul("Does `ui` satisfy `check`?"),
       },
     });
-    const a = res.answers as typeof res.answers & { judged?: { noul: number } };
-    return { kind: a.kind, subject: a.subject, area: a.area, state: a.state, judged: a.judged?.noul };
+    const a = res.answers as typeof res.answers & { satisfied: { noul: number } };
+    return {
+      kind: a.kind,
+      subject: a.subject,
+      area: a.area,
+      state: a.state,
+      satisfied: a.satisfied.noul,
+      judged: judged ? a.satisfied.noul : undefined,
+    };
   }
 }

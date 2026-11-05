@@ -133,7 +133,7 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     // plausible area is checked and they must agree. A text that is nowhere on the page is decided by code alone.
     // Presence needs every quoted text; absence fails on any one of them, so "any shown" is what it must look for.
     const has = (text: string) =>
-      kind === "absence" ? values.some((v) => containsValue(text, v)) : values.every((v) => containsValue(text, v));
+      kind === "absence" ? values.some((v) => shows(text, v, a)) : values.every((v) => shows(text, v, a));
     const text = values.map((v) => `"${v}"`).join(kind === "absence" ? " or " : " and ");
     const reading = (found: boolean, where: string): Reading =>
       found === (kind === "presence")
@@ -224,6 +224,7 @@ function matchRows(
   exact: boolean,
   log: typeof console.log,
 ): Reading {
+  const match = (text: string, expected: string) => shows(text, expected, a);
   log(`  Area: ${fmt(a.area)}`);
   const areas = plausible(a.area);
   const verdicts: Reading[] = [];
@@ -235,13 +236,19 @@ function matchRows(
     const area = obs.areas.find((e) => e.ref === ref);
     if (ref !== AREA_PAGE && !area)
       return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an area that is no longer on the page (${ref})` };
-    verdicts.push(rowsIn(area, obs, table, exact));
+    verdicts.push(rowsIn(area, obs, table, exact, match));
   }
   return agreement(verdicts, areaDisagreement(a, obs), weakMass("area", a.area, areas, obs));
 }
 
 /** `area` undefined: the whole page. */
-function rowsIn(area: Element | undefined, obs: Observation, table: string[][], exact: boolean): Reading {
+function rowsIn(
+  area: Element | undefined,
+  obs: Observation,
+  table: string[][],
+  exact: boolean,
+  match: (text: string, expected: string) => boolean,
+): Reading {
   const [names, ...expected] = table;
   const where = area ? area.line : "the page";
   const rows = obs.areas.filter((r) => r.role === "row" && r.cells?.length && (!area || within(r, area)));
@@ -261,7 +268,7 @@ function rowsIn(area: Element | undefined, obs: Observation, table: string[][], 
   const matches = (row: Element, want: string[]) =>
     names.every((n, i) => {
       const cell = row.cells![column(header(row), n)];
-      return cell !== undefined && (want[i] ? containsValue(cellText(cell), want[i]) : !cellText(cell)); // an empty expected cell is an empty cell
+      return cell !== undefined && (want[i] ? match(cellText(cell), want[i]) : !cellText(cell)); // an empty expected cell is an empty cell
     });
   const show = (want: string[]) => names.map((n, i) => `${n}=${want[i]}`).join(", ");
   const shown = `its rows: ${data.map((r) => r.cells!.map(cellText).join(" | ")).join("; ")}`;
@@ -300,7 +307,17 @@ function stateOf(ref: string, a: Assessment, obs: Observation): Reading {
     : { outcome: "ASSERTION_FAILED", reason: `expected ${el.line} to be ${a.state.choice}, but it is not` };
 }
 
-function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[], log: typeof console.log): Reading {
+/**
+ * An inexact match (the text shows more than the quoted value) can be contradicted by the words around it, and only
+ * language knows that: "Not Scheduled" does not show "Scheduled" (issue #28). Code asks Jev rather than carrying a
+ * list of negation words, which would only ever cover one language. No answer (older cassettes): the match stands.
+ * Equality is code's alone, never vetoed. Used by every check that matches quoted text: value, presence/absence, rows.
+ */
+const shows = (text: string, expected: string, a: Assessment) =>
+  norm(text) === norm(expected) ||
+  (containsValue(text, expected) && !(a.satisfied !== undefined && a.satisfied <= 1 - JUDGED_THRESHOLD));
+
+function valueOf(ref: string, a: Assessment, obs: Observation, values: string[], log: typeof console.log): Reading {
   if (ref === "none")
     return { outcome: "ASSERTION_FAILED", reason: "no element on the page shows what the check describes" };
   const el = obs.readable.find((e) => e.ref === ref);
@@ -317,18 +334,24 @@ function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[]
     return actual.includes(values[0])
       ? { outcome: "PASSED" }
       : { outcome: "ASSERTION_FAILED", reason: `expected the URL to contain "${values[0]}", but it is "${actual}"` };
-  if (containsValue(actual, values[0])) return { outcome: "PASSED" };
+  const failed = (text: string): Reading => ({
+    outcome: "ASSERTION_FAILED",
+    reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${text}"`,
+  });
+  if (shows(actual, values[0], a)) return { outcome: "PASSED" };
+  if (containsValue(actual, values[0])) {
+    log(`  Jev reads "${actual}" as not satisfying the check (p=${a.satisfied!.toFixed(2)})`);
+    return failed(actual);
+  }
   // The subject shows part of the quoted text (prose split across a link and bare text, "<b>2</b> items left"):
   // the rest can only be in the container holding it, so read that one, not anywhere on the page.
   const host = el.parent;
   if (actual && host && containsValue(values[0], actual)) {
     log(`  Compare: "${values[0]}" in "${host.text.trim()}" (${host.line}, holding ${el.line})`);
-    if (containsValue(host.text, values[0])) return { outcome: "PASSED" };
+    if (shows(host.text, values[0], a)) return { outcome: "PASSED" };
+    if (containsValue(host.text, values[0])) return failed(host.text.trim());
   }
-  return {
-    outcome: "ASSERTION_FAILED",
-    reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${actual}"`,
-  };
+  return failed(actual);
 }
 
 export type Verdict = Reading & { details: string[] };
