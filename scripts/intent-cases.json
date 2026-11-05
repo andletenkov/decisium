@@ -1,0 +1,191 @@
+[
+  {
+    "text": "I try to continue without filling in the form",
+    "kind": "action",
+    "attempt": true,
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  {
+    "text": "I submit the empty form, expecting it to be rejected",
+    "kind": "action",
+    "attempt": true,
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  {
+    "text": "I attempt to log in with a wrong password",
+    "kind": "action",
+    "attempt": true,
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  {
+    "text": "I click Save even though the name field is blank",
+    "kind": "action",
+    "attempt": true,
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  { "text": "I schedule the campaign", "kind": "action", "attempt": false, "nav": "none", "key": "none", "values": [] },
+  { "text": "I open the cart", "kind": "action", "attempt": false, "nav": "none", "key": "none", "values": [] },
+
+  {
+    "text": "I uncheck the newsletter box",
+    "kind": "action",
+    "toggle": "off",
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  {
+    "text": "I make sure the newsletter subscription is off",
+    "kind": "action",
+    "toggle": "off",
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  {
+    "text": "I opt out of marketing emails and save",
+    "kind": "action",
+    "toggle": "off",
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+  { "text": "I check the terms box", "kind": "action", "toggle": "on", "nav": "none", "key": "none", "values": [] },
+  { "text": "I enable dark mode", "kind": "action", "toggle": "on", "nav": "none", "key": "none", "values": [] },
+  {
+    "text": "I accept the terms and continue",
+    "kind": "action",
+    "toggle": "on",
+    "nav": "none",
+    "key": "none",
+    "values": []
+  },
+
+  { "text": "I press Escape", "kind": "action", "pressOnly": true, "key": "Escape", "nav": "none", "values": [] },
+  { "text": "I close the dialog with the escape key", "kind": "action", "key": "Escape", "nav": "none", "values": [] },
+  { "text": "I hit Ctrl+K", "kind": "action", "pressOnly": true, "key": "Control+K", "nav": "none", "values": [] },
+  {
+    "text": "I open the command palette with the keyboard shortcut Control K",
+    "kind": "action",
+    "key": "Control+K",
+    "nav": "none",
+    "values": []
+  },
+  { "text": "I tab to the next field", "kind": "action", "key": "Tab", "nav": "none", "values": [] },
+  { "text": "I press the Delete button", "kind": "action", "key": "none", "nav": "none", "values": [] },
+
+  { "text": "I go back", "kind": "action", "nav": "back", "key": "none", "values": [] },
+  { "text": "I return to the previous page", "kind": "action", "nav": "back", "key": "none", "values": [] },
+  { "text": "I refresh the page", "kind": "action", "nav": "reload", "key": "none", "values": [] },
+  { "text": "I reload the browser window", "kind": "action", "nav": "reload", "key": "none", "values": [] },
+  { "text": "I go to /settings", "kind": "action", "nav": "goto", "key": "none", "values": ["/settings"] },
+  { "text": "I navigate to the settings page", "kind": "action", "nav": "none", "key": "none", "values": [] },
+  { "text": "I close this tab", "kind": "action", "nav": "close_tab", "key": "none", "values": [] },
+  { "text": "I switch back to the original tab", "kind": "action", "nav": "switch_tab", "key": "none", "values": [] },
+
+  {
+    "text": "I enter \"Winter Sale\" as the campaign name",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["Winter Sale"]
+  },
+  {
+    "text": "I enter Winter Sale as the campaign name",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["Winter Sale"]
+  },
+  {
+    "text": "I name the campaign Spring Launch",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["Spring Launch"]
+  },
+  {
+    "text": "I search for wireless headphones",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["wireless headphones"]
+  },
+  {
+    "text": "I set the activation period to 2 weeks",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["2 weeks"]
+  },
+  {
+    "text": "I add Sauce Labs Backpack to the cart",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["Sauce Labs Backpack"]
+  },
+
+  { "text": "the status should be \"Scheduled\"", "kind": "assertion", "values": ["Scheduled"], "exact": false },
+  { "text": "the status should be Scheduled", "kind": "assertion", "values": ["Scheduled"], "exact": false },
+  {
+    "text": "the error should say First Name is required",
+    "kind": "assertion",
+    "values": ["First Name is required"],
+    "exact": false
+  },
+  { "text": "the cart badge shows 2", "kind": "assertion", "values": ["2"], "exact": false },
+  { "text": "the page title should be Swag Labs", "kind": "assertion", "values": ["Swag Labs"], "exact": false },
+  { "text": "the save button should be disabled", "kind": "assertion", "values": [], "exact": false },
+  { "text": "the list shows exactly these items", "kind": "assertion", "values": [], "exact": true },
+  { "text": "the items should appear in this order", "kind": "assertion", "values": [], "exact": true },
+  {
+    "text": "the products are listed from cheapest to most expensive, nothing else",
+    "kind": "assertion",
+    "values": [],
+    "exact": true
+  },
+
+  {
+    "text": "intento continuar sin rellenar el formulario",
+    "kind": "action",
+    "attempt": true,
+    "nav": "none",
+    "key": "none",
+    "values": [],
+    "lang": "es"
+  },
+  { "text": "ich gehe zurück", "kind": "action", "nav": "back", "key": "none", "values": [], "lang": "de" },
+  {
+    "text": "je désactive la newsletter",
+    "kind": "action",
+    "toggle": "off",
+    "nav": "none",
+    "key": "none",
+    "values": [],
+    "lang": "fr"
+  },
+  {
+    "text": "ich gebe Winterschlussverkauf als Kampagnenname ein",
+    "kind": "action",
+    "nav": "none",
+    "key": "none",
+    "values": ["Winterschlussverkauf"],
+    "lang": "de"
+  },
+  {
+    "text": "el estado debería ser Programada",
+    "kind": "assertion",
+    "values": ["Programada"],
+    "exact": false,
+    "lang": "es"
+  }
+]
