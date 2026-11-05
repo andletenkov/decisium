@@ -27,15 +27,7 @@ Load them with `--import` (repeatable) or `import` in your [configuration](confi
 decisium run features/campaigns.feature --import steps/campaigns.steps.ts
 ```
 
-TypeScript steps that import local modules without extensions (such as `./helpers`) need a loader. Install `tsx` alongside
-Decisium and preload it from your project directory:
-
-```sh
-npm install --save-dev tsx
-node --import tsx ./node_modules/decisium/dist/cli.js run features/campaigns.feature --import steps/campaigns.steps.ts
-```
-
-This command uses a project-local Decisium install. Alternatively, add explicit `.ts` extensions to relative imports.
+TypeScript steps can import local modules without extensions (such as `./helpers`); Decisium loads them automatically.
 
 A client step makes no model call and is not recorded in the cassette.
 

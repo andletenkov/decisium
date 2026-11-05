@@ -281,6 +281,8 @@ async function main(): Promise<number> {
       format: values.format,
     },
   });
+  // Load before configured imports as well, including when cucumber starts parallel workers.
+  runConfiguration.support.importPaths = [here(`./ts-loader${EXT}`), ...(runConfiguration.support.importPaths ?? [])];
   if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout))
     runConfiguration.formats.stdout = here(`./formatter${EXT}`);
   let settings: Settings;

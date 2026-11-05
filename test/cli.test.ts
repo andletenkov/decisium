@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,6 +23,46 @@ function invoke(args: string[]) {
     rmSync(cwd, { recursive: true, force: true });
   }
 }
+
+test("cli: TypeScript client steps resolve extensionless imports in serial and parallel", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-ts-"));
+  try {
+    writeFileSync(join(cwd, "package.json"), '{"type":"module"}');
+    writeFileSync(join(cwd, "helpers.ts"), 'export const value: string = "loaded";');
+    writeFileSync(
+      join(cwd, "steps.ts"),
+      `import { Given } from ${JSON.stringify(import.meta.resolve("@cucumber/cucumber"))};\nimport { value } from "./helpers";\nGiven("a client step", function () { if (value !== "loaded") throw new Error("wrong helper"); });\n`,
+    );
+    writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
+    for (const name of ["one", "two"])
+      writeFileSync(join(cwd, `${name}.feature`), `Feature: ${name}\n  Scenario: test\n    Given a client step\n`);
+    for (const parallel of [false, true]) {
+      for (const configured of [false, true]) {
+        if (configured) writeFileSync(join(cwd, "cucumber.mjs"), 'export default { import: ["steps.ts"] };');
+        const result = spawnSync(
+          process.execPath,
+          [
+            cli,
+            "run",
+            "one.feature",
+            ...(parallel ? ["two.feature", "--parallel", "2"] : []),
+            ...(configured ? [] : ["--import", "steps.ts"]),
+            "--url",
+            join(cwd, "page.html"),
+            "--record",
+            "none",
+          ],
+          { cwd, encoding: "utf8", timeout: 30_000, env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "" } },
+        );
+        assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        assert.match(result.stdout, parallel ? /2\/2 scenarios passed/ : /1\/1 scenarios passed/);
+        if (configured) rmSync(join(cwd, "cucumber.mjs"));
+      }
+    }
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
 
 test("cli: bare invocation keeps usage and exit 2", () => {
   const result = invoke([]);
