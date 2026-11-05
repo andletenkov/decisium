@@ -58,6 +58,9 @@ page still matches it.</p>
 <li>Run CI with <code>--record none</code>: same outcome every run, zero model calls.</li>
 <li>When the UI really changes, CI fails as <code>UI_CHANGED</code>. Heal locally with <code>--record new</code> and commit the cassette.</li>
 </ol>
+<p>To collapse cassette diffs on GitHub and exclude them from language statistics, add this to <code>.gitattributes</code>:</p>
+<pre><code class="language-gitattributes">*.cassette.json linguist-generated=true
+</code></pre>
 <p>A live run asks Jev every time, so a Step close to the confidence gate can end differently from run to run. Replays
 do not. See <a href="troubleshooting.html">Troubleshooting</a>. Backend requests can be replayed too: <a href="network-replay.html">Network replay</a>.</p>
 <h2 id="pin-an-ambiguous-target">Pin an ambiguous target</h2>
