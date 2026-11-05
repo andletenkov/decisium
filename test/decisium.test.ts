@@ -214,6 +214,16 @@ test("containsValue matches whole words only", () => {
   );
 });
 
+test("containsValue rejects a negated match", () => {
+  assert.ok(!containsValue("Not Scheduled", "Scheduled"));
+  assert.ok(!containsValue("Status: non-scheduled", "scheduled"));
+  assert.ok(!containsValue("This campaign was never published", "published"));
+  assert.ok(containsValue("Not Scheduled", "not scheduled"));
+  // Another, un-negated occurrence still counts.
+  assert.ok(containsValue("Not scheduled yesterday, scheduled today", "scheduled"));
+  assert.ok(containsValue("Notes: Scheduled", "Scheduled"));
+});
+
 test("gate needs a confident top answer with margin", () => {
   const p = (probabilities: Record<string, number>): Pick => ({ choice: "a", probabilities });
   assert.ok(gate(p({ a: 0.9, b: 0.1 })));
