@@ -257,3 +257,176 @@ test("spans: word runs up to 8 words, quotes and trailing punctuation dropped", 
   assert.deepEqual(spans(`I add "Milk".`), ["I", "I add", "I add Milk", "add", "add Milk", "Milk"]);
   assert.equal(spans("a b c d e f g h i j").includes("a b c d e f g h i"), false);
 });
+
+import { placeholder, stepKind } from "../src/step.ts";
+
+const act = (text: string) => readStep({ text, kind: "action" });
+
+test("readStep: navigation forms, table-driven", () => {
+  const cases: [string, unknown][] = [
+    ["I go back", { verb: "BACK" }],
+    ["Go back.", { verb: "BACK" }],
+    ["I  go  back", { verb: "BACK" }],
+    ["I navigate forward!", { verb: "FORWARD" }],
+    ["browses back", { verb: "BACK" }],
+    ["I reload", { verb: "RELOAD" }],
+    ["I refresh the page", { verb: "RELOAD" }],
+    ["reloads page", { verb: "RELOAD" }],
+    ["I close the tab", { verb: "CLOSE_TAB" }],
+    ["closes this new tab", { verb: "CLOSE_TAB" }],
+    ["I switch back to the previous tab", { verb: "SWITCH_TAB" }],
+    ["goes back to the original tab", { verb: "SWITCH_TAB" }],
+    ["I go to /x", { verb: "GOTO", value: "/x" }],
+    [`I open "https://a.b/c"`, { verb: "GOTO", value: "https://a.b/c" }],
+    ["visits ?q=1", { verb: "GOTO", value: "?q=1" }],
+    ["I browse to #top", { verb: "GOTO", value: "#top" }],
+    ["I go to ../up", { verb: "GOTO", value: "../up" }],
+    ["I go to ./here", { verb: "GOTO", value: "./here" }],
+    ["I open x1+y://z", { verb: "GOTO", value: "x1+y://z" }],
+    ["I visit Settings", undefined],
+    ["I open 1x://z", undefined],
+    ["I go to the settings page", undefined],
+    ["I go back to the list", undefined],
+    ["Then I go back", undefined],
+    ["I go backward", undefined],
+    ["I reload it", undefined],
+    ["I close the tab now", undefined],
+    ["I closed the tab", undefined],
+    ["I switch back to the previous tab please", undefined],
+  ];
+  for (const [text, want] of cases) assert.deepEqual(act(text).navigation, want, text);
+  assert.equal(readStep({ text: "I go back", kind: "assertion" }).navigation, undefined);
+});
+
+test("readStep: key names, aliases, combos, press-only, table-driven", () => {
+  const cases: [string, string[], string[], string | undefined][] = [
+    ["I press Escape", ["Escape"], [], "Escape"],
+    ["I press the esc key", ["Escape"], [], "Escape"],
+    ["press del", ["Delete"], [], "Delete"],
+    ["I hit Ctrl+K", ["Control+K"], [], "Control+K"],
+    ["I press cmd + c", ["Meta+c"], [], "Meta+c"],
+    ["I press command+option+i", ["Meta+Alt+i"], [], "Meta+Alt+i"],
+    ["I press page down", ["PageDown"], [], "PageDown"],
+    ["I press page up", ["PageUp"], [], "PageUp"],
+    ["press up arrow", ["ArrowUp"], [], "ArrowUp"],
+    ["press down arrow", ["ArrowDown"], [], "ArrowDown"],
+    ["press left arrow", ["ArrowLeft"], [], "ArrowLeft"],
+    ["press right arrow", ["ArrowRight"], [], "ArrowRight"],
+    ["press arrow up", ["ArrowUp"], [], "ArrowUp"],
+    ["press arrow down", ["ArrowDown"], [], "ArrowDown"],
+    ["press arrow left", ["ArrowLeft"], [], "ArrowLeft"],
+    ["press arrow right", ["ArrowRight"], [], "ArrowRight"],
+    ["press F12", ["F12"], [], "F12"],
+    ["press F1", ["F1"], [], "F1"],
+    ["press F13", [], [], undefined],
+    [`press "a"`, ["a"], [], "a"],
+    ["press a", [], [], undefined],
+    [`press Tab and type "x"`, ["Tab"], [], undefined],
+    ["I press the Delete button", [], [], undefined],
+    ["I press the Delete buttons", [], [], undefined],
+    ["press Foo+Bar", [], ["Foo+Bar"], undefined],
+    ["press Foo key", [], ["Foo"], undefined],
+    ["press Foo now", [], [], undefined],
+    ["I hit the return", ["Enter"], [], "Enter"],
+    ["I hits Enter", ["Enter"], [], "Enter"],
+    ["I presses Enter.", ["Enter"], [], "Enter"],
+    ["pressing Space", ["Space"], [], undefined],
+    [`I press "Enter" in "x"`, ["Enter"], [], undefined],
+    [`type "press Tab" in it`, [], [], undefined],
+    ["press Shift+Tab then press Enter", ["Shift+Tab", "Enter"], [], undefined],
+    ["I press   Escape  ", ["Escape"], [], "Escape"],
+  ];
+  for (const [text, keys, unknown, only] of cases) {
+    const r = act(text);
+    assert.deepEqual([r.keys, r.unknownKeys, r.pressOnly], [keys, unknown, only], text);
+  }
+  const check = readStep({ text: "press Escape", kind: "assertion" });
+  assert.deepEqual([check.keys, check.unknownKeys, check.pressOnly], [[], [], undefined]);
+});
+
+test("readStep: toggle wording, numbers and clear, table-driven", () => {
+  const toggles: [string, boolean | undefined][] = [
+    ["I uncheck News", false],
+    ["I untick it", false],
+    ["deselect it", false],
+    ["I clear it", false],
+    ["I turn off X", false],
+    ["I switch off X", false],
+    ["disable X", false],
+    ["I check A and B", undefined],
+    ["I check A then B", undefined],
+    ["I check A, B", undefined],
+    ["I decline cookies", false],
+    ["I opt out", false],
+    ["I unsubscribe now", false],
+    ["I reject all", false],
+    ["I accept", true],
+    ["I enable X", true],
+  ];
+  for (const [text, want] of toggles) assert.equal(act(text).toggle, want, text);
+  assert.deepEqual(act("I wait 5 seconds and 2.5 and 3,5 kg 10").candidates, ["5 seconds", "2.5 and", "3,5 kg", "10"]);
+  assert.deepEqual(act(`I clear the "empty" field`).candidates, ["empty", ""]);
+  assert.deepEqual(act(`I type "x" into empty`).candidates, ["x", ""]);
+  assert.deepEqual(act(`I type "clear"`).candidates, ["clear"]);
+  assert.deepEqual(readStep({ text: "it should be empty", kind: "assertion" }).candidates, []);
+  assert.deepEqual(readStep({ text: "it should show 5 items", kind: "assertion" }).candidates, ["5 items"]);
+});
+
+test("stepKind, placeholder, spans limits", () => {
+  assert.deepEqual(
+    ["I try to x", "try x", "I attempts", "Tries it", "I trying", "x I try"].map((text) => stepKind({ text })),
+    ["attempt", "attempt", "attempt", "attempt", "action", "action"],
+  );
+  assert.equal(stepKind({ text: "I try", type: "Outcome" as never }), "assertion");
+  assert.equal(stepKind({ text: "I try", type: "Action" as never }), "attempt");
+  assert.deepEqual(["$A_b1", "$1a", "x$A", "$A ", "$_", "$"].map(placeholder), [
+    "A_b1",
+    undefined,
+    undefined,
+    undefined,
+    "_",
+    undefined,
+  ]);
+  assert.equal(spans("a b c d e f g h i j").length, 52);
+  assert.ok(spans("a b c d e f g h i j").includes("a b c d e f g h"));
+  assert.ok(!spans("a b c d e f g h i j").includes("a b c d e f g h i"));
+  assert.deepEqual(spans(`Hello,  world!! "x".`), ["Hello", "Hello world", "Hello world x", "world", "world x", "x"]);
+  assert.deepEqual(spans(""), []);
+});
+
+test("withIntent: each field only where the rules read their default", () => {
+  const base = act("I do it");
+  assert.equal(withIntent(base).attempt, undefined);
+  assert.equal(withIntent(base, { attempt: true }).attempt, true);
+  assert.equal(withIntent(base, { exact: true }).exact, true);
+  assert.equal(withIntent(base, { exact: false }).exact, false);
+  assert.deepEqual(withIntent(base, { clear: true }).candidates, [""]);
+  assert.deepEqual(withIntent(act("I clear it"), { clear: true }).candidates, [""]);
+  assert.deepEqual(withIntent(base, { key: "Enter" }).keys, ["Enter"]);
+  assert.equal(withIntent(base, { key: "Enter" }).pressOnly, undefined);
+  assert.equal(withIntent(base, { key: "Enter", pressOnly: true }).pressOnly, "Enter");
+  assert.equal(withIntent(base, { pressOnly: true }).pressOnly, undefined);
+  assert.deepEqual(withIntent(act("press Escape"), { key: "Enter", pressOnly: true }).keys, ["Escape"]);
+  assert.equal(withIntent(act("press Escape"), { key: "Enter", pressOnly: true }).pressOnly, "Escape");
+  assert.equal(withIntent(act("I go back"), { key: "Enter", pressOnly: true }).pressOnly, undefined);
+  assert.equal(withIntent(base, { toggle: false }).toggle, false);
+  assert.equal(withIntent(act("I check A and B"), { toggle: true }).toggle, true);
+  assert.equal(withIntent(act("I uncheck A"), { toggle: true }).toggle, false);
+  assert.equal(withIntent(act("I check A and B"), {}).toggle, undefined);
+  assert.equal(withIntent(base, { toggle: true }).toggle, true);
+  assert.deepEqual(withIntent(base, { navigation: "BACK" }).navigation, { verb: "BACK" });
+  assert.deepEqual(withIntent(act("I go back"), { navigation: "RELOAD" }).navigation, { verb: "BACK" });
+  assert.equal(withIntent(base, { navigation: "BACK", key: "Escape", pressOnly: true }).navigation, undefined);
+  assert.deepEqual(withIntent(base, { navigation: "GOTO", value: "/a" }).navigation, { verb: "GOTO", value: "/a" });
+  assert.deepEqual(withIntent(act(`I open "x://y" now`), { navigation: "GOTO" }).navigation, {
+    verb: "GOTO",
+    value: "x://y",
+  });
+  assert.equal(withIntent(base, { navigation: "GOTO", value: "Settings" }).navigation, undefined);
+  assert.equal(withIntent(base, { navigation: "GOTO" }).navigation, undefined);
+  assert.equal(withIntent(base, { navigation: "GOTO", value: "1a://b" }).navigation, undefined);
+  const q = withIntent(act(`I type "a"`), { value: "b" });
+  assert.deepEqual([q.values, q.candidates], [["a"], ["a"]]);
+  const v = withIntent(act("I type 5 kg"), { value: "Ada" });
+  assert.deepEqual([v.values, v.candidates], [["Ada"], ["Ada", "5 kg"]]);
+});

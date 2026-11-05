@@ -1,10 +1,8 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "testRunner": "command",
-  "mutate_comment": "Pure decision-logic modules, killed by the fast unit tests; the browser/CLI suites take ~75s per run, too slow per mutant",
-  "commandRunner": {
-    "command": "node --test test/action.test.ts test/cassette-format.test.ts test/change.test.ts test/check.test.ts test/decision.test.ts test/intent.test.ts test/step.test.ts"
-  },
+  "mutate_comment": "Modules covered by test/*.unit.test.ts (no browser, sub-second); the browser/CLI suites take ~75s per run, too slow per mutant",
+  "commandRunner": { "command": "node --test test/*.unit.test.ts" },
   "mutate": [
     "src/decision.ts",
     "src/observation.ts",
@@ -17,11 +15,10 @@
   "tsconfigFile": "stryker-skip-tsconfig.json",
   "ignorePatterns": ["dist", "site", "runs", "build", "reports", "features", "mise.local.toml", ".env"],
   "coverageAnalysis": "off",
-  "reporters": ["clear-text", "progress", "html"],
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
   "htmlReporter": { "fileName": "reports/mutation/index.html" },
   "tempDirName": ".stryker-tmp",
   "timeoutMS": 30000,
-  "incremental": true,
-  "incrementalFile": "reports/mutation/stryker-incremental.json",
-  "thresholds": { "high": 80, "low": 60, "break": null }
+  "thresholds": { "high": 80, "low": 60, "break": 85 }
 }
