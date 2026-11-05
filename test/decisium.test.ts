@@ -2045,6 +2045,29 @@ test("raw cucumber-js: a failed BeforeAll hook is reported, not a silent 0/0", a
   assert.doesNotMatch(r.stdout, /0\/0 scenarios passed/);
 });
 
+test("decisium run: steps loaded twice, and a named feature that runs nothing, fail loudly (issue 8)", async () => {
+  const { execFile } = await import("node:child_process");
+  const { mkdirSync, readFileSync, writeFileSync } = await import("node:fs");
+  const { promisify } = await import("node:util");
+  const run = (...args: string[]) =>
+    promisify(execFile)("node", ["src/cli.ts", "run", ...args, "--record", "none", "--no-agent-report"], {
+      env: { ...process.env, TYPESAFE_API_KEY: "" },
+    }).then(
+      (o) => ({ ...o, code: 0 }),
+      (e: { stdout: string; stderr: string; code: number }) => e,
+    );
+  // A second copy of the steps module, as a client cucumber config importing them from another path would load.
+  mkdirSync("runs", { recursive: true });
+  writeFileSync("runs/steps-dup.ts", readFileSync("src/steps.ts", "utf8").replaceAll('from "./', 'from "../src/'));
+  const twice = await run("test/fixtures/cookbook/tables.feature:5", "--import", "runs/steps-dup.ts");
+  assert.equal(twice.code, 2);
+  assert.match(twice.stdout + twice.stderr, /step definitions are loaded twice/);
+
+  const nothing = await run("test/fixtures/cookbook/tables.feature:1"); // the Feature line: no scenario
+  assert.equal(nothing.code, 2);
+  assert.match(nothing.stderr, /No scenario ran from/);
+});
+
 test("raw cucumber-js: an undefined Step says the steps file is not loaded", async () => {
   const { execFile } = await import("node:child_process");
   const { mkdirSync, writeFileSync } = await import("node:fs");
