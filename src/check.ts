@@ -31,22 +31,17 @@ const norm = (s: string) =>
     .trim();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** A negation right before the match flips its meaning: "Not Scheduled" does not show "Scheduled". */
-const NEGATED = /(?:^|\W)(not|no|non|never|without|neither|nor)[\s-]*$/;
-
 /**
  * Whole-word, case/space-insensitive containment: "1 week" must not match "11 weeks". Only a neighbour of the same kind
  * (letter next to letter, digit next to digit) joins words: snapshots drop line breaks ("1815<br>London" -> "1815London").
- * A match negated by the word before it does not count: "Not Scheduled" does not show "Scheduled".
  */
 export function containsValue(actual: string, expected: string): boolean {
   const e = norm(expected);
   const kind = (c = "") => (/\p{L}/u.test(c) ? "\\p{L}" : /\p{N}/u.test(c) ? "\\p{N}" : undefined);
   const [before, after] = [kind(e[0]), kind(e.at(-1))];
-  const re = new RegExp(`${before ? `(?<!${before})` : ""}${escape(e)}${after ? `(?!${after})` : ""}`, "gu");
-  const a = norm(actual);
-  for (const m of a.matchAll(re)) if (!NEGATED.test(a.slice(0, m.index))) return true;
-  return false;
+  return new RegExp(`${before ? `(?<!${before})` : ""}${escape(e)}${after ? `(?!${after})` : ""}`, "u").test(
+    norm(actual),
+  );
 }
 
 const STATE_FLAG: Record<keyof typeof STATES, [flag: string, on: boolean]> = {
