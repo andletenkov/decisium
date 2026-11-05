@@ -80,6 +80,16 @@ page text around the element, a screenshot, a Playwright trace and a rerun comma
 Decisium runs inside cucumber-js: your `cucumber.mjs`, profiles, formatters (`--format junit:junit.xml`) and your own
 step definitions (`--import`, with `this.page` and `this.context`) keep working.
 
+TypeScript step files with extensionless relative imports (such as `./helpers`) need a loader. Install `tsx` alongside
+Decisium and preload it when running from your project directory:
+
+```sh
+npm install --save-dev tsx
+node --import tsx ./node_modules/decisium/dist/cli.js run checkout.feature --import steps.ts
+```
+
+Alternatively, add explicit `.ts` extensions to relative imports. The command above uses a project-local Decisium install.
+
 ## Configuration
 
 Put Decisium options in `worldParameters.decisium` in your project's `cucumber.mjs`. `decisium run` loads it automatically:

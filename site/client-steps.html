@@ -45,6 +45,12 @@ Given(&quot;the campaigns API returns {string}&quot;, async function (this: { co
 <p>Load them with <code>--import</code> (repeatable) or <code>import</code> in your <a href="configuration.html">configuration</a>:</p>
 <pre><code class="language-sh">decisium run features/campaigns.feature --import steps/campaigns.steps.ts
 </code></pre>
+<p>TypeScript steps that import local modules without extensions (such as <code>./helpers</code>) need a loader. Install <code>tsx</code> alongside
+Decisium and preload it from your project directory:</p>
+<pre><code class="language-sh">npm install --save-dev tsx
+node --import tsx ./node_modules/decisium/dist/cli.js run features/campaigns.feature --import steps/campaigns.steps.ts
+</code></pre>
+<p>This command uses a project-local Decisium install. Alternatively, add explicit <code>.ts</code> extensions to relative imports.</p>
 <p>A client step makes no model call and is not recorded in the cassette.</p>
 <h2 id="the-world">The World</h2>
 <table>
