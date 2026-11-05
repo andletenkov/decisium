@@ -300,7 +300,14 @@ function stateOf(ref: string, a: Assessment, obs: Observation): Reading {
     : { outcome: "ASSERTION_FAILED", reason: `expected ${el.line} to be ${a.state.choice}, but it is not` };
 }
 
-function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[], log: typeof console.log): Reading {
+/**
+ * An inexact match (the subject shows more than the quoted value) can be contradicted by the words around it, and
+ * only language knows that: "Not Scheduled" does not show "Scheduled" (issue #28). Code asks Jev rather than carrying
+ * a list of negation words, which would only ever cover one language. No answer (older cassettes): the match stands.
+ */
+const vetoed = (a: Assessment) => a.satisfied !== undefined && a.satisfied <= 1 - JUDGED_THRESHOLD;
+
+function valueOf(ref: string, a: Assessment, obs: Observation, values: string[], log: typeof console.log): Reading {
   if (ref === "none")
     return { outcome: "ASSERTION_FAILED", reason: "no element on the page shows what the check describes" };
   const el = obs.readable.find((e) => e.ref === ref);
@@ -317,18 +324,29 @@ function valueOf(ref: string, _a: Assessment, obs: Observation, values: string[]
     return actual.includes(values[0])
       ? { outcome: "PASSED" }
       : { outcome: "ASSERTION_FAILED", reason: `expected the URL to contain "${values[0]}", but it is "${actual}"` };
-  if (containsValue(actual, values[0])) return { outcome: "PASSED" };
+  const failed = (text: string): Reading => ({
+    outcome: "ASSERTION_FAILED",
+    reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${text}"`,
+  });
+  // Equality is code's alone; a match inside longer text needs Jev not to contradict it.
+  const matched = (text: string): Reading | undefined => {
+    if (norm(text) === norm(values[0])) return { outcome: "PASSED" };
+    if (!containsValue(text, values[0])) return undefined;
+    if (!vetoed(a)) return { outcome: "PASSED" };
+    log(`  Jev reads "${text}" as not satisfying the check (p=${a.satisfied!.toFixed(2)})`);
+    return failed(text);
+  };
+  const own = matched(actual);
+  if (own) return own;
   // The subject shows part of the quoted text (prose split across a link and bare text, "<b>2</b> items left"):
   // the rest can only be in the container holding it, so read that one, not anywhere on the page.
   const host = el.parent;
   if (actual && host && containsValue(values[0], actual)) {
     log(`  Compare: "${values[0]}" in "${host.text.trim()}" (${host.line}, holding ${el.line})`);
-    if (containsValue(host.text, values[0])) return { outcome: "PASSED" };
+    const inHost = matched(host.text);
+    if (inHost) return inHost;
   }
-  return {
-    outcome: "ASSERTION_FAILED",
-    reason: `expected "${values[0]}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${actual}"`,
-  };
+  return failed(actual);
 }
 
 export type Verdict = Reading & { details: string[] };

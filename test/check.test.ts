@@ -24,6 +24,16 @@ test("Check: plausible kinds must agree, and agreeing kinds carry the pass toget
   assert.equal(verdict(assessment({ kind: pick({ value: 0.55, absence: 0.45 }) }), obs, expected).outcome, "AMBIGUOUS");
 });
 
+test("Check: Jev vetoes a value match the surrounding words negate (issue #28)", () => {
+  const obs = parseSnapshot("- paragraph [ref=e1]: Not Scheduled");
+  const expected = { values: ["Scheduled"] };
+  // No answer (older cassettes, any language): the containment match stands.
+  assert.equal(verdict(assessment(), obs, expected).outcome, "PASSED");
+  assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, expected).outcome, "ASSERTION_FAILED");
+  // The veto never touches an exact value: code alone decides equality.
+  assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, { values: ["Not Scheduled"] }).outcome, "PASSED");
+});
+
 test("Check: subjects and areas agree on outcomes; only passes carry marginal warnings", () => {
   const obs = parseSnapshot(`- region "First" [ref=a1]:
   - paragraph [ref=e1]: Draft

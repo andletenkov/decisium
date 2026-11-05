@@ -130,6 +130,9 @@ export interface Assessment {
   area: Pick; // presence/absence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
   state: Pick; // required control state, used by `state` checks
   judged?: number; // P(step holds), only when asked
+  // P(the UI satisfies the check), always asked: the veto on an inexact text match, where only language can tell
+  // whether "Not Scheduled" shows "Scheduled" (issue #28). Undefined (older cassettes, scripted deciders): no veto.
+  satisfied?: number;
 }
 
 export const AREA_PAGE = "page";
