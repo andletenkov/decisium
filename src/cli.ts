@@ -277,7 +277,19 @@ async function main(): Promise<number> {
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);
   run.done();
+  // Issue 8: named feature files that execute nothing are a usage error (a broken configuration, a tag filter or a
+  // line with no scenario), never a pass.
+  const trace = join(run.path, "trace.jsonl");
+  const ran =
+    existsSync(trace) &&
+    readFileSync(trace, "utf8")
+      .split("\n")
+      .some((l) => l.trim() && JSON.parse(l).type === "result");
   console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
+  if (success && scenarios.length && !ran) {
+    console.error(`No scenario ran from ${files.join(", ")}: check the cucumber configuration, profile and tags.`);
+    return 2;
+  }
   // steps.ts marks an infrastructure error in the run directory (it may have happened in a worker).
   return process.exitCode === 2 || existsSync(join(run.path, INFRA_MARKER)) ? 2 : success ? 0 : 1;
 }
