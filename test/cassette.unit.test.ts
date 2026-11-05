@@ -341,7 +341,7 @@ test("cassette: in new mode a broken replay heals live once, logs it and writes 
 test("cassette: an uncertain target stores the top three, a confident one only what covers the gate", async () => {
   const p = tmp();
   const c = new Cassette(p, "m", "new");
-  const wide = pick({ e1: 0.45, e2: 0.4, e4: 0.1, e3: 0.05 });
+  const wide = pick({ e1: 0.45, e2: 0.4, page: 0.1, none: 0.05 });
   const d = c.step("S: x", scripted({ turn: { done: 0, target: wide } }).live);
   await d.turn("x", page, []);
   d.done(true);
@@ -353,7 +353,7 @@ test("cassette: an uncertain target stores the top three, a confident one only w
     read(p).entries["S: x"].turns[0].target.map(([t]: [{ name: string } | string]) =>
       typeof t === "string" ? t : t.name,
     ),
-    ["Name", "Save", "e4"], // a non-actionable ref is not an element target: kept as is
+    ["Name", "Save", "page"], // non-element answers are kept as is
   );
   assert.deepEqual(read(p).entries["S: y"].turns[0].target, [[saveTarget, 0.85]]);
 });

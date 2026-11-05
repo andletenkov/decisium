@@ -57,7 +57,11 @@ export function readStep(step: ParsedStep): StepReading {
   const list = isCheck && !!table && !header;
   const quotedText = quoted(text);
   const withDoc = docString === undefined ? quotedText : [...quotedText, docString];
-  const numbers = [...text.matchAll(/\b\d+(?:[.,]\d+)?(?:\s+[a-z]+)?/gi)].map((m) => m[0]);
+  const numbers = [
+    ...text.matchAll(
+      /\b\d+(?:[.,]\d+)?(?:\s+(?!(?:and|or|then|to|into|in|on|at|from|for|of|the|a|an|with|by)\b)[a-z]+)?/gi,
+    ),
+  ].map((m) => m[0]);
   const { keys, unknown } = isCheck ? { keys: [], unknown: [] } : stepKeys(text);
   const clear = !isCheck && /\b(clear|empty)\b/i.test(text.replace(/["“][^"”]*["”]/g, ""));
   return {

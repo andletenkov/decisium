@@ -364,7 +364,9 @@ test("readStep: toggle wording, numbers and clear, table-driven", () => {
     ["I enable X", true],
   ];
   for (const [text, want] of toggles) assert.equal(act(text).toggle, want, text);
-  assert.deepEqual(act("I wait 5 seconds and 2.5 and 3,5 kg 10").candidates, ["5 seconds", "2.5 and", "3,5 kg", "10"]);
+  assert.deepEqual(act("I wait 5 seconds and 2.5 and 3,5 kg 10").candidates, ["5 seconds", "2.5", "3,5 kg", "10"]);
+  assert.deepEqual(act("I type 5 into the field").candidates, ["5"]);
+  assert.deepEqual(act("I add 3 to the cart").candidates, ["3"]);
   assert.deepEqual(act(`I clear the "empty" field`).candidates, ["empty", ""]);
   assert.deepEqual(act(`I type "x" into empty`).candidates, ["x", ""]);
   assert.deepEqual(act(`I type "clear"`).candidates, ["clear"]);

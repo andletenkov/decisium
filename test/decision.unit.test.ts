@@ -157,7 +157,7 @@ test("gate: top at least minTop and ahead of the second by minMargin; defaults f
   assert.equal(gate(p({ b: 0.1, a: 0.8 })), true);
   assert.equal(gate(p({})), false);
   assert.equal(gate(p({ a: 0.6 }, { target: 0.5, answer: 0.6 })), true);
-  assert.equal(gate(p({ a: 0.5, b: 0.39 }), 0.5, 0.1), true);
+  assert.equal(gate(p({ a: 0.5, b: 0.4 }), 0.5, 0.1), true); // 0.5 - 0.4 is 0.0999… in floats
   assert.equal(gate(p({ a: 0.5, b: 0.41 }), 0.5, 0.1), false);
   assert.deepEqual(confidence(p({})), DEFAULTS.confidence);
 });

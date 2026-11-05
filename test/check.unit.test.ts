@@ -197,7 +197,7 @@ test("Check reasons: fuzzy, presence and absence", () => {
     reason: "this is a subjective check that code cannot compare; rerun with --judged to let Jev judge it",
   });
   assert.deepEqual(reading(fuzzy(0.8)), { outcome: "JUDGED_PASSED", reason: "p=0.80" });
-  assert.deepEqual(reading(fuzzy(0.19)), { outcome: "JUDGED_FAILED", reason: "p=0.19" });
+  assert.deepEqual(reading(fuzzy(0.2)), { outcome: "JUDGED_FAILED", reason: "p=0.20" }); // 1 - 0.8 is 0.19999… in floats
   assert.deepEqual(reading(fuzzy(0.79)), {
     outcome: "AMBIGUOUS",
     reason: "Jev is unsure whether the page satisfies the check (79% yes)",
@@ -390,13 +390,13 @@ test("Check reasons: value", () => {
     { satisfied: 0.1 },
   );
   assert.equal(vetoed.outcome, "ASSERTION_FAILED");
-  const negated = run(`- paragraph [ref=e1]: Not Draft`, { satisfied: 0.19 }, ["Draft"]);
+  const negated = run(`- paragraph [ref=e1]: Not Draft`, { satisfied: 0.2 }, ["Draft"]);
   assert.deepEqual(reading(negated), {
     outcome: "ASSERTION_FAILED",
     reason: `expected "Draft", but paragraph shows "Not Draft"`,
   });
-  assert.equal(negated.details.at(-1), `  Jev reads "Not Draft" as not satisfying the check (p=0.19)`);
-  assert.equal(run(`- paragraph [ref=e1]: Not Draft`, { satisfied: 0.2 }, ["Draft"]).outcome, "PASSED");
+  assert.equal(negated.details.at(-1), `  Jev reads "Not Draft" as not satisfying the check (p=0.20)`);
+  assert.equal(run(`- paragraph [ref=e1]: Not Draft`, { satisfied: 0.21 }, ["Draft"]).outcome, "PASSED");
 });
 
 test("Check reasons: URL and download pseudo-elements", async () => {

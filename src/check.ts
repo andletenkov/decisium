@@ -116,7 +116,7 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
       };
     log(`  Judged: p=${a.judged.toFixed(2)}`);
     if (a.judged >= JUDGED_THRESHOLD) return { outcome: "JUDGED_PASSED", reason: `p=${a.judged.toFixed(2)}` };
-    if (a.judged <= 1 - JUDGED_THRESHOLD) return { outcome: "JUDGED_FAILED", reason: `p=${a.judged.toFixed(2)}` };
+    if (1 - a.judged >= JUDGED_THRESHOLD) return { outcome: "JUDGED_FAILED", reason: `p=${a.judged.toFixed(2)}` };
     return {
       outcome: "AMBIGUOUS",
       reason: `Jev is unsure whether the page satisfies the check (${Math.round(a.judged * 100)}% yes)`,
@@ -315,7 +315,7 @@ function stateOf(ref: string, a: Assessment, obs: Observation): Reading {
  */
 const shows = (text: string, expected: string, a: Assessment) =>
   norm(text) === norm(expected) ||
-  (containsValue(text, expected) && !(a.satisfied !== undefined && a.satisfied <= 1 - JUDGED_THRESHOLD));
+  (containsValue(text, expected) && !(a.satisfied !== undefined && 1 - a.satisfied >= JUDGED_THRESHOLD));
 
 function valueOf(ref: string, a: Assessment, obs: Observation, values: string[], log: typeof console.log): Reading {
   if (ref === "none")
