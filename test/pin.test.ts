@@ -18,6 +18,7 @@ for (const example of [
   { step: "I fill a field", role: "textbox", action: "type", ok: false },
   { step: "I click a button, press Enter", role: "button", action: "click", ok: false },
   { step: "I click a button press Enter", role: "button", action: "click", ok: false },
+  { step: "I click a button next hit Enter", role: "button", action: "click", ok: false },
   { step: 'I fill the field in "Billing"', role: "textbox", action: "type", ok: false },
 ]) {
   test(`pin: ${example.step} (${example.role}) ${example.ok ? "replays" : "fails without writes"}`, () => {

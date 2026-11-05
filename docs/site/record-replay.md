@@ -40,7 +40,10 @@ The cassette keeps a `pinned` marker with the chosen Resolution, candidate numbe
 review and commit the diff. Replay still requires that Resolution to match exactly one element.
 
 Pin supports **explicit single-action Steps** starting with `I click`, `I double-click`, `I right-click`, `I hover over`,
-`I type`, `I fill`, `I select` or `I upload` (the `I` is optional). Compound Steps and unresolved continuations are
+`I type`, `I fill`, `I select` or `I upload` (the `I` is optional). Targets must be quoted names (optionally followed by
+`button`, `field`, etc.) or control nouns such as `a button` or `the field`; an optional `in "Area"` scopes them.
+Examples: `I click the "Save" button`, `I type "Ada" into the "Name" field`.
+Only these bounded single-action forms are accepted. Other wording, compound Steps and unresolved continuations are
 rejected rather than inventing a model completion. The browser must execute the confirmed action successfully;
 later assertion Steps still check the result. Pin never makes a failed assertion pass.
 

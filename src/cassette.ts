@@ -64,17 +64,25 @@ interface File {
 } // run: id of the run that last saved it
 
 function singleAction(step: ParsedStep): string | undefined {
-  const wording = step.text.replace(/["“][^"”]*["”]/g, "");
+  const wording = step.text.replace(/["“][^"”]*["”]/g, "@").trim();
   const match = /^(?:I\s+)?(double-click|right-click|click|hover over|type|fill|select|upload)\b/i.exec(wording);
   const verb = match?.[1].toLowerCase();
-  if (
-    !verb ||
-    /\b(and|then|after|before|until|also|followed|while)\b|[,;.!?&+]/i.test(wording) ||
-    step.kind === "assertion"
-  )
-    return;
-  if (/\b(click|type|fill|select|upload|press|submit|open|close|hover)\b/i.test(wording.slice(match![0].length)))
-    return;
+  if (!verb || step.kind === "assertion") return;
+  // A positive grammar, not a blacklist of conjunctions: unseen continuations must never become DONE.
+  const role =
+    "(?:button|link|field|textbox|searchbox|combobox|checkbox|radio|tab|item|option|control|slider|spinbutton)";
+  const target = `(?:(?:the|a|an)\\s+)?(?:@(?:\\s+${role})?|${role}(?:\\s+@)?)(?:\\s+in\\s+(?:the\\s+)?@(?:\\s+(?:area|section|region|dialog|list))?)?`;
+  const forms: Record<string, string> = {
+    click: `(?:on\\s+)?${target}`,
+    "double-click": `(?:on\\s+)?${target}`,
+    "right-click": `(?:on\\s+)?${target}`,
+    "hover over": target,
+    type: `@\\s+(?:into|in)\\s+${target}`,
+    fill: `${target}(?:\\s+with\\s+@)?`,
+    select: `@\\s+(?:from|in)\\s+${target}`,
+    upload: `@\\s+to\\s+${target}`,
+  };
+  if (!new RegExp(`^\\s+${forms[verb]}$`, "i").test(wording.slice(match![0].length))) return;
   return (
     (
       { "double-click": "double click", "right-click": "right click", "hover over": "hover", fill: "type" } as Record<

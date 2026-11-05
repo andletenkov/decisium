@@ -70,7 +70,10 @@ decisium run features/campaign.feature --record none
 The cassette keeps a <code>pinned</code> marker with the chosen Resolution, candidate number, turn and original probabilities;
 review and commit the diff. Replay still requires that Resolution to match exactly one element.</p>
 <p>Pin supports <strong>explicit single-action Steps</strong> starting with <code>I click</code>, <code>I double-click</code>, <code>I right-click</code>, <code>I hover over</code>,
-<code>I type</code>, <code>I fill</code>, <code>I select</code> or <code>I upload</code> (the <code>I</code> is optional). Compound Steps and unresolved continuations are
+<code>I type</code>, <code>I fill</code>, <code>I select</code> or <code>I upload</code> (the <code>I</code> is optional). Targets must be quoted names (optionally followed by
+<code>button</code>, <code>field</code>, etc.) or control nouns such as <code>a button</code> or <code>the field</code>; an optional <code>in &quot;Area&quot;</code> scopes them.
+Examples: <code>I click the &quot;Save&quot; button</code>, <code>I type &quot;Ada&quot; into the &quot;Name&quot; field</code>.
+Only these bounded single-action forms are accepted. Other wording, compound Steps and unresolved continuations are
 rejected rather than inventing a model completion. The browser must execute the confirmed action successfully;
 later assertion Steps still check the result. Pin never makes a failed assertion pass.</p>
 <p>For typing/selecting/uploading, an existing recorded value is preserved. If none was recorded, pin accepts only an
