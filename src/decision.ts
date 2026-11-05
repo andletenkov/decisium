@@ -158,6 +158,20 @@ export const fmt = (p: Pick) =>
     .map(([k, v]) => `${k}=${v.toFixed(2)}`)
     .join(" ");
 
+/**
+ * How Jev read a Step's wording (issue #31): only its confident answers, each field absent when unsure. step.ts
+ * withIntent() adds them where the wording rules read nothing, so the rules stay a fast path, not a requirement.
+ */
+export interface Intent {
+  attempt?: boolean;
+  toggle?: boolean; // on (true) / off (false)
+  navigation?: "BACK" | "FORWARD" | "RELOAD" | "GOTO" | "CLOSE_TAB" | "SWITCH_TAB";
+  key?: string; // Playwright key name
+  pressOnly?: boolean;
+  value?: string; // a value the Step gives without quotes
+  exact?: boolean;
+}
+
 /** The seam to the decision model: Jev implements it (jev.ts); tests use a scripted fake. */
 export interface Decider {
   /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
@@ -173,6 +187,8 @@ export interface Decider {
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;
   /** The open browser dialog (`obs.dialog`): "accept", "dismiss", or for a prompt one of the Step's quoted values. */
   dialog(step: string, obs: Observation, answers: string[]): Promise<Pick>;
+  /** The Step's wording (no page): asked once per Step; absent in fakes means the wording rules alone. */
+  intent?(step: string, check: boolean): Promise<Intent>;
 }
 
 /**

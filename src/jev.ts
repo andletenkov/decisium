@@ -9,10 +9,13 @@ import {
   STATES,
   type Assessment,
   type Decider,
+  type Intent,
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
+import { settings } from "./options.ts";
+import { spans } from "./step.ts";
 
 export const MODEL = "jev-1.14.0";
 
@@ -111,6 +114,29 @@ export async function reduceUi(
   const keep = new Set(Object.keys(kept).flatMap((k) => parts[Number(k.slice(1))]));
   return lines.filter((_, i) => keep.has(i)).join("\n");
 }
+
+const YES_NO = { yes: "Yes.", no: "No." }; // noul stayed 0.6-0.7 on clear yeses (bench-intent); a 2-way choice does not
+const INTENT_KEYS = [
+  ..."Escape Tab Enter Backspace Delete Home End PageUp PageDown ArrowUp ArrowDown ArrowLeft ArrowRight Space".split(
+    " ",
+  ),
+  ..."Control+A Control+C Control+V Control+K Control+Z Meta+K Shift+Tab".split(" "),
+];
+const NAVIGATIONS = {
+  none: "None of these: `step` is not only a browser navigation.",
+  BACK: "Go back in the browser history.",
+  FORWARD: "Go forward in the browser history.",
+  RELOAD: "Reload the page.",
+  GOTO: "Go to a URL or path that `step` gives.",
+  CLOSE_TAB: "Close the current browser tab.",
+  SWITCH_TAB: "Switch to the previous browser tab.",
+};
+/** A confident answer, else undefined (gated like checks: 0.8 / 0.3 by default). */
+const sure = (p: Pick, top = settings().confidence.answer) => {
+  const [a = 0, b = 0] = Object.values(p.probabilities).sort((x, y) => y - x);
+  return a >= top && a - b >= 0.3 ? p.choice : undefined;
+};
+const yes = (p: Pick, top?: number) => (sure(p, top) === undefined ? undefined : p.choice === "yes");
 
 /** Live Jev requests of this process and their tokens; cassette replays cost nothing and are not counted. */
 export const jevUsage = { calls: 0, inputTokens: 0, outputTokens: 0 };
@@ -279,6 +305,65 @@ export class JevDecider implements Decider {
       choice: name(a.choice),
       probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
     };
+  }
+
+  /** One request, no page (issue #31): what the wording means, as the rules in step.ts would read it. */
+  async intent(step: string, check: boolean): Promise<Intent> {
+    const sp = spans(step);
+    const value = choice(
+      check
+        ? "Which part of `step` is the exact text or value the page is expected to show?"
+        : "Which words of `step` are free text the user types, selects or visits, as opposed to names of buttons, links, pages or fields?",
+      {
+        none: "None: `step` only names actions, controls, pages or fields.",
+        ...Object.fromEntries(sp.map((s, i) => [`s${i}`, `"${s}"`])),
+      },
+    );
+    const questions = check
+      ? {
+          value,
+          exact: choice("Does `step` say a list must match exactly, with nothing else, or in a given order?", YES_NO),
+        }
+      : {
+          value,
+          attempt: choice(
+            "Does `step` try something the app may refuse (a negative path), so it is done once performed, whether or not the app accepts it?",
+            YES_NO,
+          ),
+          toggle: choice("If `step` sets a checkbox or switch, how should it end?", {
+            on: "Turned on / checked.",
+            off: "Turned off / unchecked.",
+            na: "`step` sets no checkbox or switch.",
+          }),
+          navigation: choice("Is `step` only one of these browser navigations?", NAVIGATIONS),
+          // Two questions: one choice over "none" + every key spread "none" thin ("I go back": none < 0.3).
+          presses: choice("Does `step` press a keyboard key (not click a button)?", YES_NO),
+          key: choice(
+            "Which keyboard key does `step` press?",
+            Object.fromEntries(INTENT_KEYS.map((k, i) => [`k${i}`, `The ${k} key.`])),
+          ),
+          pressOnly: choice("Is pressing keyboard keys all that `step` asks for?", YES_NO),
+        };
+    const a = (await this.#ask({ state: { step }, questions } as unknown as Parameters<TypeSafeClient["systemOne"]>[0]))
+      .answers as Record<string, Pick>;
+    const out: Intent = {};
+    const v = sure(a.value);
+    if (v && v !== "none") out.value = sp[Number(v.slice(1))];
+    if (check) {
+      out.exact = yes(a.exact);
+    } else {
+      // Bench: a 0.95 gate still read `I enter "invalid" in Email` as an attempt (harmless: typing is done once typed)
+      // and lost a real one, so attempts use the normal gate.
+      out.attempt = yes(a.attempt);
+      const t = sure(a.toggle);
+      out.toggle = t === "on" ? true : t === "off" ? false : undefined;
+      const n = sure(a.navigation);
+      if (n && n !== "none") out.navigation = n as Intent["navigation"];
+      const k = yes(a.presses) ? sure(a.key) : undefined;
+      if (k) out.key = INTENT_KEYS[Number(k.slice(1))];
+      out.pressOnly = yes(a.pressOnly);
+    }
+    return Object.fromEntries(Object.entries(out).filter(([, x]) => x !== undefined)) as Intent;
   }
 
   async assess(step: string, obs: Observation, judged: boolean): Promise<Assessment> {

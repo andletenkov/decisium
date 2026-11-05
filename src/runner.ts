@@ -1,6 +1,6 @@
 import { settings } from "./options.ts";
 import type { Action } from "./browser.ts";
-import { placeholder, readStep, type StepArgument } from "./step.ts";
+import { placeholder, readStep, withIntent, type StepArgument } from "./step.ts";
 import {
   capabilities,
   gate,
@@ -12,6 +12,7 @@ import {
   fmt,
   PAGE,
   type Decider,
+  type Intent,
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
@@ -144,8 +145,9 @@ export async function runAssertion(
   judged = false,
   earlier: Record<string, string> = {},
   arg: StepArgument = {},
+  intent?: Intent,
 ): Promise<StepResult> {
-  const { label: said, values, list, exact } = readStep({ text: step, kind: "assertion", ...arg }); // said: what Jev reads, with the table or doc string
+  const { label: said, values, list, exact } = withIntent(readStep({ text: step, kind: "assertion", ...arg }), intent); // said: what Jev reads, with the table or doc string
   log(`\nAssert: ${said}`);
   const end = finish(log);
   const { table } = arg;
@@ -231,8 +233,9 @@ export async function runStep(
   log = console.log,
   attempt = false,
   docString?: string,
+  intent?: Intent,
 ): Promise<StepResult> {
-  return rt.actionStep(() => act(step, rt, decider, log, attempt, docString), log);
+  return rt.actionStep(() => act(step, rt, decider, log, attempt, docString, intent), log);
 }
 
 /**
@@ -262,8 +265,10 @@ async function act(
   log: typeof console.log,
   attempt: boolean,
   docString?: string,
+  intent?: Intent,
 ): Promise<StepResult> {
-  const read = readStep({ text: step, kind: "action", docString });
+  const read = withIntent(readStep({ text: step, kind: "action", docString }), intent);
+  attempt ||= !!read.attempt;
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
