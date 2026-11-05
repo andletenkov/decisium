@@ -27,6 +27,8 @@ Load them with `--import` (repeatable) or `import` in your [configuration](confi
 decisium run features/campaigns.feature --import steps/campaigns.steps.ts
 ```
 
+TypeScript steps can import local modules without extensions (such as `./helpers`); Decisium loads them automatically.
+
 A client step makes no model call and is not recorded in the cassette.
 
 ## The World

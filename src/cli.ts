@@ -281,6 +281,9 @@ async function main(): Promise<number> {
       format: values.format,
     },
   });
+  const imports = runConfiguration.support.importPaths ?? [];
+  if (imports.some((path) => resolve(path) !== here(`./steps${EXT}`)))
+    runConfiguration.support.importPaths = [here(`./ts-loader${EXT}`), ...imports];
   if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout))
     runConfiguration.formats.stdout = here(`./formatter${EXT}`);
   let settings: Settings;

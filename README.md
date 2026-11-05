@@ -80,6 +80,8 @@ page text around the element, a screenshot, a Playwright trace and a rerun comma
 Decisium runs inside cucumber-js: your `cucumber.mjs`, profiles, formatters (`--format junit:junit.xml`) and your own
 step definitions (`--import`, with `this.page` and `this.context`) keep working.
 
+TypeScript step files can import local modules without extensions (such as `./helpers`); Decisium loads them automatically.
+
 ## Configuration
 
 Put Decisium options in `worldParameters.decisium` in your project's `cucumber.mjs`. `decisium run` loads it automatically:

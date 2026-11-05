@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -23,6 +24,64 @@ function invoke(args: string[]) {
     rmSync(cwd, { recursive: true, force: true });
   }
 }
+
+test("cli: TypeScript client steps resolve extensionless imports in serial and parallel", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-ts-"));
+  try {
+    writeFileSync(join(cwd, "helpers.ts"), 'export const value: string = "loaded";');
+    writeFileSync(
+      join(cwd, "steps.ts"),
+      `import { Given } from ${JSON.stringify(createRequire(import.meta.url).resolve("@cucumber/cucumber"))};\nimport { value } from "./helpers";\nGiven("a client step", function () { if (value !== "loaded" || !this.page) throw new Error("wrong helper or world"); });\n`,
+    );
+    writeFileSync(
+      join(cwd, "hooks.ts"),
+      `import { Before, World, setWorldConstructor } from ${JSON.stringify(createRequire(import.meta.url).resolve("@cucumber/cucumber"))};\nsetWorldConstructor(class extends World {});\nBefore(function () { if (this.browser) throw new Error("client hook ran after Decisium setup"); });\n`,
+    );
+    writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
+    for (const name of ["one", "two"])
+      writeFileSync(join(cwd, `${name}.feature`), `Feature: ${name}\n  Scenario: test\n    Given a client step\n`);
+    const noImports = spawnSync(
+      process.execPath,
+      [cli, "run", "one.feature", "--url", join(cwd, "page.html"), "--record", "none"],
+      {
+        cwd,
+        encoding: "utf8",
+        timeout: 30_000,
+        maxBuffer: 10_000_000,
+        env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "", NODE_DEBUG: "esm" },
+      },
+    );
+    assert.equal(noImports.status, 1, noImports.error?.message ?? noImports.stdout);
+    assert.doesNotMatch(noImports.stderr, /Translating (?:StandardModule|TypeScript) file:.*\/src\/ts-loader\.ts/);
+    for (const parallel of [false, true]) {
+      for (const configured of [false, true]) {
+        writeFileSync(join(cwd, "package.json"), JSON.stringify({ type: configured ? "commonjs" : "module" }));
+        if (configured)
+          writeFileSync(join(cwd, "cucumber.mjs"), 'export default { import: ["hooks.ts", "steps.ts"] };');
+        const result = spawnSync(
+          process.execPath,
+          [
+            cli,
+            "run",
+            "one.feature",
+            ...(parallel ? ["two.feature", "--parallel", "2"] : []),
+            ...(configured ? [] : ["--import", "steps.ts"]),
+            "--url",
+            join(cwd, "page.html"),
+            "--record",
+            "none",
+          ],
+          { cwd, encoding: "utf8", timeout: 30_000, env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "" } },
+        );
+        assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        assert.match(result.stdout, parallel ? /2\/2 scenarios passed/ : /1\/1 scenarios passed/);
+        if (configured) rmSync(join(cwd, "cucumber.mjs"));
+      }
+    }
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
 
 test("cli: bare invocation keeps usage and exit 2", () => {
   const result = invoke([]);
