@@ -284,7 +284,7 @@ async function main(): Promise<number> {
     existsSync(trace) &&
     readFileSync(trace, "utf8")
       .split("\n")
-      .some((l) => l.includes('"type":"result"'));
+      .some((l) => l.trim() && JSON.parse(l).type === "result");
   console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
   if (success && scenarios.length && !ran) {
     console.error(`No scenario ran from ${files.join(", ")}: check the cucumber configuration, profile and tags.`);
