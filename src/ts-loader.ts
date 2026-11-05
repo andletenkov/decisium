@@ -1,3 +1,5 @@
-import { register } from "tsx/esm/api";
+import { register as registerCjs } from "tsx/cjs/api";
+import { register as registerEsm } from "tsx/esm/api";
 
-register();
+registerCjs();
+registerEsm();
