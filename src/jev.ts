@@ -343,6 +343,7 @@ export class JevDecider implements Decider {
             Object.fromEntries(INTENT_KEYS.map((k, i) => [`k${i}`, `The ${k} key.`])),
           ),
           pressOnly: choice("Is pressing keyboard keys all that `step` asks for?", YES_NO),
+          clear: choice("Does `step` ask to empty a field, removing its text?", YES_NO),
         };
     const a = (await this.#ask({ state: { step }, questions } as unknown as Parameters<TypeSafeClient["systemOne"]>[0]))
       .answers as Record<string, Pick>;
@@ -362,6 +363,7 @@ export class JevDecider implements Decider {
       const k = yes(a.presses) ? sure(a.key) : undefined;
       if (k) out.key = INTENT_KEYS[Number(k.slice(1))];
       out.pressOnly = yes(a.pressOnly);
+      out.clear = yes(a.clear);
     }
     return Object.fromEntries(Object.entries(out).filter(([, x]) => x !== undefined)) as Intent;
   }

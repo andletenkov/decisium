@@ -38,3 +38,28 @@ test("cassette: an entry recorded before intents replays with the wording rules 
   assert.equal(calls.n, 0);
   assert.equal(JSON.parse(readFileSync(p, "utf8")).entries["S: I go back"].intent, undefined);
 });
+
+test("runner: an Action step that changed the page stops before a field it gives nothing to type (issue #31)", async () => {
+  const { parseSnapshot } = await import("../src/observation.ts");
+  const { runStep } = await import("../src/runner.ts");
+  const cart = parseSnapshot(`- button "Checkout" [ref=e1]`);
+  const form = parseSnapshot(`- textbox "First Name" [ref=e2]\n- button "Continue" [ref=e3]`);
+  const sure = (choice: string) => ({ choice, probabilities: { [choice]: 0.95, other: 0.05 } });
+  const run = async (done: number) => {
+    let obs = cart;
+    const d = {
+      turn: async (_s: string, o: typeof cart) => ({ done: o === cart ? 0 : done, target: sure(o.elements[0].ref) }),
+    } as unknown as Decider;
+    const rt = {
+      actionStep: (f: () => Promise<unknown>) => f(),
+      observe: async () => obs,
+      execute: async () => {
+        obs = form;
+      },
+      waitForChange: async () => false,
+    };
+    return (await runStep("ich zur Kasse gehe", rt as any, d, () => {})).outcome;
+  };
+  assert.equal(await run(0.77), "DONE");
+  assert.equal(await run(0.3), "AMBIGUOUS"); // Jev thinks there is more to do: still asks for a value
+});

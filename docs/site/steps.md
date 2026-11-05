@@ -6,10 +6,15 @@ do and how to word it. `decisium lint <file.feature>` flags the wordings marked 
 
 ## Rules of thumb
 
+Steps can be written in any wording and, with Gherkin's `# language:` header, in any language Jev reads
+(`examples/saucedemo-de.feature`). The phrasings on this page are read without the model and are always exact; other
+wordings are read by Jev, once per Step, and replayed from the cassette.
+
 1. **One Step, one task**, named by what the user wants, not by the clicks: `I save the draft`, not
    `I click the button labelled Save draft`.
-2. **Quote every value**: what to type, the option to pick, the text a check expects. Decisium only uses values you
-   quoted; it never invents one. A number with a unit can stay unquoted (`2 weeks`).
+2. **Quote a value when the exact text matters**: what to type, the option to pick, the text a check expects. A
+   quoted value is used exactly as written. Unquoted values (`I name the campaign Spring Launch`) are picked out of
+   the Step by Jev and used only when it is sure; Decisium never invents a value that is not in the Step.
 3. **A check quotes exactly what it compares**: one value for a value check, the text to look for in a presence check.
 4. **Name things the way the page labels them**: "heading", "error", "status", "the calendar". Avoid words that also
    name something else; "title" can also mean the browser tab's title.
@@ -71,8 +76,9 @@ number with a unit. Decisium checks the option was chosen.
 
 ### Attempt
 
-A Step starting with "try" or "attempt" is done once the action ran, even if the app refuses it. Use it for negative
-paths and check the refusal after it:
+A Step that tries something the app may refuse is done once the action ran, even if the app refuses it. Starting it
+with "try" or "attempt" makes that certain; other wordings (`I submit the empty form`, `intento continuar sin
+rellenar el formulario`) are recognised by Jev. Use it for negative paths and check the refusal after it:
 
 ```gherkin
 When I try to schedule the campaign
@@ -92,7 +98,8 @@ Already in the wanted state: the Step is done without a click. **Avoid** `I chec
 
 ### Keys
 
-A key is pressed only when the Step names it after "press" or "hit": Playwright's names (`Escape`, `Tab`,
+A key named after "press" or "hit" is always pressed; other wordings (`I close the help with the Escape key`) are
+recognised by Jev. Key names are Playwright's (`Escape`, `Tab`,
 `ArrowDown`, `PageDown`, `Home`, `F2`, …), aliases (`Esc`, `down arrow`, `Return`, `Space`) and `+` combinations
 (`Ctrl+K`, `Shift+Tab`; `Ctrl` is Control, `Cmd` is Meta). The key goes to whatever has focus.
 
@@ -101,8 +108,6 @@ A key is pressed only when the Step names it after "press" or "hit": Playwright'
 | `I press Escape` | Only a key: pressed directly, without the model. |
 | `I open the command palette by pressing Ctrl+K` | The key is offered next to the page's elements. |
 | `I press the down arrow`, `I press "Tab"` | Aliases and quotes both work. |
-
-**Avoid** `I close the help with the Escape key`: without "press" or "hit" no key is pressed.
 
 ### Hover
 

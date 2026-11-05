@@ -169,6 +169,7 @@ export interface Intent {
   key?: string; // Playwright key name
   pressOnly?: boolean;
   value?: string; // a value the Step gives without quotes
+  clear?: boolean; // the Step empties a field ("" becomes a value to type)
   exact?: boolean;
 }
 

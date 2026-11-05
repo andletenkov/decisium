@@ -107,6 +107,7 @@ export function withIntent(read: StepReading, intent: Intent = {}): StepReading 
     out.candidates = [...new Set([intent.value, ...read.candidates])];
   }
   if (intent.exact) out.exact = true;
+  if (intent.clear && !out.candidates.includes("")) out.candidates = [...out.candidates, ""];
   if (intent.key && !read.keys.length) out.keys = [intent.key];
   if (intent.key && intent.pressOnly && !read.pressOnly && !read.navigation) out.pressOnly = intent.key;
   if (intent.toggle === false && read.toggle !== false) out.toggle = false;

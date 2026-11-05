@@ -248,6 +248,7 @@ test("withIntent: Jev fills only what the wording rules missed (issue #31)", () 
   // Checks: an unquoted expected value and exactness.
   const c = withIntent(check("the status should be Scheduled"), { value: "Scheduled", exact: true });
   assert.deepEqual([c.values, c.exact], [["Scheduled"], true]);
+  assert.deepEqual(withIntent(action("je vide le champ de recherche"), { clear: true }).candidates, [""]);
   // No intent: the rules' reading unchanged.
   assert.deepEqual(withIntent(action(`I press Escape`)), { ...action(`I press Escape`), attempt: undefined });
 });

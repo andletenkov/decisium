@@ -369,11 +369,17 @@ async function act(
       if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
         // A file to upload is only ever one the Step quotes (task 0044).
         const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
-        if (!candidates.length)
+        if (!candidates.length) {
+          // Nothing to type, right after an action that changed the page: the field belongs to the next Step, so
+          // done counts at the after-action bar (German "ich zur Kasse gehe": Checkout clicked, done 0.77, then the
+          // First Name field was AMBIGUOUS). Language-neutral: evidence is the page change, not the wording.
+          if (action.verb === "TYPE" && recent.length && unchanged === 0 && t.done >= DONE_AFTER_ACTION)
+            return end("DONE");
           return end(
             "AMBIGUOUS",
             `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`,
           );
+        }
         // A clear Step that quotes nothing allows only "": no question (task 0067: Jev's "" 79% missed the gate).
         const v =
           candidates.length === 1 && candidates[0] === "" && action.verb === "TYPE"

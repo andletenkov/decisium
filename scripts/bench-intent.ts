@@ -23,6 +23,7 @@ interface Labels {
   pressOnly?: boolean;
   values?: string[];
   exact?: boolean;
+  clear?: boolean;
 }
 interface Case extends Labels {
   text: string;
@@ -39,7 +40,7 @@ const ONLY = arg("only");
 const CONCURRENCY = Number(arg("concurrency") ?? 4);
 const OUT = "runs/bench-intent";
 const CACHE = join(OUT, "cache.json");
-const FIELDS = ["attempt", "toggle", "nav", "key", "pressOnly", "values", "exact"] as const;
+const FIELDS = ["attempt", "toggle", "nav", "key", "pressOnly", "clear", "values", "exact"] as const;
 
 /** A reading in the labels' terms. `attempt`: the Step's prefix (rules) or Jev's. */
 function labelsOf(r: StepReading & { attempt?: boolean }, text: string, kind: Kind): Labels {
@@ -50,6 +51,7 @@ function labelsOf(r: StepReading & { attempt?: boolean }, text: string, kind: Ki
     nav: r.navigation ? r.navigation.verb.toLowerCase() : "none",
     key: r.pressOnly ?? r.keys[0] ?? "none",
     pressOnly: !!r.pressOnly,
+    clear: r.candidates.includes(""),
     values: [...r.candidates.filter((c) => c !== ""), ...(r.navigation?.value ? [r.navigation.value] : [])],
   };
 }
