@@ -24,6 +24,30 @@ test("Check: plausible kinds must agree, and agreeing kinds carry the pass toget
   assert.equal(verdict(assessment({ kind: pick({ value: 0.55, absence: 0.45 }) }), obs, expected).outcome, "AMBIGUOUS");
 });
 
+test("Check: Jev vetoes any inexact match the surrounding words negate (issue #28)", () => {
+  const obs = parseSnapshot("- paragraph [ref=e1]: Not Scheduled");
+  const expected = { values: ["Scheduled"] };
+  // No answer (older cassettes, any language): the containment match stands.
+  assert.equal(verdict(assessment(), obs, expected).outcome, "PASSED");
+  assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, expected).outcome, "ASSERTION_FAILED");
+  // The veto never touches an exact value: code alone decides equality.
+  assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, { values: ["Not Scheduled"] }).outcome, "PASSED");
+  // Presence reads the same text, so it is vetoed the same way; absence then holds.
+  const vetoed = (k: string) => ({ kind: pick({ [k]: 1 }), satisfied: 0.02 });
+  assert.equal(verdict(assessment(vetoed("presence")), obs, expected).outcome, "ASSERTION_FAILED");
+  assert.equal(verdict(assessment({ kind: pick({ absence: 1 }) }), obs, expected).outcome, "ASSERTION_FAILED");
+  assert.equal(verdict(assessment(vetoed("absence")), obs, expected).outcome, "PASSED");
+  // A table cell is matched the same way.
+  const rows = parseSnapshot(`- table [ref=t1]:
+  - row [ref=r0]:
+    - columnheader [ref=c0]: Status
+  - row [ref=r1]:
+    - cell [ref=c1]: Not Scheduled`);
+  const table = { values: [], table: [["Status"], ["Scheduled"]] };
+  assert.equal(verdict(assessment(), rows, table).outcome, "PASSED");
+  assert.equal(verdict(assessment({ satisfied: 0.02 }), rows, table).outcome, "ASSERTION_FAILED");
+});
+
 test("Check: subjects and areas agree on outcomes; only passes carry marginal warnings", () => {
   const obs = parseSnapshot(`- region "First" [ref=a1]:
   - paragraph [ref=e1]: Draft
