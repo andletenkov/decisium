@@ -64,8 +64,12 @@ cases that never completes a real journey is a failed design.
    and a rerun command for that scenario. Classify each failure:
    - **The app is wrong** (ASSERTION_FAILED, BLOCKED with the expected control truly missing): keep the Step, and
      report the app behaviour.
-   - **The wording is unclear** (AMBIGUOUS, UNVERIFIABLE, a check that picked the wrong element): reword using
-     https://andletenkov.github.io/decisium/troubleshooting.html, then rerun just that scenario.
+   - **An action target is AMBIGUOUS and the report lists Resolutions**: compare the candidates' role, name,
+     container and disambiguating text/position with the screenshot and the intended action. When one is clearly
+     correct, follow **Pin a Resolution** below instead of rewording or calling Jev again. Probability alone is not
+     evidence that a candidate is correct.
+   - **The wording is unclear** (no clearly correct pinnable Resolution, UNVERIFIABLE, a check that picked the wrong
+     element): reword using https://andletenkov.github.io/decisium/troubleshooting.html, then rerun just that scenario.
    - **`AMBIGUOUS: Jev chose … which is not "X"`** usually means the Step before already used X (it finished the task):
      merge the two Steps, not an app bug.
    - A **marginal pass** warning means the pass rested on a barely-confident answer. Treat it like an unclear wording.
@@ -74,5 +78,24 @@ cases that never completes a real journey is a failed design.
    search box instead of the article) is a false pass. Compare Jev's subject in `report.md` with what the scenario
    means.
 
-Done when the run passes, or every remaining failure is classified as the app being wrong, with the evidence line from
-`report.md`.
+### Pin a Resolution
+
+1. Use the failed Step's `file.feature:line` and the Resolution's 1-based report number:
+   `decisium pin features/campaign.feature:12 2`. Pin writes the chosen Resolution into the existing cassette without
+   a browser, an API key or rewording. Inspect the cassette diff: `pinned` retains the chosen candidate, turn and
+   original probabilities. Keep the pin only when it matches the scenario's intent.
+2. Replay the scenario with `decisium run features/campaign.feature:<scenario-line> --record none`, using the
+   report's scenario location and any original URL/configuration options. Replay needs no `TYPESAFE_API_KEY`;
+   the selected Resolution must still match exactly one element, and the browser must execute the action.
+   Keep the following assertions: pin confirms an action target, not the app's correctness.
+3. Pin supports bounded explicit single-action forms (click, double/right-click, hover, type/fill, select, upload),
+   with quoted target names or control nouns. For exact forms and offline quoted-value rules, read
+   https://andletenkov.github.io/decisium/record-replay.html#pin-an-ambiguous-target before pinning.
+   Checks, compound Steps, unknown continuations, dialog choices, drag destinations, action-table rows and shared
+   Background/Outline lines cannot be pinned. If refused, return to wording repair; keep the expected outcome fixed.
+
+Commit reviewed cassette changes with the feature. `--record all` replaces pins; healing a changed Step replaces its
+pin too. On `UI_CHANGED`, inspect the current UI before healing with `--record new` (calls Jev).
+
+Done when the run passes with assertions intact (after pinning, verify with `--record none`), or every remaining
+failure is classified as the app being wrong, with the evidence line from `report.md`.
