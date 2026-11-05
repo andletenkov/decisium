@@ -43,6 +43,11 @@ Merge them: <code>I publish the post, confirming with &quot;Publish now&quot;</c
 <li><strong>Still unstable: a <a href="client-steps.html">client step</a>.</strong> Code can use any Playwright locator. Each one marks a gap
 worth reporting.</li>
 </ol>
+<h2 id="step-definitions-are-loaded-twice-no-scenario-ran-from">&quot;step definitions are loaded twice&quot; / &quot;No scenario ran from …&quot;</h2>
+<p><code>decisium run</code> adds its own step definitions, so a <code>cucumber.{mjs,ts,json}</code> that also imports them (from a different
+path, e.g. from source) loads them twice: drop that import from the configuration, or run raw <code>npx cucumber-js</code>, which
+uses the configuration alone. <code>No scenario ran from &lt;file&gt;</code> means the named features yielded nothing — a tag
+expression or profile filtered them out, or <code>file.feature:&lt;line&gt;</code> points at no scenario. Both exit 2, never 0.</p>
 <h2 id="what-an-outcome-means-and-what-to-do">What an outcome means and what to do</h2>
 <table>
 <thead>
@@ -113,7 +118,7 @@ worth reporting.</li>
 <p>Selectors tie a test to markup, skip the model, and do not help with the most common failure: deciding when a Step is
 done. Quote what the page shows instead.</p>
 <div class="pager"><a class="prev" href="cucumber-js.html"><span>Previous</span>Running with cucumber-js</a><a class="next" href="agent-skill.html"><span>Next</span>Agent skill</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#a-step-fails-sometimes-passes-other-times">A Step fails sometimes, passes other times</a><a class="l2" href="#what-an-outcome-means-and-what-to-do">What an outcome means and what to do</a><a class="l2" href="#why-not-selectors">Why not selectors</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#a-step-fails-sometimes-passes-other-times">A Step fails sometimes, passes other times</a><a class="l2" href="#step-definitions-are-loaded-twice-no-scenario-ran-from">&amp;quot;step definitions are loaded twice&amp;quot; / &amp;quot;No scenario ran from …&amp;quot;</a><a class="l2" href="#what-an-outcome-means-and-what-to-do">What an outcome means and what to do</a><a class="l2" href="#why-not-selectors">Why not selectors</a></aside>
 </div>
 </body>
 </html>
