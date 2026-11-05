@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
-const commands = ["run", "step", "lint", "doctor", "install"];
+const commands = ["run", "step", "lint", "doctor", "install", "pin"];
 const cli = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -103,6 +103,7 @@ for (const command of commands) {
           "cucumber",
         ],
         step: ["--url", "--headed", "--judged", "--strict"],
+        pin: ["candidate", "pinned", "--record none"],
         lint: ["no browser", "no Jev"],
         doctor: ["Node", "Chromium", "TYPESAFE_API_KEY"],
         install: ["Chromium", "--with-deps"],

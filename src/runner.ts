@@ -413,6 +413,7 @@ async function act(
     // What the action changed, for Jev's next `done` (task 0066: under-confident after working actions).
     const effect = changes(before, next, action.ref);
     log(`  Effect: ${effect}`);
+    if (t.target.confirmed) return end("DONE");
     recent.push(`${described} -> ${effect}`);
     // Drag effect check (task 0065): Jev's done stayed 0.57-0.73 with the item shown in its new list, any wording.
     if (action.verb === "DRAG" && el && dropOn && !landed(obs, el, dropOn) && landed(next, el, dropOn)) {

@@ -9,7 +9,8 @@ A live run asks Jev every time, so a Step whose wording is borderline can end di
    [Record and replay](record-replay.md).
 2. **Read the reason, then reword.** An `AMBIGUOUS` reason names what the Step could mean. Quote the one you mean:
    `I leave for the search page` can mean two links; `I leave by the "Search page" link` cannot. When it is unclear
-   *how* (a Search button or Enter), say how: `… and press Enter`.
+   *how* (a Search button or Enter), say how: `… and press Enter`. If the reported Resolution is correct and completes
+   the action Step, [pin its candidate](record-replay.md#pin-an-ambiguous-target) and replay without a key or rewording.
 3. **Keep together what the page cannot do separately.** If a filter only applies when Search is clicked,
    `I filter the users by role "Admin"` clicks it; a following `I search` has nothing left to do.
 4. **`AMBIGUOUS: Jev chose … which is not "…"`** after a Step that already did the task: the Step before it finished
@@ -30,7 +31,7 @@ expression or profile filtered them out, or `file.feature:<line>` points at no s
 | Outcome | Usually | Do |
 |---|---|---|
 | `ASSERTION_FAILED` | The app is wrong. | Check the app, not the Step. |
-| `AMBIGUOUS` | The Step could mean more than one thing. | Name the element or area; quote its label. |
+| `AMBIGUOUS` | The Step could mean more than one thing. | Name the element or area; quote its label, or pin a reported action-target Resolution. |
 | `UNVERIFIABLE` | The check quotes nothing to compare. | Quote the expected value or text. |
 | `BLOCKED` | The task cannot be done on this page. | Check the start URL and the Steps before it; a hover menu needs "hover". |
 | `ELEMENT_NOT_FOUND` | Nothing matches what the Step names. | Use the page's own label. |

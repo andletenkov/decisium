@@ -5,7 +5,7 @@ import { availableParallelism, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, type ParseArgsConfig } from "node:util";
-import { RECORD_MODES, type RecordMode } from "./cassette.ts";
+import { describe, pin, stepKey, RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { applyOptions, ourStdout, settingWarnings, type Settings } from "./options.ts";
 import { doctor } from "./doctor.ts";
@@ -13,6 +13,7 @@ import { install } from "./install.ts";
 import { lint } from "./lint.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
+import { readStep } from "./step.ts";
 
 // ".ts" from source, ".js" from the built package in dist/.
 const EXT = import.meta.url.slice(-3);
@@ -71,6 +72,11 @@ masked back to the token. A scenario that typed one keeps no Playwright trace (i
 written literally in a Step is sent to Jev, recorded in the cassette and written to log.txt.
 
 Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.`,
+  },
+  pin: {
+    synopsis: "decisium pin <file.feature:line> <n>",
+    notes:
+      "Confirms candidate 1-3 from an AMBIGUOUS target in an explicit single-action Step (click, type, fill, select, upload,\nhover). Writes a reviewable pinned marker without Jev or a browser. Replay with --record none.\nChecks, compound Steps and unresolved continuations cannot be pinned; an unrecorded value must be unambiguous.",
   },
   install: {
     synopsis: "decisium install [--with-deps] [--dry-run]",
@@ -159,6 +165,44 @@ async function main(): Promise<number> {
   if (values.help || cmd === "help") {
     console.log(usage(command));
     return 0;
+  }
+  if (cmd === "pin") {
+    try {
+      const match = /^(.*\.feature):(\d+)$/.exec(arg ?? "");
+      if (!match || positionals.length !== 3) throw new Error(usage("pin"));
+      const scenarios = parseFeature(readFileSync(match[1], "utf8"), match[1]);
+      const matches = scenarios.flatMap((s) =>
+        s.steps.flatMap((step, i) =>
+          step.line === Number(match[2])
+            ? [
+                {
+                  key: stepKey(
+                    s.name,
+                    s.steps.map((p) => readStep(p).label),
+                    i,
+                  ),
+                  step,
+                },
+              ]
+            : [],
+        ),
+      );
+      if (matches.length !== 1)
+        throw new Error("Line must identify exactly one Step (shared Background/Outline Steps cannot be pinned).");
+      if (matches[0].step.table && matches[0].step.kind !== "assertion")
+        throw new Error("Action table rows cannot be pinned by line.");
+      const resolution = pin(
+        match[1].replace(/\.feature$/, ".cassette.json"),
+        matches[0].key,
+        Number(positionals[2]),
+        matches[0].step,
+      );
+      console.log(`Pinned ${describe(resolution)} at ${arg}. Replay with --record none; review the cassette diff.`);
+      return 0;
+    } catch (err) {
+      console.error((err as Error).message);
+      return 2;
+    }
   }
   if (existsSync(".env")) process.loadEnvFile(".env"); // TYPESAFE_API_KEY; never logged
   const env = process.env;

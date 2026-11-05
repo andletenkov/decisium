@@ -8,6 +8,8 @@ export interface Pick {
   probabilities: Record<string, number>;
   /** Replay keeps the confidence used to record this answer, not the current run’s gates. */
   recordedConfidence?: Settings["confidence"];
+  /** Human-confirmed target of an explicit single-action Step; completion still requires browser execution. */
+  confirmed?: boolean;
 }
 export const confidence = (pick: Pick) => pick.recordedConfidence ?? settings().confidence;
 

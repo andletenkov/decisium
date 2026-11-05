@@ -93,8 +93,12 @@ flags wordings to avoid with ⚠. Done when every ⚠ is reworded away, or kept 
 and a rerun command for that scenario. Classify each failure:<ul>
 <li><strong>The app is wrong</strong> (ASSERTION_FAILED, BLOCKED with the expected control truly missing): keep the Step, and
 report the app behaviour.</li>
-<li><strong>The wording is unclear</strong> (AMBIGUOUS, UNVERIFIABLE, a check that picked the wrong element): reword using
-<a href="https://andletenkov.github.io/decisium/troubleshooting.html">https://andletenkov.github.io/decisium/troubleshooting.html</a>, then rerun just that scenario.</li>
+<li><strong>An action target is AMBIGUOUS and the report lists Resolutions</strong>: compare the candidates&#39; role, name,
+container and disambiguating text/position with the screenshot and the intended action. When one is clearly
+correct, follow <strong>Pin a Resolution</strong> below instead of rewording or calling Jev again. Probability alone is not
+evidence that a candidate is correct.</li>
+<li><strong>The wording is unclear</strong> (no clearly correct pinnable Resolution, UNVERIFIABLE, a check that picked the wrong
+element): reword using <a href="https://andletenkov.github.io/decisium/troubleshooting.html">https://andletenkov.github.io/decisium/troubleshooting.html</a>, then rerun just that scenario.</li>
 <li><strong><code>AMBIGUOUS: Jev chose … which is not &quot;X&quot;</code></strong> usually means the Step before already used X (it finished the task):
 merge the two Steps, not an app bug.</li>
 <li>A <strong>marginal pass</strong> warning means the pass rested on a barely-confident answer. Treat it like an unclear wording.</li>
@@ -105,10 +109,29 @@ written. A rewording that makes a check pass by reading a different element (a l
 search box instead of the article) is a false pass. Compare Jev&#39;s subject in <code>report.md</code> with what the scenario
 means.</li>
 </ol>
-<p>Done when the run passes, or every remaining failure is classified as the app being wrong, with the evidence line from
-<code>report.md</code>.</p>
+<h3 id="pin-a-resolution">Pin a Resolution</h3>
+<ol>
+<li>Copy the ready-to-run command printed under the correct Resolution in the console or <code>report.md</code>, e.g.
+<code>decisium pin &#39;features/campaign.feature:12&#39; 2</code>; its Step location and candidate number are already filled in.
+Pin writes the chosen Resolution into the existing cassette without
+a browser, an API key or rewording. Inspect the cassette diff: <code>pinned</code> retains the chosen candidate, turn and
+original probabilities. Keep the pin only when it matches the scenario&#39;s intent.</li>
+<li>Replay the scenario with <code>decisium run features/campaign.feature:&lt;scenario-line&gt; --record none</code>, using the
+report&#39;s scenario location and any original URL/configuration options. Replay needs no <code>TYPESAFE_API_KEY</code>;
+the selected Resolution must still match exactly one element, and the browser must execute the action.
+Keep the following assertions: pin confirms an action target, not the app&#39;s correctness.</li>
+<li>Pin supports bounded explicit single-action forms (click, double/right-click, hover, type/fill, select, upload),
+with quoted target names or control nouns. For exact forms and offline quoted-value rules, read
+<a href="https://andletenkov.github.io/decisium/record-replay.html#pin-an-ambiguous-target">https://andletenkov.github.io/decisium/record-replay.html#pin-an-ambiguous-target</a> before pinning.
+Checks, compound Steps, unknown continuations, dialog choices, drag destinations, action-table rows and shared
+Background/Outline lines cannot be pinned. If refused, return to wording repair; keep the expected outcome fixed.</li>
+</ol>
+<p>Commit reviewed cassette changes with the feature. <code>--record all</code> replaces pins; healing a changed Step replaces its
+pin too. On <code>UI_CHANGED</code>, inspect the current UI before healing with <code>--record new</code> (calls Jev).</p>
+<p>Done when the run passes with assertions intact (after pinning, verify with <code>--record none</code>), or every remaining
+failure is classified as the app being wrong, with the evidence line from <code>report.md</code>.</p>
 <div class="pager"><a class="prev" href="troubleshooting.html"><span>Previous</span>Troubleshooting</a><a class="next" href="examples.html"><span>Next</span>Examples</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#design-when-generating-from-app-code-or-requirements">Design (when generating from app code or requirements)</a><a class="l2" href="#write">Write</a><a class="l2" href="#run-and-repair">Run and repair</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#design-when-generating-from-app-code-or-requirements">Design (when generating from app code or requirements)</a><a class="l2" href="#write">Write</a><a class="l2" href="#run-and-repair">Run and repair</a><a class="l3" href="#pin-a-resolution">Pin a Resolution</a></aside>
 </div>
 </body>
 </html>

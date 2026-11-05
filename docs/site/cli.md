@@ -6,6 +6,7 @@ decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [
              [--parallel <n|auto>] [--report-dir <dir>]
              [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]
              [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]
+decisium pin <file.feature:line> <n>
 decisium install [--with-deps] [--dry-run]
 decisium doctor [<file.feature>...]
 decisium lint <file.feature>...
@@ -43,6 +44,13 @@ Runs one Step against a URL, without a feature file. Handy for trying a wording.
 ```sh
 decisium step "I open the calendar" --url http://localhost:3000
 ```
+
+## pin
+
+`decisium pin features/campaign.feature:12 2` confirms the second reported Resolution for an ambiguous action target
+as the Step's final action. Writes a reviewable `pinned` cassette marker without Jev or a browser. Replay using
+`--record none` needs no API key. Invalid selections leave the cassette unchanged.
+See [Pin an ambiguous target](record-replay.md#pin-an-ambiguous-target) for limits and review guidance.
 
 ## install
 

@@ -34,7 +34,8 @@ replays what it resolved to, with the same outcome every run. Live variation onl
 <a href="record-replay.html">Record and replay</a>.</li>
 <li><strong>Read the reason, then reword.</strong> An <code>AMBIGUOUS</code> reason names what the Step could mean. Quote the one you mean:
 <code>I leave for the search page</code> can mean two links; <code>I leave by the &quot;Search page&quot; link</code> cannot. When it is unclear
-<em>how</em> (a Search button or Enter), say how: <code>… and press Enter</code>.</li>
+<em>how</em> (a Search button or Enter), say how: <code>… and press Enter</code>. If the reported Resolution is correct and completes
+the action Step, <a href="record-replay.html#pin-an-ambiguous-target">pin its candidate</a> and replay without a key or rewording.</li>
 <li><strong>Keep together what the page cannot do separately.</strong> If a filter only applies when Search is clicked,
 <code>I filter the users by role &quot;Admin&quot;</code> clicks it; a following <code>I search</code> has nothing left to do.</li>
 <li><strong><code>AMBIGUOUS: Jev chose … which is not &quot;…&quot;</code></strong> after a Step that already did the task: the Step before it finished
@@ -65,7 +66,7 @@ expression or profile filtered them out, or <code>file.feature:&lt;line&gt;</cod
 <tr>
 <td><code>AMBIGUOUS</code></td>
 <td>The Step could mean more than one thing.</td>
-<td>Name the element or area; quote its label.</td>
+<td>Name the element or area; quote its label, or pin a reported action-target Resolution.</td>
 </tr>
 <tr>
 <td><code>UNVERIFIABLE</code></td>

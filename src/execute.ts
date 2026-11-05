@@ -75,6 +75,11 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
       } else throw err;
     }
     served.push(entry?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome)));
+    if (r.outcome === "AMBIGUOUS" && r.reason?.startsWith("Jev is unsure what to do next:")) {
+      const resolutions =
+        cassette?.resolutions(perRow ? `${key} (row ${i + 1})` : key, { text: row, kind, ...arg }) ?? [];
+      if (resolutions.length) r.reason += `\nResolutions (confirm the final action target):\n${resolutions.join("\n")}`;
+    }
     if (r.outcome !== "DONE" && perRow) r = { ...r, reason: `row ${i + 1} (${row})${r.reason ? `: ${r.reason}` : ""}` };
     if (r.outcome !== "DONE") break;
   }

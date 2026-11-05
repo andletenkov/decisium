@@ -7,13 +7,16 @@ import {
   NotYet,
   PAGE,
   plausible,
+  gate,
+  GATE_TARGET_MARGIN,
   type Assessment,
   type Decider,
   type Intent,
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
-import type { Element, Observation } from "./observation.ts";
+import { parseSnapshot, type Element, type Observation } from "./observation.ts";
+import type { ParsedStep } from "./step.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -51,6 +54,7 @@ interface Entry {
   turns?: Turn[];
   check?: Check;
   recall?: Answer;
+  pinned?: { turn: number; candidate: number; resolution: Resolution; original: Answer }[];
   intent?: Intent; // already gated (jev.ts); absent in cassettes recorded before issue #31: read by the rules alone
 }
 interface File {
@@ -58,6 +62,95 @@ interface File {
   run?: string;
   entries: Record<string, Entry>;
 } // run: id of the run that last saved it
+
+function singleAction(step: ParsedStep): string | undefined {
+  const wording = step.text.replace(/["“][^"”]*["”]/g, "@").trim();
+  const match = /^(?:I\s+)?(double-click|right-click|click|hover over|type|fill|select|upload)\b/i.exec(wording);
+  const verb = match?.[1].toLowerCase();
+  if (!verb || step.kind === "assertion") return;
+  // A positive grammar, not a blacklist of conjunctions: unseen continuations must never become DONE.
+  const role =
+    "(?:button|link|field|textbox|searchbox|combobox|checkbox|radio|tab|item|option|control|slider|spinbutton)";
+  const target = `(?:(?:the|a|an)\\s+)?(?:@(?:\\s+${role})?|${role}(?:\\s+@)?)(?:\\s+in\\s+(?:the\\s+)?@(?:\\s+(?:area|section|region|dialog|list))?)?`;
+  const forms: Record<string, string> = {
+    click: `(?:on\\s+)?${target}`,
+    "double-click": `(?:on\\s+)?${target}`,
+    "right-click": `(?:on\\s+)?${target}`,
+    "hover over": target,
+    type: `@\\s+(?:into|in)\\s+${target}`,
+    fill: `${target}(?:\\s+with\\s+@)?`,
+    select: `@\\s+(?:from|in)\\s+${target}`,
+    upload: `@\\s+to\\s+${target}`,
+  };
+  if (!new RegExp(`^\\s+${forms[verb]}$`, "i").test(wording.slice(match![0].length))) return;
+  return (
+    (
+      { "double-click": "double click", "right-click": "right click", "hover over": "hover", fill: "type" } as Record<
+        string,
+        string
+      >
+    )[verb] ?? verb
+  );
+}
+
+function candidates(entry?: Entry): [Resolution, number][] {
+  const t = entry?.turns?.at(-1);
+  if (!t || "dialog" in t || t.done >= 0.8) return [];
+  // Only element-target uncertainty is pinnable; never override checks or missing values.
+  const probabilities = Object.fromEntries(t.target.map(([, p], i) => [String(i), p]));
+  if (
+    gate(
+      { choice: "0", probabilities },
+      (t.target[0]?.[2] ?? entry?.confidence ?? DEFAULTS.confidence).target,
+      GATE_TARGET_MARGIN,
+    )
+  )
+    return [];
+  return t.target.slice(0, 3).filter((a): a is [Resolution, number] => typeof a[0] !== "string");
+}
+
+/** Confirms one recorded action target. Other confidence gates and UI matching stay intact. */
+export function pin(path: string, key: string, selection: number, step: ParsedStep): Resolution {
+  const file: File = JSON.parse(readFileSync(path, "utf8"));
+  const entry = file.entries[key];
+  const options = candidates(entry);
+  const chosen = options[selection - 1];
+  if (!Number.isInteger(selection) || selection < 1 || !chosen)
+    throw new Error("Choose an available Resolution (1-3) from an AMBIGUOUS action target.");
+  const t = entry.turns!.at(-1)!;
+  if ("dialog" in t) throw new Error("Cannot pin a dialog.");
+  const action = singleAction(step);
+  if (!action)
+    throw new Error(
+      "Pin requires an explicit single action (click, type, fill, select, upload or hover); an unresolved continuation cannot be confirmed offline.",
+    );
+  const obs = parseSnapshot(`- ${chosen[0].role} ${JSON.stringify(chosen[0].name)} [ref=pin]`);
+  const el = obs.elements[0];
+  if (!el || !capabilities(el, obs).includes(action))
+    throw new Error(`The chosen Resolution cannot perform ${action}. Cassette unchanged.`);
+  if (["type", "select", "upload"].includes(action) && !t.value) {
+    const supplied = /^(?:I\s+)?fill\b/i.test(step.text)
+      ? /\bwith\s+["“]([^"”]*)["”]\s*$/i.exec(step.text)
+      : /^(?:I\s+)?(?:type|select|upload)\s+["“]([^"”]*)["”]\s+(?:into|in|from|to)\b/i.exec(step.text);
+    if (!supplied)
+      throw new Error(
+        "This target needs an unrecorded value; use explicit quoted value wording or record the Step instead.",
+      );
+    t.value = [[supplied[1], 1]];
+  }
+  t.action = [[action, 1]];
+  (entry.pinned ??= []).push({
+    turn: entry.turns!.length,
+    candidate: selection,
+    resolution: chosen[0],
+    original: t.target,
+  });
+  t.target = [[chosen[0], 1]];
+
+  writeFileSync(path + ".tmp", JSON.stringify(file, null, 2) + "\n");
+  renameSync(path + ".tmp", path);
+  return chosen[0];
+}
 
 /** Replay-only mode and a Step whose recorded resolution is missing or no longer holds. */
 export class UiChanged extends Error {
@@ -114,8 +207,15 @@ export const describe = (t: Target) =>
     : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.near ? ` near "${t.near}"` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
 
 /** A live answer for the cassette: refs (looked up in `among`) become Resolutions. */
-const store = (p: Pick, among: Element[] = []): Answer =>
-  plausible(p, Math.max(DEFAULTS.confidence.answer, confidence(p).answer)).map((k) => {
+const store = (p: Pick, among: Element[] = [], minimum = 0): Answer =>
+  [
+    ...new Set([
+      ...plausible(p, Math.max(DEFAULTS.confidence.answer, confidence(p).answer)),
+      ...Object.keys(p.probabilities)
+        .sort((a, b) => p.probabilities[b] - p.probabilities[a])
+        .slice(0, minimum),
+    ]),
+  ].map((k) => {
     const el = among.find((e) => e.ref === k);
     const target = el ? resolve(el, among) : k;
     // A healed Step can mix replayed answers with live ones using different confidence.
@@ -263,7 +363,10 @@ export class Cassette {
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
           const a: TurnAnswer = {
             done: t.done,
-            target: loadRecorded(t.target, obs.elements),
+            target: {
+              ...loadRecorded(t.target, obs.elements),
+              ...(e.pinned?.some((p) => p.turn === i + 1) ? { confirmed: true } : {}),
+            },
             action: t.action && loadRecorded(t.action),
           };
           // The recorded action must still be one the recorded target can do (a key the Step names, Enter in a focused field).
@@ -287,7 +390,11 @@ export class Cassette {
             : a.action;
         (now.turns ??= [])[i] = {
           done: a.done,
-          target: store(a.target, obs.elements),
+          target: store(
+            a.target,
+            obs.elements,
+            gate(a.target, confidence(a.target).target, GATE_TARGET_MARGIN) ? 0 : 3,
+          ),
           action: action && store(action),
         };
         return a;
@@ -393,6 +500,11 @@ export class Cassette {
         return "recorded";
       },
     };
+  }
+
+  resolutions(key: string, step: ParsedStep): string[] {
+    if (!singleAction(step)) return [];
+    return candidates(this.#file.entries[key]).map(([r, p], i) => `${i + 1}. ${describe(r)} (${Math.round(p * 100)}%)`);
   }
 
   save() {
