@@ -9,6 +9,7 @@ import {
   plausible,
   type Assessment,
   type Decider,
+  type Intent,
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
@@ -50,6 +51,7 @@ interface Entry {
   turns?: Turn[];
   check?: Check;
   recall?: Answer;
+  intent?: Intent; // already gated (jev.ts); absent in cassettes recorded before issue #31: read by the rules alone
 }
 interface File {
   model: string;
@@ -354,6 +356,13 @@ export class Cassette {
           area: store(a.area, obs.areas),
         };
         return a;
+      },
+      intent: async (step, check) => {
+        // Replayed as recorded; an entry from before intents existed was recorded with the rules alone, so it replays
+        // that way without breaking the Step.
+        if (old && !broken && this.mode !== "all") return (now.intent = old.intent ?? {});
+        if (replayOnly) return (now.intent = {}); // the Step's first question will report the missing resolution
+        return (now.intent = (await live.intent?.(step, check)) ?? {});
       },
       recall: async (step, earlier) => {
         const r = replay((e) => {

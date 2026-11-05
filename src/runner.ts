@@ -1,6 +1,6 @@
 import { settings } from "./options.ts";
 import type { Action } from "./browser.ts";
-import { placeholder, readStep, type StepArgument } from "./step.ts";
+import { placeholder, readStep, withIntent, type StepArgument } from "./step.ts";
 import {
   capabilities,
   gate,
@@ -12,6 +12,7 @@ import {
   fmt,
   PAGE,
   type Decider,
+  type Intent,
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
@@ -144,8 +145,9 @@ export async function runAssertion(
   judged = false,
   earlier: Record<string, string> = {},
   arg: StepArgument = {},
+  intent?: Intent,
 ): Promise<StepResult> {
-  const { label: said, values, list, exact } = readStep({ text: step, kind: "assertion", ...arg }); // said: what Jev reads, with the table or doc string
+  const { label: said, values, list, exact } = withIntent(readStep({ text: step, kind: "assertion", ...arg }), intent); // said: what Jev reads, with the table or doc string
   log(`\nAssert: ${said}`);
   const end = finish(log);
   const { table } = arg;
@@ -231,8 +233,9 @@ export async function runStep(
   log = console.log,
   attempt = false,
   docString?: string,
+  intent?: Intent,
 ): Promise<StepResult> {
-  return rt.actionStep(() => act(step, rt, decider, log, attempt, docString), log);
+  return rt.actionStep(() => act(step, rt, decider, log, attempt, docString, intent), log);
 }
 
 /**
@@ -262,8 +265,10 @@ async function act(
   log: typeof console.log,
   attempt: boolean,
   docString?: string,
+  intent?: Intent,
 ): Promise<StepResult> {
-  const read = readStep({ text: step, kind: "action", docString });
+  const read = withIntent(readStep({ text: step, kind: "action", docString }), intent);
+  attempt ||= !!read.attempt;
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const end = finish(log);
@@ -364,11 +369,17 @@ async function act(
       if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
         // A file to upload is only ever one the Step quotes (task 0044).
         const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
-        if (!candidates.length)
+        if (!candidates.length) {
+          // Nothing to type, right after an action that changed the page: the field belongs to the next Step, so
+          // done counts at the after-action bar (German "ich zur Kasse gehe": Checkout clicked, done 0.77, then the
+          // First Name field was AMBIGUOUS). Language-neutral: evidence is the page change, not the wording.
+          if (action.verb === "TYPE" && recent.length && unchanged === 0 && t.done >= DONE_AFTER_ACTION)
+            return end("DONE");
           return end(
             "AMBIGUOUS",
             `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`,
           );
+        }
         // A clear Step that quotes nothing allows only "": no question (task 0067: Jev's "" 79% missed the gate).
         const v =
           candidates.length === 1 && candidates[0] === "" && action.verb === "TYPE"

@@ -30,11 +30,15 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <strong>action</strong> (it changes the page) or a <strong>check</strong> (it verifies what the page shows). This page lists what each kind can
 do and how to word it. <code>decisium lint &lt;file.feature&gt;</code> flags the wordings marked <strong>Avoid</strong> below.</p>
 <h2 id="rules-of-thumb">Rules of thumb</h2>
+<p>Steps can be written in any wording and, with Gherkin&#39;s <code># language:</code> header, in any language Jev reads
+(<code>examples/saucedemo-de.feature</code>). The phrasings on this page are read without the model and are always exact; other
+wordings are read by Jev, once per Step, and replayed from the cassette.</p>
 <ol>
 <li><strong>One Step, one task</strong>, named by what the user wants, not by the clicks: <code>I save the draft</code>, not
 <code>I click the button labelled Save draft</code>.</li>
-<li><strong>Quote every value</strong>: what to type, the option to pick, the text a check expects. Decisium only uses values you
-quoted; it never invents one. A number with a unit can stay unquoted (<code>2 weeks</code>).</li>
+<li><strong>Quote a value when the exact text matters</strong>: what to type, the option to pick, the text a check expects. A
+quoted value is used exactly as written. Unquoted values (<code>I name the campaign Spring Launch</code>) are picked out of
+the Step by Jev and used only when it is sure; Decisium never invents a value that is not in the Step.</li>
 <li><strong>A check quotes exactly what it compares</strong>: one value for a value check, the text to look for in a presence check.</li>
 <li><strong>Name things the way the page labels them</strong>: &quot;heading&quot;, &quot;error&quot;, &quot;status&quot;, &quot;the calendar&quot;. Avoid words that also
 name something else; &quot;title&quot; can also mean the browser tab&#39;s title.</li>
@@ -129,8 +133,8 @@ number with a unit. Decisium checks the option was chosen.</p>
 <h3 id="submit-and-act">Submit and act</h3>
 <p><code>I save the draft</code>, <code>I schedule the campaign</code>, <code>I delete the campaign</code>. Name the task; Decisium finds the control.</p>
 <h3 id="attempt">Attempt</h3>
-<p>A Step starting with &quot;try&quot; or &quot;attempt&quot; is done once the action ran, even if the app refuses it. Use it for negative
-paths and check the refusal after it:</p>
+<p>A Step that tries something the app may refuse is done once the action ran, even if the app refuses it. Starting it
+with &quot;try&quot; or &quot;attempt&quot; makes that certain; other wordings (<code>I submit the empty form</code>, <code>intento continuar sin rellenar el formulario</code>) are recognised by Jev. Use it for negative paths and check the refusal after it:</p>
 <pre><code class="language-gherkin">When I try to schedule the campaign
 Then the error should say &quot;Set an activation date before scheduling&quot;
 </code></pre>
@@ -161,7 +165,8 @@ Then the error should say &quot;Set an activation date before scheduling&quot;
 </tbody></table>
 <p>Already in the wanted state: the Step is done without a click. <strong>Avoid</strong> <code>I check &quot;Weekly digest&quot; and save</code>: split it.</p>
 <h3 id="keys">Keys</h3>
-<p>A key is pressed only when the Step names it after &quot;press&quot; or &quot;hit&quot;: Playwright&#39;s names (<code>Escape</code>, <code>Tab</code>,
+<p>A key named after &quot;press&quot; or &quot;hit&quot; is always pressed; other wordings (<code>I close the help with the Escape key</code>) are
+recognised by Jev. Key names are Playwright&#39;s (<code>Escape</code>, <code>Tab</code>,
 <code>ArrowDown</code>, <code>PageDown</code>, <code>Home</code>, <code>F2</code>, …), aliases (<code>Esc</code>, <code>down arrow</code>, <code>Return</code>, <code>Space</code>) and <code>+</code> combinations
 (<code>Ctrl+K</code>, <code>Shift+Tab</code>; <code>Ctrl</code> is Control, <code>Cmd</code> is Meta). The key goes to whatever has focus.</p>
 <table>
@@ -184,7 +189,6 @@ Then the error should say &quot;Set an activation date before scheduling&quot;
 <td>Aliases and quotes both work.</td>
 </tr>
 </tbody></table>
-<p><strong>Avoid</strong> <code>I close the help with the Escape key</code>: without &quot;press&quot; or &quot;hit&quot; no key is pressed.</p>
 <h3 id="hover">Hover</h3>
 <p><code>I hover over the help button</code>: say &quot;hover&quot; for a tooltip or a menu that opens on mouse-over; a plain click would close
 it again. What the hover shows is then part of the page: <code>the tooltip should say &quot;Opens the docs&quot;</code>. A <code>title</code>

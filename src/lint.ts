@@ -42,13 +42,7 @@ export function warnings(
       out.push(
         `"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}, Keys)`,
       );
-    if (
-      !/\b(press(es|ed|ing)?|hit(s|ting)?)\b/i.test(t) &&
-      /\b(Esc|Escape)\b|\b(Tab|Enter|Return|Space|Backspace|Delete|Home|End|arrow|F\d+) key\b|\b(Ctrl|Control|Shift|Alt|Cmd|Meta)\s*\+\s*\w/i.test(
-        t,
-      )
-    )
-      out.push(`names a key without "press" or "hit", so no key is offered: say "press Escape" (${SEE}, Keys)`);
+    // A key named without "press"/"hit" is read by Jev at run time (issue #31): no warning.
     if (
       /^(I\s+)?(accept|dismiss|cancel|answer|confirm)\s+(the\s+)?(alert|confirm|confirmation|prompt|browser dialog)\b/i.test(
         t,

@@ -48,14 +48,19 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     ? { outcome: "DONE" }
     : { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
   const served: StepReport["cassette"][] = [];
+  const unquoted: [string, string][] = []; // values Jev read without quotes: scenario memory too
   for (const [i, row] of rows.entries()) {
     const entry = cassette?.step(perRow ? `${key} (row ${i + 1})` : key, live, log);
     const decider = trace(entry ?? live);
     try {
+      // How Jev reads the wording (issue #31); DECISIUM_NO_INTENT=1 keeps the wording rules alone (A/B runs).
+      const intent = process.env.DECISIUM_NO_INTENT === "1" ? {} : await decider.intent?.(row, kind === "assertion");
+      if (intent && Object.keys(intent).length) log(`  Intent: ${JSON.stringify(intent)}`);
+      if (intent?.value && kind !== "assertion") unquoted.push([intent.value, row]);
       r =
         kind === "assertion"
-          ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg)
-          : await runStep(row, rt, decider, log, kind === "attempt", docString);
+          ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg, intent)
+          : await runStep(row, rt, decider, log, kind === "attempt", docString, intent);
     } catch (err) {
       if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
         // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).
@@ -76,6 +81,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   if (r.marginal && ctx.strict)
     r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
   for (const row of rows) for (const v of readStep({ text: row, kind }).quoted) earlier[v] = row;
+  for (const [v, row] of unquoted) earlier[v] ??= row;
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
   return {
     ...r,

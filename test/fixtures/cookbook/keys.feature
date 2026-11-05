@@ -21,7 +21,7 @@ Feature: Keys (task 0039)
     When I press "Tab"
     Then the status should be "Focus: Note"
 
-  # Should FAIL: without "press" or "hit" no key is offered, and the help has no button to close it.
+  # Should FAIL by the wording rules alone (its cassette predates #31): without "press" or "hit" they offer no key.
   Scenario: A key named without press
     When I open the keyboard help
     And I close the help with the Escape key

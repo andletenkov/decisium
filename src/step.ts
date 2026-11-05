@@ -1,6 +1,7 @@
 // The Step language (task 0052): what a Step's text, Data table and Doc string mean to the runtime, read in one place.
 // The runner, Jev's questions, lint, reports and cassette keys all read a Step through readStep().
 import { PickleStepType } from "@cucumber/messages";
+import type { Intent } from "./decision.ts";
 
 export type StepKind = "action" | "attempt" | "assertion";
 
@@ -79,6 +80,45 @@ export function readStep(step: ParsedStep): StepReading {
     placeholders: [...withDoc, ...(table?.flat() ?? [])].filter((v) => placeholder(v)),
     badCell: isCheck ? undefined : table?.flat().find((c) => !c.trim() || /["“”]/.test(c)),
   };
+}
+
+/** Contiguous word spans of `text` (quotes dropped), up to 8 words: what Jev can name as an unquoted value. */
+export function spans(text: string): string[] {
+  const words = text
+    .replace(/["“”]/g, "")
+    .split(/\s+/)
+    .map((w) => w.replace(/[.,!?;:]+$/, ""))
+    .filter(Boolean);
+  const out = new Set<string>();
+  for (let i = 0; i < words.length; i++)
+    for (let n = 1; n <= 8 && i + n <= words.length; n++) out.add(words.slice(i, i + n).join(" "));
+  return [...out];
+}
+
+/**
+ * The reading with Jev's Intent added where the wording rules read their default (issue #31): rules first, Jev only
+ * fills what they missed, so a Step the rules read is read as before. Bench (scripts/bench-intent.ts): 98-100% on
+ * the repo's Steps, 71-100% on dialect-free ones (rules alone 43-92%).
+ */
+export function withIntent(read: StepReading, intent: Intent = {}): StepReading & { attempt?: boolean } {
+  const out: StepReading & { attempt?: boolean } = { ...read, attempt: intent.attempt };
+  if (intent.value !== undefined && !read.quoted.length) {
+    out.values = [...read.values, intent.value];
+    out.candidates = [...new Set([intent.value, ...read.candidates])];
+  }
+  if (intent.exact) out.exact = true;
+  if (intent.clear && !out.candidates.includes("")) out.candidates = [...out.candidates, ""];
+  if (intent.key && !read.keys.length) out.keys = [intent.key];
+  if (intent.key && intent.pressOnly && !read.pressOnly && !read.navigation) out.pressOnly = intent.key;
+  if (intent.toggle === false && read.toggle !== false) out.toggle = false;
+  else if (intent.toggle === true && read.toggle === undefined) out.toggle = true;
+  if (intent.navigation && !read.navigation && !out.pressOnly) {
+    const url = intent.value ?? read.quoted[0];
+    if (intent.navigation !== "GOTO") out.navigation = { verb: intent.navigation };
+    else if (url && /^(\/|\?|#|\.\.?\/|[a-z][a-z\d+.-]*:\/\/)/i.test(url))
+      out.navigation = { verb: "GOTO", value: url };
+  }
+  return out;
 }
 
 /** "try"/"attempt" right after the keyword marks an Attempt step: done once performed, even if the app rejects it. */

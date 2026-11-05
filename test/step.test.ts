@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readStep, type ParsedStep } from "../src/step.ts";
+import { readStep, spans, withIntent, type ParsedStep } from "../src/step.ts";
 
 const action = (text: string, more: Partial<ParsedStep> = {}) => readStep({ text, kind: "action", ...more });
 const check = (text: string, more: Partial<ParsedStep> = {}) => readStep({ text, kind: "assertion", ...more });
@@ -218,3 +218,42 @@ test("readStep: clear/empty offers an empty TYPE candidate only in action wordin
 });
 
 test("readStep: a Step pastes only when it says paste and quotes nothing (task 0062)", () => {});
+
+test("withIntent: Jev fills only what the wording rules missed (issue #31)", () => {
+  // Rules first: a quoted value, a key or a navigation they read is kept.
+  const quoted = withIntent(action(`I enter "Winter Sale" as the name`), { value: "Winter", key: "Enter" });
+  assert.deepEqual([quoted.candidates, quoted.keys], [["Winter Sale"], ["Enter"]]);
+  assert.deepEqual(withIntent(action("I go back"), { navigation: "RELOAD" }).navigation, { verb: "BACK" });
+  // Unquoted value, key, navigation, toggle off, attempt: added.
+  assert.deepEqual(withIntent(action("I enter Winter Sale as the name"), { value: "Winter Sale" }).candidates, [
+    "Winter Sale",
+  ]);
+  assert.equal(withIntent(action("I close the dialog with the escape key"), { key: "Escape" }).keys[0], "Escape");
+  assert.equal(withIntent(action("I hit escape now"), { key: "Escape", pressOnly: true }).pressOnly, "Escape");
+  assert.deepEqual(withIntent(action("I return to the previous page"), { navigation: "BACK" }).navigation, {
+    verb: "BACK",
+  });
+  assert.equal(withIntent(action("I make sure the newsletter is off"), { toggle: false }).toggle, false);
+  assert.equal(withIntent(action("I accept the terms and continue"), { toggle: true }).toggle, true); // "and": rules read none
+  assert.equal(withIntent(action("I submit the empty form"), { attempt: true }).attempt, true);
+  // GOTO needs something URL-like: a page name is Jev's turn, not a navigation.
+  assert.equal(
+    withIntent(action("I visit the settings page"), { navigation: "GOTO", value: "settings page" }).navigation,
+    undefined,
+  );
+  assert.deepEqual(withIntent(action("I visit /settings now"), { navigation: "GOTO", value: "/settings" }).navigation, {
+    verb: "GOTO",
+    value: "/settings",
+  });
+  // Checks: an unquoted expected value and exactness.
+  const c = withIntent(check("the status should be Scheduled"), { value: "Scheduled", exact: true });
+  assert.deepEqual([c.values, c.exact], [["Scheduled"], true]);
+  assert.deepEqual(withIntent(action("je vide le champ de recherche"), { clear: true }).candidates, [""]);
+  // No intent: the rules' reading unchanged.
+  assert.deepEqual(withIntent(action(`I press Escape`)), { ...action(`I press Escape`), attempt: undefined });
+});
+
+test("spans: word runs up to 8 words, quotes and trailing punctuation dropped", () => {
+  assert.deepEqual(spans(`I add "Milk".`), ["I", "I add", "I add Milk", "add", "add Milk", "Milk"]);
+  assert.equal(spans("a b c d e f g h i j").includes("a b c d e f g h i"), false);
+});

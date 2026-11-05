@@ -1787,9 +1787,10 @@ test("lint: a key that is not a key name, or named without press/hit, is never p
     `I enter "abc" as the API key`,
   ])
     assert.equal(w(ok), "", ok);
-  assert.match(w("I open the palette with Ctrl+K"), /without "press"/);
   assert.match(w("I press the Foo key"), /"Foo" is not a key name/);
-  assert.match(w("I close the dialog with the Escape key"), /without "press"/);
+  // Keys named without "press" are Jev's reading now (issue #31).
+  assert.equal(w("I open the palette with Ctrl+K"), "");
+  assert.equal(w("I close the dialog with the Escape key"), "");
 });
 
 test("dialogs: the Step that opened a dialog answers it; unsure or alert = dismiss; message readable until the next action Step (task 0040)", async () => {
