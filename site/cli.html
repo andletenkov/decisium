@@ -31,6 +31,7 @@ decisium run &lt;file.feature[:line]&gt;... [--url &lt;url|file&gt;] [--headed] 
              [--parallel &lt;n|auto&gt;] [--report-dir &lt;dir&gt;]
              [--confidence-target &lt;p&gt;] [--confidence-answer &lt;p&gt;] [--check-timeout &lt;ms&gt;] [--action-timeout &lt;ms&gt;]
              [--max-turns &lt;n&gt;] [--format &lt;name[:path]&gt;] [--import &lt;file&gt;] [-p &lt;profile&gt;] [--no-agent-report] [-v] [--debug]
+decisium pin &lt;file.feature:line&gt; &lt;n&gt;
 decisium install [--with-deps] [--dry-run]
 decisium doctor [&lt;file.feature&gt;...]
 decisium lint &lt;file.feature&gt;...
@@ -121,6 +122,11 @@ decisium lint &lt;file.feature&gt;...
 <p>Runs one Step against a URL, without a feature file. Handy for trying a wording.</p>
 <pre><code class="language-sh">decisium step &quot;I open the calendar&quot; --url http://localhost:3000
 </code></pre>
+<h2 id="pin">pin</h2>
+<p><code>decisium pin features/campaign.feature:12 2</code> confirms the second reported Resolution for an ambiguous action target
+as the Step&#39;s final action. Writes a reviewable <code>pinned</code> cassette marker without Jev or a browser. Replay using
+<code>--record none</code> needs no API key. Invalid selections leave the cassette unchanged.
+See <a href="record-replay.html#pin-an-ambiguous-target">Pin an ambiguous target</a> for limits and review guidance.</p>
 <h2 id="install">install</h2>
 <p>Downloads the Chromium build Decisium&#39;s own Playwright drives, so the version always matches (<code>npx playwright install</code>
 may fetch a different Playwright). <code>--with-deps</code> also installs the system libraries Chromium needs (Linux, e.g. CI);
@@ -133,7 +139,7 @@ may fetch a different Playwright). <code>--with-deps</code> also installs the sy
 <h2 id="exit-codes">Exit codes</h2>
 <p><code>0</code> passed, <code>1</code> a scenario failed, <code>2</code> configuration or infrastructure error.</p>
 <div class="pager"><a class="prev" href="client-steps.html"><span>Previous</span>Client steps</a><a class="next" href="record-replay.html"><span>Next</span>Record and replay</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#run">run</a><a class="l2" href="#step">step</a><a class="l2" href="#install">install</a><a class="l2" href="#doctor">doctor</a><a class="l2" href="#lint">lint</a><a class="l2" href="#exit-codes">Exit codes</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#run">run</a><a class="l2" href="#step">step</a><a class="l2" href="#pin">pin</a><a class="l2" href="#install">install</a><a class="l2" href="#doctor">doctor</a><a class="l2" href="#lint">lint</a><a class="l2" href="#exit-codes">Exit codes</a></aside>
 </div>
 </body>
 </html>

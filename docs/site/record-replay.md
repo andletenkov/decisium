@@ -25,6 +25,33 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
 A live run asks Jev every time, so a Step close to the confidence gate can end differently from run to run. Replays
 do not. See [Troubleshooting](troubleshooting.md). Backend requests can be replayed too: [Network replay](network-replay.md).
 
+## Pin an ambiguous target
+
+When an action fails because Jev is unsure which element to use, the failure report lists up to three **Resolutions**
+(role, name, container and any disambiguating text/position). Inspect the screenshot, then confirm the correct one:
+
+```sh
+decisium pin features/campaign.feature:12 2
+decisium run features/campaign.feature --record none
+```
+
+No `TYPESAFE_API_KEY`, browser or rewording is needed to pin. The number is the Resolution's 1-based report index.
+The cassette keeps a `pinned` marker with the chosen Resolution, candidate number, turn and original probabilities;
+review and commit the diff. Replay still requires that Resolution to match exactly one element.
+
+Pin supports **explicit single-action Steps** starting with `I click`, `I double-click`, `I right-click`, `I hover over`,
+`I type`, `I fill`, `I select` or `I upload` (the `I` is optional). Compound Steps and unresolved continuations are
+rejected rather than inventing a model completion. The browser must execute the confirmed action successfully;
+later assertion Steps still check the result. Pin never makes a failed assertion pass.
+
+For typing/selecting/uploading, an existing recorded value is preserved. If none was recorded, pin accepts only an
+explicit quoted value: `I type "Ada" into …`, `I fill … with "Ada"`, `I select "Weekly" from …`, or
+`I upload "file.txt" to …`. Container names are never inferred as values; otherwise reword and record instead.
+The explicit action must be compatible with the selected control. Checks, dialog choices, drag destinations,
+action-table rows, and lines shared by multiple Background/Outline instances are not pinnable.
+Older cassettes may have fewer than three candidates. Only recorded candidates can be selected.
+`--record all` replaces pins along with the rest of the recording; healing a changed Step replaces its pin too.
+
 ## Waiting on replay
 
 A replay waits the way a Playwright spec does, not after every action:

@@ -57,6 +57,8 @@ export function parseOutcome(message: string): { outcome: string; reason: string
   return { outcome: m[1], reason: (m[2] ?? "").replaceAll(JOINER, "") };
 }
 
+const pinCommand = (where: string) => `decisium pin '${where.replaceAll("'", "'\\''")}' <n>`;
+
 /** A failure in plain words: where, what, why, what to do, and where to look. */
 export function failureReport(
   where: string,
@@ -72,6 +74,7 @@ export function failureReport(
     `  at ${where}  ${KIND[kind]}: ${step}`,
     `  ${r.outcome}${r.reason ? `: ${r.reason}` : ""}`,
     HINTS[r.outcome] && `  What to do: ${HINTS[r.outcome]}`,
+    r.reason?.includes("\nResolutions (") && `  Confirm: ${pinCommand(where)}; then replay with --record none.`,
     screenshot && `  Screenshot: ${screenshot}`,
     trace && `  Playwright trace: ${traceRef(trace)}`,
   ]
@@ -202,15 +205,27 @@ function failureSection(f: AgentFailure, n: number): string[] {
     .slice(0, SNIPPET * 2);
   // A fence longer than any backtick run in the page text: the page cannot close it.
   const fence = "`".repeat(
-    Math.max(3, ...[...(excerpt + answers.join("\n")).matchAll(/`+/g)].map((m) => m[0].length + 1)),
+    Math.max(3, ...[...(excerpt + answers.join("\n") + (f.reason ?? "")).matchAll(/`+/g)].map((m) => m[0].length + 1)),
   );
   const where = anchor && name(anchor, lines) ? `[ref=${anchor}]` : "the top of the page";
   return [
     `## ${n}. ${f.outcome}: ${f.scenario}`,
     "",
     `- ${KIND[f.kind]} at ${f.where}: ${f.step}`,
-    f.reason ? `- Reason: ${f.reason.replace(/\s+/g, " ")}` : undefined,
+    f.reason ? `- Reason: ${f.reason.split("\nResolutions (")[0].replace(/\s+/g, " ")}` : undefined,
     HINTS[f.outcome] && `- What to do: ${HINTS[f.outcome]}`,
+    ...(f.reason?.includes("\nResolutions (")
+      ? [
+          "",
+          "### Resolutions (UNTRUSTED: element names from the app)",
+          "",
+          `${fence}text`,
+          f.reason.slice(f.reason.indexOf("\nResolutions (") + 1),
+          fence,
+          "",
+          `Confirm: ${pinCommand(f.where)}; then replay with --record none.`,
+        ]
+      : []),
     `- Rerun this scenario: \`${f.rerun}\``,
     f.screenshot && `- Screenshot: ${f.screenshot}`,
     f.trace && `- Playwright trace: ${f.trace.endsWith(".zip") ? `\`${traceRef(f.trace)}\`` : f.trace}`,
