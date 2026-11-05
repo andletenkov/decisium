@@ -282,14 +282,8 @@ async function main(): Promise<number> {
     },
   });
   const imports = runConfiguration.support.importPaths ?? [];
-  const steps = here(`./steps${EXT}`);
-  if (imports.some((path) => resolve(path) !== steps))
-    // Load Decisium natively before tsx, so its transformed source maps cannot corrupt Node's coverage totals.
-    runConfiguration.support.importPaths = [
-      steps,
-      here(`./ts-loader${EXT}`),
-      ...imports.filter((path) => resolve(path) !== steps),
-    ];
+  if (imports.some((path) => resolve(path) !== here(`./steps${EXT}`)))
+    runConfiguration.support.importPaths = [here(`./ts-loader${EXT}`), ...imports];
   if (ourStdout(useConfiguration.format, runConfiguration.formats.stdout))
     runConfiguration.formats.stdout = here(`./formatter${EXT}`);
   let settings: Settings;
