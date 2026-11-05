@@ -36,6 +36,19 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
     writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
     for (const name of ["one", "two"])
       writeFileSync(join(cwd, `${name}.feature`), `Feature: ${name}\n  Scenario: test\n    Given a client step\n`);
+    const noImports = spawnSync(
+      process.execPath,
+      [cli, "run", "one.feature", "--url", join(cwd, "page.html"), "--record", "none"],
+      {
+        cwd,
+        encoding: "utf8",
+        timeout: 30_000,
+        maxBuffer: 10_000_000,
+        env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "", NODE_DEBUG: "esm" },
+      },
+    );
+    assert.equal(noImports.status, 1, noImports.error?.message ?? noImports.stdout);
+    assert.doesNotMatch(noImports.stderr, /Translating (?:StandardModule|TypeScript) file:.*\/src\/ts-loader\.ts/);
     for (const parallel of [false, true]) {
       for (const configured of [false, true]) {
         writeFileSync(join(cwd, "package.json"), JSON.stringify({ type: configured ? "commonjs" : "module" }));
