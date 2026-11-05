@@ -291,9 +291,9 @@ export class Cassette {
     }
   }
 
-  /** Entries of a file on disk worth keeping: same model, and in `all` mode only those recorded in this run. */
+  /** Entries of a file on disk worth keeping: in `all` mode only those recorded in this run. */
   #keep(file: File | undefined, thisRun: boolean): Record<string, Entry> | undefined {
-    return file && file.model === this.model && (this.mode !== "all" || thisRun) ? file.entries : undefined;
+    return file && (this.mode !== "all" || thisRun) ? file.entries : undefined;
   }
 
   /**

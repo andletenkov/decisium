@@ -758,12 +758,29 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   assert.deepEqual(await go(heal, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
   assert.deepEqual([heal.healed, heal.replayed, calls], [1, 1, 2]);
 
-  // Missing step in replay-only mode; a different model discards the cassette.
+  // Missing step in replay-only mode still fails; model upgrades replay recorded resolutions.
   await assert.rejects(async () => {
     const d = new Cassette(path, "m1", "none").step("new step", live);
     await d.turn("x", two, []);
   }, UiChanged);
-  await assert.rejects(go(new Cassette(path, "m2", "none"), page("3")), UiChanged);
+  calls = 0;
+  assert.deepEqual(await go(new Cassette(path, "m2", "none"), page("3")), {
+    outcome: "DONE",
+    check: "PASSED",
+    clicked: ["e3"],
+  });
+  assert.equal(calls, 0);
+  const upgraded = new Cassette(path, "m2", "new");
+  assert.deepEqual(await go(upgraded, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
+  assert.deepEqual([upgraded.healed, upgraded.replayed, calls], [1, 1, 2]);
+  upgraded.save();
+  calls = 0;
+  assert.deepEqual(await go(new Cassette(path, "m2", "none"), two), {
+    outcome: "DONE",
+    check: "PASSED",
+    clicked: ["e9"],
+  });
+  assert.equal(calls, 0);
 });
 
 test("resolution: look-alikes are told apart by nearby text, never by position", async () => {
@@ -801,6 +818,11 @@ test("cassette: scenarios of one feature on different workers share it; the run 
   await record(new Cassette(path, "m1", "new", since), "a");
   await record(new Cassette(path, "m1", "new", since), "b");
   assert.equal(keys(), 2); // merged, not overwritten
+
+  const upgraded = new Cassette(path, "m2", "new", "run-upgrade");
+  await record(new Cassette(path, "m1", "new", "run-other"), "c");
+  await record(upgraded, "d");
+  assert.deepEqual(Object.keys(JSON.parse(readFileSync(path, "utf8")).entries).sort(), ["a", "b", "c", "d"]);
 
   // all: entries from before the run are dropped, entries from this run's other workers kept.
   writeFileSync(path, JSON.stringify({ model: "m1", entries: { stale: {} } }));
