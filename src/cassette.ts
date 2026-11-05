@@ -63,6 +63,13 @@ interface File {
   entries: Record<string, Entry>;
 } // run: id of the run that last saved it
 
+function formatFile(file: File): string {
+  const { entries, ...header } = file;
+  const properties = JSON.stringify(header, null, 2).slice(2, -2);
+  const lines = Object.entries(entries).map(([key, entry]) => `    ${JSON.stringify(key)}: ${JSON.stringify(entry)}`);
+  return `{\n${properties},\n  "entries": {${lines.length ? `\n${lines.join(",\n")}\n  ` : ""}}\n}\n`;
+}
+
 function singleAction(step: ParsedStep): string | undefined {
   const wording = step.text.replace(/["“][^"”]*["”]/g, "@").trim();
   const match = /^(?:I\s+)?(double-click|right-click|click|hover over|type|fill|select|upload)\b/i.exec(wording);
@@ -147,7 +154,7 @@ export function pin(path: string, key: string, selection: number, step: ParsedSt
   });
   t.target = [[chosen[0], 1]];
 
-  writeFileSync(path + ".tmp", JSON.stringify(file, null, 2) + "\n");
+  writeFileSync(path + ".tmp", formatFile(file));
   renameSync(path + ".tmp", path);
   return chosen[0];
 }
@@ -511,7 +518,7 @@ export class Cassette {
     if (!this.#dirty) return;
     const { file, thisRun } = this.#read(); // another worker may have saved scenarios of this feature since
     this.#file.entries = { ...this.#keep(file, thisRun), ...this.#file.entries };
-    writeFileSync(this.path + ".tmp", JSON.stringify(this.#file, null, 2) + "\n");
+    writeFileSync(this.path + ".tmp", formatFile(this.#file));
     renameSync(this.path + ".tmp", this.path); // atomic: a crash mid-save never leaves half a cassette
   }
 }
