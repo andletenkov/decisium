@@ -111,8 +111,9 @@ means.</li>
 </ol>
 <h3 id="pin-a-resolution">Pin a Resolution</h3>
 <ol>
-<li>Use the failed Step&#39;s <code>file.feature:line</code> and the Resolution&#39;s 1-based report number:
-<code>decisium pin features/campaign.feature:12 2</code>. Pin writes the chosen Resolution into the existing cassette without
+<li>Copy the ready-to-run command printed under the correct Resolution in the console or <code>report.md</code>, e.g.
+<code>decisium pin &#39;features/campaign.feature:12&#39; 2</code>; its Step location and candidate number are already filled in.
+Pin writes the chosen Resolution into the existing cassette without
 a browser, an API key or rewording. Inspect the cassette diff: <code>pinned</code> retains the chosen candidate, turn and
 original probabilities. Keep the pin only when it matches the scenario&#39;s intent.</li>
 <li>Replay the scenario with <code>decisium run features/campaign.feature:&lt;scenario-line&gt; --record none</code>, using the

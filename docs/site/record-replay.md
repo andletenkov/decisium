@@ -28,7 +28,15 @@ do not. See [Troubleshooting](troubleshooting.md). Backend requests can be repla
 ## Pin an ambiguous target
 
 When an action fails because Jev is unsure which element to use, the failure report lists up to three **Resolutions**
-(role, name, container and any disambiguating text/position). Inspect the screenshot, then confirm the correct one:
+(role, name, container and any disambiguating text/position), each followed by its ready-to-copy pin command:
+
+```text
+2. button "Search" in region "Products" (35%)
+   decisium pin 'features/campaign.feature:12' 2
+```
+
+Inspect the screenshot, then copy the command under the correct candidate—no feature-file lookup or number editing
+needed. Replay afterward:
 
 ```sh
 decisium pin features/campaign.feature:12 2

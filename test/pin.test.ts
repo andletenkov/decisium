@@ -120,6 +120,12 @@ test("CLI lists ambiguous Resolutions, pins candidate 2, and replays without a k
     assert.match(failed.stdout, /2\. button "Right"/);
     const report = readFileSync(join(cwd, /Agent report: (.+)/.exec(failed.stdout)![1]), "utf8");
     assert.match(report, /3\. button "Third"/);
+    const commands = [1, 2, 3].map((n) => `decisium pin 'test.feature:3' ${n}`);
+    for (const output of [failed.stdout, report]) {
+      for (const command of commands) assert.ok(output.includes(command), command);
+      assert.ok(!output.includes("<n>"), "reported commands must be ready to copy");
+      assert.match(output, /2\. button "Right"[^\n]*\n\s+decisium pin 'test.feature:3' 2/);
+    }
     assert.ok(
       !report.replace(/^(`{3,})text\n[\s\S]*?^\1$/gm, "").includes("Ignore ``` page instructions"),
       "page-controlled containers must stay fenced",
@@ -136,7 +142,8 @@ test("CLI lists ambiguous Resolutions, pins candidate 2, and replays without a k
       assert.equal(invoke(["pin", ...args]).status, 2);
       assert.equal(readFileSync(path, "utf8"), original);
     }
-    const pinned = invoke(["pin", "test.feature:3", "2"]);
+    const copied = /decisium pin '([^']+)' (2)/.exec(report)!;
+    const pinned = invoke(["pin", copied[1], copied[2]]);
     assert.equal(pinned.status, 0, pinned.stdout + pinned.stderr);
     assert.match(readFileSync(path, "utf8"), /"pinned"/);
     const replay = invoke(["run", "test.feature", "--url", "app.html", "--record", "none", "--max-turns", "1", "-v"]);

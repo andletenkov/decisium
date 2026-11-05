@@ -62,7 +62,12 @@ page still matches it.</p>
 do not. See <a href="troubleshooting.html">Troubleshooting</a>. Backend requests can be replayed too: <a href="network-replay.html">Network replay</a>.</p>
 <h2 id="pin-an-ambiguous-target">Pin an ambiguous target</h2>
 <p>When an action fails because Jev is unsure which element to use, the failure report lists up to three <strong>Resolutions</strong>
-(role, name, container and any disambiguating text/position). Inspect the screenshot, then confirm the correct one:</p>
+(role, name, container and any disambiguating text/position), each followed by its ready-to-copy pin command:</p>
+<pre><code class="language-text">2. button &quot;Search&quot; in region &quot;Products&quot; (35%)
+   decisium pin &#39;features/campaign.feature:12&#39; 2
+</code></pre>
+<p>Inspect the screenshot, then copy the command under the correct candidate—no feature-file lookup or number editing
+needed. Replay afterward:</p>
 <pre><code class="language-sh">decisium pin features/campaign.feature:12 2
 decisium run features/campaign.feature --record none
 </code></pre>

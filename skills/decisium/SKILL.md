@@ -80,8 +80,9 @@ cases that never completes a real journey is a failed design.
 
 ### Pin a Resolution
 
-1. Use the failed Step's `file.feature:line` and the Resolution's 1-based report number:
-   `decisium pin features/campaign.feature:12 2`. Pin writes the chosen Resolution into the existing cassette without
+1. Copy the ready-to-run command printed under the correct Resolution in the console or `report.md`, e.g.
+   `decisium pin 'features/campaign.feature:12' 2`; its Step location and candidate number are already filled in.
+   Pin writes the chosen Resolution into the existing cassette without
    a browser, an API key or rewording. Inspect the cassette diff: `pinned` retains the chosen candidate, turn and
    original probabilities. Keep the pin only when it matches the scenario's intent.
 2. Replay the scenario with `decisium run features/campaign.feature:<scenario-line> --record none`, using the

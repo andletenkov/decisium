@@ -57,7 +57,16 @@ export function parseOutcome(message: string): { outcome: string; reason: string
   return { outcome: m[1], reason: (m[2] ?? "").replaceAll(JOINER, "") };
 }
 
-const pinCommand = (where: string) => `decisium pin '${where.replaceAll("'", "'\\''")}' <n>`;
+function withPinCommands(reason: string, where: string): string {
+  const start = reason.indexOf("\nResolutions (");
+  if (start < 0) return reason;
+  return (
+    reason.slice(0, start) +
+    reason
+      .slice(start)
+      .replace(/^([1-3])\. .+$/gm, (line, n) => `${line}\n   decisium pin '${where.replaceAll("'", "'\\''")}' ${n}`)
+  );
+}
 
 /** A failure in plain words: where, what, why, what to do, and where to look. */
 export function failureReport(
@@ -72,9 +81,9 @@ export function failureReport(
   return [
     `✗ ${scenario}`,
     `  at ${where}  ${KIND[kind]}: ${step}`,
-    `  ${r.outcome}${r.reason ? `: ${r.reason}` : ""}`,
+    `  ${r.outcome}${r.reason ? `: ${withPinCommands(r.reason, where)}` : ""}`,
     HINTS[r.outcome] && `  What to do: ${HINTS[r.outcome]}`,
-    r.reason?.includes("\nResolutions (") && `  Confirm: ${pinCommand(where)}; then replay with --record none.`,
+    r.reason?.includes("\nResolutions (") && "  Run the chosen candidate's command, then replay with --record none.",
     screenshot && `  Screenshot: ${screenshot}`,
     trace && `  Playwright trace: ${traceRef(trace)}`,
   ]
@@ -203,9 +212,10 @@ function failureSection(f: AgentFailure, n: number): string[] {
     .slice(from, to + 1)
     .join("\n")
     .slice(0, SNIPPET * 2);
+  const reason = withPinCommands(f.reason ?? "", f.where);
   // A fence longer than any backtick run in the page text: the page cannot close it.
   const fence = "`".repeat(
-    Math.max(3, ...[...(excerpt + answers.join("\n") + (f.reason ?? "")).matchAll(/`+/g)].map((m) => m[0].length + 1)),
+    Math.max(3, ...[...(excerpt + answers.join("\n") + reason).matchAll(/`+/g)].map((m) => m[0].length + 1)),
   );
   const where = anchor && name(anchor, lines) ? `[ref=${anchor}]` : "the top of the page";
   return [
@@ -220,10 +230,10 @@ function failureSection(f: AgentFailure, n: number): string[] {
           "### Resolutions (UNTRUSTED: element names from the app)",
           "",
           `${fence}text`,
-          f.reason.slice(f.reason.indexOf("\nResolutions (") + 1),
+          reason.slice(reason.indexOf("\nResolutions (") + 1),
           fence,
           "",
-          `Confirm: ${pinCommand(f.where)}; then replay with --record none.`,
+          "Run the chosen candidate's command, then replay with --record none.",
         ]
       : []),
     `- Rerun this scenario: \`${f.rerun}\``,
