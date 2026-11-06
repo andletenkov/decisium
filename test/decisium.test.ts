@@ -165,7 +165,7 @@ test("Browser: a secret placeholder is typed as its value, masked back to the to
 
 test("Browser: a {{...}} template inside a value is filled in, masked back, and keeps the trace", async () => {
   const b = await Browser.open(
-    `data:text/html,<label>Name <input oninput="o.textContent='Hi '+this.value"></label><p id=o></p>`,
+    `data:text/html,<label>Name <input oninput="o.textContent='Hi '+this.value"></label><p id=o></p><label>Project <select><option>P x</option><option>P k3x9q</option></select></label>`,
     false,
     false,
     { "{{unique:a}}": "k3x9q" },
@@ -176,6 +176,8 @@ test("Browser: a {{...}} template inside a value is filled in, masked back, and 
     const obs = await b.observe();
     assert.ok(!obs.text.includes("k3x9q"));
     assert.match(obs.pageText, /Hi Agent \{\{unique:a\}\}/);
+    const pick = obs.elements.find((e) => e.name === "Project")!;
+    await b.execute({ verb: "SELECT", ref: pick.ref, value: "P {{unique:a}}" }); // options are masked too
     assert.ok(!b.typedSecret);
   } finally {
     await b.close();

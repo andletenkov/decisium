@@ -808,13 +808,14 @@ export class Browser {
           if ((await (await now()).inputValue(opts)) !== typed)
             throw new Error("field does not hold the typed value after TYPE");
         } else {
-          await target.selectOption({ label: value }, opts);
+          const label = this.typed(value);
+          await target.selectOption({ label }, opts);
           const shown = await (await now()).evaluate(
             (el) => (el as HTMLSelectElement).selectedOptions[0]?.label,
             undefined,
             opts,
           );
-          if (shown !== value) throw new Error(`select shows "${shown}" after SELECT "${value}"`);
+          if (shown !== label) throw new Error(`select shows "${this.mask(shown ?? "")}" after SELECT "${value}"`);
         }
       }
     }

@@ -289,7 +289,8 @@ earlier one created. The model, logs and cassette only see the template: the val
 template wherever the page shows it as typed (a date the page reformats is not). Unlike secrets, the trace is kept.
 An unknown function or bad arguments stop the run before it starts (exit 2); `decisium lint` shows each template with
 an example value. The run prints its seed; `--seed <s>` repeats its random values (`uuid`, `number`), while dates and
-`unique` follow the new run's start.
+`unique` follow the new run's start. Running cucumber-js directly with `--parallel`, set `DECISIUM_SEED` and
+`DECISIUM_START` (Unix ms) yourself, or each worker gets its own values.
 
 ### Out of scope
 
