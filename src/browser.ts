@@ -346,11 +346,15 @@ export class Browser {
         frames.delete(id);
         caf(id);
       };
+      // A deadline makes the browser run it even if never idle (a busy page, a loaded CI machine): settle waits for it.
       w.requestIdleCallback = (cb, opts) => {
-        const id = ric((d) => {
-          idles.delete(id);
-          cb(d);
-        }, opts);
+        const id = ric(
+          (d) => {
+            idles.delete(id);
+            cb(d);
+          },
+          { timeout: 500, ...opts },
+        );
         idles.add(id);
         return id;
       };
