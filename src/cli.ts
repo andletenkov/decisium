@@ -15,7 +15,7 @@ import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 import { readStep } from "./step.ts";
 import { SavedStorage } from "./saved.ts";
-import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef } from "./states.ts";
+import { misplacedDef, consumerChain, discoverStates, isStateFile, loadStates, type StateDef } from "./states.ts";
 
 // ".ts" from source, ".js" from the built package in dist/.
 const EXT = import.meta.url.slice(-3);
@@ -313,6 +313,7 @@ async function main(): Promise<number> {
   try {
     const states = loadStates(discoverStates(env.DECISIUM_STATES || undefined));
     chains = scenarios.map((s) => consumerChain(states, s));
+    for (const w of scenarios.map(misplacedDef)) if (w) console.warn(w);
   } catch (err) {
     console.error((err as Error).message);
     return 2;

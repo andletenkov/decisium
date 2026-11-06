@@ -80,7 +80,7 @@ when the run ends. A scenario that loaded one keeps no Playwright trace (it woul
 <p><strong>Checked before any browser opens:</strong> unknown state names, cycles, duplicate names, <code>@state-def:</code> or <code>@state:</code> on a
 Feature, a <code>Background:</code> in a definition file, more than one <code>@state:</code> on a scenario, <code>@save:storage</code> without a final
 <code>Then</code>, <code>@replay-network</code> on a scenario whose state types a secret (it would record it into the HAR file), and tags one
-typo away from a Decisium tag (<code>@stat:</code> → &quot;did you mean @state:?&quot;).</p>
+typo away from a Decisium tag (<code>@stat:</code> → &quot;did you mean @state:?&quot;). <code>@state-def:</code> on a scenario in a normal feature defines nothing: Decisium warns and runs it as a test.</p>
 <div class="pager"><a class="prev" href="client-steps.html"><span>Previous</span>Client steps</a><a class="next" href="cli.html"><span>Next</span>Command line</a></div></main>
 
 </div>

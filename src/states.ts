@@ -134,6 +134,15 @@ export function stateChain(states: States, name: string): StateDef[] {
   return chain.reverse();
 }
 
+/** A warning for `@state-def:` on a test scenario: outside a `*.state.feature` file it defines nothing. */
+export function misplacedDef(scenario: { name: string; tags: readonly string[] }): string | undefined {
+  const def = scenario.tags.find((t) => t.startsWith("@state-def:"));
+  return (
+    def &&
+    `Warning: "${scenario.name}": ${def} has no effect in a test; move the scenario to a *.state.feature file to define a state`
+  );
+}
+
 /**
  * The chain a consumer scenario runs, after checking its tags. `tags`: all its tags (feature ones included); `own`: the
  * scenario's own. Throws on an unknown state, several `@state:`, a feature-level `@state:`, or an own `@url:` with it.
@@ -145,8 +154,6 @@ export function consumerChain(
 ): StateDef[] {
   const near = scenario.tags.map(nearMiss).find(Boolean);
   if (near) throw new Error(`"${scenario.name}": ${near}`);
-  if (scenario.tags.some((t) => t.startsWith("@state-def:")))
-    throw new Error(`"${scenario.name}" is a state definition: keep it in a *.state.feature file`);
   const used = scenario.tags.filter((t) => t.startsWith("@state:"));
   if (!used.length) return [];
   if (used.some((t) => !scenario.own.includes(t)))

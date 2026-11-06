@@ -64,4 +64,4 @@ when the run ends. A scenario that loaded one keeps no Playwright trace (it woul
 **Checked before any browser opens:** unknown state names, cycles, duplicate names, `@state-def:` or `@state:` on a
 Feature, a `Background:` in a definition file, more than one `@state:` on a scenario, `@save:storage` without a final
 `Then`, `@replay-network` on a scenario whose state types a secret (it would record it into the HAR file), and tags one
-typo away from a Decisium tag (`@stat:` → "did you mean @state:?").
+typo away from a Decisium tag (`@stat:` → "did you mean @state:?"). `@state-def:` on a scenario in a normal feature defines nothing: Decisium warns and runs it as a test.
