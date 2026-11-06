@@ -1330,6 +1330,52 @@ test("Browser: the page URL and title are readable subjects, not actionable and 
   }
 });
 
+test("Jev decider maps model choices back to values and element refs", async (t) => {
+  const { TypeSafeClient } = await import("@typesafe-ai/sdk");
+  const key = process.env.TYPESAFE_API_KEY;
+  process.env.TYPESAFE_API_KEY = "test";
+  const pick = (choice: string) => ({ choice, probabilities: { [choice]: 1 } });
+  t.mock.method(TypeSafeClient.prototype, "systemOne", (async () => ({
+    model: "test",
+    answers: {
+      done: { noul: 0 },
+      target: pick("e1"),
+      action: pick("type"),
+      value: pick("v0"),
+      answer: pick("v0"),
+      kind: pick("value"),
+      subject: pick("e1"),
+      state: pick("checked"),
+      area: pick("page"),
+      satisfied: { noul: 1 },
+      exact: pick("no"),
+      attempt: pick("no"),
+      toggle: pick("na"),
+      navigation: pick("none"),
+      presses: pick("no"),
+      key: pick("k0"),
+      pressOnly: pick("no"),
+      clear: pick("no"),
+    },
+  })) as never);
+  try {
+    const jev = new JevDecider();
+    const obs = parseSnapshot('- textbox "Name" [ref=e1]\n- button "Save" [ref=e2]');
+    assert.equal((await jev.turn('type "Ada"', obs, [])).target.choice, "e1");
+    assert.equal((await jev.value('type "Ada"', obs, obs.elements[0], ["Ada"])).choice, "Ada");
+    assert.equal((await jev.drop("drop", obs, obs.elements[0])).choice, "e1");
+    assert.equal((await jev.recall("check it", { Ada: "typed earlier" })).choice, "Ada");
+    const dialog = withDialog(obs, { type: "prompt", message: "Name?", state: "open" });
+    assert.equal((await jev.dialog("answer", dialog, ["Ada"])).choice, "Ada");
+    assert.equal((await jev.assess("Name", obs, true)).judged, 1);
+    await jev.intent("type name", false);
+    await jev.intent("check name", true);
+  } finally {
+    if (key === undefined) delete process.env.TYPESAFE_API_KEY;
+    else process.env.TYPESAFE_API_KEY = key;
+  }
+});
+
 test("doctor: Node needs type stripping on by default (22.18+)", async () => {
   const { nodeOk } = await import("../src/doctor.ts");
   assert.deepEqual(
