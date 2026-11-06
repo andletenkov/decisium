@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/andletenkov/decisium/compare/v0.2.0...v0.2.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* install the tarball's own Chromium in the pack smoke test ([#48](https://github.com/andletenkov/decisium/issues/48)) ([b4cfd05](https://github.com/andletenkov/decisium/commit/b4cfd05719db25359ea985dbd09057642939f53f))
+
 ## [0.2.0](https://github.com/andletenkov/decisium/compare/v0.1.5...v0.2.0) (2026-11-06)
 
 
