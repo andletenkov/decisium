@@ -1,8 +1,12 @@
-# Task 0050: a v* tag tests, smoke-tests the packed tarball, stages the npm release (provenance) and creates the GitHub release. Then pushes the runner image to ghcr.io.
+# Called by release-please.yml once its release PR is merged: tests the tag, smoke-tests the packed tarball, stages the npm release (provenance) and attaches the tarball to the GitHub release release-please created. Then pushes the runner image to ghcr.io.
 name: release
 on:
-  push:
-    tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        description: The vX.Y.Z tag release-please created
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
@@ -14,14 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag }}
           fetch-depth: 0 # the ancestry check below needs main's history, not just the tag
       # A tag can point at any commit, including one that never passed CI or review.
       # Only main is branch-protected, so refuse to publish anything not merged into it.
       - name: Verify the tag is on main
         run: |
           git fetch --quiet origin main
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
-            || { echo "::error::$GITHUB_REF_NAME ($GITHUB_SHA) is not on main - tag a merged commit"; exit 1; }
+          git merge-base --is-ancestor HEAD origin/main \
+            || { echo "::error::$TAG is not on main - tag a merged commit"; exit 1; }
+        env:
+          TAG: ${{ inputs.tag }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -51,8 +58,9 @@ jobs:
       - run: npm install -g npm@latest # trusted publishing (OIDC) needs npm 11.5.1+, staging a newer one
       # The trusted publisher only allows staging: approve with 2FA via `npm stage list decisium` + `npm stage approve <id>`.
       - run: npm stage publish --access public
-      - run: npm pack --silent && gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes decisium-*.tgz
+      - run: npm pack --silent && gh release upload "$TAG" decisium-*.tgz
         env:
+          TAG: ${{ inputs.tag }}
           GH_TOKEN: ${{ github.token }}
   image: # multi-arch push; the amd64 image was built and smoke-tested in publish (cache hit)
     needs: publish
@@ -62,6 +70,8 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
@@ -74,8 +84,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ inputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }}
       - uses: docker/build-push-action@v6
         with:
           context: .

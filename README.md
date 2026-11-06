@@ -130,6 +130,13 @@ terms. Per Turn it receives the Step's text and a text snapshot of the page (the
 visible text, link URLs). No screenshots, cookies or network traffic. Write credentials as `"$NAME"`: only the token
 leaves your machine. Replays send nothing.
 
+## Releasing
+
+[release-please](https://github.com/googleapis/release-please-action) keeps a `chore(main): release x.y.z` PR open
+from conventional commits (version bump, `CHANGELOG.md`, regenerated `site/`). Merging it tags `vX.Y.Z`, creates the
+GitHub release and runs `release.yml`, which tests, stages the npm publish and pushes the image. Then approve the staged
+publish with 2FA: `npm stage list decisium`, `npm stage approve <id>`.
+
 ## License
 
 [MIT](LICENSE) © Andrei Letenkov
