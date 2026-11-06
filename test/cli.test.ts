@@ -98,6 +98,48 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
   }
 });
 
+test("cli: runId is shared by workers and changes on the next run", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-run-id-"));
+  try {
+    writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
+    writeFileSync(
+      join(cwd, "steps.mjs"),
+      `import { Given } from ${JSON.stringify(createRequire(import.meta.url).resolve("@cucumber/cucumber"))};\nimport { appendFileSync } from "node:fs";\nGiven("capture run id", () => appendFileSync("ids.txt", process.env.DECISIUM_RUN_ID + "\\n"));\n`,
+    );
+    for (const name of ["one", "two"])
+      writeFileSync(join(cwd, `${name}.feature`), `Feature: ${name}\n  Scenario: s\n    Given capture run id\n`);
+    for (let i = 0; i < 2; i++) {
+      const result = spawnSync(
+        process.execPath,
+        [
+          cli,
+          "run",
+          "one.feature",
+          "two.feature",
+          "--parallel",
+          "2",
+          "--import",
+          "steps.mjs",
+          "--url",
+          join(cwd, "page.html"),
+          "--record",
+          "none",
+        ],
+        { cwd, encoding: "utf8", timeout: 30_000, env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "" } },
+      );
+      assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    }
+    const ids = readFileSync(join(cwd, "ids.txt"), "utf8").trim().split("\n");
+    assert.equal(ids.length, 4);
+    assert.match(ids[0], /^[A-Za-z0-9_-]{16}$/);
+    assert.equal(ids[0], ids[1]);
+    assert.equal(ids[2], ids[3]);
+    assert.notEqual(ids[0], ids[2]);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test("cli: bare invocation keeps usage and exit 2", () => {
   const result = invoke([]);
   assert.equal(result.status, 2);

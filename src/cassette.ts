@@ -17,6 +17,7 @@ import {
 } from "./decision.ts";
 import { parseSnapshot, type Element, type Observation } from "./observation.ts";
 import type { ParsedStep } from "./step.ts";
+import { fill } from "./generate.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -62,6 +63,18 @@ interface File {
   run?: string;
   entries: Record<string, Entry>;
 } // run: id of the run that last saved it
+
+// Cassette entries carry templates, while the decider and page use the current run's concrete values.
+function mapEntry(entry: Entry, transform: (value: string) => string): Entry {
+  return JSON.parse(JSON.stringify(entry), (_key, value: unknown) =>
+    typeof value === "string" ? transform(value) : value,
+  ) as Entry;
+}
+
+function templateValue(text: string, generated: Record<string, string>): string {
+  const id = generated["{{decisium.runId}}"];
+  return id ? text.replaceAll(id, "{{decisium.runId}}") : text;
+}
 
 function formatFile(file: File): string {
   const { entries, ...header } = file;
@@ -311,8 +324,10 @@ export class Cassette {
     key: string,
     live: Decider,
     log: (line: string) => void = () => {},
+    generated: Record<string, string> = {},
   ): Decider & { done(keep: boolean): "replayed" | "recorded" | "healed" | undefined } {
-    const old = this.mode === "all" ? undefined : this.#file.entries[key];
+    const saved = this.mode === "all" ? undefined : this.#file.entries[key];
+    const old = saved && mapEntry(saved, (value) => fill(value, generated));
     const now: Entry = { confidence: settings().confidence };
     const recorded = (pick: Pick): Pick => ({
       ...pick,
@@ -496,7 +511,7 @@ export class Cassette {
           return "replayed";
         }
         if (!keep || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
-        this.#file.entries[key] = now;
+        this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));
         this.#dirty = true;
         if (old) {
           this.healed++;

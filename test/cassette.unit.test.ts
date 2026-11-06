@@ -114,6 +114,23 @@ const page = parseSnapshot(
   ].join("\n"),
 );
 
+test("cassette: generated values are recorded as templates and replayed with new values", async () => {
+  const path = tmp();
+  const before = parseSnapshot('- button "Open Agent abc123 and abc123" [ref=e1]');
+  const after = parseSnapshot('- button "Open Agent xyz789 and xyz789" [ref=e2]');
+  const { live, calls } = scripted({ turn: { done: 0, target: sure("e1"), action: sure("click") } });
+  const rec = new Cassette(path, "m", "new");
+  const writer = rec.step("step", live, undefined, { "{{decisium.runId}}": "abc123" });
+  await writer.turn("open", before, []);
+  assert.equal(writer.done(true), "recorded");
+  rec.save();
+  assert.match(readFileSync(path, "utf8"), /Open Agent \{\{decisium\.runId\}\} and \{\{decisium\.runId\}\}/);
+  const replay = new Cassette(path, "m", "none").step("step", live, undefined, { "{{decisium.runId}}": "xyz789" });
+  assert.equal((await replay.turn("open", after, [])).target.choice, "e2");
+  assert.equal(replay.done(true), "replayed");
+  assert.deepEqual(calls, ["turn"]);
+});
+
 test("cassette: a recorded Step stores every answer as Resolutions and replays them with no Jev call", async () => {
   const p = tmp();
   const turn = { done: 0.1, target: pick({ e1: 0.9, e2: 0.1 }), action: pick({ type: 0.7, click: 0.3 }) };

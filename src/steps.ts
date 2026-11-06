@@ -32,7 +32,10 @@ import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
+import { fill, newRunId } from "./generate.ts";
 import { applyOptions, settingWarnings } from "./options.ts";
+
+let runId: string;
 
 // Issue 8: a client cucumber configuration importing decisium's steps from another path (source while the CLI uses
 // dist) loads this module twice; the two catch-all definitions then defer to each other forever and the run collects
@@ -73,6 +76,7 @@ class Scenario extends World {
   arg: StepArgument = {}; // the running Step's data table or doc string
   at = ""; // file:line of the running Step, in its trace event (scripts/cookbook.ts)
   earlier: Record<string, string> = {}; // memory: quoted value -> the Step that named it
+  generated: Record<string, string> = {};
   /** Public API for client step definitions (task 0048): the current tab (a popup becomes it) and its Playwright context. */
   get page() {
     return this.browser.page;
@@ -94,6 +98,7 @@ BeforeAll(function () {
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED")))
     throw new Error("TYPESAFE_API_KEY is not set.");
   run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
+  runId = env.DECISIUM_RUN_ID ||= newRunId();
   saved = new SavedStorage(run.path);
   states = loadStates(discoverStates(env.DECISIUM_STATES || undefined));
   if (cliOwnsRun) return; // the CLI warned and wrote the run event
@@ -145,6 +150,7 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
       throw infra(new Error(`"${token}" in ${where}: environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
   }
+  this.generated = { "{{decisium.runId}}": runId };
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
   this.dir = run.scenario(pickle.name);
   const glob = tagValue(pickle.tags, "replay-network");
@@ -307,13 +313,17 @@ async function perform(w: Scenario, text: string, quiet = false) {
   };
   let r: StepReport;
   try {
-    r = await executeStep(text, {
+    r = await executeStep(fill(text, w.generated), {
       rt: w.rt,
       live: w.live,
       cassette: w.cassette,
       key: w.key,
       kind: w.kind,
-      arg: w.arg,
+      arg: {
+        ...(w.arg.docString !== undefined ? { docString: fill(w.arg.docString, w.generated) } : {}),
+        ...(w.arg.table ? { table: w.arg.table.map((row) => row.map((cell) => fill(cell, w.generated))) } : {}),
+      },
+      generated: w.generated,
       earlier: w.earlier,
       log,
       trace: (d) => run.decider(d),

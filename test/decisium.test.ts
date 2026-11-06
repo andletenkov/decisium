@@ -163,6 +163,36 @@ test("Browser: a secret placeholder is typed as its value, masked back to the to
   }
 });
 
+test("Browser: generated values are visible without changing unrelated text", async () => {
+  const b = await Browser.open(
+    `data:text/html,<label>Name <input></label><button>Exit</button><button>Box 12</button>`,
+  );
+  try {
+    const before = await b.observe();
+    assert.ok(before.elements.some((e) => e.name === "Exit"));
+    assert.ok(before.elements.some((e) => e.name === "Box 12"));
+    const name = before.elements.find((e) => e.name === "Name")!;
+    await b.execute({ verb: "TYPE", ref: name.ref, value: "x" });
+    assert.match((await b.observe()).text, /textbox "Name".*x/);
+    assert.ok(!b.typedSecret);
+  } finally {
+    await b.close();
+  }
+});
+
+test("Browser: generated run ID fits a 40-character name field", async () => {
+  const { newRunId } = await import("../src/generate.ts");
+  const b = await Browser.open(`data:text/html,<label>Name <input maxlength="40"></label>`);
+  try {
+    const name = (await b.observe()).elements.find((e) => e.name === "Name")!;
+    const value = `Autotest agent ${newRunId()}`;
+    await b.execute({ verb: "TYPE", ref: name.ref, value });
+    assert.equal(await b.page.locator("input").inputValue(), value);
+  } finally {
+    await b.close();
+  }
+});
+
 test("Browser: a collapsed control lists the hidden entries it holds; checks cannot read them", async () => {
   const b = await Browser.open(`data:text/html,<ul><li><a href=b>Biography</a>
     <button aria-expanded=false aria-controls=sub>Toggle Biography subsection</button>
@@ -1297,6 +1327,52 @@ test("Browser: the page URL and title are readable subjects, not actionable and 
     assert.equal(await run(`the URL should contain "/wiki/Ada_Lovelace"`, url.ref), "ASSERTION_FAILED");
   } finally {
     await b.close();
+  }
+});
+
+test("Jev decider maps model choices back to values and element refs", async (t) => {
+  const { TypeSafeClient } = await import("@typesafe-ai/sdk");
+  const key = process.env.TYPESAFE_API_KEY;
+  process.env.TYPESAFE_API_KEY = "test";
+  const pick = (choice: string) => ({ choice, probabilities: { [choice]: 1 } });
+  t.mock.method(TypeSafeClient.prototype, "systemOne", (async () => ({
+    model: "test",
+    answers: {
+      done: { noul: 0 },
+      target: pick("e1"),
+      action: pick("type"),
+      value: pick("v0"),
+      answer: pick("v0"),
+      kind: pick("value"),
+      subject: pick("e1"),
+      state: pick("checked"),
+      area: pick("page"),
+      satisfied: { noul: 1 },
+      exact: pick("no"),
+      attempt: pick("no"),
+      toggle: pick("na"),
+      navigation: pick("none"),
+      presses: pick("no"),
+      key: pick("k0"),
+      pressOnly: pick("no"),
+      clear: pick("no"),
+    },
+  })) as never);
+  try {
+    const jev = new JevDecider();
+    const obs = parseSnapshot('- textbox "Name" [ref=e1]\n- button "Save" [ref=e2]');
+    assert.equal((await jev.turn('type "Ada"', obs, [])).target.choice, "e1");
+    assert.equal((await jev.value('type "Ada"', obs, obs.elements[0], ["Ada"])).choice, "Ada");
+    assert.equal((await jev.drop("drop", obs, obs.elements[0])).choice, "e1");
+    assert.equal((await jev.recall("check it", { Ada: "typed earlier" })).choice, "Ada");
+    const dialog = withDialog(obs, { type: "prompt", message: "Name?", state: "open" });
+    assert.equal((await jev.dialog("answer", dialog, ["Ada"])).choice, "Ada");
+    assert.equal((await jev.assess("Name", obs, true)).judged, 1);
+    await jev.intent("type name", false);
+    await jev.intent("check name", true);
+  } finally {
+    if (key === undefined) delete process.env.TYPESAFE_API_KEY;
+    else process.env.TYPESAFE_API_KEY = key;
   }
 });
 

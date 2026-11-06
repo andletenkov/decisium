@@ -180,7 +180,12 @@ export class Browser {
     return this.page.evaluate(() => navigator.clipboard?.readText()).catch(() => undefined);
   } // undefined: insecure origin (data:)
   private mask(s: string) {
-    return Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s);
+    return Object.entries(this.secrets).reduce((text, [token, value]) => text.replaceAll(value, token), s);
+  }
+  /** The text to type for a chosen value, resolving secret placeholders. */
+  private typed(value: string) {
+    if (value in this.secrets) this.typedSecret = true;
+    return this.secrets[value] ?? value;
   }
 
   private constructor(browser: PwBrowser, page: Page, start: string) {
@@ -709,8 +714,7 @@ export class Browser {
       this.open = undefined;
       this.dialog = { ...this.dialog!, state: verb === "ACCEPT" ? "accepted" : "dismissed" };
       this.rearm(); // before answering: the next dialog may open at once
-      if (value in this.secrets) this.typedSecret = true;
-      await (verb === "ACCEPT" ? d.accept(this.secrets[value] ?? value) : d.dismiss());
+      await (verb === "ACCEPT" ? d.accept(this.typed(value)) : d.dismiss());
     } else {
       const t = Date.now();
       await this.unblocked(this.perform(action));
@@ -769,8 +773,7 @@ export class Browser {
             ? target
             : this.page.getByRole(el.role as Parameters<Page["getByRole"]>[0], { name: el.name, exact: true }).first();
         if (verb === "TYPE") {
-          const typed = this.secrets[value] ?? value;
-          if (value in this.secrets) this.typedSecret = true;
+          const typed = this.typed(value);
           await target.fill(typed, opts);
           const field = await (await now()).elementHandle();
           if (field) {
@@ -800,13 +803,14 @@ export class Browser {
           if ((await (await now()).inputValue(opts)) !== typed)
             throw new Error("field does not hold the typed value after TYPE");
         } else {
-          await target.selectOption({ label: value }, opts);
+          const label = this.typed(value);
+          await target.selectOption({ label }, opts);
           const shown = await (await now()).evaluate(
             (el) => (el as HTMLSelectElement).selectedOptions[0]?.label,
             undefined,
             opts,
           );
-          if (shown !== value) throw new Error(`select shows "${shown}" after SELECT "${value}"`);
+          if (shown !== label) throw new Error(`select shows "${this.mask(shown ?? "")}" after SELECT "${value}"`);
         }
       }
     }
