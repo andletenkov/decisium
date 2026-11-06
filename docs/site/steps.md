@@ -265,36 +265,21 @@ is masked back wherever the page shows it. A missing variable is a setup error. 
 Playwright trace. Password fields are always masked. A value written literally in a Step is sent to the model and
 recorded.
 
-### Generated values
+### Unique values
 
-For input that must differ on every run, write `{{function}}` anywhere inside a Step's quotes, doc string or table
-cells: `I create an agent named "Autotest agent {{unique:archived}}"`.
+Use `{{runId}}` inside a Step's quotes, doc string or table cell for input that must differ on every run:
 
-| Template | Value |
-| --- | --- |
-| `{{unique}}` | run-unique id: run start time + random, base 36, lower case |
-| `{{email}}` | `autotest+<unique>@example.com` |
-| `{{uuid}}` | random UUID v4 |
-| `{{number}}`, `{{number 1 10}}` | random whole number, default 100000-999999 |
-| `{{date}}`, `{{date +3d DD.MM.YYYY}}` | run's date, default `YYYY-MM-DD` |
-| `{{datetime}}`, `{{datetime -2h}}` | run's date and time, default `YYYY-MM-DDTHH:mm` |
-| `{{timestamp}}` | run start, Unix milliseconds |
-| `{{text 256}}`, `{{text 10 x}}` | the character (default `a`) repeated up to 1,000,000 times, for length limits |
+```gherkin
+When I create an agent named "Autotest agent {{runId}}"
+Then I see the agent named "Autotest agent {{runId}}"
+```
 
-Shifts are `+N`/`-N` with `s m h d w M y`; formats use `YYYY MM DD HH mm ss`. Times are local.
+Decisium generates a UUID once per CLI run, shared across scenarios and parallel workers. The model, page and logs see
+the real value. Cassette entries store `{{runId}}` and substitute the current run's value during replay. Unlike secrets,
+the value is included in traces. If the page reformats the ID, cassette replay may not recognize it.
 
-A label after a colon gives separate values: `{{unique:a}}` and `{{unique:b}}` differ. The same function, label and
-arguments have one value for the whole run, in every Scenario and parallel worker, so a later Scenario finds what an
-earlier one created. The model, page and logs see the generated value. Cassette entries store templates and substitute
-this run's values on replay; secrets are still masked and never recorded. Short values (up to three characters) are only
-recorded when they are the whole string; a short standalone match inside a longer string is ambiguous and stops recording.
-If a recorded string contains multiple matches or several templates have the same value, recording stops rather than
-guessing; use a longer, distinct value. A value reformatted by the page cannot be
-recognized reliably. Unlike secrets, generated values are kept in the trace.
-An unknown function or bad arguments stop the run before it starts (exit 2); `decisium lint` shows each template with
-an example value. The run prints its seed; `--seed <s>` repeats its random values (`uuid`, `number`), while dates and
-`unique` follow the new run's start. Running cucumber-js directly with `--parallel`, set `DECISIUM_SEED` and
-`DECISIUM_START` (Unix ms) yourself, or each worker gets its own values.
+When running cucumber-js directly with `--parallel`, set `DECISIUM_RUN_ID` to a fresh UUID before starting it so all
+workers share the same ID. Other `{{...}}` expressions are not supported.
 
 ### Out of scope
 

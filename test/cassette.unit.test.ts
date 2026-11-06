@@ -116,27 +116,19 @@ const page = parseSnapshot(
 
 test("cassette: generated values are recorded as templates and replayed with new values", async () => {
   const path = tmp();
-  const before = parseSnapshot('- button "Agent abc123" [ref=e1]');
-  const after = parseSnapshot('- button "Agent xyz789" [ref=e2]');
+  const before = parseSnapshot('- button "Open Agent abc123 and abc123" [ref=e1]');
+  const after = parseSnapshot('- button "Open Agent xyz789 and xyz789" [ref=e2]');
   const { live, calls } = scripted({ turn: { done: 0, target: sure("e1"), action: sure("click") } });
   const rec = new Cassette(path, "m", "new");
-  const writer = rec.step("step", live, undefined, { "{{unique:a}}": "abc123" });
+  const writer = rec.step("step", live, undefined, { "{{runId}}": "abc123" });
   await writer.turn("open", before, []);
   assert.equal(writer.done(true), "recorded");
   rec.save();
-  assert.match(readFileSync(path, "utf8"), /Agent \{\{unique:a\}\}/);
-  const replay = new Cassette(path, "m", "none").step("step", live, undefined, { "{{unique:a}}": "xyz789" });
+  assert.match(readFileSync(path, "utf8"), /Open Agent \{\{runId\}\} and \{\{runId\}\}/);
+  const replay = new Cassette(path, "m", "none").step("step", live, undefined, { "{{runId}}": "xyz789" });
   assert.equal((await replay.turn("open", after, [])).target.choice, "e2");
   assert.equal(replay.done(true), "replayed");
   assert.deepEqual(calls, ["turn"]);
-});
-
-test("cassette: ambiguous generated matches are not silently recorded", async () => {
-  const obs = parseSnapshot('- button "x x" [ref=e1]');
-  const { live } = scripted({ turn: { done: 0, target: sure("e1"), action: sure("click") } });
-  const d = new Cassette(tmp(), "m", "new").step("step", live, undefined, { "{{text 1 x}}": "x" });
-  await d.turn("open", obs, []);
-  assert.throws(() => d.done(true), /ambiguous match/);
 });
 
 test("cassette: a recorded Step stores every answer as Resolutions and replays them with no Jev call", async () => {

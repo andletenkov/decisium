@@ -1554,20 +1554,6 @@ test("doc strings: one more quoted value, to type or to compare (task 0038)", as
   }
 });
 
-test("lint: {{...}} templates show an example value; a bad one is flagged", async () => {
-  const { lint } = await import("../src/lint.ts");
-  const { mkdtempSync, writeFileSync } = await import("node:fs");
-  const { tmpdir } = await import("node:os");
-  const path = `${mkdtempSync(`${tmpdir()}/decisium-`)}/g.feature`;
-  writeFileSync(
-    path,
-    'Feature: f\n  Scenario: s\n    When I type "{{text 3}}" into "Name"\n    And I type "{{uuidd}}" into "Id"\n',
-  );
-  const out = lint(path, {});
-  assert.match(out, /generated \(Jev sees the template\), e\.g\.: \{\{text 3\}\} → aaa/);
-  assert.match(out, /⚠ \{\{uuidd\}\}: unknown function/);
-});
-
 test("lint: a check's table with only a header row compares nothing (task 0038)", async () => {
   const { warnings } = await import("../src/lint.ts");
   assert.match(

@@ -83,40 +83,43 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
   }
 });
 
-test("cli: a bad {{...}} template is a setup error before the run; --seed is printed", () => {
-  const cwd = mkdtempSync(join(tmpdir(), "decisium-gen-"));
+test("cli: runId is shared by workers and changes on the next run", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-run-id-"));
   try {
     writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
     writeFileSync(
       join(cwd, "steps.mjs"),
-      `import { Given } from ${JSON.stringify(createRequire(import.meta.url).resolve("@cucumber/cucumber"))};\nGiven(/^a client step/, () => {});\n`,
+      `import { Given } from ${JSON.stringify(createRequire(import.meta.url).resolve("@cucumber/cucumber"))};\nimport { appendFileSync } from "node:fs";\nGiven("capture run id", () => appendFileSync("ids.txt", process.env.DECISIUM_RUN_ID + "\\n"));\n`,
     );
-    const run = (step: string) => {
-      writeFileSync(join(cwd, "g.feature"), `Feature: g\n  Scenario: s\n    Given ${step}\n`);
-      return spawnSync(
+    for (const name of ["one", "two"])
+      writeFileSync(join(cwd, `${name}.feature`), `Feature: ${name}\n  Scenario: s\n    Given capture run id\n`);
+    for (let i = 0; i < 2; i++) {
+      const result = spawnSync(
         process.execPath,
         [
           cli,
           "run",
-          "g.feature",
+          "one.feature",
+          "two.feature",
+          "--parallel",
+          "2",
           "--import",
           "steps.mjs",
           "--url",
           join(cwd, "page.html"),
           "--record",
           "none",
-          "--seed",
-          "abc",
         ],
         { cwd, encoding: "utf8", timeout: 30_000, env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "" } },
       );
-    };
-    const bad = run('a client step "{{text abc}}"');
-    assert.equal(bad.status, 2);
-    assert.match(bad.stderr, /\{\{text abc\}\}: unknown function or bad arguments/);
-    const ok = run('a client step "{{uuid}}"');
-    assert.equal(ok.status, 0, `${ok.stdout}\n${ok.stderr}`);
-    assert.match(ok.stdout, /Seed: abc/);
+      assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    }
+    const ids = readFileSync(join(cwd, "ids.txt"), "utf8").trim().split("\n");
+    assert.equal(ids.length, 4);
+    assert.match(ids[0], /^[0-9a-f-]{36}$/);
+    assert.equal(ids[0], ids[1]);
+    assert.equal(ids[2], ids[3]);
+    assert.notEqual(ids[0], ids[2]);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }

@@ -72,31 +72,8 @@ function mapEntry(entry: Entry, transform: (value: string) => string): Entry {
 }
 
 function templateValue(text: string, generated: Record<string, string>): string {
-  const matches = Object.entries(generated)
-    .filter(([, value]) => value && text.includes(value))
-    .sort((a, b) => b[1].length - a[1].length);
-  const found: { start: number; end: number; token: string }[] = [];
-  for (const [token, value] of matches) {
-    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(value.length <= 3 ? `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])` : escaped, "gu");
-    const occurrences = [...text.matchAll(pattern)];
-    if (
-      occurrences.length > 1 ||
-      (occurrences.length && value.length <= 3 && text !== value) ||
-      (occurrences.length && matches.some(([other, v]) => other !== token && v === value))
-    )
-      throw new Error(
-        `Cannot safely record generated value ${token} in cassette: ambiguous match in ${JSON.stringify(text)}`,
-      );
-    for (const match of occurrences) {
-      const start = match.index;
-      const end = start + value.length;
-      if (!found.some((prior) => start < prior.end && end > prior.start)) found.push({ start, end, token });
-    }
-  }
-  for (const match of found.sort((a, b) => b.start - a.start))
-    text = text.slice(0, match.start) + match.token + text.slice(match.end);
-  return text;
+  const id = generated["{{runId}}"];
+  return id ? text.replaceAll(id, "{{runId}}") : text;
 }
 
 function formatFile(file: File): string {
