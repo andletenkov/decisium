@@ -75,7 +75,7 @@ instead of all logging in. Later scenarios load the storage, re-run the final ch
 check fails, the Steps are replayed. Values the skipped Steps named are not remembered for later Steps. The storage lives
 in a temporary directory outside the project (owner-only, files <code>0600</code>), keeps only the start URL&#39;s origin, and is deleted
 when the run ends. A scenario that loaded one keeps no Playwright trace (it would hold the session cookies).</p>
-<p><strong>A state is setup, not a test.</strong> A failing state Step stops the run as a setup error (exit 2), labelled
+<p><strong>A state is setup, not a test.</strong> A failing state Step makes its scenario a setup error (exit 2; the other scenarios still run), labelled
 <code>in state &quot;&lt;name&gt;&quot; at &lt;file&gt;:&lt;line&gt;</code>. Test the login itself in a normal feature.</p>
 <p><strong>Checked before any browser opens:</strong> unknown state names, cycles, duplicate names, <code>@state-def:</code> or <code>@state:</code> on a
 Feature, a <code>Background:</code> in a definition file, more than one <code>@state:</code> on a scenario, <code>@save:storage</code> without a final

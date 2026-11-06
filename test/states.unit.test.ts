@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -46,6 +46,7 @@ test("parseStates: names, url, dependency, @save:storage and Step lines", () => 
 
 test("parseStates rejects what would run differently than it reads", () => {
   const bad = (src: string, re: RegExp) => assert.throws(() => parseStates(src, "x.state.feature"), re);
+  bad("Feature: f\n  @state-def:a\n  Scenario: s\n    I forgot the keyword\n", /has no steps/);
   bad("@state-def:a\nFeature: f\n  Scenario: s\n    When I go\n", /on a Feature/);
   bad("Feature: f\n  Background:\n    When I go\n  @state-def:a\n  Scenario: s\n    When I go\n", /Background/);
   bad("Feature: f\n  Scenario: s\n    When I go\n", /no @state-def/);
@@ -177,4 +178,16 @@ test("SavedStorage: 0600 files in a 0700 gitignored dir; one producer per state,
     /timed out/,
   );
   a.remove();
+});
+
+test("SavedStorage: a crashed worker's lock is stale, so nobody waits for it", async () => {
+  const [login] = [...states().values()];
+  const s = new SavedStorage("runs/y", dir());
+  assert.ok(s.tryLock("logged-in"));
+  s.held.clear(); // as if another process took it
+  const lock = readdirSync(s.dir).find((f) => f.endsWith(".lock"))!;
+  writeFileSync(join(s.dir, lock), "999999"); // no such process
+  assert.equal(s.locked("logged-in"), false);
+  assert.deepEqual(await s.plan([login], 1000, 10), { load: undefined, mine: ["logged-in"] });
+  s.remove();
 });

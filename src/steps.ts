@@ -31,7 +31,7 @@ import { JevDecider, MODEL } from "./jev.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
-import { INFRA_MARKER, RunDir } from "./trace.ts";
+import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
 import { applyOptions, settingWarnings } from "./options.ts";
 
 // Issue 8: a client cucumber configuration importing decisium's steps from another path (source while the CLI uses
@@ -199,7 +199,8 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
       run.log(`--- state ${loaded.name}: loaded saved storage`);
       const check = await runState(this, loaded, loaded.steps.slice(-1), true);
       if (!check) {
-        if (attempt >= 2) throw infra(new Error(`state "${loaded.name}" fails its check after loading and replaying`));
+        if (attempt >= 2)
+          throw setupError(new Error(`state "${loaded.name}" fails its check after loading and replaying`));
         run.log(`--- state ${loaded.name}: check failed after loading; replaying its Steps`);
         saved.forget(loaded.name);
         saved.release();
@@ -252,11 +253,11 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
           client: true,
           ms: Date.now() - t,
         });
-      } else await perform(w, text);
+      } else await perform(w, text, quiet);
       networkMissed(w.browser);
     } catch (err) {
       if (quiet) return false;
-      throw infra(new Error(`in state "${def.name}" at ${w.at}: ${(err as Error).message.split("\n")[0]}`));
+      throw setupError(new Error(`in state "${def.name}" at ${w.at}: ${(err as Error).message.split("\n")[0]}`));
     }
   }
   run.event("state", { state: def.name, steps: steps.length, ms: Date.now() - started }); // the cost of each state
@@ -299,7 +300,7 @@ async function step(this: Scenario, text: string) {
 }
 
 /** Runs one Step through Jev (or its cassette); throws on a failed outcome, with the screenshot attached. */
-async function perform(w: Scenario, text: string) {
+async function perform(w: Scenario, text: string, quiet = false) {
   const log = (line: string) => {
     run.log(line);
     if (opt("VERBOSE")) console.log(line);
@@ -322,6 +323,12 @@ async function perform(w: Scenario, text: string) {
   } catch (err) {
     throw infra(err);
   }
+  const ok = ["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome);
+  // quiet: a saved state's check after loading; a failure there replays the state, it is not a failed Step.
+  if (quiet && !ok) {
+    run.log(`  (check after loading: ${r.outcome})`);
+    throw new Error(r.outcome);
+  }
   run.event("step", {
     kind: w.kind,
     step: readStep({ text, kind: w.kind, ...w.arg }).label,
@@ -331,7 +338,7 @@ async function perform(w: Scenario, text: string) {
   if (r.outcome === "JUDGED_PASSED") w.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   // A file attachment any reporter keeps (text/plain opens as .txt); the console formatter reads it by its prefix.
   if (r.marginal) w.attach(`${MARGINAL}${r.marginal}`, { mediaType: "text/plain", fileName: "marginal-pass.txt" });
-  if (!["DONE", "PASSED", "JUDGED_PASSED"].includes(r.outcome)) {
+  if (!ok) {
     // Failed Step only; fileName carries the path to the console formatter.
     if (w.browser?.replay) await run.shoot(w.browser);
     const shot = run.lastScreenshot;
@@ -386,6 +393,14 @@ AfterAll(() => {
   for (const { cassette: c } of deciders.values())
     if (c) console.log(`Cassette ${c.path}: ${c.replayed} replayed, ${c.recorded} recorded, ${c.healed} healed`);
 });
+
+/** A failed state: the scenario is a setup error (exit 2), not a failed test; unlike `infra`, the suite goes on. */
+function setupError(err: Error): Error {
+  process.exitCode = 2;
+  if (run) writeFileSync(join(run.path, SETUP_MARKER), err.message); // read by `decisium run`, as workers exit alone
+  err.stack = err.message;
+  return err;
+}
 
 /** Infrastructure error (app not running, bad API key, network): one clear line, `--debug` for the stack. Exit code 2. */
 function infra(err: unknown): Error {

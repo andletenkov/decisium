@@ -50,9 +50,26 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
     assert.equal(existsSync(new SavedStorage(dir).dir), false); // run-scoped: removed at the end
     assert.match(readFileSync(join(dir, "log.txt"), "utf8"), /state logged-in: loaded saved storage/);
 
-    const broken = await run(`${F}/broken.feature`);
+    // A failing state is a setup error (exit 2) for its consumer; the other scenarios still run and pass.
+    writeFileSync(log, "");
+    const broken = await run(`${F}/broken.feature`, `${F}/states.feature`);
     assert.equal(broken.code, 2);
     assert.match(broken.stdout, /in state "broken" at test\/fixtures\/states\/shop.state.feature:15: not logged in/);
+    assert.match(broken.stdout, /3\/4 scenarios passed/);
+
+    // The saved session is revoked: the next consumer's check after loading fails, so it logs in again and passes.
+    writeFileSync(log, "");
+    const expired = await run(`${F}/expire.feature`);
+    assert.equal(expired.code, 0, expired.stdout + expired.stderr);
+    assert.deepEqual(
+      readFileSync(log, "utf8")
+        .trim()
+        .split("\n")
+        .map((l) => l.replace(/^revoke .*/, "revoke")),
+      ["log in", "check", "revoke", "check", "log in", "check"],
+    );
+    const edir = /Run directory: (\S+)/.exec(expired.stdout)![1];
+    assert.match(readFileSync(join(edir, "log.txt"), "utf8"), /check failed after loading; replaying its Steps/);
 
     const only = await run(`${F}/shop.state.feature`);
     assert.equal(only.code, 2);

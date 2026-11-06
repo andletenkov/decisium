@@ -58,7 +58,7 @@ check fails, the Steps are replayed. Values the skipped Steps named are not reme
 in a temporary directory outside the project (owner-only, files `0600`), keeps only the start URL's origin, and is deleted
 when the run ends. A scenario that loaded one keeps no Playwright trace (it would hold the session cookies).
 
-**A state is setup, not a test.** A failing state Step stops the run as a setup error (exit 2), labelled
+**A state is setup, not a test.** A failing state Step makes its scenario a setup error (exit 2; the other scenarios still run), labelled
 `in state "<name>" at <file>:<line>`. Test the login itself in a normal feature.
 
 **Checked before any browser opens:** unknown state names, cycles, duplicate names, `@state-def:` or `@state:` on a

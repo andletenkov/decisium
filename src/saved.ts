@@ -76,15 +76,33 @@ export class SavedStorage {
   tryLock(name: string): boolean {
     this.#ensure();
     try {
-      closeSync(openSync(this.#path(name, "lock"), "wx", 0o600));
+      const fd = openSync(this.#path(name, "lock"), "wx", 0o600);
+      writeFileSync(fd, String(process.pid));
+      closeSync(fd);
     } catch {
       return false;
     }
     this.held.add(name);
     return true;
   }
+  /** Whether a live process holds the lock; a crashed worker's lock is removed, so nobody waits for it. */
   locked(name: string) {
-    return existsSync(this.#path(name, "lock"));
+    const lock = this.#path(name, "lock");
+    let pid: number;
+    try {
+      pid = Number(readFileSync(lock, "utf8"));
+    } catch {
+      return false;
+    }
+    if (!pid) return true; // being written
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === "EPERM") return true; // alive, another user
+      rmSync(lock, { force: true });
+      return false;
+    }
   }
   unlock(name: string) {
     if (this.held.delete(name)) rmSync(this.#path(name, "lock"), { force: true });

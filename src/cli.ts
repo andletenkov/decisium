@@ -11,7 +11,7 @@ import { applyOptions, ourStdout, settingWarnings, type Settings } from "./optio
 import { doctor } from "./doctor.ts";
 import { install } from "./install.ts";
 import { lint } from "./lint.ts";
-import { INFRA_MARKER, RunDir } from "./trace.ts";
+import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 import { readStep } from "./step.ts";
 import { SavedStorage } from "./saved.ts";
@@ -357,7 +357,11 @@ async function main(): Promise<number> {
     return 2;
   }
   // steps.ts marks an infrastructure error in the run directory (it may have happened in a worker).
-  return process.exitCode === 2 || existsSync(join(run.path, INFRA_MARKER)) ? 2 : success ? 0 : 1;
+  return process.exitCode === 2 || [INFRA_MARKER, SETUP_MARKER].some((m) => existsSync(join(run.path, m)))
+    ? 2
+    : success
+      ? 0
+      : 1;
 }
 
 // No process.exit on success paths: a reporter (e.g. Qase's) may finish uploading after cucumber returns.

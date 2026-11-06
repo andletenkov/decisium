@@ -72,7 +72,8 @@ export const fromPickle = (step: {
 }): ParsedStep => ({ text: step.text, kind: stepKind(step), ...stepArgument(step) });
 
 /** Parses a `.feature` source. Throws on Gherkin syntax errors. */
-export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
+/** Parses Gherkin into its document and pickles. Throws on syntax errors and on a scenario with no steps. */
+export function parseGherkin(source: string, uri: string) {
   const newId = IdGenerator.uuid();
   const doc = new Parser(new AstBuilder(newId), new GherkinClassicTokenMatcher()).parse(source);
   const pickles = compile(doc, uri, newId);
@@ -82,6 +83,11 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
     throw new Error(
       `Scenario "${empty.name}" has no steps (lines without Given/When/Then/And/But are read as description)`,
     );
+  return { doc, pickles };
+}
+
+export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
+  const { doc, pickles } = parseGherkin(source, uri);
   if (!pickles.length) throw new Error("No scenarios found");
   const lines = new Map(
     (doc.feature?.children ?? [])

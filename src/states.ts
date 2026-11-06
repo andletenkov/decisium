@@ -1,10 +1,8 @@
 // Declarative state preconditions (issue 11): `@state-def:<name>` scenarios in `*.state.feature` files are sequences of
 // Steps a scenario tagged `@state:<name>` runs before its own. `@save:storage` on a definition saves its cookies and
 // localStorage once per run and loads them into later consumers instead of replaying its Steps.
-import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
-import { IdGenerator } from "@cucumber/messages";
 import { globSync, readFileSync } from "node:fs";
-import { fromPickle, tagValue, urlFromTags } from "./feature.ts";
+import { fromPickle, parseGherkin, tagValue, urlFromTags } from "./feature.ts";
 import { readStep, type ParsedStep } from "./step.ts";
 
 export interface StateDef {
@@ -50,8 +48,7 @@ export function nearMiss(tag: string): string | undefined {
 
 /** Definitions in one `*.state.feature` source. Throws on what would run differently than it reads. */
 export function parseStates(source: string, uri: string): StateDef[] {
-  const newId = IdGenerator.uuid();
-  const doc = new Parser(new AstBuilder(newId), new GherkinClassicTokenMatcher()).parse(source);
+  const { doc, pickles } = parseGherkin(source, uri);
   const feature = doc.feature;
   if (!feature) return [];
   const at = (line: number) => `${uri}:${line}`;
@@ -64,7 +61,7 @@ export function parseStates(source: string, uri: string): StateDef[] {
   const scenarios = new Map(children.flatMap((c) => (c.scenario ? [[c.scenario.id, c.scenario] as const] : [])));
   const lines = new Map(children.flatMap((c) => c.scenario?.steps ?? []).map((s) => [s.id, s.location.line] as const));
   const out: StateDef[] = [];
-  for (const p of compile(doc, uri, newId)) {
+  for (const p of pickles) {
     const sc = scenarios.get(p.astNodeIds[0])!;
     const tags = p.tags.map((t) => t.name);
     for (const t of tags) {
