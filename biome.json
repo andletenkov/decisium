@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**", "test/**", "scripts/**", "*.json", "*.mjs", "!test/fixtures/**/*.html"]
+    "includes": [
+      "src/**",
+      "test/**",
+      "scripts/**",
+      "*.json",
+      "*.mjs",
+      "!test/fixtures/**/*.html",
+      "!.release-please-manifest.json"
+    ]
   },
   "formatter": {
     "indentStyle": "space",
