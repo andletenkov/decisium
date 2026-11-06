@@ -1,6 +1,6 @@
 // Generated values: `{{fn[:label] [args]}}` inside a Step's quotes, doc string or table cells (docs/site/steps.md, Generated
-// values). Each function+label+args gets one value per run, typed for the template and masked back to it in every
-// Observation, so the model and cassette only see the template. Random values derive from the run's seed (shared by
+// values). Each function+label+args gets one value per run. The cassette stores templates; the model and page see values.
+// Random values derive from the run's seed (shared by
 // parallel workers through the environment); dates and `unique` from the run's start time.
 import { createHash, randomBytes } from "node:crypto";
 

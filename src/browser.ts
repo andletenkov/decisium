@@ -11,7 +11,6 @@ import {
   type Page,
   type Request,
 } from "playwright";
-import { fill } from "./generate.ts";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import {
   parseSnapshot,
@@ -181,26 +180,12 @@ export class Browser {
     return this.page.evaluate(() => navigator.clipboard?.readText()).catch(() => undefined);
   } // undefined: insecure origin (data:)
   private mask(s: string) {
-    // Match once, longest first, so a replacement cannot alter another template.
-    const values = Object.entries(this.secrets)
-      .filter(([, value]) => value)
-      .sort((a, b) => b[1].length - a[1].length);
-    if (!values.length) return s;
-    const patterns = values.map(([token, value]) => {
-      const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      // shortcut: a standalone short value is indistinguishable from unrelated page text; use longer values if it matters.
-      return token.startsWith("{{") && value.length <= 3 ? `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])` : escaped;
-    });
-    const matches = new RegExp(patterns.map((p) => `(${p})`).join("|"), "gu");
-    return s.replace(
-      matches,
-      (...args: unknown[]) => values[args.slice(1, values.length + 1).findIndex((v) => v !== undefined)][0],
-    );
+    return Object.entries(this.secrets).reduce((text, [token, value]) => text.replaceAll(value, token), s);
   }
-  /** The text to type for a chosen value: a secret's value, or the value with its {{...}} templates filled in. */
+  /** The text to type for a chosen value, resolving secret placeholders. */
   private typed(value: string) {
-    if (value in this.secrets && value.startsWith("$")) this.typedSecret = true;
-    return this.secrets[value] ?? fill(value, this.secrets);
+    if (value in this.secrets) this.typedSecret = true;
+    return this.secrets[value] ?? value;
   }
 
   private constructor(browser: PwBrowser, page: Page, start: string) {

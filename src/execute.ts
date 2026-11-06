@@ -9,6 +9,7 @@ export interface StepContext {
   rt: Runtime;
   live: Decider;
   cassette?: Cassette;
+  generated?: Record<string, string>;
   /** The Step's cassette key (stepKey); a table row adds ` (row n)`. */
   key: string;
   kind: StepKind;
@@ -50,7 +51,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   const served: StepReport["cassette"][] = [];
   const unquoted: [string, string][] = []; // values Jev read without quotes: scenario memory too
   for (const [i, row] of rows.entries()) {
-    const entry = cassette?.step(perRow ? `${key} (row ${i + 1})` : key, live, log);
+    const entry = cassette?.step(perRow ? `${key} (row ${i + 1})` : key, live, log, ctx.generated);
     const decider = trace(entry ?? live);
     try {
       // How Jev reads the wording (issue #31); DECISIUM_NO_INTENT=1 keeps the wording rules alone (A/B runs).

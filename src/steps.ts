@@ -29,7 +29,7 @@ import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
-import { Generated, newSeed } from "./generate.ts";
+import { fill, Generated, newSeed } from "./generate.ts";
 import { applyOptions, settingWarnings } from "./options.ts";
 
 let generated: Generated; // the run's {{...}} values; seed and start shared with parallel workers by the CLI
@@ -70,6 +70,7 @@ class Scenario extends World {
   arg: StepArgument = {}; // the running Step's data table or doc string
   at = ""; // file:line of the running Step, in its trace event (scripts/cookbook.ts)
   earlier: Record<string, string> = {}; // memory: quoted value -> the Step that named it
+  generated: Record<string, string> = {};
   /** Public API for client step definitions (task 0048): the current tab (a popup becomes it) and its Playwright context. */
   get page() {
     return this.browser.page;
@@ -126,9 +127,9 @@ Before(async function (this: Scenario, { pickle }) {
       throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
   }
-  // Generated values ("{{unique:x}}", "{{date}}", ...): one per run, typed for the template and masked back like a secret.
+  // Generated values ("{{unique:x}}", "{{date}}", ...): one per run, shared across the scenario.
   try {
-    Object.assign(secrets, generated.values(pickle.steps.map((s) => JSON.stringify(fromPickle(s)))));
+    this.generated = generated.values(pickle.steps.map((s) => JSON.stringify(fromPickle(s))));
   } catch (err) {
     throw infra(new Error(`"${pickle.name}": ${(err as Error).message}`));
   }
@@ -202,13 +203,19 @@ async function step(this: Scenario, text: string) {
   };
   let r: StepReport;
   try {
-    r = await executeStep(text, {
+    r = await executeStep(fill(text, this.generated), {
       rt: this.rt,
       live: this.live,
       cassette: this.cassette,
       key: this.key,
       kind: this.kind,
-      arg: this.arg,
+      arg: {
+        ...(this.arg.docString !== undefined ? { docString: fill(this.arg.docString, this.generated) } : {}),
+        ...(this.arg.table
+          ? { table: this.arg.table.map((row) => row.map((cell) => fill(cell, this.generated))) }
+          : {}),
+      },
+      generated: this.generated,
       earlier: this.earlier,
       log,
       trace: (d) => run.decider(d),

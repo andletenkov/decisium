@@ -285,11 +285,12 @@ Shifts are `+N`/`-N` with `s m h d w M y`; formats use `YYYY MM DD HH mm ss`. Ti
 
 A label after a colon gives separate values: `{{unique:a}}` and `{{unique:b}}` differ. The same function, label and
 arguments have one value for the whole run, in every Scenario and parallel worker, so a later Scenario finds what an
-earlier one created. The model, logs and cassette only see the template: the value is typed, and masked back to the
-template wherever the page shows it as typed (a date the page reformats is not). Generated values of at most three
-characters are masked only at letter/number boundaries, so a short value inside a word is not masked; a matching standalone
-value elsewhere on the page is indistinguishable and is also masked. Use longer values to avoid ambiguity. Unlike secrets,
-the trace is kept.
+earlier one created. The model, page and logs see the generated value. Cassette entries store templates and substitute
+this run's values on replay; secrets are still masked and never recorded. Short values (up to three characters) are only
+recorded when they are the whole string; a short standalone match inside a longer string is ambiguous and stops recording.
+If a recorded string contains multiple matches or several templates have the same value, recording stops rather than
+guessing; use a longer, distinct value. A value reformatted by the page cannot be
+recognized reliably. Unlike secrets, generated values are kept in the trace.
 An unknown function or bad arguments stop the run before it starts (exit 2); `decisium lint` shows each template with
 an example value. The run prints its seed; `--seed <s>` repeats its random values (`uuid`, `number`), while dates and
 `unique` follow the new run's start. Running cucumber-js directly with `--parallel`, set `DECISIUM_SEED` and

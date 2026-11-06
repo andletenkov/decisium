@@ -163,41 +163,18 @@ test("Browser: a secret placeholder is typed as its value, masked back to the to
   }
 });
 
-test("Browser: a {{...}} template inside a value is filled in, masked back, and keeps the trace", async () => {
-  const b = await Browser.open(
-    `data:text/html,<label>Name <input oninput="o.textContent='Hi '+this.value"></label><p id=o></p><label>Project <select><option>P x</option><option>P k3x9q</option></select></label>`,
-    false,
-    false,
-    { "{{unique:a}}": "k3x9q" },
-  );
-  try {
-    const name = (await b.observe()).elements.find((e) => e.name === "Name")!;
-    await b.execute({ verb: "TYPE", ref: name.ref, value: "Agent {{unique:a}}" });
-    const obs = await b.observe();
-    assert.ok(!obs.text.includes("k3x9q"));
-    assert.match(obs.pageText, /Hi Agent \{\{unique:a\}\}/);
-    const pick = obs.elements.find((e) => e.name === "Project")!;
-    await b.execute({ verb: "SELECT", ref: pick.ref, value: "P {{unique:a}}" }); // options are masked too
-    assert.ok(!b.typedSecret);
-  } finally {
-    await b.close();
-  }
-});
-
-test("Browser: a short generated value does not change unrelated words", async () => {
+test("Browser: generated values are visible without changing unrelated text", async () => {
   const b = await Browser.open(
     `data:text/html,<label>Name <input></label><button>Exit</button><button>Box 12</button>`,
-    false,
-    false,
-    { "{{text 1 x}}": "x", "{{number 2 2}}": "2" },
   );
   try {
     const before = await b.observe();
     assert.ok(before.elements.some((e) => e.name === "Exit"));
     assert.ok(before.elements.some((e) => e.name === "Box 12"));
     const name = before.elements.find((e) => e.name === "Name")!;
-    await b.execute({ verb: "TYPE", ref: name.ref, value: "{{text 1 x}}" });
-    assert.match((await b.observe()).text, /\{\{text 1 x\}\}/);
+    await b.execute({ verb: "TYPE", ref: name.ref, value: "x" });
+    assert.match((await b.observe()).text, /textbox "Name".*x/);
+    assert.ok(!b.typedSecret);
   } finally {
     await b.close();
   }
