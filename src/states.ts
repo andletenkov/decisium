@@ -31,24 +31,20 @@ export function discoverStates(glob = "**/*.state.feature", cwd = "."): string[]
 
 /** Decisium's tag names: a colon tag a small edit away from one is a typo, not a team tag (`@stat:` for `@state:`). */
 const TAGS = ["url", "viewport", "locale", "timezone", "geolocation", "replay-network", "state", "state-def", "save"];
-const distance = (a: string, b: string) => {
-  const d = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    let prev = d[0];
-    d[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      const t = d[j];
-      d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
-      prev = t;
-    }
+// One letter dropped, added, or two neighbours swapped. A changed letter is not a typo here: `@stage:`, `@date:` are
+// real team tags.
+const typo = (a: string, b: string) => {
+  if (Math.abs(a.length - b.length) === 1) {
+    const [s, l] = a.length < b.length ? [a, b] : [b, a];
+    return [...l].some((_, i) => l.slice(0, i) + l.slice(i + 1) === s);
   }
-  return d[b.length];
+  return a.length === b.length && [...a].some((_, i) => a.slice(0, i) + a[i + 1] + a[i] + a.slice(i + 2) === b);
 };
 /** "did you mean" for a colon tag near a Decisium tag name, else undefined. */
 export function nearMiss(tag: string): string | undefined {
   const m = /^@([\w-]+):/.exec(tag);
   if (!m || TAGS.includes(m[1])) return undefined;
-  const best = TAGS.find((t) => distance(m[1].toLowerCase(), t) <= (t.length > 4 ? 2 : 1));
+  const best = TAGS.find((t) => typo(m[1].toLowerCase(), t));
   return best && `${tag}: unknown tag, did you mean @${best}:?`;
 }
 

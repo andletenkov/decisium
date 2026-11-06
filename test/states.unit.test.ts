@@ -103,6 +103,8 @@ test("nearMiss: typos of Decisium tags, not team tags", () => {
   assert.match(nearMiss("@stat:x")!, /@state:/);
   assert.equal(nearMiss("@jira:ABC-1"), undefined);
   assert.equal(nearMiss("@owner:me"), undefined);
+  for (const t of ["@stage:x", "@status:x", "@date:x", "@uri:x", "@scale:x"]) assert.equal(nearMiss(t), undefined, t);
+  assert.match(nearMiss("@statte:x")!, /@state:/);
   assert.equal(nearMiss("@state:x"), undefined);
   assert.equal(nearMiss("@smoke"), undefined);
 });

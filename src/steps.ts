@@ -103,7 +103,8 @@ BeforeAll(function () {
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
 });
 
-Before(async function (this: Scenario, { pickle, gherkinDocument }) {
+// Its own timeout: live state Steps run inside it, and a worker may wait for another to save a state's storage.
+Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherkinDocument }) {
   if (broken()) return "skipped";
   if (isStateFile(pickle.uri))
     throw infra(new Error(`${pickle.uri} is a state definition file; exclude it from test paths`));
@@ -222,6 +223,7 @@ Before(async function (this: Scenario, { pickle, gherkinDocument }) {
 async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], quiet = false): Promise<boolean> {
   const labels = def.steps.map((s) => readStep(s).label);
   if (!quiet) run.log(`--- state ${def.name} (${def.file}:${def.line})`);
+  const started = Date.now();
   for (const s of steps) {
     const { text, kind, line, ...arg } = s;
     w.kind = kind;
@@ -240,7 +242,16 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
           step: { text, argument } as unknown as PickleStep,
           world: w,
         } as unknown as Parameters<typeof client.getInvocationParameters>[0]);
+        const t = Date.now();
         await client.code.apply(w, parameters);
+        run.event("step", {
+          kind,
+          step: readStep(s).label,
+          at: w.at,
+          outcome: "DONE",
+          client: true,
+          ms: Date.now() - t,
+        });
       } else await perform(w, text);
       networkMissed(w.browser);
     } catch (err) {
@@ -248,6 +259,7 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
       throw infra(new Error(`in state "${def.name}" at ${w.at}: ${(err as Error).message.split("\n")[0]}`));
     }
   }
+  run.event("state", { state: def.name, steps: steps.length, ms: Date.now() - started }); // the cost of each state
   return true;
 }
 
