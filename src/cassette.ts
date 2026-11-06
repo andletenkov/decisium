@@ -72,8 +72,8 @@ function mapEntry(entry: Entry, transform: (value: string) => string): Entry {
 }
 
 function templateValue(text: string, generated: Record<string, string>): string {
-  const id = generated["{{runId}}"];
-  return id ? text.replaceAll(id, "{{runId}}") : text;
+  const id = generated["{{decisium.runId}}"];
+  return id ? text.replaceAll(id, "{{decisium.runId}}") : text;
 }
 
 function formatFile(file: File): string {

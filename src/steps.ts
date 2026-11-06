@@ -29,8 +29,7 @@ import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
-import { fill } from "./generate.ts";
-import { randomUUID } from "node:crypto";
+import { fill, newRunId } from "./generate.ts";
 import { applyOptions, settingWarnings } from "./options.ts";
 
 let runId: string;
@@ -93,7 +92,7 @@ BeforeAll(function () {
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED")))
     throw new Error("TYPESAFE_API_KEY is not set.");
   run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
-  runId = env.DECISIUM_RUN_ID ||= randomUUID();
+  runId = env.DECISIUM_RUN_ID ||= newRunId();
   if (cliOwnsRun) return; // the CLI warned and wrote the run event
   run.event("run", { settings });
   if (!env.CUCUMBER_WORKER_ID || env.CUCUMBER_WORKER_ID === "0")
@@ -125,7 +124,7 @@ Before(async function (this: Scenario, { pickle }) {
       throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
   }
-  this.generated = { "{{runId}}": runId };
+  this.generated = { "{{decisium.runId}}": runId };
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
   this.dir = run.scenario(pickle.name);
   const glob = tagValue(pickle.tags, "replay-network");

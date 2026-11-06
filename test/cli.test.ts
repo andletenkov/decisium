@@ -116,7 +116,7 @@ test("cli: runId is shared by workers and changes on the next run", () => {
     }
     const ids = readFileSync(join(cwd, "ids.txt"), "utf8").trim().split("\n");
     assert.equal(ids.length, 4);
-    assert.match(ids[0], /^[0-9a-f-]{36}$/);
+    assert.match(ids[0], /^[A-Za-z0-9_-]{16}$/);
     assert.equal(ids[0], ids[1]);
     assert.equal(ids[2], ids[3]);
     assert.notEqual(ids[0], ids[2]);

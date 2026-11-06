@@ -8,7 +8,7 @@ import { parseArgs, type ParseArgsConfig } from "node:util";
 import { describe, pin, stepKey, RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { applyOptions, ourStdout, settingWarnings, type Settings } from "./options.ts";
-import { randomUUID } from "node:crypto";
+import { newRunId } from "./generate.ts";
 import { doctor } from "./doctor.ts";
 import { install } from "./install.ts";
 import { lint } from "./lint.ts";
@@ -309,7 +309,7 @@ async function main(): Promise<number> {
     return 2;
   }
   // Each CLI run has a new ID; workers inherit the same ID.
-  env.DECISIUM_RUN_ID = randomUUID();
+  env.DECISIUM_RUN_ID = newRunId();
   if (!env.TYPESAFE_API_KEY && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
     console.error("TYPESAFE_API_KEY is not set.");
     return 2;

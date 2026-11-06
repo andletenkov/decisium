@@ -120,12 +120,12 @@ test("cassette: generated values are recorded as templates and replayed with new
   const after = parseSnapshot('- button "Open Agent xyz789 and xyz789" [ref=e2]');
   const { live, calls } = scripted({ turn: { done: 0, target: sure("e1"), action: sure("click") } });
   const rec = new Cassette(path, "m", "new");
-  const writer = rec.step("step", live, undefined, { "{{runId}}": "abc123" });
+  const writer = rec.step("step", live, undefined, { "{{decisium.runId}}": "abc123" });
   await writer.turn("open", before, []);
   assert.equal(writer.done(true), "recorded");
   rec.save();
-  assert.match(readFileSync(path, "utf8"), /Open Agent \{\{runId\}\} and \{\{runId\}\}/);
-  const replay = new Cassette(path, "m", "none").step("step", live, undefined, { "{{runId}}": "xyz789" });
+  assert.match(readFileSync(path, "utf8"), /Open Agent \{\{decisium\.runId\}\} and \{\{decisium\.runId\}\}/);
+  const replay = new Cassette(path, "m", "none").step("step", live, undefined, { "{{decisium.runId}}": "xyz789" });
   assert.equal((await replay.turn("open", after, [])).target.choice, "e2");
   assert.equal(replay.done(true), "replayed");
   assert.deepEqual(calls, ["turn"]);

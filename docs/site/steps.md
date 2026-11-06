@@ -267,18 +267,18 @@ recorded.
 
 ### Unique values
 
-Use `{{runId}}` inside a Step's quotes, doc string or table cell for input that must differ on every run:
+Use `{{decisium.runId}}` inside a Step's quotes, doc string or table cell for input that must differ on every run:
 
 ```gherkin
-When I create an agent named "Autotest agent {{runId}}"
-Then I see the agent named "Autotest agent {{runId}}"
+When I create an agent named "Autotest agent {{decisium.runId}}"
+Then I see the agent named "Autotest agent {{decisium.runId}}"
 ```
 
-Decisium generates a UUID once per CLI run, shared across scenarios and parallel workers. The model, page and logs see
-the real value. Cassette entries store `{{runId}}` and substitute the current run's value during replay. Unlike secrets,
+Decisium generates a 16-character random ID once per CLI run, shared across scenarios and parallel workers. The model,
+page and logs see the real value. Cassette entries store `{{decisium.runId}}` and substitute the current run's value during replay. Unlike secrets,
 the value is included in traces. If the page reformats the ID, cassette replay may not recognize it.
 
-When running cucumber-js directly with `--parallel`, set `DECISIUM_RUN_ID` to a fresh UUID before starting it so all
+When running cucumber-js directly with `--parallel`, set `DECISIUM_RUN_ID` to a fresh random ID before starting it so all
 workers share the same ID. Other `{{...}}` expressions are not supported.
 
 ### Out of scope

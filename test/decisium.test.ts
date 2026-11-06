@@ -180,6 +180,19 @@ test("Browser: generated values are visible without changing unrelated text", as
   }
 });
 
+test("Browser: generated run ID fits a 40-character name field", async () => {
+  const { newRunId } = await import("../src/generate.ts");
+  const b = await Browser.open(`data:text/html,<label>Name <input maxlength="40"></label>`);
+  try {
+    const name = (await b.observe()).elements.find((e) => e.name === "Name")!;
+    const value = `Autotest agent ${newRunId()}`;
+    await b.execute({ verb: "TYPE", ref: name.ref, value });
+    assert.equal(await b.page.locator("input").inputValue(), value);
+  } finally {
+    await b.close();
+  }
+});
+
 test("Browser: a collapsed control lists the hidden entries it holds; checks cannot read them", async () => {
   const b = await Browser.open(`data:text/html,<ul><li><a href=b>Biography</a>
     <button aria-expanded=false aria-controls=sub>Toggle Biography subsection</button>
