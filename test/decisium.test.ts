@@ -184,6 +184,25 @@ test("Browser: a {{...}} template inside a value is filled in, masked back, and 
   }
 });
 
+test("Browser: a short generated value does not change unrelated words", async () => {
+  const b = await Browser.open(
+    `data:text/html,<label>Name <input></label><button>Exit</button><button>Box 12</button>`,
+    false,
+    false,
+    { "{{text 1 x}}": "x", "{{number 2 2}}": "2" },
+  );
+  try {
+    const before = await b.observe();
+    assert.ok(before.elements.some((e) => e.name === "Exit"));
+    assert.ok(before.elements.some((e) => e.name === "Box 12"));
+    const name = before.elements.find((e) => e.name === "Name")!;
+    await b.execute({ verb: "TYPE", ref: name.ref, value: "{{text 1 x}}" });
+    assert.match((await b.observe()).text, /\{\{text 1 x\}\}/);
+  } finally {
+    await b.close();
+  }
+});
+
 test("Browser: a collapsed control lists the hidden entries it holds; checks cannot read them", async () => {
   const b = await Browser.open(`data:text/html,<ul><li><a href=b>Biography</a>
     <button aria-expanded=false aria-controls=sub>Toggle Biography subsection</button>

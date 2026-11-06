@@ -4,7 +4,9 @@
 // parallel workers through the environment); dates and `unique` from the run's start time.
 import { createHash, randomBytes } from "node:crypto";
 
-const TEMPLATE = /\{\{\s*([a-z]+)(?::(\w+))?((?:\s+[^{}\s]+)*)\s*\}\}/g;
+const TEMPLATE = /\{\{[^{}]*\}\}/g;
+const SYNTAX = /^\{\{\s*([a-z]+)(?::(\w+))?((?:\s+[^{}\s]+)*)\s*\}\}$/;
+const MAX_TEXT = 1_000_000;
 
 /** The `{{...}}` templates in a string, as written, in order. */
 export const templates = (s: string): string[] => [...s.matchAll(TEMPLATE)].map((m) => m[0]);
@@ -51,8 +53,10 @@ export class Generated {
   values(texts: string[]): Record<string, string> {
     const out: Record<string, string> = {};
     for (const text of texts)
-      for (const m of text.matchAll(TEMPLATE)) {
-        const [template, fn, label = "", rest] = m;
+      for (const [template] of text.matchAll(TEMPLATE)) {
+        const m = SYNTAX.exec(template);
+        if (!m) throw new Error(`${template}: unknown function or bad arguments (see Generated values)`);
+        const [, fn, label = "", rest] = m;
         const args = rest.trim() ? rest.trim().split(/\s+/) : [];
         const key = [fn, label, ...args].join("\0");
         if (!this.cache.has(key)) {
@@ -95,7 +99,15 @@ export class Generated {
       case "text": {
         const n = whole(args[0]);
         const ch = args[1] ?? "a";
-        if (n === undefined || n < 0 || args.length > 2 || [...ch].length !== 1) return undefined;
+        if (
+          n === undefined ||
+          !Number.isSafeInteger(n) ||
+          n < 0 ||
+          n > MAX_TEXT ||
+          args.length > 2 ||
+          [...ch].length !== 1
+        )
+          return undefined;
         return ch.repeat(n);
       }
       case "date":
@@ -108,6 +120,8 @@ export class Generated {
           rest = rest.slice(1);
         } else if (/^[+-]/.test(rest[0] ?? "")) return undefined;
         const format = rest.join(" ") || (fn === "date" ? "YYYY-MM-DD" : "YYYY-MM-DDTHH:mm");
+        if (!/YYYY|MM|DD|HH|mm|ss/.test(format) || /[a-zA-Z]/.test(format.replace(/YYYY|MM|DD|HH|mm|ss|T/g, "")))
+          return undefined;
         return formatDate(d, format);
       }
     }

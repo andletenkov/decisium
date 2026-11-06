@@ -279,14 +279,17 @@ cells: `I create an agent named "Autotest agent {{unique:archived}}"`.
 | `{{date}}`, `{{date +3d DD.MM.YYYY}}` | run's date, default `YYYY-MM-DD` |
 | `{{datetime}}`, `{{datetime -2h}}` | run's date and time, default `YYYY-MM-DDTHH:mm` |
 | `{{timestamp}}` | run start, Unix milliseconds |
-| `{{text 256}}`, `{{text 10 x}}` | the character (default `a`) repeated, for length limits |
+| `{{text 256}}`, `{{text 10 x}}` | the character (default `a`) repeated up to 1,000,000 times, for length limits |
 
 Shifts are `+N`/`-N` with `s m h d w M y`; formats use `YYYY MM DD HH mm ss`. Times are local.
 
 A label after a colon gives separate values: `{{unique:a}}` and `{{unique:b}}` differ. The same function, label and
 arguments have one value for the whole run, in every Scenario and parallel worker, so a later Scenario finds what an
 earlier one created. The model, logs and cassette only see the template: the value is typed, and masked back to the
-template wherever the page shows it as typed (a date the page reformats is not). Unlike secrets, the trace is kept.
+template wherever the page shows it as typed (a date the page reformats is not). Generated values of at most three
+characters are masked only at letter/number boundaries, so a short value inside a word is not masked; a matching standalone
+value elsewhere on the page is indistinguishable and is also masked. Use longer values to avoid ambiguity. Unlike secrets,
+the trace is kept.
 An unknown function or bad arguments stop the run before it starts (exit 2); `decisium lint` shows each template with
 an example value. The run prints its seed; `--seed <s>` repeats its random values (`uuid`, `number`), while dates and
 `unique` follow the new run's start. Running cucumber-js directly with `--parallel`, set `DECISIUM_SEED` and

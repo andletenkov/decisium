@@ -181,11 +181,21 @@ export class Browser {
     return this.page.evaluate(() => navigator.clipboard?.readText()).catch(() => undefined);
   } // undefined: insecure origin (data:)
   private mask(s: string) {
-    // Longest first: "{{text 128}}" holds "{{text 64}}"'s value twice.
-    return Object.entries(this.secrets)
-      .filter(([, value]) => value) // "{{text 0}}"
-      .sort((a, b) => b[1].length - a[1].length)
-      .reduce((t, [token, value]) => t.replaceAll(value, token), s);
+    // Match once, longest first, so a replacement cannot alter another template.
+    const values = Object.entries(this.secrets)
+      .filter(([, value]) => value)
+      .sort((a, b) => b[1].length - a[1].length);
+    if (!values.length) return s;
+    const patterns = values.map(([token, value]) => {
+      const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // shortcut: a standalone short value is indistinguishable from unrelated page text; use longer values if it matters.
+      return token.startsWith("{{") && value.length <= 3 ? `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])` : escaped;
+    });
+    const matches = new RegExp(patterns.map((p) => `(${p})`).join("|"), "gu");
+    return s.replace(
+      matches,
+      (...args: unknown[]) => values[args.slice(1, values.length + 1).findIndex((v) => v !== undefined)][0],
+    );
   }
   /** The text to type for a chosen value: a secret's value, or the value with its {{...}} templates filled in. */
   private typed(value: string) {

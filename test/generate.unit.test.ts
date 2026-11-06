@@ -13,7 +13,7 @@ test("templates: {{fn[:label] [args]}} anywhere in the text", () => {
     "{{ text 5 }}",
     "{{date +1d DD.MM.YYYY}}",
   ]);
-  assert.deepEqual(templates("$USER {x} {{}} plain"), []);
+  assert.deepEqual(templates("$USER {x} plain"), []);
   assert.equal(placeholder("$USER"), "USER"); // secrets are untouched
 });
 
@@ -45,6 +45,18 @@ test("one value per function, label and args for the run; the seed repeats rando
 });
 
 test("an unknown function or bad args is an error naming the template", () => {
-  for (const t of ["{{uuidd}}", "{{text abc}}", "{{text}}", "{{number 5 1}}", "{{date +3x}}", "{{uuid 1}}"])
+  for (const t of [
+    "{{uuidd}}",
+    "{{UUID}}",
+    "{{uuid:bad-name}}",
+    "{{}}",
+    "{{text abc}}",
+    "{{text}}",
+    "{{text 999999999999999999999}}",
+    "{{number 5 1}}",
+    "{{date +3x}}",
+    "{{date rubbish}}",
+    "{{uuid 1}}",
+  ])
     assert.throws(() => gen().values([t]), new RegExp(t.replace(/[{}+]/g, "\\$&")));
 });
