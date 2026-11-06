@@ -536,6 +536,20 @@ test("lazy UI: actions settle only after work due soon (idle callbacks, short ti
   }
 });
 
+test("lazy UI on a busy page: an idle callback the browser never gets idle for still runs before settle returns", async () => {
+  const b = await Browser.open(APP + "?lazy=1&busy=1");
+  try {
+    const name = (await b.observe()).elements.find((e) => e.name === "Campaign name")!;
+    await b.execute({ verb: "TYPE", ref: name.ref, value: "Autumn Sale" });
+    const t = Date.now();
+    await b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find((e) => e.name === "Schedule")!.ref });
+    assert.ok(Date.now() - t < 3000, `settled in ${Date.now() - t} ms, not the cap`);
+    assert.match((await b.observe()).text, /Status: Scheduled/);
+  } finally {
+    await b.close();
+  }
+});
+
 test("idle page: a failing check and WAIT give up at once instead of waiting the full cap", async () => {
   const b = await Browser.open(APP);
   try {
