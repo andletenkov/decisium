@@ -14,6 +14,8 @@ import { lint } from "./lint.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 import { readStep } from "./step.ts";
+import { SavedStorage } from "./saved.ts";
+import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef } from "./states.ts";
 
 // ".ts" from source, ".js" from the built package in dist/.
 const EXT = import.meta.url.slice(-3);
@@ -253,7 +255,12 @@ async function main(): Promise<number> {
       const dir = dirname(file);
       process.on("exit", () => rmSync(dir, { recursive: true, force: true })); // every exit path, early returns included
     } else if (cmd === "run" && arg) {
-      files = positionals.slice(1);
+      // State definition files are not tests, even when a broad glob names them (issue 11).
+      files = positionals.slice(1).filter((f) => !isStateFile(feature(f)));
+      if (!files.length) {
+        console.error(`Only state definition files given (*.state.feature); name the features that use them.`);
+        return 2;
+      }
       const missing = files.find((f) => !existsSync(feature(f)));
       if (missing) {
         console.error(`File not found: ${missing}`);
@@ -302,7 +309,15 @@ async function main(): Promise<number> {
     console.error(`--record must be one of ${RECORD_MODES.join(", ")}\n\n${usage(cmd)}`);
     return 2;
   }
-  const missingUrl = scenarios.find((s) => !(env.DECISIUM_URL || s.url));
+  let chains: StateDef[][];
+  try {
+    const states = loadStates(discoverStates(env.DECISIUM_STATES || undefined));
+    chains = scenarios.map((s) => consumerChain(states, s));
+  } catch (err) {
+    console.error((err as Error).message);
+    return 2;
+  }
+  const missingUrl = scenarios.find((s, i) => !(env.DECISIUM_URL || chains[i].length || s.url));
   if (missingUrl) {
     console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${usage(cmd)}`);
     return 2;
@@ -327,6 +342,7 @@ async function main(): Promise<number> {
   console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);
   run.done();
+  new SavedStorage(run.path).remove(); // saved state storage lives for this run only
   // Issue 8: named feature files that execute nothing are a usage error (a broken configuration, a tag filter or a
   // line with no scenario), never a pass.
   const trace = join(run.path, "trace.jsonl");
