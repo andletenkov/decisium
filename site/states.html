@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>States · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/search-index.js" defer></script>
+<script src="assets/search.js" defer></script>
+<script>const q = new URLSearchParams(location.search).get("theme");
+let saved = null; try { saved = localStorage.getItem("theme"); } catch {}
+document.documentElement.dataset.theme = q || saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("theme", t); } catch {} }
+document.addEventListener("click", e => { const a = e.target.closest("a[href]"); if (!a || /^(https?:|#)/.test(a.getAttribute("href"))) return;
+  const u = new URL(a.href); u.searchParams.set("theme", document.documentElement.dataset.theme); a.href = u.href; });</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <div class="search"><input type="search" id="search" placeholder="Search docs" aria-label="Search docs" autocomplete="off"><kbd>/</kbd><div class="search-results" role="listbox" hidden></div></div>
+  <nav class="top-links"><a class="icon-link" href="https://github.com/andletenkov/decisium" aria-label="GitHub" title="GitHub"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a><a class="icon-link npm-version" href="https://www.npmjs.com/package/decisium" aria-label="npm, version 0.1.5" title="npm"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>v0.1.5</span></a>
+    <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html" aria-current="page">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<main class="doc"><h1 id="states">States</h1>
+<p>A state is a reusable precondition written as Steps: logged in, a cookie banner dismissed, a cart with items. Define it
+once with <code>@state-def:&lt;name&gt;</code> and start any scenario from it with <code>@state:&lt;name&gt;</code>.</p>
+<p>Definitions live in <code>*.state.feature</code> files next to your features. Decisium finds every <code>**/*.state.feature</code> under the
+working directory (not <code>node_modules</code>, <code>dist</code>, <code>build</code>, <code>runs</code>), whichever features you run; set
+<code>worldParameters.decisium.states</code> (or <code>DECISIUM_STATES</code>) to another glob. <code>decisium run</code> never runs a definition file as
+a test, even when a broad glob names it. Raw <code>cucumber-js</code> stops with &quot;is a state definition file; exclude it from
+test paths&quot;.</p>
+<pre><code class="language-gherkin"># features/shop.state.feature
+@url:https://shop.example.com
+Feature: Shop states
+
+  # Saved once per run, loaded into later consumers.
+  @state-def:logged-in @save:storage
+  Scenario: Logged in as an admin
+    When I log in as &quot;$USERNAME&quot; with password &quot;$PASSWORD&quot;
+    Then the header should show &quot;Admin&quot;
+
+  # Page state: always replayed.
+  @state-def:consent-dismissed
+  Scenario: Cookie banner dismissed
+    When I click &quot;Accept all&quot;
+    Then the &quot;Cookie settings&quot; banner should not be shown
+
+  # Chain: starts from logged-in, then replays its own Steps.
+  @state-def:cart-with-items @state:logged-in
+  Scenario: A cart with three items
+    When I add the &quot;Backpack&quot; to the cart
+    And I add the &quot;Bike light&quot; to the cart
+    And I add the &quot;T-shirt&quot; to the cart
+    Then the cart badge should show &quot;3&quot;
+</code></pre>
+<pre><code class="language-gherkin">@state:cart-with-items
+Scenario: Checkout shows the right total
+  When I open the checkout
+  Then the order total should be &quot;59.97&quot;
+</code></pre>
+<p><strong>Start URL:</strong> the <code>@url:</code> of the first state in the chain (<code>--url</code> overrides). The scenario continues on the page the
+state ended on; go elsewhere with a Step such as <code>I go to &quot;/checkout&quot;</code>. A scenario&#39;s own <code>@url:</code> together with <code>@state:</code> is
+an error.</p>
+<p><strong>Each scenario gets a fresh browser</strong>, and its <code>@viewport:</code>, <code>@locale:</code>, <code>@timezone:</code>, <code>@geolocation:</code> apply to the
+state&#39;s Steps too. A state&#39;s Steps are recorded in the consuming feature&#39;s cassette, keyed <code>state:&lt;name&gt;: &lt;Step&gt;</code>. A
+line one of your <a href="client-steps.html">client step definitions</a> matches runs it.</p>
+<p><strong><code>@save:storage</code>:</strong> after this state&#39;s Steps run, its cookies and <code>localStorage</code> are saved and loaded into the
+scenarios that use it, for the rest of the run. Page state and <code>sessionStorage</code> are not saved; end the definition with a
+<code>Then</code> check. The first scenario that reaches the state replays its Steps and saves; parallel workers wait for it
+instead of all logging in. Later scenarios load the storage, re-run the final check and skip the other Steps; if the
+check fails, the Steps are replayed. Values the skipped Steps named are not remembered for later Steps. The storage lives
+in a temporary directory outside the project (owner-only, files <code>0600</code>), keeps only the start URL&#39;s origin, and is deleted
+when the run ends. A scenario that loaded one keeps no Playwright trace (it would hold the session cookies).</p>
+<p><strong>A state is setup, not a test.</strong> A failing state Step makes its scenario a setup error (exit 2; the other scenarios still run), labelled
+<code>in state &quot;&lt;name&gt;&quot; at &lt;file&gt;:&lt;line&gt;</code>. Test the login itself in a normal feature.</p>
+<p><strong>Checked before any browser opens:</strong> unknown state names, cycles, duplicate names, <code>@state-def:</code> or <code>@state:</code> on a
+Feature, a <code>Background:</code> in a definition file, more than one <code>@state:</code> on a scenario, <code>@save:storage</code> without a final
+<code>Then</code>, <code>@replay-network</code> on a scenario whose state types a secret (it would record it into the HAR file), and tags one
+typo away from a Decisium tag (<code>@stat:</code> → &quot;did you mean @state:?&quot;). <code>@state-def:</code> on a scenario outside a <code>*.state.feature</code> file is an error too.</p>
+<div class="pager"><a class="prev" href="client-steps.html"><span>Previous</span>Client steps</a><a class="next" href="cli.html"><span>Next</span>Command line</a></div></main>
+
+</div>
+</body>
+</html>

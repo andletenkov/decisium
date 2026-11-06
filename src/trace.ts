@@ -6,6 +6,7 @@ import type { Runtime } from "./runner.ts";
 
 /** File in the run directory marking an infrastructure error (exit 2), written by any worker, read by the CLI. */
 export const INFRA_MARKER = "infrastructure-error";
+export const SETUP_MARKER = "setup-error"; // a failed state: exit 2, the other scenarios still run
 
 /** runs/<timestamp>/: trace.jsonl for the whole run, one folder per scenario with a screenshot per Turn (replay: per failed Step). */
 export class RunDir {

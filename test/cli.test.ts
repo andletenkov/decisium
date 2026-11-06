@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -8,6 +8,13 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
 const commands = ["run", "step", "lint", "doctor", "install", "pin"];
+// Children that load src/ through tsx (a CommonJS client package) would report its offsets as uncovered code: no coverage.
+// Node re-adds NODE_V8_COVERAGE to a child env that lacks it, so it points at a directory nobody reads.
+const noCoverage = (extra: Record<string, string>) => ({
+  ...process.env,
+  ...extra,
+  NODE_V8_COVERAGE: mkdtempSync(join(tmpdir(), "decisium-nocov-")),
+});
 const cli = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
@@ -40,6 +47,9 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
     writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
     for (const name of ["one", "two"])
       writeFileSync(join(cwd, `${name}.feature`), `Feature: ${name}\n  Scenario: test\n    Given a client step\n`);
+    // NODE_DEBUG=esm logs every module loaded (megabytes, growing with the source): stderr goes to a file, not a buffer.
+    const debugLog = join(cwd, "esm-debug.log");
+    const stderrFd = openSync(debugLog, "w");
     const noImports = spawnSync(
       process.execPath,
       [cli, "run", "one.feature", "--url", join(cwd, "page.html"), "--record", "none"],
@@ -47,12 +57,17 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
         cwd,
         encoding: "utf8",
         timeout: 30_000,
-        maxBuffer: 10_000_000,
-        env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "", NODE_DEBUG: "esm" },
+        stdio: ["ignore", "pipe", stderrFd],
+        env: noCoverage({ TYPESAFE_API_KEY: "", NODE_OPTIONS: "", NODE_DEBUG: "esm" }),
       },
     );
+    closeSync(stderrFd);
     assert.equal(noImports.status, 1, noImports.error?.message ?? noImports.stdout);
-    assert.doesNotMatch(noImports.stderr, /Translating (?:StandardModule|TypeScript) file:.*\/src\/ts-loader\.ts/);
+    assert.match(readFileSync(debugLog, "utf8"), /Translating TypeScript file:/); // the debug log was captured
+    assert.doesNotMatch(
+      readFileSync(debugLog, "utf8"),
+      /Translating (?:StandardModule|TypeScript) file:.*\/src\/ts-loader\.ts/,
+    );
     for (const parallel of [false, true]) {
       for (const configured of [false, true]) {
         writeFileSync(join(cwd, "package.json"), JSON.stringify({ type: configured ? "commonjs" : "module" }));
@@ -71,7 +86,7 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
             "--record",
             "none",
           ],
-          { cwd, encoding: "utf8", timeout: 30_000, env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "" } },
+          { cwd, encoding: "utf8", timeout: 30_000, env: noCoverage({ TYPESAFE_API_KEY: "", NODE_OPTIONS: "" }) },
         );
         assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
         assert.match(result.stdout, parallel ? /2\/2 scenarios passed/ : /1\/1 scenarios passed/);

@@ -28,6 +28,7 @@ const NAV: [group: string, pages: [slug: string, title: string, source: string][
       ["how-it-works", "How a Step runs", "docs/site/how-it-works.md"],
       ["browser-context", "Browser context", "docs/site/browser-context.md"],
       ["client-steps", "Client steps", "docs/site/client-steps.md"],
+      ["states", "States", "docs/site/states.md"],
     ],
   ],
   [
