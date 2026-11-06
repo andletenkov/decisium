@@ -11,6 +11,7 @@ import {
   type Page,
   type Request,
 } from "playwright";
+import { fill } from "./generate.ts";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import {
   parseSnapshot,
@@ -180,7 +181,16 @@ export class Browser {
     return this.page.evaluate(() => navigator.clipboard?.readText()).catch(() => undefined);
   } // undefined: insecure origin (data:)
   private mask(s: string) {
-    return Object.entries(this.secrets).reduce((t, [token, value]) => t.replaceAll(value, token), s);
+    // Longest first: "{{text 128}}" holds "{{text 64}}"'s value twice.
+    return Object.entries(this.secrets)
+      .filter(([, value]) => value) // "{{text 0}}"
+      .sort((a, b) => b[1].length - a[1].length)
+      .reduce((t, [token, value]) => t.replaceAll(value, token), s);
+  }
+  /** The text to type for a chosen value: a secret's value, or the value with its {{...}} templates filled in. */
+  private typed(value: string) {
+    if (value in this.secrets && value.startsWith("$")) this.typedSecret = true;
+    return this.secrets[value] ?? fill(value, this.secrets);
   }
 
   private constructor(browser: PwBrowser, page: Page, start: string) {
@@ -709,8 +719,7 @@ export class Browser {
       this.open = undefined;
       this.dialog = { ...this.dialog!, state: verb === "ACCEPT" ? "accepted" : "dismissed" };
       this.rearm(); // before answering: the next dialog may open at once
-      if (value in this.secrets) this.typedSecret = true;
-      await (verb === "ACCEPT" ? d.accept(this.secrets[value] ?? value) : d.dismiss());
+      await (verb === "ACCEPT" ? d.accept(this.typed(value)) : d.dismiss());
     } else {
       const t = Date.now();
       await this.unblocked(this.perform(action));
@@ -769,8 +778,7 @@ export class Browser {
             ? target
             : this.page.getByRole(el.role as Parameters<Page["getByRole"]>[0], { name: el.name, exact: true }).first();
         if (verb === "TYPE") {
-          const typed = this.secrets[value] ?? value;
-          if (value in this.secrets) this.typedSecret = true;
+          const typed = this.typed(value);
           await target.fill(typed, opts);
           const field = await (await now()).elementHandle();
           if (field) {

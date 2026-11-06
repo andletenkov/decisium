@@ -83,6 +83,45 @@ test("cli: TypeScript client steps resolve extensionless imports in serial and p
   }
 });
 
+test("cli: a bad {{...}} template is a setup error before the run; --seed is printed", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-gen-"));
+  try {
+    writeFileSync(join(cwd, "page.html"), "<html><body>ready</body></html>");
+    writeFileSync(
+      join(cwd, "steps.mjs"),
+      `import { Given } from ${JSON.stringify(createRequire(import.meta.url).resolve("@cucumber/cucumber"))};\nGiven(/^a client step/, () => {});\n`,
+    );
+    const run = (step: string) => {
+      writeFileSync(join(cwd, "g.feature"), `Feature: g\n  Scenario: s\n    Given ${step}\n`);
+      return spawnSync(
+        process.execPath,
+        [
+          cli,
+          "run",
+          "g.feature",
+          "--import",
+          "steps.mjs",
+          "--url",
+          join(cwd, "page.html"),
+          "--record",
+          "none",
+          "--seed",
+          "abc",
+        ],
+        { cwd, encoding: "utf8", timeout: 30_000, env: { ...process.env, TYPESAFE_API_KEY: "", NODE_OPTIONS: "" } },
+      );
+    };
+    const bad = run('a client step "{{text abc}}"');
+    assert.equal(bad.status, 2);
+    assert.match(bad.stderr, /\{\{text abc\}\}: unknown function or bad arguments/);
+    const ok = run('a client step "{{uuid}}"');
+    assert.equal(ok.status, 0, `${ok.stdout}\n${ok.stderr}`);
+    assert.match(ok.stdout, /Seed: abc/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test("cli: bare invocation keeps usage and exit 2", () => {
   const result = invoke([]);
   assert.equal(result.status, 2);

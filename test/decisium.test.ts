@@ -163,6 +163,25 @@ test("Browser: a secret placeholder is typed as its value, masked back to the to
   }
 });
 
+test("Browser: a {{...}} template inside a value is filled in, masked back, and keeps the trace", async () => {
+  const b = await Browser.open(
+    `data:text/html,<label>Name <input oninput="o.textContent='Hi '+this.value"></label><p id=o></p>`,
+    false,
+    false,
+    { "{{unique:a}}": "k3x9q" },
+  );
+  try {
+    const name = (await b.observe()).elements.find((e) => e.name === "Name")!;
+    await b.execute({ verb: "TYPE", ref: name.ref, value: "Agent {{unique:a}}" });
+    const obs = await b.observe();
+    assert.ok(!obs.text.includes("k3x9q"));
+    assert.match(obs.pageText, /Hi Agent \{\{unique:a\}\}/);
+    assert.ok(!b.typedSecret);
+  } finally {
+    await b.close();
+  }
+});
+
 test("Browser: a collapsed control lists the hidden entries it holds; checks cannot read them", async () => {
   const b = await Browser.open(`data:text/html,<ul><li><a href=b>Biography</a>
     <button aria-expanded=false aria-controls=sub>Toggle Biography subsection</button>
@@ -1535,6 +1554,20 @@ test("doc strings: one more quoted value, to type or to compare (task 0038)", as
   } finally {
     await b.close();
   }
+});
+
+test("lint: {{...}} templates show an example value; a bad one is flagged", async () => {
+  const { lint } = await import("../src/lint.ts");
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const path = `${mkdtempSync(`${tmpdir()}/decisium-`)}/g.feature`;
+  writeFileSync(
+    path,
+    'Feature: f\n  Scenario: s\n    When I type "{{text 3}}" into "Name"\n    And I type "{{uuidd}}" into "Id"\n',
+  );
+  const out = lint(path, {});
+  assert.match(out, /generated \(Jev sees the template\), e\.g\.: \{\{text 3\}\} → aaa/);
+  assert.match(out, /⚠ \{\{uuidd\}\}: unknown function/);
 });
 
 test("lint: a check's table with only a header row compares nothing (task 0038)", async () => {

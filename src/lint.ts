@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { parseFeature } from "./feature.ts";
 import { KIND } from "./report.ts";
 import { placeholder, readStep, type ParsedStep } from "./step.ts";
+import { Generated, newSeed } from "./generate.ts";
 
 const SEE = "see https://andletenkov.github.io/decisium/steps.html";
 
@@ -120,6 +121,7 @@ export function warnings(
 export function lint(path: string, env: Record<string, string | undefined> = process.env): string {
   const out = [path];
   let flagged = 0;
+  const generated = new Generated(newSeed(), Date.now());
   for (const s of parseFeature(readFileSync(path, "utf8"), path)) {
     out.push("", `  Scenario: ${s.name}${s.url ? `  (${s.url})` : ""}`);
     const before: ParsedStep[] = [];
@@ -144,6 +146,16 @@ export function lint(path: string, env: Record<string, string | undefined> = pro
       if (keys.length) out.push(`${" ".repeat(15)}keys: ${keys.join(", ")}`);
       if (secrets.length)
         out.push(`${" ".repeat(15)}secrets (from the environment, never sent to Jev): ${secrets.join(", ")}`);
+      try {
+        const made = Object.entries(generated.values([JSON.stringify(step)]));
+        if (made.length)
+          out.push(
+            `${" ".repeat(15)}generated (Jev sees the template), e.g.: ${made.map(([t, v]) => `${t} → ${v}`).join(", ")}`,
+          );
+      } catch (err) {
+        out.push(`${" ".repeat(15)}⚠ ${(err as Error).message}: the run stops before it starts (exit 2)`);
+        flagged++;
+      }
       for (const w of warnings(step, before, env)) {
         out.push(`${" ".repeat(15)}⚠ ${w}`);
         flagged++;

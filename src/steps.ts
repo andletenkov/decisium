@@ -29,7 +29,10 @@ import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir } from "./trace.ts";
+import { Generated, newSeed } from "./generate.ts";
 import { applyOptions, settingWarnings } from "./options.ts";
+
+let generated: Generated; // the run's {{...}} values; seed and start shared with parallel workers by the CLI
 
 // Issue 8: a client cucumber configuration importing decisium's steps from another path (source while the CLI uses
 // dist) loads this module twice; the two catch-all definitions then defer to each other forever and the run collects
@@ -88,6 +91,10 @@ BeforeAll(function () {
   if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED")))
     throw new Error("TYPESAFE_API_KEY is not set.");
   run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
+  env.DECISIUM_SEED ||= newSeed();
+  env.DECISIUM_START ||= String(Date.now());
+  generated = new Generated(env.DECISIUM_SEED, Number(env.DECISIUM_START));
+  run.log(`Seed: ${env.DECISIUM_SEED} (--seed repeats this run's {{...}} values)`);
   if (cliOwnsRun) return; // the CLI warned and wrote the run event
   run.event("run", { settings });
   if (!env.CUCUMBER_WORKER_ID || env.CUCUMBER_WORKER_ID === "0")
@@ -118,6 +125,12 @@ Before(async function (this: Scenario, { pickle }) {
     if (!env[name])
       throw infra(new Error(`"${token}" in "${pickle.name}": environment variable ${name} is not set (or empty).`));
     secrets[token] = env[name];
+  }
+  // Generated values ("{{unique:x}}", "{{date}}", ...): one per run, typed for the template and masked back like a secret.
+  try {
+    Object.assign(secrets, generated.values(pickle.steps.map((s) => JSON.stringify(fromPickle(s)))));
+  } catch (err) {
+    throw infra(new Error(`"${pickle.name}": ${(err as Error).message}`));
   }
   run.log(`\n=== Scenario: ${pickle.name}  (${url})`);
   this.dir = run.scenario(pickle.name);

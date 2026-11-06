@@ -8,6 +8,7 @@ import { parseArgs, type ParseArgsConfig } from "node:util";
 import { describe, pin, stepKey, RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { applyOptions, ourStdout, settingWarnings, type Settings } from "./options.ts";
+import { Generated, newSeed } from "./generate.ts";
 import { doctor } from "./doctor.ts";
 import { install } from "./install.ts";
 import { lint } from "./lint.ts";
@@ -29,7 +30,7 @@ const COMMANDS: Record<string, { synopsis: string; notes: string }> = {
   },
   run: {
     synopsis:
-      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--report-dir <dir>]\n                [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]\n                [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
+      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--report-dir <dir>] [--seed <s>]\n                [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]\n                [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
     notes: `The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
@@ -48,6 +49,7 @@ Options in the configuration: worldParameters: { decisium: { url, record, headed
   agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns } }; flags and DECISIUM_*
   env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, DECISIUM_MAX_TURNS, ...) override them.
 --report-dir <dir>: where run folders go (default runs).
+--seed <s>: repeat a run's random {{...}} values (uuid, number); the seed is printed at the start of every run.
 --confidence-target <p>: how sure Jev must be of the element an action acts on (default 0.5).
 --confidence-answer <p>: how sure Jev must be of every other answer (default 0.8; lower lets a wrong reading pass).
 --check-timeout <ms>: how long a check waits for the expected state (default 5000).
@@ -133,6 +135,7 @@ async function main(): Promise<number> {
       verbose: { type: "boolean", short: "v" },
       debug: { type: "boolean" },
       "report-dir": { type: "string" },
+      seed: { type: "string" },
       "confidence-target": { type: "string" },
       "confidence-answer": { type: "string" },
       "check-timeout": { type: "string" },
@@ -219,6 +222,7 @@ async function main(): Promise<number> {
     VERBOSE: flag(values.verbose),
     DEBUG: flag(values.debug),
     REPORT_DIR: values["report-dir"],
+    SEED: values.seed,
     CONFIDENCE_TARGET: values["confidence-target"],
     CONFIDENCE_ANSWER: values["confidence-answer"],
     CHECK_TIMEOUT: values["check-timeout"],
@@ -307,6 +311,16 @@ async function main(): Promise<number> {
     console.error(`No start URL for "${missingUrl.name}": pass --url or add an @url:<url> tag.\n\n${usage(cmd)}`);
     return 2;
   }
+  // {{...}} generated values: one seed and start time for every worker; a bad template is a setup error.
+  env.DECISIUM_SEED ||= newSeed();
+  env.DECISIUM_START ||= String(Date.now());
+  try {
+    const generated = new Generated(env.DECISIUM_SEED, Number(env.DECISIUM_START));
+    for (const s of scenarios) generated.values(s.steps.map((step) => JSON.stringify(step)));
+  } catch (err) {
+    console.error((err as Error).message);
+    return 2;
+  }
   if (!env.TYPESAFE_API_KEY && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
     console.error("TYPESAFE_API_KEY is not set.");
     return 2;
@@ -324,7 +338,7 @@ async function main(): Promise<number> {
   Object.assign(env, { DECISIUM_STEP: cmd === "step" ? "1" : "", DECISIUM_RUN_DIR: run.path });
   run.event("run", { settings });
   for (const w of settingWarnings(settings)) console.warn(w);
-  console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
+  console.log(`Model: ${MODEL}\nRun directory: ${run.path}\nSeed: ${env.DECISIUM_SEED}`);
   const { success } = await runCucumber(runConfiguration);
   run.done();
   // Issue 8: named feature files that execute nothing are a usage error (a broken configuration, a tag filter or a

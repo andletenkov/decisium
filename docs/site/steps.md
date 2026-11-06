@@ -265,6 +265,32 @@ is masked back wherever the page shows it. A missing variable is a setup error. 
 Playwright trace. Password fields are always masked. A value written literally in a Step is sent to the model and
 recorded.
 
+### Generated values
+
+For input that must differ on every run, write `{{function}}` anywhere inside a Step's quotes, doc string or table
+cells: `I create an agent named "Autotest agent {{unique:archived}}"`.
+
+| Template | Value |
+| --- | --- |
+| `{{unique}}` | run-unique id: run start time + random, base 36, lower case |
+| `{{email}}` | `autotest+<unique>@example.com` |
+| `{{uuid}}` | random UUID v4 |
+| `{{number}}`, `{{number 1 10}}` | random whole number, default 100000-999999 |
+| `{{date}}`, `{{date +3d DD.MM.YYYY}}` | run's date, default `YYYY-MM-DD` |
+| `{{datetime}}`, `{{datetime -2h}}` | run's date and time, default `YYYY-MM-DDTHH:mm` |
+| `{{timestamp}}` | run start, Unix milliseconds |
+| `{{text 256}}`, `{{text 10 x}}` | the character (default `a`) repeated, for length limits |
+
+Shifts are `+N`/`-N` with `s m h d w M y`; formats use `YYYY MM DD HH mm ss`. Times are local.
+
+A label after a colon gives separate values: `{{unique:a}}` and `{{unique:b}}` differ. The same function, label and
+arguments have one value for the whole run, in every Scenario and parallel worker, so a later Scenario finds what an
+earlier one created. The model, logs and cassette only see the template: the value is typed, and masked back to the
+template wherever the page shows it as typed (a date the page reformats is not). Unlike secrets, the trace is kept.
+An unknown function or bad arguments stop the run before it starts (exit 2); `decisium lint` shows each template with
+an example value. The run prints its seed; `--seed <s>` repeats its random values (`uuid`, `number`), while dates and
+`unique` follow the new run's start.
+
 ### Out of scope
 
 Canvas drawing, maps, captchas, 2FA codes and closed shadow roots cannot be seen or driven by Steps. Use a test mode in
