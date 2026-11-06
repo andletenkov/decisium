@@ -1,7 +1,7 @@
 // Gherkin `.feature` files -> runnable Scenarios. The official parser expands Background steps and Scenario
 // Outline rows ("pickles"), so the runner only sees flat Step lists.
 import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
-import { IdGenerator, type PickleStepArgument, type PickleStepType } from "@cucumber/messages";
+import { IdGenerator, type GherkinDocument, type PickleStepArgument, type PickleStepType } from "@cucumber/messages";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { devices, type BrowserContextOptions } from "playwright";
@@ -11,6 +11,7 @@ export interface Scenario {
   name: string;
   tags: string[];
   url?: string; // from the last `@url:<url>` tag (scenario tags override feature tags)
+  own: string[]; // the scenario's own tags (and its Examples'), not the Feature's or Rule's
   steps: ParsedStep[];
 }
 
@@ -71,7 +72,8 @@ export const fromPickle = (step: {
 }): ParsedStep => ({ text: step.text, kind: stepKind(step), ...stepArgument(step) });
 
 /** Parses a `.feature` source. Throws on Gherkin syntax errors. */
-export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
+/** Parses Gherkin into its document and pickles. Throws on syntax errors and on a scenario with no steps. */
+export function parseGherkin(source: string, uri: string) {
   const newId = IdGenerator.uuid();
   const doc = new Parser(new AstBuilder(newId), new GherkinClassicTokenMatcher()).parse(source);
   const pickles = compile(doc, uri, newId);
@@ -81,6 +83,11 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
     throw new Error(
       `Scenario "${empty.name}" has no steps (lines without Given/When/Then/And/But are read as description)`,
     );
+  return { doc, pickles };
+}
+
+export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
+  const { doc, pickles } = parseGherkin(source, uri);
   if (!pickles.length) throw new Error("No scenarios found");
   const lines = new Map(
     (doc.feature?.children ?? [])
@@ -99,9 +106,22 @@ export function parseFeature(source: string, uri = "test.feature"): Scenario[] {
   return pickles.map((pickle) => ({
     name: pickle.name,
     tags: pickle.tags.map((t) => t.name),
+    own: ownTags(doc, pickle),
     url: urlFromTags(pickle.tags),
     steps: pickle.steps.map((step) => ({ ...fromPickle(step), line: lines.get(step.astNodeIds[0]) })),
   }));
+}
+
+/** A pickle's tags that are not inherited from its Feature or Rule. */
+export function ownTags(
+  doc: GherkinDocument,
+  pickle: { tags: readonly { name: string; astNodeId: string }[] },
+): string[] {
+  const feature = doc.feature;
+  const inherited = new Set(
+    [...(feature?.tags ?? []), ...(feature?.children ?? []).flatMap((c) => c.rule?.tags ?? [])].map((t) => t.id),
+  );
+  return pickle.tags.filter((t) => !inherited.has(t.astNodeId)).map((t) => t.name);
 }
 
 /** One Step given on the command line, e.g. `Then the status should be "Draft"`; no keyword means `When`. */

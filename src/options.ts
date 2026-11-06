@@ -15,10 +15,11 @@ const ENV = {
   checkTimeout: "CHECK_TIMEOUT",
   actionTimeout: "ACTION_TIMEOUT",
   maxTurns: "MAX_TURNS",
+  states: "STATES", // glob of state definition files (issue 11), default **/*.state.feature
   "confidence.target": "CONFIDENCE_TARGET",
   "confidence.answer": "CONFIDENCE_ANSWER",
 } as const;
-const TEXT = ["url", "record", "reportDir"];
+const TEXT = ["url", "record", "reportDir", "states"];
 const BOOL = ["headed", "judged", "strict", "verbose", "debug", "agentReport"];
 
 /** Tuning values (issue 16): defaults, overridden by DECISIUM_* env (filled from worldParameters.decisium). */

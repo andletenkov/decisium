@@ -47,6 +47,7 @@ export default {
 | `checkTimeout` | `5000` | `--check-timeout` | `DECISIUM_CHECK_TIMEOUT` | Ms a check waits for the page to reach the expected state. |
 | `actionTimeout` | `5000` | `--action-timeout` | `DECISIUM_ACTION_TIMEOUT` | Ms after an action to wait for requests and DOM changes to settle. |
 | `maxTurns` | `8` | `--max-turns` | `DECISIUM_MAX_TURNS` | Turns an action Step may take before `STEP_TIMEOUT`, 1-20. |
+| `states` | `"**/*.state.feature"` | | `DECISIUM_STATES` | Glob of [state definition](https://andletenkov.github.io/decisium/states.html) files. |
 
 ### reportDir
 

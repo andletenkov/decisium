@@ -43,7 +43,7 @@ cases that never completes a real journey is a failed design.
    rest with what would unblock them. Tag Scenarios needing special setup (e.g. `@needs-seed-admin`).
 6. Shape: one behaviour per Scenario, named by its expected outcome. Same flow with different data → a
    `Scenario Outline` with `Examples` (one row per class/boundary). Each Scenario is independent (fresh browser), so
-   repeat setup Steps or use `Background`. Every Scenario ends with a check of the observable outcome (message text,
+   repeat setup Steps, use `Background` (one file), or a state (below) for setup shared across features. Every Scenario ends with a check of the observable outcome (message text,
    value, page), never just an action. Use only data the app accepts or rejects deterministically.
 7. Show the user the CUJ list and case list (journey, behaviour, technique, source, automate decision) before
    writing, if long or requirements were ambiguous.
@@ -54,6 +54,12 @@ cases that never completes a real journey is a failed design.
    Word each Step like a **Write** row of its kind (navigate, type, select, act, attempt, keys, value / presence /
    scoped / state check, memory, secrets). Quote every value the Step uses and every value a check compares.
    Credentials go in as `"$NAME"` placeholders, with the variables set in the environment or `.env`.
+   **Shared setup (login, consent, a built cart) → a state**: a `@state-def:<name>` Scenario in a `*.state.feature`
+   file (with its `@url:`), used by a Scenario tagged `@state:<name>` (at most one, no own `@url:`; it continues on
+   the page the state ended on). Chain with `@state:<other>` on the definition. Add `@save:storage` when the result
+   lives only in cookies/`localStorage` (login): it runs once per run and is loaded into later scenarios; it must end
+   with a `Then` check. Not for page or `sessionStorage` state. A state is setup: its failure exits 2; keep real login
+   coverage in a normal feature. Never put `@state-def:`/`@state:` on a Feature or a `Background` in a state file.
 2. Run `decisium lint <file.feature>`. It shows how each Step will be read (kind, quoted values, placeholders) and
    flags wordings to avoid with ⚠. Done when every ⚠ is reworded away, or kept on purpose with a `#` comment saying why.
 
