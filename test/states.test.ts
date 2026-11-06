@@ -62,7 +62,7 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
   }
 });
 
-test("decisium run: state mistakes stop before any browser opens; @state-def in a test only warns", async () => {
+test("decisium run: state mistakes, @state-def in a test included, stop before any browser opens", async () => {
   const run = (env: Record<string, string>, ...files: string[]) =>
     promisify(execFile)(
       "node",
@@ -108,13 +108,7 @@ test("decisium run: state mistakes stop before any browser opens; @state-def in 
   );
   await fails(`${F}/states.feature`, /state cycle/, { DECISIUM_STATES: `${dir}/*.state.feature` });
 
-  // @state-def on a test scenario defines nothing: a warning, and the scenario still runs.
-  const warned = await run({}, `${N}/def-in-test.feature`);
-  assert.match(
-    warned.stderr,
-    /@state-def:misplaced has no effect in a test; move the scenario to a \*\.state\.feature file/,
-  );
-  assert.match(warned.stdout, /Run directory/);
+  await fails(`${N}/def-in-test.feature`, /@state-def: only works in a \*\.state\.feature file/);
 });
 
 test("raw cucumber-js: a state definition file among the test paths fails clearly", async () => {

@@ -5,15 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { parseFeature } from "../src/feature.ts";
 import { forOrigin, SavedStorage } from "../src/saved.ts";
-import {
-  consumerChain,
-  discoverStates,
-  loadStates,
-  misplacedDef,
-  nearMiss,
-  parseStates,
-  stateChain,
-} from "../src/states.ts";
+import { consumerChain, discoverStates, loadStates, nearMiss, parseStates, stateChain } from "../src/states.ts";
 
 const SHOP = `@url:https://shop.example.com
 Feature: Shop states
@@ -96,6 +88,7 @@ test("consumerChain checks the consumer's tags", () => {
   bad("Feature: f\n  @state:cart @url:http://x\n  Scenario: s\n    When I pay\n", /@url: and @state: together/);
   bad("Feature: f\n  @state:cart @state:logged-in\n  Scenario: s\n    When I pay\n", /at most one/);
   bad("Feature: f\n  @state:nope\n  Scenario: s\n    When I pay\n", /unknown state "nope"/);
+  bad("Feature: f\n  @state-def:x\n  Scenario: s\n    When I pay\n", /only works in a \*\.state\.feature/);
   bad("Feature: f\n  @stat:cart\n  Scenario: s\n    When I pay\n", /did you mean @state:/);
   bad("Feature: f\n  @state:cart @replay-network:**/api/**\n  Scenario: s\n    When I pay\n", /HAR/);
   // A feature-level @url: is fine: the state's url wins.
@@ -104,11 +97,6 @@ test("consumerChain checks the consumer's tags", () => {
       .length,
     2,
   );
-});
-
-test("misplacedDef warns on @state-def in a test, not on @state", () => {
-  assert.match(misplacedDef({ name: "s", tags: ["@state-def:x"] })!, /^Warning: "s": @state-def:x has no effect/);
-  assert.equal(misplacedDef({ name: "s", tags: ["@state:x"] }), undefined);
 });
 
 test("nearMiss: typos of Decisium tags, not team tags", () => {

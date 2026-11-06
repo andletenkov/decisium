@@ -25,15 +25,7 @@ import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts"
 import { executeStep, type StepReport } from "./execute.ts";
 import { contextFromTags, fromPickle, ownTags, tagValue, toUrl, urlFromTags } from "./feature.ts";
 import { forOrigin, SavedStorage, type StorageState } from "./saved.ts";
-import {
-  misplacedDef,
-  consumerChain,
-  discoverStates,
-  isStateFile,
-  loadStates,
-  type StateDef,
-  type States,
-} from "./states.ts";
+import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, type States } from "./states.ts";
 import type { Decider } from "./decision.ts";
 import { JevDecider, MODEL } from "./jev.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
@@ -126,8 +118,6 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
   } catch (err) {
     throw infra(err);
   }
-  const misplaced = misplacedDef({ name: pickle.name, tags: pickle.tags.map((t) => t.name) });
-  if (misplaced && !cliOwnsRun) console.warn(misplaced); // the CLI warned before the run
   // A state runs from the @url: of the root of its chain; the scenario continues where it ended.
   const url = env.DECISIUM_URL || (chain.length ? chain[0].url : urlFromTags(pickle.tags));
   if (!url) throw infra(new Error(`No start URL for "${pickle.name}": pass --url or add an @url:<url> tag.`));
