@@ -1,0 +1,62 @@
+# Keeps a "chore(main): release x.y.z" PR open from conventional commits. Merging it tags vX.Y.Z,
+# creates the GitHub release and calls release.yml in this run (a GITHUB_TOKEN tag push triggers no workflow).
+name: release-please
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency: release-please
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+      pr_branch: ${{ steps.rp.outputs.pr && fromJSON(steps.rp.outputs.pr).headBranchName }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }} # a PAT, so the release PR and its pushes trigger CI
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+  site: # the site shows the version, so regenerate it on the release PR branch
+    needs: release-please
+    if: needs.release-please.outputs.pr_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.pr_branch }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }} # the push below must trigger CI on the release PR
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: node scripts/site.ts
+      - name: Commit the regenerated site
+        run: |
+          git add site
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: regenerate site for release"
+          git push
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+    secrets: # only what release.yml needs; never the PAT
+      TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
