@@ -116,3 +116,82 @@ test("changes: what an action removed is listed where it was; the closing menu o
     'changed: gone: listitem "report.pdf"; status value "Ready" -> "Deleted report.pdf"; gone: menuitem "Rename"; gone: menuitem "Delete"',
   );
 });
+
+test("changes: label, state, rename, churn, reorder, distance and diff details", async () => {
+  const { withDialog } = await import("../src/observation.ts");
+  const p = (s: string) => parseSnapshot(s);
+  const cases: [string, string, string, string?][] = [
+    [
+      `- button "\ue001 ${"A".repeat(45)}" [ref=e1]: x`,
+      `- button "\ue001 ${"A".repeat(45)}" [ref=e1]: y`,
+      `changed: button "${"A".repeat(40)}…" value "x" -> "y"`,
+    ],
+    [
+      `- list "L" [ref=l]:\n  - listitem "Item" [ref=i]`,
+      `- listitem "Item" [ref=i]`,
+      `changed: listitem "Item" moved from list "L" to the page; gone: list "L"`,
+    ],
+    [`- button "B" [pressed] [ref=e1]`, `- button "B" [ref=e1]`, `changed: button "B" [pressed] -> [no state]`],
+    [`- button "B" [ref=e1]`, `- button "B" [expanded] [ref=e1]`, `changed: button "B" [no state] -> [expanded]`],
+    [
+      `- list "L" [ref=l]:\n  - listitem [ref=i]: Apple`,
+      `- list "L" [ref=l]:\n  - listitem [ref=i]: Apricot`,
+      `changed: listitem value "Apple" -> "Apricot"`,
+    ],
+    [`- generic [ref=g]:\n  - button "X" [ref=b]`, `- button "X" [ref=b]`, "no visible change"],
+    [
+      `- list "L" [ref=l]:\n  - listitem "b" [ref=1]\n  - listitem "a" [ref=2]`,
+      `- list "L" [ref=l]:\n  - listitem "a" [ref=2]\n  - listitem "b" [ref=1]`,
+      `changed: list "L" reordered: b, a -> a, b`,
+    ],
+    [
+      `- list "L" [ref=l]:\n  - listitem [ref=1]: ${"x".repeat(25)}\n  - listitem [ref=2]: a`,
+      `- list "L" [ref=l]:\n  - listitem [ref=2]: a\n  - listitem [ref=1]: ${"x".repeat(25)}`,
+      `changed: list "L" reordered: ${"x".repeat(20)}…, a -> a, ${"x".repeat(20)}…`,
+    ],
+    [
+      `- paragraph [ref=1]: a\n- paragraph [ref=2]: b\n- paragraph [ref=3]: c\n- button "Go" [ref=4]\n- paragraph [ref=5]: d`,
+      `- paragraph [ref=1]: A\n- paragraph [ref=2]: B\n- paragraph [ref=3]: c\n- button "Go" [ref=4]\n- paragraph [ref=5]: D`,
+      `changed: paragraph value "d" -> "D"; paragraph value "b" -> "B"; paragraph value "a" -> "A"`,
+      "4",
+    ],
+    [
+      `- paragraph [ref=1]: a\n- paragraph [ref=5]: d`,
+      `- paragraph [ref=1]: A\n- paragraph [ref=5]: D`,
+      `changed: paragraph value "a" -> "A"; paragraph value "d" -> "D"`,
+      "zz",
+    ],
+    [
+      `- paragraph [ref=1]: abcdefghijklmnopq1`,
+      `- paragraph [ref=1]: abcdefghijklmnopq2`,
+      `changed: paragraph value "…cdefghijklmnopq1" -> "…cdefghijklmnopq2"`,
+    ],
+    [
+      `- paragraph [ref=1]: abcdefghijklmn1`,
+      `- paragraph [ref=1]: abcdefghijklmn2`,
+      `changed: paragraph value "abcdefghijklmn1" -> "abcdefghijklmn2"`,
+    ],
+  ];
+  for (const [a, b, want, acted] of cases) assert.equal(changes(p(a), p(b), acted), want, want);
+  const items = (o: string[]) => p(`- list "L" [ref=l]:\n${o.map((x) => `  - listitem "${x}" [ref=${x}]`).join("\n")}`);
+  assert.equal(
+    changes(items(["a", "b", "c", "d", "e", "f"]), items(["f", "e", "d", "c", "b", "a"])),
+    `changed: list "L" reordered: a, b, c, d, e -> f, e, d, c, b`,
+  );
+  const dialog = withDialog(p(`- paragraph [ref=1]: b`), { type: "alert", message: "Hi", state: "open" });
+  assert.equal(
+    changes(p(`- paragraph [ref=1]: a`), dialog, "1"),
+    `changed: appeared: alert "browser dialog"; paragraph value "a" -> "b"`,
+  );
+});
+
+test("changes: the cap keeps whole entries up to 300 characters", () => {
+  const p = (v: string) =>
+    parseSnapshot(Array.from({ length: 12 }, (_, i) => `- paragraph [ref=e${i}]: ${v}${i}`).join("\n"));
+  const out = changes(p("old"), p("new"));
+  const entry = (i: number) => `paragraph value "old${i}" -> "new${i}"`;
+  // each entry is 33-34 characters with its separator: 8 fit, the 9th would pass 300
+  assert.equal(out, `changed: ${[0, 1, 2, 3, 4, 5, 6, 7].map(entry).join("; ")}; …`);
+  const exact = parseSnapshot(`- paragraph [ref=e]: ${"a".repeat(0)}x`);
+  assert.equal(changes(exact, parseSnapshot(`- paragraph [ref=e]: y`)), `changed: paragraph value "x" -> "y"`);
+});

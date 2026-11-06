@@ -15,3 +15,5 @@ docs/experiments/
 docs/roadmap.md
 docs/cookbook.md
 scripts/cookbook.ts
+reports/
+.stryker-tmp/

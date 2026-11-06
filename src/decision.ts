@@ -221,7 +221,7 @@ export const GATE_TARGET_TOP = 0.5; // default of `confidence.target`
 export const GATE_TARGET_MARGIN = 0.1;
 export function gate(pick: Pick, minTop = confidence(pick).answer, minMargin = GATE_MARGIN): boolean {
   const [top = 0, second = 0] = Object.values(pick.probabilities).sort((a, b) => b - a);
-  return top >= minTop && top - second >= minMargin;
+  return top >= minTop && top - second >= minMargin - 1e-9; // 0.5 - 0.4 is 0.0999… in floats
 }
 
 /** Most likely answers first, until together they cover the gate's confidence (cassette.ts stores exactly these). */
