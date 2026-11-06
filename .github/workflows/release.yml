@@ -1,4 +1,4 @@
-# Task 0050: a v* tag tests, smoke-tests the packed tarball, stages the npm release (provenance) and creates the GitHub release.
+# Task 0050: a v* tag tests, smoke-tests the packed tarball, stages the npm release (provenance) and creates the GitHub release. Then pushes the runner image to ghcr.io.
 name: release
 on:
   push:
@@ -37,9 +37,51 @@ jobs:
       - run: npm run pack:smoke
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the runner image (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: decisium:smoke
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test - Chromium launches in the image
+        run: docker run --rm -w /opt/decisium --entrypoint node decisium:smoke -e "require('playwright').chromium.launch().then(b=>b.close())"
       - run: npm install -g npm@latest # trusted publishing (OIDC) needs npm 11.5.1+, staging a newer one
       # The trusted publisher only allows staging: approve with 2FA via `npm stage list decisium` + `npm stage approve <id>`.
       - run: npm stage publish --access public
       - run: npm pack --silent && gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes decisium-*.tgz
         env:
           GH_TOKEN: ${{ github.token }}
+  image: # multi-arch push; the amd64 image was built and smoke-tested in publish (cache hit)
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

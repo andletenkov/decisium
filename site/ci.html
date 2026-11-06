@@ -47,6 +47,17 @@ jobs:
 <p>With a global install instead, replace <code>npm ci</code> with <code>npm install -g decisium@0.1.4</code> (the version that recorded the
 cassettes) and drop <code>npx</code>.</p>
 <p>Upload <code>runs/</code> (or your <code>reportDir</code>) on failure: it holds the screenshots, Playwright trace and <code>report.md</code> for every failed scenario.</p>
+<h2 id="docker-image">Docker image</h2>
+<p>Every release is published as <code>ghcr.io/andletenkov/decisium:&lt;version&gt;</code> (also <code>:&lt;major&gt;.&lt;minor&gt;</code>), for amd64 and arm64.
+Chromium and its system libraries are already installed, so <code>decisium install</code> is not needed. The image&#39;s entrypoint is
+<code>decisium</code>, and its working directory is <code>/work</code>:</p>
+<pre><code class="language-sh">docker run --rm --user &quot;$(id -u):$(id -g)&quot; -v &quot;$PWD:/work&quot; ghcr.io/andletenkov/decisium:0.1.5 \
+  run features/*.feature --record none --format junit:reports/junit.xml
+</code></pre>
+<p>Use the image version that recorded your cassettes.</p>
+<p>To record cassettes or heal Steps, pass the key: <code>-e TYPESAFE_API_KEY</code>. Any runner that can start a container (a
+Kubernetes Job, a test orchestrator, a CI service) runs features the same way: mount or check out the project into the
+working directory and collect <code>reports/</code> and <code>runs/</code> as artifacts.</p>
 <div class="pager"><a class="prev" href="reports.html"><span>Previous</span>Reports and debugging</a><a class="next" href="cucumber-js.html"><span>Next</span>Running with cucumber-js</a></div></main>
 
 </div>

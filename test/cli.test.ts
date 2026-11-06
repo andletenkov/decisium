@@ -190,3 +190,10 @@ test("cli: install fetches the Chromium Decisium launches (its own Playwright, n
   const dir = /^(.*[\\/]chromium-\d+)/.exec(chromium.executablePath())![1];
   assert.ok(result.stdout.includes(dir), `${dir} not in:\n${result.stdout}`);
 });
+
+test("cli: install --only-shell skips the full Chromium", () => {
+  const result = invoke(["install", "--only-shell", "--dry-run"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /chromium_headless_shell-\d+/);
+  assert.doesNotMatch(result.stdout, /chromium-\d+/);
+});
