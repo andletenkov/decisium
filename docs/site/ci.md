@@ -25,3 +25,20 @@ With a global install instead, replace `npm ci` with `npm install -g decisium@0.
 cassettes) and drop `npx`.
 
 Upload `runs/` (or your `reportDir`) on failure: it holds the screenshots, Playwright trace and `report.md` for every failed scenario.
+
+## Docker image
+
+Every release is published as `ghcr.io/andletenkov/decisium:<version>` (also `:<major>.<minor>`), for amd64 and arm64.
+Chromium and its system libraries are already installed, so `decisium install` is not needed. The image's entrypoint is
+`decisium`, and its working directory is `/work`:
+
+```sh
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/work" ghcr.io/andletenkov/decisium:0.1.5 \
+  run features/*.feature --record none --format junit:reports/junit.xml
+```
+
+Use the image version that recorded your cassettes.
+
+To record cassettes or heal Steps, pass the key: `-e TYPESAFE_API_KEY`. Any runner that can start a container (a
+Kubernetes Job, a test orchestrator, a CI service) runs features the same way: mount or check out the project into the
+working directory and collect `reports/` and `runs/` as artifacts.

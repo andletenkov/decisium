@@ -79,9 +79,10 @@ Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.
       "Confirms candidate 1-3 from an AMBIGUOUS target in an explicit single-action Step (click, type, fill, select, upload,\nhover). Writes a reviewable pinned marker without Jev or a browser. Replay with --record none.\nChecks, compound Steps and unresolved continuations cannot be pinned; an unrecorded value must be unambiguous.",
   },
   install: {
-    synopsis: "decisium install [--with-deps] [--dry-run]",
+    synopsis: "decisium install [--with-deps] [--only-shell] [--dry-run]",
     notes: `Downloads the Chromium build this Decisium's Playwright drives (once per machine and version).
 --with-deps: also installs the system libraries Chromium needs (Linux, e.g. CI; may ask for sudo).
+--only-shell: only the headless shell (no --headed; smaller, e.g. for Docker images).
 --dry-run: only print what would be installed, and where.`,
   },
   doctor: {
@@ -139,6 +140,7 @@ async function main(): Promise<number> {
       "max-turns": { type: "string" },
       "with-deps": { type: "boolean" },
       "dry-run": { type: "boolean" },
+      "only-shell": { type: "boolean" },
     },
   } satisfies ParseArgsConfig;
   let parsed: ReturnType<typeof parseArgs<typeof config>>;
@@ -224,7 +226,8 @@ async function main(): Promise<number> {
     MAX_TURNS: values["max-turns"],
   }))
     if (value !== undefined) env[`DECISIUM_${name}`] = value;
-  if (cmd === "install") return install({ withDeps: values["with-deps"], dryRun: values["dry-run"] });
+  if (cmd === "install")
+    return install({ withDeps: values["with-deps"], onlyShell: values["only-shell"], dryRun: values["dry-run"] });
   if (cmd === "doctor") return doctor(positionals.slice(1));
   if (cmd === "lint" && arg) {
     try {

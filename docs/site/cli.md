@@ -7,7 +7,7 @@ decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [
              [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]
              [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]
 decisium pin <file.feature:line> <n>
-decisium install [--with-deps] [--dry-run]
+decisium install [--with-deps] [--only-shell] [--dry-run]
 decisium doctor [<file.feature>...]
 decisium lint <file.feature>...
 ```
@@ -56,7 +56,8 @@ See [Pin an ambiguous target](record-replay.md#pin-an-ambiguous-target) for limi
 
 Downloads the Chromium build Decisium's own Playwright drives, so the version always matches (`npx playwright install`
 may fetch a different Playwright). `--with-deps` also installs the system libraries Chromium needs (Linux, e.g. CI);
-`--dry-run` only prints what would be installed, and where.
+`--only-shell` installs only the headless shell (no `--headed`; smaller, e.g. for Docker images); `--dry-run` only prints
+what would be installed, and where.
 
 ## doctor
 

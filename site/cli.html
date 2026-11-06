@@ -32,7 +32,7 @@ decisium run &lt;file.feature[:line]&gt;... [--url &lt;url|file&gt;] [--headed] 
              [--confidence-target &lt;p&gt;] [--confidence-answer &lt;p&gt;] [--check-timeout &lt;ms&gt;] [--action-timeout &lt;ms&gt;]
              [--max-turns &lt;n&gt;] [--format &lt;name[:path]&gt;] [--import &lt;file&gt;] [-p &lt;profile&gt;] [--no-agent-report] [-v] [--debug]
 decisium pin &lt;file.feature:line&gt; &lt;n&gt;
-decisium install [--with-deps] [--dry-run]
+decisium install [--with-deps] [--only-shell] [--dry-run]
 decisium doctor [&lt;file.feature&gt;...]
 decisium lint &lt;file.feature&gt;...
 </code></pre>
@@ -130,7 +130,8 @@ See <a href="record-replay.html#pin-an-ambiguous-target">Pin an ambiguous target
 <h2 id="install">install</h2>
 <p>Downloads the Chromium build Decisium&#39;s own Playwright drives, so the version always matches (<code>npx playwright install</code>
 may fetch a different Playwright). <code>--with-deps</code> also installs the system libraries Chromium needs (Linux, e.g. CI);
-<code>--dry-run</code> only prints what would be installed, and where.</p>
+<code>--only-shell</code> installs only the headless shell (no <code>--headed</code>; smaller, e.g. for Docker images); <code>--dry-run</code> only prints
+what would be installed, and where.</p>
 <h2 id="doctor">doctor</h2>
 <p>Checks Node, Chromium and <code>TYPESAFE_API_KEY</code>; given features, also opens every start URL.</p>
 <h2 id="lint">lint</h2>
