@@ -40,6 +40,7 @@ if [ -z "${TYPESAFE_API_KEY:-}" ]; then
   echo "TYPESAFE_API_KEY unset: skipping doctor and live/replay runs (install and bin checked)"
   exit 0
 fi
+npx decisium install # the tarball may resolve a newer Playwright than our lockfile, so fetch its own Chromium
 npx decisium doctor sample.feature
 npx decisium run sample.feature --record all
 test -f sample.cassette.json
