@@ -63,3 +63,38 @@ test("runner: an Action step that changed the page stops before a field it gives
   assert.equal(await run(0.77), "DONE");
   assert.equal(await run(0.3), "AMBIGUOUS"); // Jev thinks there is more to do: still asks for a value
 });
+
+test("runner: an Action step that moved to a new page stops there instead of doing the next Step's task", async () => {
+  const { parseSnapshot, withPage } = await import("../src/observation.ts");
+  const { runStep } = await import("../src/runner.ts");
+  // SauceDemo "I continue": Continue opened the overview, done 0.78, and the Step went on to click Finish.
+  const form = withPage(parseSnapshot(`- button "Continue" [ref=e1]`), "https://x.dev/step-one", "Shop");
+  const overview = withPage(parseSnapshot(`- button "Finish" [ref=e2]`), "https://x.dev/step-two", "Shop");
+  const samePage = withPage(parseSnapshot(`- button "Finish" [ref=e2]`), "https://x.dev/step-one", "Shop");
+  const complete = withPage(parseSnapshot(`- button "Back Home" [ref=e3]`), "https://x.dev/complete", "Shop");
+  const sure = (choice: string) => ({ choice, probabilities: { [choice]: 0.95, other: 0.05 } });
+  const run = async (after: typeof form, done: number) => {
+    let obs = form;
+    const clicked: string[] = [];
+    const d = {
+      turn: async (_s: string, o: typeof form) => ({
+        done: o === form ? 0 : o === complete ? 0.9 : done,
+        target: sure(o.elements[0].ref),
+      }),
+    } as unknown as Decider;
+    const rt = {
+      actionStep: (f: () => Promise<unknown>) => f(),
+      observe: async () => obs,
+      execute: async (a: { ref?: string }) => {
+        clicked.push(a.ref!);
+        obs = obs === form ? after : complete;
+      },
+      waitForChange: async () => false,
+    };
+    const { outcome } = await runStep("I continue", rt as any, d, () => {});
+    return `${outcome} ${clicked.join(",")}`;
+  };
+  assert.equal(await run(overview, 0.78), "DONE e1");
+  assert.equal(await run(overview, 0.3), "DONE e1,e2"); // Jev says the task is not done yet: it goes on
+  assert.equal(await run(samePage, 0.78), "DONE e1,e2"); // same URL: only the 0.8 bar ends the Step
+});

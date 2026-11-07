@@ -127,6 +127,7 @@ const DONE_THRESHOLD = 0.8;
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
  */
 const DONE_AFTER_ACTION = 0.5;
+const pageUrl = (obs: Observation) => obs.readable.find((e) => e.ref === "url")?.value;
 
 /**
  * Jev classifies the check and picks the element it is about; code decides pass/fail.
@@ -287,6 +288,7 @@ async function act(
   }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
+  let navigated = false; // the last action opened another URL
   let obs = await rt.observe();
 
   const { maxTurns } = settings();
@@ -317,6 +319,9 @@ async function act(
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
       return end("DONE");
+    // A new page after an action is evidence too: what it offers next belongs to the next Step (SauceDemo "I continue":
+    // Continue opened the overview, done 0.78, then the Step clicked Finish). Language-neutral, like the TYPE case.
+    if (navigated && t.done >= DONE_AFTER_ACTION) return end("DONE");
     if (alreadyToggled(t.target, obs, read.toggle)) {
       log("  Toggle: already done");
       return end("DONE");
@@ -428,6 +433,7 @@ async function act(
     }
     // By the effect, not the raw text: focus alone ([active]) is no change (task 0067, false DONE on the hover menu).
     unchanged = effect === "no visible change" ? unchanged + 1 : 0;
+    navigated = pageUrl(next) !== undefined && pageUrl(next) !== pageUrl(before);
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;
   }
