@@ -89,12 +89,16 @@ export const describeAction = (a: string) =>
 /**
  * Equivalent targets sum their confidence before the gate (task 0065, 0057): links with the same name and URL lead to
  * the same page (Wikipedia's two `Deutsch` links, 42% / 38%). The first keeps the sum. Buttons never: their handlers
- * may differ.
+ * may differ. With Enter as the action, the page and the focused field are one target too: the key goes to the field
+ * (TodoMVC "I add a todo": enter 0.92, target field 0.48 / page 0.43).
  */
-export function grouped(p: Pick, obs: Observation): Pick {
+export function grouped(p: Pick, obs: Observation, action?: Pick): Pick {
   const first = new Map<string, string>();
   const probabilities: Record<string, number> = {};
-  for (const [k, v] of Object.entries(p.probabilities)) {
+  const focused =
+    action?.choice === "enter" ? obs.elements.find((e) => e.verb === "TYPE" && /\[active\]/.test(e.state)) : undefined;
+  for (const [key, v] of Object.entries(p.probabilities)) {
+    const k = key === PAGE && focused ? focused.ref : key;
     const e = obs.elements.find((x) => x.ref === k);
     const id = e?.role === "link" && e.url ? `${e.name}|${e.url}` : undefined;
     const into = id ? (first.get(id) ?? (first.set(id, k), k)) : k;
