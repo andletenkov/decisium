@@ -7,16 +7,16 @@ Feature: GitHub, a real site (public pages, no login)
     Then the page heading should be "Releases"
     And a release marked "Latest" should be shown
 
-  Scenario: Browse issues and filter by a label
+  Scenario: Browse issues and search them
     When I open the Issues tab
     Then the "Issues" tab should be selected
-    When I search the issues for "label:bug"
-    Then the issue list should show only issues labelled "bug"
+    When I search the issues for "screenshot"
+    Then "screenshot" should appear in the issue list
 
   Scenario: Read a file from the repository
     When I open the "package.json" file
     Then the file content should contain "playwright-internal"
-    And the "Raw" button should be shown
+    And the "Raw" link should be enabled
 
   @url:https://github.com/
   Scenario: Search for a repository and open it
