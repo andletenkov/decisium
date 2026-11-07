@@ -1,50 +1,30 @@
 # Troubleshooting
 
-## A Step fails sometimes, passes other times
+A failed run prints the reason under each Step and writes `runs/<timestamp>/`: `report.md` (the Step, Jev's answers,
+the page text, a rerun command, ready for a coding agent), a screenshot, a Playwright trace and `log.txt`.
 
-A live run asks Jev every time, so a Step whose wording is borderline can end differently from run to run.
+## Outcomes
 
-1. **Replay in CI.** Record once, check the outcomes, commit the cassettes and run CI with `--record none`: every Step
-   replays what it resolved to, with the same outcome every run. Live variation only matters while recording. See
-   [Record and replay](record-replay.md).
-2. **Read the reason, then reword.** An `AMBIGUOUS` reason names what the Step could mean. Quote the one you mean:
-   `I leave for the search page` can mean two links; `I leave by the "Search page" link` cannot. When it is unclear
-   *how* (a Search button or Enter), say how: `… and press Enter`. If the reported Resolution is correct and completes
-   the action Step, [pin its candidate](record-replay.md#pin-an-ambiguous-target) and replay without a key or rewording.
-3. **Keep together what the page cannot do separately.** If a filter only applies when Search is clicked,
-   `I filter the users by role "Admin"` clicks it; a following `I search` has nothing left to do.
-4. **`AMBIGUOUS: Jev chose … which is not "…"`** after a Step that already did the task: the Step before it finished
-   the job (`I publish the post` confirmed the dialog), so `I confirm with "Publish now"` only finds a lookalike.
-   Merge them: `I publish the post, confirming with "Publish now"`.
-5. **Still unstable: a [client step](client-steps.md).** Code can use any Playwright locator. Each one marks a gap
-   worth reporting.
-
-## "step definitions are loaded twice" / "No scenario ran from …"
-
-`decisium run` adds its own step definitions, so a `cucumber.{mjs,ts,json}` that also imports them (from a different
-path, e.g. from source) loads them twice: drop that import from the configuration, or run raw `npx cucumber-js`, which
-uses the configuration alone. `No scenario ran from <file>` means the named features yielded nothing — a tag
-expression or profile filtered them out, or `file.feature:<line>` points at no scenario. Both exit 2, never 0.
-
-## What an outcome means and what to do
-
-| Outcome | Usually | Do |
+| Outcome | Means | Do |
 |---|---|---|
-| `ASSERTION_FAILED` | The app is wrong. | Check the app, not the Step. |
-| `AMBIGUOUS` | The Step could mean more than one thing. | Name the element or area; quote its label, or pin a reported action-target Resolution. |
-| `UNVERIFIABLE` | The check quotes nothing to compare. | Quote the expected value or text. |
-| `BLOCKED` | The task cannot be done on this page. | Check the start URL and the Steps before it; a hover menu needs "hover". |
-| `ELEMENT_NOT_FOUND` | Nothing matches what the Step names. | Use the page's own label. |
-| `ACTION_FAILED` | The action ran but did not take effect (e.g. a field rejected the value). | Check the value's format; for dates use ISO. |
-| `STEP_TIMEOUT` | The Step did not finish in its allowed actions. | Split it into smaller tasks, or raise `maxTurns` for a long flow. |
-| `UI_CHANGED` | A replayed Step no longer matches the page. | If the change is intended, re-record with `--record new`. |
-| `PAGE_TOO_LARGE` | The page is over the model's size limit. | Test a narrower page or state. |
-| marginal pass | Passed, but the model was barely sure. | Make the Step more specific; do not lower `confidence.answer`. |
-| check fails on a slow page | The expected state came after the check gave up. | Raise `checkTimeout` (and `actionTimeout` if actions finish too early). |
+| `ASSERTION_FAILED` | The app is wrong. | Fix the app, not the Step. |
+| `AMBIGUOUS` | The Step could mean more than one element. | Quote the label or name the area, or [pin](ci.md#pin-an-ambiguous-target) a candidate. |
+| `UNVERIFIABLE` | The check quotes nothing to compare. | Quote the expected value. |
+| `ELEMENT_NOT_FOUND` | Nothing matches the Step. | Use the page's own label. |
+| `BLOCKED` | The task cannot be done on this page. | Check the start URL and earlier Steps; menus may need "hover". |
+| `ACTION_FAILED` | The action did not take effect. | Check the value's format (ISO for dates). |
+| `STEP_TIMEOUT` | Too many actions for one Step. | Split the Step, or raise `maxTurns`. |
+| `UI_CHANGED` | A replayed Step no longer matches the page. | Re-record with `--record new` if intended. |
+| `PAGE_TOO_LARGE` | The page is over the model's limit. | Test a narrower page or state. |
+| marginal pass | Passed, but Jev was barely sure. | Make the Step more specific. `--strict` fails it. |
+| check fails on a slow page | The state came after the check gave up. | Raise `checkTimeout`. |
 
-Run `decisium lint` on the feature: it flags many of these wordings before you run.
+## A Step passes sometimes
 
-## Why not selectors
+Live runs ask Jev each time; replays do not. Record once and run CI with `--record none`. If a live Step still
+wavers, reword it: `I leave by the "Search page" link`, not `I leave for the search page`.
 
-Selectors tie a test to markup, skip the model, and do not help with the most common failure: deciding when a Step is
-done. Quote what the page shows instead.
+## "Step definitions are loaded twice"
+
+Your `cucumber.mjs` imports Decisium's steps and `decisium run` adds them again. Drop the import, or run
+`npx cucumber-js` instead.

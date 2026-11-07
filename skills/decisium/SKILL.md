@@ -5,7 +5,7 @@ description: Design, write or repair Decisium Gherkin features (natural-language
 
 Decisium runs each Step by asking Jev, a decision model that only picks among offered answers; code decides pass/fail.
 A Step's wording decides most outcomes. The wording rules, per kind of Step, are in
-https://andletenkov.github.io/decisium/steps.html. Read it before writing a Step. This skill is the procedure.
+[references/steps.md](references/steps.md). Read it before writing a Step. This skill is the procedure.
 
 ## Design (when generating from app code or requirements)
 
@@ -75,7 +75,7 @@ cases that never completes a real journey is a failed design.
      correct, follow **Pin a Resolution** below instead of rewording or calling Jev again. Probability alone is not
      evidence that a candidate is correct.
    - **The wording is unclear** (no clearly correct pinnable Resolution, UNVERIFIABLE, a check that picked the wrong
-     element): reword using https://andletenkov.github.io/decisium/troubleshooting.html, then rerun just that scenario.
+     element): reword using [references/troubleshooting.md](references/troubleshooting.md), then rerun just that scenario.
    - **`AMBIGUOUS: Jev chose … which is not "X"`** usually means the Step before already used X (it finished the task):
      merge the two Steps, not an app bug.
    - A **marginal pass** warning means the pass rested on a barely-confident answer. Treat it like an unclear wording.
@@ -97,7 +97,7 @@ cases that never completes a real journey is a failed design.
    Keep the following assertions: pin confirms an action target, not the app's correctness.
 3. Pin supports bounded explicit single-action forms (click, double/right-click, hover, type/fill, select, upload),
    with quoted target names or control nouns. For exact forms and offline quoted-value rules, read
-   https://andletenkov.github.io/decisium/record-replay.html#pin-an-ambiguous-target before pinning.
+   [references/record-replay.md](references/record-replay.md#pin-an-ambiguous-target) before pinning.
    Checks, compound Steps, unknown continuations, dialog choices, drag destinations, action-table rows and shared
    Background/Outline lines cannot be pinned. If refused, return to wording repair; keep the expected outcome fixed.
 

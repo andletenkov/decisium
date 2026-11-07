@@ -24,9 +24,10 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html" aria-current="page">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html" aria-current="page">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
 <main class="doc"><h1 id="ci">CI</h1>
-<p>Replay committed cassettes: no model calls, no API key, the same outcome every run.</p>
+<p>Record locally, commit the cassettes, replay in CI with <code>--record none</code>: no API key, no model calls, the same result
+every run.</p>
 <pre><code class="language-yaml"># .github/workflows/e2e.yml
 name: e2e
 on: [push, pull_request]
@@ -37,29 +38,33 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - run: npm ci # decisium in devDependencies: replays with the version that recorded
+      - run: npm ci
       - run: npx decisium install --with-deps
       - run: npx decisium run features/*.feature --record none --parallel auto --format junit:reports/junit.xml
       - if: failure()
         uses: actions/upload-artifact@v4
         with: { name: decisium-runs, path: runs/ }
 </code></pre>
-<p>With a global install instead, replace <code>npm ci</code> with <code>npm install -g decisium@0.1.4</code> (the version that recorded the
-cassettes) and drop <code>npx</code>.</p>
-<p>Upload <code>runs/</code> (or your <code>reportDir</code>) on failure: it holds the screenshots, Playwright trace and <code>report.md</code> for every failed scenario.</p>
-<h2 id="docker-image">Docker image</h2>
-<p>Every release is published as <code>ghcr.io/andletenkov/decisium:&lt;version&gt;</code> (also <code>:&lt;major&gt;.&lt;minor&gt;</code>), for amd64 and arm64.
-Chromium and its system libraries are already installed, so <code>decisium install</code> is not needed. The image&#39;s entrypoint is
-<code>decisium</code>, and its working directory is <code>/work</code>:</p>
-<pre><code class="language-sh">docker run --rm --user &quot;$(id -u):$(id -g)&quot; -v &quot;$PWD:/work&quot; ghcr.io/andletenkov/decisium:0.1.5 \
-  run features/*.feature --record none --format junit:reports/junit.xml
+<p><code>runs/</code> holds the screenshots, Playwright trace and <code>report.md</code> of every failed scenario.</p>
+<h2 id="when-the-ui-changes">When the UI changes</h2>
+<p>CI fails as <code>UI_CHANGED</code>. If the change is intended, re-record locally and commit the cassette:</p>
+<pre><code class="language-sh">decisium run features/campaign.feature --record new
 </code></pre>
-<p>Use the image version that recorded your cassettes.</p>
-<p>To record cassettes or heal Steps, pass the key: <code>-e TYPESAFE_API_KEY</code>. Any runner that can start a container (a
-Kubernetes Job, a test orchestrator, a CI service) runs features the same way: mount or check out the project into the
-working directory and collect <code>reports/</code> and <code>runs/</code> as artifacts.</p>
-<div class="pager"><a class="prev" href="reports.html"><span>Previous</span>Reports and debugging</a><a class="next" href="cucumber-js.html"><span>Next</span>Running with cucumber-js</a></div></main>
-
+<p>Optional, to collapse cassette diffs on GitHub: add <code>*.cassette.json linguist-generated=true</code> to <code>.gitattributes</code>.</p>
+<h2 id="pin-an-ambiguous-target">Pin an ambiguous target</h2>
+<p>When an action fails as <code>AMBIGUOUS</code>, the report lists the candidates, each with a ready pin command. Check the
+screenshot, run the right one, replay:</p>
+<pre><code class="language-sh">decisium pin features/campaign.feature:12 2
+decisium run features/campaign.feature --record none
+</code></pre>
+<p>Works for single-action Steps such as <code>I click the &quot;Save&quot; button</code> or <code>I type &quot;Ada&quot; into the &quot;Name&quot; field</code>.</p>
+<h2 id="docker">Docker</h2>
+<pre><code class="language-sh">docker run --rm --user &quot;$(id -u):$(id -g)&quot; -v &quot;$PWD:/work&quot; ghcr.io/andletenkov/decisium:&lt;version&gt; \
+  run features/*.feature --record none
+</code></pre>
+<p>Chromium is preinstalled. Use the version that recorded your cassettes; pass <code>-e TYPESAFE_API_KEY</code> to record.</p>
+<div class="pager"><a class="prev" href="configuration.html"><span>Previous</span>CLI and configuration</a><a class="next" href="troubleshooting.html"><span>Next</span>Troubleshooting</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#when-the-ui-changes">When the UI changes</a><a class="l2" href="#pin-an-ambiguous-target">Pin an ambiguous target</a><a class="l2" href="#docker">Docker</a></aside>
 </div>
 </body>
 </html>

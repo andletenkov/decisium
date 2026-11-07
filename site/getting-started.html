@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quick start · Decisium</title>
+<title>Getting started · Decisium</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/nocturne.css">
 <link rel="stylesheet" href="assets/site.css">
@@ -24,9 +24,21 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html" aria-current="page">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
-<main class="doc"><h1 id="quick-start">Quick start</h1>
-<h2 id="1-write-a-feature">1. Write a feature</h2>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html" aria-current="page">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
+<main class="doc"><h1 id="getting-started">Getting started</h1>
+<p>Needs Node 22.18+ (or 23.6+).</p>
+<h2 id="1-install">1. Install</h2>
+<pre><code class="language-sh">npm install --save-dev decisium   # or: npm install -g decisium
+npx decisium install              # the Chromium build Decisium drives; --with-deps on Linux
+</code></pre>
+<p>A per-project install pins the version, so CI replays with the version that recorded. These docs write <code>decisium …</code>;
+per project, type <code>npx decisium …</code>.</p>
+<h2 id="2-add-your-api-key">2. Add your API key</h2>
+<p>Live runs call Jev through the TypeSafe API. Replays need no key.</p>
+<pre><code class="language-sh">echo &#39;TYPESAFE_API_KEY=...&#39; &gt;&gt; .env
+decisium doctor                   # checks Node, Chromium and the key
+</code></pre>
+<h2 id="3-write-a-feature">3. Write a feature</h2>
 <pre><code class="language-gherkin"># features/campaign.feature
 @url:http://localhost:3000
 Feature: Campaigns
@@ -37,24 +49,20 @@ Feature: Campaigns
     And I schedule the campaign
     Then the campaign status should be &quot;Scheduled&quot;
 </code></pre>
-<p>The <code>@url:</code> tag is the start URL (a URL or a local HTML file). Each Scenario starts from a fresh browser. Quote every
-value a Step types or a check compares.</p>
-<h2 id="2-lint-it">2. Lint it</h2>
-<pre><code class="language-sh">decisium lint features/campaign.feature
+<p><code>@url:</code> is the start URL (a URL or a local HTML file). Each scenario starts in a fresh browser. Quote every value a
+Step types or a check compares. More: <a href="steps.html">Writing Steps</a>.</p>
+<h2 id="4-run-it">4. Run it</h2>
+<pre><code class="language-sh">decisium lint features/campaign.feature          # no browser: how each Step will be read
+decisium run features/campaign.feature           # live: writes campaign.cassette.json
+decisium run features/campaign.feature --record none   # replay: no model calls
 </code></pre>
-<p>No browser, no model: shows how each Step will be read and flags wordings <a href="steps.html">Writing Steps</a> marks as ones to avoid.</p>
-<h2 id="3-run-it-live">3. Run it live</h2>
-<pre><code class="language-sh">decisium run features/campaign.feature
-</code></pre>
-<p>The first run asks Jev for every Step and records the answers in <code>features/campaign.cassette.json</code>. Commit it.</p>
-<h2 id="4-replay-it">4. Replay it</h2>
-<pre><code class="language-sh">decisium run features/campaign.feature --record none
-</code></pre>
-<p>Every Step replays its recorded resolution with zero model calls. Use this in <a href="ci.html">CI</a>.</p>
-<p>When a Step fails, read <a href="reports.html">Reports and debugging</a>. When a wording does not work, look it up in the
-<a href="steps.html">Writing Steps</a> and <a href="troubleshooting.html">Troubleshooting</a>.</p>
-<div class="pager"><a class="prev" href="installation.html"><span>Previous</span>Installation</a><a class="next" href="writing-features.html"><span>Next</span>Features and scenarios</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#1-write-a-feature">1. Write a feature</a><a class="l2" href="#2-lint-it">2. Lint it</a><a class="l2" href="#3-run-it-live">3. Run it live</a><a class="l2" href="#4-replay-it">4. Replay it</a></aside>
+<p>Commit the cassette and replay it in <a href="ci.html">CI</a>. When a Step fails, see <a href="troubleshooting.html">Troubleshooting</a>.</p>
+<h2 id="what-is-sent-to-jev">What is sent to Jev</h2>
+<p>Per request: the Step&#39;s text and a text snapshot of the page (roles, names, visible text, link URLs). No screenshots,
+cookies or network traffic. Secrets written as <code>&quot;$NAME&quot;</code> leave your machine only as the token. Replays send nothing.
+Decisium is MIT; Jev is TypeSafe&#39;s hosted service under its own terms.</p>
+<div class="pager"><a class="prev" href="index.html"><span>Previous</span>Introduction</a><a class="next" href="examples.html"><span>Next</span>Example</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#1-install">1. Install</a><a class="l2" href="#2-add-your-api-key">2. Add your API key</a><a class="l2" href="#3-write-a-feature">3. Write a feature</a><a class="l2" href="#4-run-it">4. Run it</a><a class="l2" href="#what-is-sent-to-jev">What is sent to Jev</a></aside>
 </div>
 </body>
 </html>

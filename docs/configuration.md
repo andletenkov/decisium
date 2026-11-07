@@ -1,127 +1,59 @@
-# Configuration and reporters
+# CLI and configuration
 
-`decisium run` loads configuration exactly like cucumber-js:
-your `cucumber.{js,mjs,cjs,json,yaml}`, `-p <profile>`, and cucumber's `--format name[:path]` and `--import <file>`
-flags, added to the file's values. Decisium adds its own step definitions to `import`.
+## Commands
 
-## Decisium options
+| Command | Does |
+|---|---|
+| `decisium run <file.feature[:line]>...` | Runs features; `:line` runs one scenario. |
+| `decisium step "<step>" --url <url>` | Runs one Step, no feature file. For trying a wording. |
+| `decisium lint <file.feature>...` | No browser, no model: how each Step will be read, and wordings to avoid. |
+| `decisium pin <file.feature:line> <n>` | Confirms candidate `n` of an `AMBIGUOUS` action. See [Pin](https://andletenkov.github.io/decisium/ci.html#pin-an-ambiguous-target). |
+| `decisium install [--with-deps]` | Downloads Chromium (`--with-deps`: Linux system libraries too). |
+| `decisium doctor [<file.feature>...]` | Checks Node, Chromium, the API key and the start URLs. |
 
-In `worldParameters.decisium`, so raw `npx cucumber-js` reads them too. Flags (`--url`, `--record`, `--strict`, ...)
-and `DECISIUM_*` env (`DECISIUM_URL`, `DECISIUM_RECORD`, `DECISIUM_STRICT=1`, ...) override them.
+Exit codes: `0` passed, `1` a scenario failed, `2` configuration or infrastructure error.
 
-```js
-// cucumber.mjs
-export default {
-  worldParameters: { decisium: { record: "none", strict: true } },
-  // url, record, headed, judged, strict, verbose, debug, agentReport,
-  // reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns
-};
-```
+## run flags
 
-Precedence: flag > `DECISIUM_*` env > `worldParameters.decisium` > default. A value of the wrong type or out of range
-fails at startup (exit 2). `--parallel` workers read the same values.
+| Flag | |
+|---|---|
+| `--url <url\|file>` | Start URL; overrides `@url:`. |
+| `--record new\|none\|all` | `new` (default): replay, record what is missing. `none`: replay only (CI). `all`: re-record everything. |
+| `--parallel <n\|auto>` | Run features in parallel workers. |
+| `--headed` | Show the browser. |
+| `--strict` | Fail checks that passed with low confidence. |
+| `--judged` | Let Jev judge subjective checks. |
+| `--format <name[:path]>` | Any cucumber formatter, e.g. `junit:junit.xml`. Repeatable. |
+| `--import <file>` | Your step definitions or hooks. Repeatable. |
+| `-p <profile>` | A cucumber profile. |
+| `--no-agent-report` | Do not write `report.md`. |
+| `-v`, `--debug` | Print every page snapshot and answer; show stack traces. |
 
-### Tuning
+## Options
+
+`decisium run` loads your `cucumber.{js,mjs,cjs,json,yaml}` like cucumber-js does. Decisium options go in
+`worldParameters.decisium`:
 
 ```js
 // cucumber.mjs
 export default {
   worldParameters: {
-    decisium: {
-      url: "http://localhost:3000",
-      reportDir: "e2e/runs",
-      confidence: { target: 0.6, answer: 0.85 },
-      checkTimeout: 10000,
-      actionTimeout: 10000,
-      maxTurns: 12,
-    },
+    decisium: { url: "http://localhost:3000", reportDir: "e2e/runs", checkTimeout: 10000 },
   },
 };
 ```
 
-| Option | Default | Flag | Env | Affects |
-|---|---|---|---|---|
-| `reportDir` | `"runs"` | `--report-dir` | `DECISIUM_REPORT_DIR` | Where `<reportDir>/<timestamp>/` (log, trace, screenshots, `report.md`) is written. |
-| `confidence.target` | `0.5` | `--confidence-target` | `DECISIUM_CONFIDENCE_TARGET` | How sure Jev must be of the element an action acts on (and a drag's drop target). In (0, 1]. |
-| `confidence.answer` | `0.8` | `--confidence-answer` | `DECISIUM_CONFIDENCE_ANSWER` | Every other answer: a check's required state, the value to type or select, which earlier value a check refers to, a dialog answer. A pass under `answer` + 0.1 is marginal. In (0, 1]. |
-| `checkTimeout` | `5000` | `--check-timeout` | `DECISIUM_CHECK_TIMEOUT` | Ms a check waits for the page to reach the expected state. |
-| `actionTimeout` | `5000` | `--action-timeout` | `DECISIUM_ACTION_TIMEOUT` | Ms after an action to wait for requests and DOM changes to settle. |
-| `maxTurns` | `8` | `--max-turns` | `DECISIUM_MAX_TURNS` | Turns an action Step may take before `STEP_TIMEOUT`, 1-20. |
-| `states` | `"**/*.state.feature"` | | `DECISIUM_STATES` | Glob of [state definition](https://andletenkov.github.io/decisium/states.html) files. |
+| Option | Default | When to change |
+|---|---|---|
+| `url` | | Start URL for features without `@url:`. |
+| `record` | `"new"` | `"none"` in CI. |
+| `reportDir` | `"runs"` | To match your CI artifact path. |
+| `checkTimeout` | `5000` | Slow page: ms a check waits for the expected state. |
+| `actionTimeout` | `5000` | Slow app: ms to wait for the page to settle after an action. |
+| `maxTurns` | `8` | Long flows in one Step (1–20). Or split the Step. |
+| `confidence.target` | `0.5` | How sure Jev must be of the element. Reword the Step first. |
+| `confidence.answer` | `0.8` | How sure Jev must be of other answers. Below `0.6` warns. |
+| `states` | `"**/*.state.feature"` | Where [state](https://andletenkov.github.io/decisium/advanced.html#states) files live. |
 
-### reportDir
-
-Default `"runs"`; `--report-dir`, `DECISIUM_REPORT_DIR`. Non-empty path containing timestamped run folders.
-Change it to match your CI artifact upload path.
-
-### confidence.target
-
-Default `0.5`; `--confidence-target`, `DECISIUM_CONFIDENCE_TARGET`. Top probability in (0, 1] for action and drop targets.
-Reword ambiguous Steps first; tune this only when the intended control is clear.
-
-### confidence.answer
-
-Default `0.8`; `--confidence-answer`, `DECISIUM_CONFIDENCE_ANSWER`. Probability in (0, 1] for other answers and plausible
-check readings. Marginal-pass line is this value + 0.1. Lowering it below 0.6 warns once per run; prefer rewording.
-
-### checkTimeout
-
-Default `5000` ms; `--check-timeout`, `DECISIUM_CHECK_TIMEOUT`. Positive integer; how long checks wait for the expected
-state. Raise for slow pages.
-
-### actionTimeout
-
-Default `5000` ms; `--action-timeout`, `DECISIUM_ACTION_TIMEOUT`. Positive integer; how long actions wait for requests
-and DOM changes to settle. Raise when slow actions finish too early.
-
-### maxTurns
-
-Default `8`; `--max-turns`, `DECISIUM_MAX_TURNS`. Integer 1–20; action Turns before `STEP_TIMEOUT`.
-Raise for long wizards, or split them into smaller Steps.
-
-Only the top probability is configurable; the lead over the runner-up stays fixed (0.1 target, 0.3 answer): it is
-what catches "two controls look the same". Confidence affects live answers only (a replay reuses recorded
-resolutions with their recorded confidence; older cassettes use the original defaults); timeouts and `maxTurns` apply to replays too. The effective values go into the run event in
-`trace.jsonl`, and `report.md` says when confidence was not the default.
-
-When to change them:
-
-- Slow app: raise `checkTimeout` and `actionTimeout`.
-- Long flow in one Step (a wizard): raise `maxTurns`, or split the Step.
-- `AMBIGUOUS` on a clear page: reword the Step first, then raise or lower `confidence.target`.
-- Marginal passes: reword. Lowering `confidence.answer` below 0.6 prints a warning: a wrong reading can then pass.
-
-## Reporters
-
-Any cucumber formatter: cucumber's own `junit`, `json`, `html`, `message`, or a package such as the official Qase
-reporter. Only one formatter may write to stdout: one configured without a path takes it; otherwise Decisium's console
-output does.
-
-```sh
-decisium run features/login.feature --format junit:reports/junit.xml
-```
-
-### Qase
-
-Decisium ships nothing Qase-specific; wire the official reporter as in any cucumber project.
-
-```sh
-npm install --save-dev cucumberjs-qase-reporter
-echo '{"mode":"report"}' > qase.config.json   # or mode "testops" with QASE_TESTOPS_API_TOKEN, QASE_TESTOPS_PROJECT
-decisium run features/login.feature --format cucumberjs-qase-reporter:/dev/null
-```
-
-Or in your configuration, which raw `npx cucumber-js` uses too:
-
-```js
-// cucumber.mjs
-export default {
-  // Raw cucumber-js only: Decisium's steps and formatter (decisium run adds both itself).
-  import: ["node_modules/decisium/dist/steps.js"],
-  format: ["decisium/formatter", "cucumberjs-qase-reporter:/dev/null"],
-};
-```
-
-Tag scenarios `@QaseID=<id>`. A failing Step's message starts with its outcome; app failures (`ASSERTION_FAILED`,
-`JUDGED_FAILED`, `BLOCKED`, `ACTION_FAILED`) report as `failed`, every other outcome as `invalid`. A marginal pass
-reaches every reporter as a `text/plain` attachment `marginal-pass.txt` on its Step (Qase stores it as `file.txt`).
+Also `headed`, `judged`, `strict`, `verbose`, `debug`, `agentReport`. Every option has a flag (`--check-timeout`) and an
+environment variable (`DECISIUM_CHECK_TIMEOUT`). Precedence: flag > environment > config file > default.

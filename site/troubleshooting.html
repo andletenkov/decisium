@@ -24,102 +24,83 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html" aria-current="page">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html">CI</a><a href="troubleshooting.html" aria-current="page">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
 <main class="doc"><h1 id="troubleshooting">Troubleshooting</h1>
-<h2 id="a-step-fails-sometimes-passes-other-times">A Step fails sometimes, passes other times</h2>
-<p>A live run asks Jev every time, so a Step whose wording is borderline can end differently from run to run.</p>
-<ol>
-<li><strong>Replay in CI.</strong> Record once, check the outcomes, commit the cassettes and run CI with <code>--record none</code>: every Step
-replays what it resolved to, with the same outcome every run. Live variation only matters while recording. See
-<a href="record-replay.html">Record and replay</a>.</li>
-<li><strong>Read the reason, then reword.</strong> An <code>AMBIGUOUS</code> reason names what the Step could mean. Quote the one you mean:
-<code>I leave for the search page</code> can mean two links; <code>I leave by the &quot;Search page&quot; link</code> cannot. When it is unclear
-<em>how</em> (a Search button or Enter), say how: <code>… and press Enter</code>. If the reported Resolution is correct and completes
-the action Step, <a href="record-replay.html#pin-an-ambiguous-target">pin its candidate</a> and replay without a key or rewording.</li>
-<li><strong>Keep together what the page cannot do separately.</strong> If a filter only applies when Search is clicked,
-<code>I filter the users by role &quot;Admin&quot;</code> clicks it; a following <code>I search</code> has nothing left to do.</li>
-<li><strong><code>AMBIGUOUS: Jev chose … which is not &quot;…&quot;</code></strong> after a Step that already did the task: the Step before it finished
-the job (<code>I publish the post</code> confirmed the dialog), so <code>I confirm with &quot;Publish now&quot;</code> only finds a lookalike.
-Merge them: <code>I publish the post, confirming with &quot;Publish now&quot;</code>.</li>
-<li><strong>Still unstable: a <a href="client-steps.html">client step</a>.</strong> Code can use any Playwright locator. Each one marks a gap
-worth reporting.</li>
-</ol>
-<h2 id="step-definitions-are-loaded-twice-no-scenario-ran-from">&quot;step definitions are loaded twice&quot; / &quot;No scenario ran from …&quot;</h2>
-<p><code>decisium run</code> adds its own step definitions, so a <code>cucumber.{mjs,ts,json}</code> that also imports them (from a different
-path, e.g. from source) loads them twice: drop that import from the configuration, or run raw <code>npx cucumber-js</code>, which
-uses the configuration alone. <code>No scenario ran from &lt;file&gt;</code> means the named features yielded nothing — a tag
-expression or profile filtered them out, or <code>file.feature:&lt;line&gt;</code> points at no scenario. Both exit 2, never 0.</p>
-<h2 id="what-an-outcome-means-and-what-to-do">What an outcome means and what to do</h2>
+<p>A failed run prints the reason under each Step and writes <code>runs/&lt;timestamp&gt;/</code>: <code>report.md</code> (the Step, Jev&#39;s answers,
+the page text, a rerun command, ready for a coding agent), a screenshot, a Playwright trace and <code>log.txt</code>.</p>
+<h2 id="outcomes">Outcomes</h2>
 <table>
 <thead>
 <tr>
 <th>Outcome</th>
-<th>Usually</th>
+<th>Means</th>
 <th>Do</th>
 </tr>
 </thead>
 <tbody><tr>
 <td><code>ASSERTION_FAILED</code></td>
 <td>The app is wrong.</td>
-<td>Check the app, not the Step.</td>
+<td>Fix the app, not the Step.</td>
 </tr>
 <tr>
 <td><code>AMBIGUOUS</code></td>
-<td>The Step could mean more than one thing.</td>
-<td>Name the element or area; quote its label, or pin a reported action-target Resolution.</td>
+<td>The Step could mean more than one element.</td>
+<td>Quote the label or name the area, or <a href="ci.html#pin-an-ambiguous-target">pin</a> a candidate.</td>
 </tr>
 <tr>
 <td><code>UNVERIFIABLE</code></td>
 <td>The check quotes nothing to compare.</td>
-<td>Quote the expected value or text.</td>
+<td>Quote the expected value.</td>
+</tr>
+<tr>
+<td><code>ELEMENT_NOT_FOUND</code></td>
+<td>Nothing matches the Step.</td>
+<td>Use the page&#39;s own label.</td>
 </tr>
 <tr>
 <td><code>BLOCKED</code></td>
 <td>The task cannot be done on this page.</td>
-<td>Check the start URL and the Steps before it; a hover menu needs &quot;hover&quot;.</td>
-</tr>
-<tr>
-<td><code>ELEMENT_NOT_FOUND</code></td>
-<td>Nothing matches what the Step names.</td>
-<td>Use the page&#39;s own label.</td>
+<td>Check the start URL and earlier Steps; menus may need &quot;hover&quot;.</td>
 </tr>
 <tr>
 <td><code>ACTION_FAILED</code></td>
-<td>The action ran but did not take effect (e.g. a field rejected the value).</td>
-<td>Check the value&#39;s format; for dates use ISO.</td>
+<td>The action did not take effect.</td>
+<td>Check the value&#39;s format (ISO for dates).</td>
 </tr>
 <tr>
 <td><code>STEP_TIMEOUT</code></td>
-<td>The Step did not finish in its allowed actions.</td>
-<td>Split it into smaller tasks, or raise <code>maxTurns</code> for a long flow.</td>
+<td>Too many actions for one Step.</td>
+<td>Split the Step, or raise <code>maxTurns</code>.</td>
 </tr>
 <tr>
 <td><code>UI_CHANGED</code></td>
 <td>A replayed Step no longer matches the page.</td>
-<td>If the change is intended, re-record with <code>--record new</code>.</td>
+<td>Re-record with <code>--record new</code> if intended.</td>
 </tr>
 <tr>
 <td><code>PAGE_TOO_LARGE</code></td>
-<td>The page is over the model&#39;s size limit.</td>
+<td>The page is over the model&#39;s limit.</td>
 <td>Test a narrower page or state.</td>
 </tr>
 <tr>
 <td>marginal pass</td>
-<td>Passed, but the model was barely sure.</td>
-<td>Make the Step more specific; do not lower <code>confidence.answer</code>.</td>
+<td>Passed, but Jev was barely sure.</td>
+<td>Make the Step more specific. <code>--strict</code> fails it.</td>
 </tr>
 <tr>
 <td>check fails on a slow page</td>
-<td>The expected state came after the check gave up.</td>
-<td>Raise <code>checkTimeout</code> (and <code>actionTimeout</code> if actions finish too early).</td>
+<td>The state came after the check gave up.</td>
+<td>Raise <code>checkTimeout</code>.</td>
 </tr>
 </tbody></table>
-<p>Run <code>decisium lint</code> on the feature: it flags many of these wordings before you run.</p>
-<h2 id="why-not-selectors">Why not selectors</h2>
-<p>Selectors tie a test to markup, skip the model, and do not help with the most common failure: deciding when a Step is
-done. Quote what the page shows instead.</p>
-<div class="pager"><a class="prev" href="cucumber-js.html"><span>Previous</span>Running with cucumber-js</a><a class="next" href="agent-skill.html"><span>Next</span>Agent skill</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#a-step-fails-sometimes-passes-other-times">A Step fails sometimes, passes other times</a><a class="l2" href="#step-definitions-are-loaded-twice-no-scenario-ran-from">&amp;quot;step definitions are loaded twice&amp;quot; / &amp;quot;No scenario ran from …&amp;quot;</a><a class="l2" href="#what-an-outcome-means-and-what-to-do">What an outcome means and what to do</a><a class="l2" href="#why-not-selectors">Why not selectors</a></aside>
+<h2 id="a-step-passes-sometimes">A Step passes sometimes</h2>
+<p>Live runs ask Jev each time; replays do not. Record once and run CI with <code>--record none</code>. If a live Step still
+wavers, reword it: <code>I leave by the &quot;Search page&quot; link</code>, not <code>I leave for the search page</code>.</p>
+<h2 id="step-definitions-are-loaded-twice">&quot;Step definitions are loaded twice&quot;</h2>
+<p>Your <code>cucumber.mjs</code> imports Decisium&#39;s steps and <code>decisium run</code> adds them again. Drop the import, or run
+<code>npx cucumber-js</code> instead.</p>
+<div class="pager"><a class="prev" href="ci.html"><span>Previous</span>CI</a><a class="next" href="advanced.html"><span>Next</span>Advanced</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#outcomes">Outcomes</a><a class="l2" href="#a-step-passes-sometimes">A Step passes sometimes</a><a class="l2" href="#step-definitions-are-loaded-twice">&amp;quot;Step definitions are loaded twice&amp;quot;</a></aside>
 </div>
 </body>
 </html>

@@ -29,7 +29,7 @@ To collapse cassette diffs on GitHub and exclude them from language statistics, 
 ```
 
 A live run asks Jev every time, so a Step close to the confidence gate can end differently from run to run. Replays
-do not. See [Troubleshooting](troubleshooting.md). Backend requests can be replayed too: [Network replay](network-replay.md).
+do not. See [Troubleshooting](troubleshooting.md). Backend requests can be replayed too: [Network replay](https://andletenkov.github.io/decisium/advanced.html#network-replay).
 
 ## Pin an ambiguous target
 
