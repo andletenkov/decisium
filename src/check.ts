@@ -393,17 +393,30 @@ function check(
     kind,
     ...(kind === "rows" ? matchRows(a, obs, table!, exact, log) : evaluate(kind, a, obs, values, log)),
   }));
-  const results = all.filter((r) => !r.inapplicable);
-  if (!results.length) return { outcome: "UNVERIFIABLE", reason: all.map((r) => r.reason).join("; ") };
+  const applicable = all.filter((r) => !r.inapplicable);
+  if (!applicable.length) return { outcome: "UNVERIFIABLE", reason: all.map((r) => r.reason).join("; ") };
+  // A kind reading that cannot decide (AMBIGUOUS) does not veto readings that passed: the pass is marginal instead
+  // (GitHub `"screenshot" should appear in the issue list`: presence 79% passed, value 19% could not pick a subject).
+  // A reading that fails still vetoes.
+  const decided = applicable.filter((r) => r.outcome !== "AMBIGUOUS");
+  const undecided =
+    decided.length && decided.every((r) => r.outcome === "PASSED") ? applicable.length - decided.length : 0;
+  const results = undecided ? decided : applicable;
+  const abstained = undecided
+    ? applicable.filter((r) => r.outcome === "AMBIGUOUS").map((r) => `as a ${r.kind} check Jev could not decide`)
+    : [];
   return agreement(
     results,
     `Jev could not tell what kind of check this is, and the readings disagree: ${results.map((r) => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}`,
-    table
-      ? []
-      : weakMass(
-          "kind",
-          a.kind,
-          results.map((r) => r.kind),
-        ),
+    [
+      ...(table
+        ? []
+        : weakMass(
+            "kind",
+            a.kind,
+            results.map((r) => r.kind),
+          )),
+      ...abstained,
+    ],
   );
 }

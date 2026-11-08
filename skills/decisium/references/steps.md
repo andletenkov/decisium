@@ -228,7 +228,9 @@ and the result is reported as `JUDGED_PASSED` or `JUDGED_FAILED`, never as a pla
 ### Marginal passes
 
 A check that passed while the model was barely sure what it was looking at is reported as a **marginal pass**: passed,
-with a warning. Treat it like an unclear wording and make the Step more specific; `--strict` fails it as `AMBIGUOUS`.
+with a warning. A check is also a marginal pass when one reading of it passed and another could not decide (for
+example, read as a value check, Jev could not pick the element). Treat it like an unclear wording and make the Step
+more specific; `--strict` fails it as `AMBIGUOUS`.
 
 ## More
 

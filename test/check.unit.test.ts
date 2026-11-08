@@ -417,6 +417,23 @@ test("Check reasons: URL and download pseudo-elements", async () => {
   assert.equal(verdict(assessment({ subject: pick({ download: 1 }) }), full, { values: ["abc"] }).outcome, "PASSED");
 });
 
+test("Check: a kind reading that cannot decide does not veto one that passed; the pass is marginal", () => {
+  // GitHub `"screenshot" should appear in the issue list`: presence 79% passed, value 19% could not pick a subject.
+  const snap = `- heading "Issues" [ref=e4]\n- list "Issues" [ref=e1]:\n  - link "Fix screenshot timeout" [ref=e2]\n  - link "Add screenshot option" [ref=e3]`;
+  const a = {
+    kind: pick({ presence: 0.79, value: 0.21 }),
+    area: pick({ e1: 1 }),
+    subject: pick({ e2: 0.5, e4: 0.5 }),
+  };
+  const r = run(snap, a, ["screenshot"]);
+  assert.equal(r.outcome, "PASSED");
+  assert.ok(r.marginal?.includes("as a value check Jev could not decide"), String(r.marginal));
+  // A reading that fails still vetoes.
+  assert.equal(run(snap, { ...a, kind: pick({ presence: 0.6, absence: 0.4 }) }, ["screenshot"]).outcome, "AMBIGUOUS");
+  // Nothing decided at all stays AMBIGUOUS.
+  assert.equal(run(snap, { ...a, kind: pick({ value: 1 }) }, ["screenshot"]).outcome, "AMBIGUOUS");
+});
+
 test("Check reasons: kinds disagree, none applies, table shapes", () => {
   const snap = `- paragraph [ref=e1]: Draft`;
   assert.deepEqual(reading(run(snap, { kind: pick({ value: 0.5, absence: 0.5 }) }, ["Draft"])), {
