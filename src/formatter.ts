@@ -13,6 +13,8 @@ import {
   KIND,
   MARGINAL,
   MARGINAL_HINT,
+  POSITIONAL,
+  POSITIONAL_HINT,
   NO_TRACE,
   parseOutcome,
   stepEvents,
@@ -65,6 +67,7 @@ export default class DecisiumFormatter extends Formatter {
     const scenarios: { name: string; passed: boolean }[] = [];
     const failures: (() => Omit<AgentFailure, "events">)[] = []; // built at the end: the Playwright trace is saved after the step
     const warnings: string[] = [];
+    const byPosition: string[] = [];
     const hookIds = new Map<string, string>(); // testRunHookStarted id -> hook definition id
     const hookFailures: string[] = []; // a failed BeforeAll/AfterAll (e.g. no TYPESAFE_API_KEY): cucumber runs no scenario
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
@@ -100,6 +103,11 @@ export default class DecisiumFormatter extends Formatter {
         if (marginal) {
           this.log(`      ⚠ marginal pass: ${marginal}\n`);
           warnings.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${label}\n  Jev was barely confident: ${marginal}`);
+        }
+        const positional = attachments.find((a) => a.body.startsWith(POSITIONAL))?.body.slice(POSITIONAL.length);
+        if (positional) {
+          this.log(`      ⚠ told apart by position only: ${positional}\n`);
+          byPosition.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${label}\n  ${positional}`);
         }
         if (!failed) return;
         const r = parseOutcome(result.message ?? "");
@@ -165,6 +173,10 @@ export default class DecisiumFormatter extends Formatter {
         if (failed.length)
           this.log(
             `\n${"─".repeat(60)}\nFailures\n\n${failed.map((f) => failureReport(f.where, f.scenario, f.kind, f.step, f, f.screenshot, f.trace)).join("\n\n")}\n`,
+          );
+        if (byPosition.length)
+          this.log(
+            `\n${"─".repeat(60)}\nTold apart by position only\n\n${byPosition.join("\n\n")}\n\nWhat to do: ${POSITIONAL_HINT}\n`,
           );
         if (warnings.length)
           this.log(

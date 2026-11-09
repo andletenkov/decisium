@@ -820,3 +820,81 @@ test("resolve and find: a stable text keeps telling look-alikes apart across run
   assert.equal(find(old, before), before[0]);
   assert.match(find(old, after) as string, /matches 0 elements now/);
 });
+
+const campaigns = (a: string, b: string) =>
+  parseSnapshot(
+    [
+      `- listitem [ref=e1]:`,
+      `  - text: ${a}`,
+      `  - button "Open" [ref=e2]`,
+      `- listitem [ref=e3]:`,
+      `  - text: ${b}`,
+      `  - button "Open" [ref=e4]`,
+    ].join("\n"),
+  ).elements;
+
+test("resolve and find: a value the Step quotes anchors the element to its own row, across other changes to the row", () => {
+  const before = campaigns("Spring Sale Draft", "Autumn Sale Scheduled");
+  const r = resolve(before[0], before, ["Spring Sale"]);
+  assert.deepEqual(r, { role: "button", name: "Open", container: "", anchor: "Spring Sale" });
+  assert.equal(describe(r), `button "Open" for "Spring Sale"`);
+  // The row's status changed and the rows swapped: the anchor still finds the Spring Sale button.
+  const after = campaigns("Autumn Sale Scheduled", "Spring Sale Scheduled");
+  assert.equal(find(r, after), after[1]);
+  // Without the hint the closest unique text is the whole row, which the status change breaks.
+  assert.match(find(resolve(before[0], before), after) as string, /matches 0 elements now/);
+});
+
+test("resolve: a quoted value that is not the element's own is no anchor", () => {
+  const els = campaigns("Spring Sale Draft", "Autumn Sale Draft");
+  // On both rows, or on neither: falls back to the text that differs.
+  assert.equal(resolve(els[0], els, ["Draft"]).anchor, undefined);
+  assert.equal(resolve(els[0], els, ["Winter Sale"]).anchor, undefined);
+  assert.equal(resolve(els[0], els, ["Draft"]).near, "Spring Sale Draft Open");
+  // Shared by an ancestor of both rows (a list heading), not by one row.
+  const shared = parseSnapshot(
+    [
+      `- list "Spring Sale campaigns" [ref=e0]:`,
+      `  - listitem [ref=e1]:`,
+      `    - text: one`,
+      `    - button "Open" [ref=e2]`,
+      `  - listitem [ref=e3]:`,
+      `    - text: two`,
+      `    - button "Open" [ref=e4]`,
+    ].join("\n"),
+  ).elements;
+  const open = shared.filter((e) => e.name === "Open");
+  assert.equal(resolve(open[0], shared, ["Spring Sale"]).anchor, undefined);
+  // An anchor that now matches both rows (or none) fails as UI_CHANGED instead of picking one.
+  const r = { role: "button", name: "Open", container: "", anchor: "Spring Sale" };
+  assert.match(find(r, campaigns("Spring Sale", "Spring Sale")) as string, /matches 0 elements now/);
+});
+
+test("cassette: an action target is anchored by the Step's quoted value, a check's subject never; a position-only target is reported", async () => {
+  const els = campaigns("Spring Sale Draft", "Autumn Sale Draft");
+  const obs = { ...page, elements: els, readable: els };
+  const p = tmp();
+  const c = new Cassette(p, "m", "new");
+  const d = c.step("S: x", scripted({ turn: { done: 0, target: sure("e2"), action: sure("click") } }).live);
+  await d.turn(`I open the "Spring Sale" campaign`, obs, []);
+  assert.deepEqual(d.positional(), []);
+  d.done(true);
+  const check = c.step(
+    "S: y",
+    scripted({
+      assess: { kind: sure("value"), subject: sure("e2"), area: sure("page"), state: sure("disabled") },
+    }).live,
+  );
+  await check.assess(`the "Spring Sale" status should be "Draft"`, obs, false);
+  check.done(true);
+  const twins = campaigns("same", "same");
+  const t = c.step("S: z", scripted({ turn: { done: 0, target: sure("e4"), action: sure("click") } }).live);
+  await t.turn("I open the second one", { ...page, elements: twins }, []);
+  assert.deepEqual(t.positional(), [`button "Open" (#2 of 2 identical)`]);
+  t.done(true);
+  c.save();
+  const entries = read(p).entries;
+  assert.equal(entries["S: x"].turns[0].target[0][0].anchor, "Spring Sale");
+  // The expected value of a check must not decide which element it reads: a wrong status has to fail the check.
+  assert.equal(entries["S: y"].check.subject[0][0].anchor, undefined);
+});
