@@ -2,7 +2,17 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
-import { Cassette, describe, find, pin, RECORD_MODES, resolve, stepKey, UiChanged } from "../src/cassette.ts";
+import {
+  Cassette,
+  describe,
+  find,
+  pin,
+  RECORD_MODES,
+  resolve,
+  stableText,
+  stepKey,
+  UiChanged,
+} from "../src/cassette.ts";
 import { type Decider, fmt, gate, named, NotYet, type Pick } from "../src/decision.ts";
 import { DEFAULTS } from "../src/options.ts";
 import { parseSnapshot } from "../src/observation.ts";
@@ -742,4 +752,66 @@ test("cassette: a check still needs every plausible subject; a heal writes a gon
     written.map(([t]: [unknown]) => t),
     [saveTarget, goneTarget],
   );
+});
+
+test("stableText: run-dependent values are masked, content that identifies an item is not", () => {
+  const masked: [string, string][] = [
+    ["Run 19:40:08.445 1.4s", "Run ‹time› ‹duration›"],
+    ["Updated 3 min ago", "Updated ‹time›"],
+    ["just now", "‹time›"],
+    ["2026-11-09T19:40:08Z done", "‹date› done"],
+    ["Ran 28/10/2026", "Ran ‹date›"],
+    ["Nov 9, 2026 5:30 PM", "‹date› ‹time›"],
+    ["Cost $0.0042 for 1,200 tokens", "Cost ‹amount› for ‹amount›"],
+    ["Progress 45%", "Progress ‹percent›"],
+    ["took 250ms", "took ‹duration›"],
+    ["id 3f2b8c1a-1234-4abc-9def-0123456789ab", "id ‹id›"],
+  ];
+  for (const [raw, want] of masked) assert.equal(stableText(raw), want, raw);
+  for (const kept of ["Order 1042", "Item 3 of 5", "Agent test-agent: Done", "Room 12", "Step 2", "v1.4"])
+    assert.equal(stableText(kept), kept);
+});
+
+test("resolve and find: look-alikes that differ only in a time or duration are told apart by position", () => {
+  const rows = (a: string, b: string) =>
+    parseSnapshot(
+      [
+        `- listitem [ref=e1]:`,
+        `  - text: ${a}`,
+        `  - button "Agent test-agent: Done" [ref=e2]`,
+        `- listitem [ref=e3]:`,
+        `  - text: ${b}`,
+        `  - button "Agent test-agent: Done" [ref=e4]`,
+      ].join("\n"),
+    ).elements;
+  const before = rows("test-agent 19:40:08.445 1.4s", "test-agent 19:40:09.100 2.9s");
+  const r = resolve(before[1], before);
+  assert.equal(r.near, undefined);
+  assert.deepEqual([r.nth, r.of], [1, 2]);
+  // The next run: other times and durations, same page.
+  const after = rows("test-agent 20:11:42.001 0.8s", "test-agent 20:11:44.870 3.3s");
+  assert.equal(find(r, after), after[1]);
+});
+
+test("resolve and find: a stable text keeps telling look-alikes apart across runs, and a raw near of an older cassette still matches", () => {
+  const rows = (a: string, b: string) =>
+    parseSnapshot(
+      [
+        `- listitem [ref=e1]:`,
+        `  - text: Run alpha ${a}`,
+        `  - button "Open" [ref=e2]`,
+        `- listitem [ref=e3]:`,
+        `  - text: Run beta ${b}`,
+        `  - button "Open" [ref=e4]`,
+      ].join("\n"),
+    ).elements;
+  const before = rows("19:40:08 1.4s", "19:40:09 2.9s");
+  const r = resolve(before[0], before);
+  assert.match(r.near!, /^Run alpha ‹time› ‹duration› Open$/);
+  const after = rows("20:11:42 0.8s", "20:11:44 3.3s");
+  assert.equal(find(r, after), after[0]);
+  // Written before values were masked: the raw text of that run.
+  const old = { role: "button", name: "Open", container: "", near: "Run alpha 19:40:08 1.4s Open" };
+  assert.equal(find(old, before), before[0]);
+  assert.match(find(old, after) as string, /matches 0 elements now/);
 });
