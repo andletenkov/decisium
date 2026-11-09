@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { parseFeature } from "./feature.ts";
 import { KIND } from "./report.ts";
+import { tagProblems } from "./states.ts";
 import { placeholder, readStep, type ParsedStep } from "./step.ts";
 
 const SEE = "see https://andletenkov.github.io/decisium/steps.html";
@@ -122,6 +123,10 @@ export function lint(path: string, env: Record<string, string | undefined> = pro
   let flagged = 0;
   for (const s of parseFeature(readFileSync(path, "utf8"), path)) {
     out.push("", `  Scenario: ${s.name}${s.url ? `  (${s.url})` : ""}`);
+    for (const problem of tagProblems(s)) {
+      out.push(`${" ".repeat(7)}⚠ ${problem}`);
+      flagged++;
+    }
     const before: ParsedStep[] = [];
     for (const step of s.steps) {
       const read = readStep(step);

@@ -16,7 +16,7 @@ import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
 import { MODEL } from "./jev.ts";
 import { readStep } from "./step.ts";
 import { SavedStorage } from "./saved.ts";
-import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef } from "./states.ts";
+import { consumerChain, discoverStates, isStateFile, loadStates, tagProblems, type StateDef } from "./states.ts";
 
 // ".ts" from source, ".js" from the built package in dist/.
 const EXT = import.meta.url.slice(-3);
@@ -271,7 +271,13 @@ async function main(): Promise<number> {
       console.error(usage(cmd));
       return 2;
     }
-    scenarios = files.flatMap((f) => parseFeature(readFileSync(feature(f), "utf8"), feature(f))); // syntax and unsupported arguments: one line, before running
+    const parsed = files.map((f) => [f, parseFeature(readFileSync(feature(f), "utf8"), feature(f))] as const); // syntax and unsupported arguments: one line, before running
+    scenarios = parsed.flatMap(([, s]) => s);
+    // Tag typos and bad values: all of them at once, before any browser opens or Jev is called.
+    const problems = new Set(
+      parsed.flatMap(([f, ss]) => ss.flatMap((s) => tagProblems(s).map((p) => `${f}: "${s.name}": ${p}`))),
+    );
+    if (problems.size) throw new Error([...problems].join("\n"));
   } catch (err) {
     console.error((err as Error).message);
     return 2;
