@@ -5,7 +5,15 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { parseFeature } from "../src/feature.ts";
 import { forOrigin, SavedStorage } from "../src/saved.ts";
-import { consumerChain, discoverStates, loadStates, nearMiss, parseStates, stateChain } from "../src/states.ts";
+import {
+  consumerChain,
+  discoverStates,
+  loadStates,
+  nearMiss,
+  parseStates,
+  stateChain,
+  tagProblems,
+} from "../src/states.ts";
 
 const SHOP = `@url:https://shop.example.com
 Feature: Shop states
@@ -190,4 +198,18 @@ test("SavedStorage: a crashed worker's lock is stale, so nobody waits for it", a
   assert.equal(s.locked("logged-in"), false);
   assert.deepEqual(await s.plan([login], 1000, 10), { load: undefined, mine: ["logged-in"] });
   s.remove();
+});
+
+test("tagProblems: typos, missing values, bad values and repeated tags, before any browser opens", () => {
+  const p = (tags: string[], own = tags) => tagProblems({ tags, own });
+  assert.deepEqual(p(["@url:http://x", "@viewport:390x844", "@smoke", "@stage:x"]), []);
+  assert.match(p(["@viewprot:390x844"])[0], /did you mean @viewport:/);
+  assert.match(p(["@url"])[0], /needs a value/);
+  assert.match(p(["@viewport:"])[0], /needs a value/);
+  assert.match(p(["@viewport:tiny"])[0], /@viewport:tiny: expected/);
+  assert.match(p(["@geolocation:52.5"])[0], /expected <latitude>,<longitude>/);
+  assert.match(p(["@url:a", "@url:b"])[0], /only the last one applies/);
+  // a scenario overriding the Feature's @url: is deliberate
+  assert.deepEqual(p(["@url:a", "@url:b"], ["@url:b"]), []);
+  assert.equal(p(["@viewprot:1x1", "@stat:x"]).length, 2);
 });

@@ -2825,3 +2825,12 @@ test("runStep: a click must land on what the Step quotes, not on a lookalike", a
   const plain = page(`- button "Publish again" [ref=e1]`);
   assert.equal((await runStep("I publish it again", plain.rt, picks("e1"), () => {})).outcome, "DONE");
 });
+
+test("lint: a mistyped Decisium tag is a warning on its scenario", async () => {
+  const { lint } = await import("../src/lint.ts");
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const path = `${mkdtempSync(`${tmpdir()}/lint-`)}/t.feature`;
+  writeFileSync(path, 'Feature: t\n\n  @url:http://x @viewprot:390x844\n  Scenario: s\n    When I click "Go"\n');
+  assert.match(lint(path, {}), /⚠ @viewprot:390x844: unknown tag, did you mean @viewport:\?[\s\S]*1 warning\./);
+});

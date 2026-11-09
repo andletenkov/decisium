@@ -2,7 +2,7 @@
 // Steps a scenario tagged `@state:<name>` runs before its own. `@save:storage` on a definition saves its cookies and
 // localStorage once per run and loads them into later consumers instead of replaying its Steps.
 import { globSync, readFileSync } from "node:fs";
-import { fromPickle, parseGherkin, tagValue, urlFromTags } from "./feature.ts";
+import { contextFromTags, fromPickle, parseGherkin, tagValue, urlFromTags } from "./feature.ts";
 import { readStep, type ParsedStep } from "./step.ts";
 
 export interface StateDef {
@@ -44,6 +44,34 @@ export function nearMiss(tag: string): string | undefined {
   if (!m || TAGS.includes(m[1])) return undefined;
   const best = TAGS.find((t) => typo(m[1].toLowerCase(), t));
   return best && `${tag}: unknown tag, did you mean @${best}:?`;
+}
+
+// Tags where a second one on the same scenario silently wins over the first.
+const SINGLE = ["url", "viewport", "locale", "timezone", "geolocation", "replay-network"];
+
+/**
+ * What is wrong with a scenario's Decisium tags, before any browser opens: a typo of a tag name, a tag without its
+ * value (it would do nothing), a value the browser context rejects, a repeated tag. `tags`: all of the scenario's tags
+ * (feature ones included); `own`: its own (a scenario may override a Feature's `@url:` on purpose).
+ */
+export function tagProblems({ tags, own }: { tags: readonly string[]; own: readonly string[] }): string[] {
+  const out: string[] = [];
+  for (const t of tags) {
+    const near = nearMiss(t);
+    if (near) out.push(near);
+    const m = /^@([\w-]+)(:?)$/.exec(t);
+    if (m && TAGS.includes(m[1])) out.push(`${t}: needs a value (@${m[1]}:<value>); without one it does nothing`);
+  }
+  for (const name of SINGLE) {
+    const same = own.filter((t) => t.startsWith(`@${name}:`));
+    if (same.length > 1) out.push(`${same.join(" and ")}: only the last one applies`);
+  }
+  try {
+    contextFromTags(tags.map((name) => ({ name })));
+  } catch (err) {
+    out.push((err as Error).message);
+  }
+  return [...new Set(out)];
 }
 
 /** Definitions in one `*.state.feature` source. Throws on what would run differently than it reads. */

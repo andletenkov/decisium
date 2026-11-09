@@ -254,3 +254,24 @@ test("cli: install --only-shell skips the full Chromium", () => {
   assert.match(result.stdout, /chromium_headless_shell-\d+/);
   assert.doesNotMatch(result.stdout, /chromium-\d+/);
 });
+
+test("cli: run reports every tag problem at once and exits 2 before running anything", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-tags-"));
+  try {
+    writeFileSync(
+      join(cwd, "t.feature"),
+      'Feature: t\n\n  @url:http://x @viewprot:1x1\n  Scenario: one\n    When I click "Go"\n\n  @url:http://x @viewport:tiny\n  Scenario: two\n    When I click "Go"\n',
+    );
+    const r = spawnSync(process.execPath, [cli, "run", "t.feature", "--record", "none"], {
+      cwd,
+      encoding: "utf8",
+      timeout: 10_000,
+      env: { ...process.env, TYPESAFE_API_KEY: "", DECISIUM_DEBUG: "" },
+    });
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /"one": @viewprot:1x1: unknown tag[\s\S]*"two": @viewport:tiny: expected/);
+    assert.doesNotMatch(r.stdout, /Run directory/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
