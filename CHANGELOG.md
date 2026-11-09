@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/andletenkov/decisium/compare/v0.3.1...v0.4.0) (2026-11-09)
+
+
+### Features
+
+* anchor look-alike targets on the Step's quoted values ([#72](https://github.com/andletenkov/decisium/issues/72)) ([333fbe2](https://github.com/andletenkov/decisium/commit/333fbe26c7a838cebe28c97d6028b9e20efa46d8))
+
+
+### Bug Fixes
+
+* mask run-dependent values in the text that tells look-alikes apart ([#70](https://github.com/andletenkov/decisium/issues/70)) ([4ccc96d](https://github.com/andletenkov/decisium/commit/4ccc96d52fa54e0bc6ee53d72021da0258aef78d))
+
 ## [0.3.1](https://github.com/andletenkov/decisium/compare/v0.3.0...v0.3.1) (2026-11-09)
 
 
