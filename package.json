@@ -71,7 +71,7 @@
     "tsx": "^4.23.15"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.5",
     "@stryker-mutator/core": "^10.1.1",
     "@types/node": "^26.6.5",
     "marked": "^18.1.1",
