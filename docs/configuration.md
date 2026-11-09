@@ -28,6 +28,7 @@ Exit codes: `0` passed, `1` a scenario failed, `2` configuration or infrastructu
 | `-p <profile>` | A cucumber profile. |
 | `--no-agent-report` | Do not write `report.md`. |
 | `-v`, `--debug` | Print every page snapshot and answer; show stack traces. |
+| `--report-dir`, `--check-timeout`, `--action-timeout`, `--max-turns`, `--confidence-target`, `--confidence-answer` | The options below, one flag each. |
 
 ## Options
 
@@ -45,7 +46,7 @@ export default {
 
 | Option | Default | When to change |
 |---|---|---|
-| `url` | | Start URL for features without `@url:`. |
+| `url` | | Start URL for every scenario. Overrides `@url:`, so one set of features runs against dev, staging and prod. |
 | `record` | `"new"` | `"none"` in CI. |
 | `reportDir` | `"runs"` | To match your CI artifact path. |
 | `checkTimeout` | `5000` | Slow page: ms a check waits for the expected state. |
@@ -55,5 +56,37 @@ export default {
 | `confidence.answer` | `0.8` | How sure Jev must be of other answers. Below `0.6` warns. |
 | `states` | `"**/*.state.feature"` | Where [state](https://andletenkov.github.io/decisium/advanced.html#states) files live. |
 
-Also `headed`, `judged`, `strict`, `verbose`, `debug`, `agentReport`. Every option has a flag (`--check-timeout`) and an
-environment variable (`DECISIUM_CHECK_TIMEOUT`). Precedence: flag > environment > config file > default.
+Also `headed`, `judged`, `strict`, `verbose`, `debug`, `agentReport`. Precedence: flag > environment variable > config
+file > default.
+
+## Environment variables
+
+Every option has an environment variable, so a CI job or a shell can change it without touching files:
+
+| Variable | Flag | Option | Notes |
+|---|---|---|---|
+| `DECISIUM_URL` | `--url` | `url` | Start URL; overrides `@url:`. |
+| `DECISIUM_RECORD` | `--record` | `record` | `new`, `none` or `all`. |
+| `DECISIUM_REPORT_DIR` | `--report-dir` | `reportDir` | Where run folders go. |
+| `DECISIUM_CHECK_TIMEOUT` | `--check-timeout` | `checkTimeout` | ms. |
+| `DECISIUM_ACTION_TIMEOUT` | `--action-timeout` | `actionTimeout` | ms. |
+| `DECISIUM_MAX_TURNS` | `--max-turns` | `maxTurns` | 1-20. |
+| `DECISIUM_CONFIDENCE_TARGET` | `--confidence-target` | `confidence.target` | 0 to 1. |
+| `DECISIUM_CONFIDENCE_ANSWER` | `--confidence-answer` | `confidence.answer` | 0 to 1. |
+| `DECISIUM_STATES` | | `states` | Glob of state files. |
+| `DECISIUM_HEADED` | `--headed` | `headed` | `1` or `0`. |
+| `DECISIUM_JUDGED` | `--judged` | `judged` | `1` or `0`. |
+| `DECISIUM_STRICT` | `--strict` | `strict` | `1` or `0`. |
+| `DECISIUM_VERBOSE` | `-v` | `verbose` | `1` or `0`. |
+| `DECISIUM_DEBUG` | `--debug` | `debug` | `1` or `0`. |
+| `DECISIUM_NO_AGENT_REPORT` | `--no-agent-report` | `agentReport: false` | `1` skips `report.md`. |
+
+Other variables:
+
+| Variable | Does |
+|---|---|
+| `TYPESAFE_API_KEY` | Jev API key for live runs. Read from the environment or from `.env`; replays need none. |
+| `SLOWMO` | Milliseconds to pause per browser action, for demos. |
+| Any name you write as `"$NAME"` in a Step | A [secret placeholder](https://andletenkov.github.io/decisium/steps.html): its value is typed but never sent to Jev or logged. |
+
+`DECISIUM_RUN_ID`, `DECISIUM_RUN_DIR`, `DECISIUM_STEP` and `DECISIUM_NO_INTENT` are internal; do not set them.

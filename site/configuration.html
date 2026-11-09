@@ -112,6 +112,10 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <td><code>-v</code>, <code>--debug</code></td>
 <td>Print every page snapshot and answer; show stack traces.</td>
 </tr>
+<tr>
+<td><code>--report-dir</code>, <code>--check-timeout</code>, <code>--action-timeout</code>, <code>--max-turns</code>, <code>--confidence-target</code>, <code>--confidence-answer</code></td>
+<td>The options below, one flag each.</td>
+</tr>
 </tbody></table>
 <h2 id="options">Options</h2>
 <p><code>decisium run</code> loads your <code>cucumber.{js,mjs,cjs,json,yaml}</code> like cucumber-js does. Decisium options go in
@@ -134,7 +138,7 @@ export default {
 <tbody><tr>
 <td><code>url</code></td>
 <td></td>
-<td>Start URL for features without <code>@url:</code>.</td>
+<td>Start URL for every scenario. Overrides <code>@url:</code>, so one set of features runs against dev, staging and prod.</td>
 </tr>
 <tr>
 <td><code>record</code></td>
@@ -177,10 +181,134 @@ export default {
 <td>Where <a href="https://andletenkov.github.io/decisium/advanced.html#states">state</a> files live.</td>
 </tr>
 </tbody></table>
-<p>Also <code>headed</code>, <code>judged</code>, <code>strict</code>, <code>verbose</code>, <code>debug</code>, <code>agentReport</code>. Every option has a flag (<code>--check-timeout</code>) and an
-environment variable (<code>DECISIUM_CHECK_TIMEOUT</code>). Precedence: flag &gt; environment &gt; config file &gt; default.</p>
+<p>Also <code>headed</code>, <code>judged</code>, <code>strict</code>, <code>verbose</code>, <code>debug</code>, <code>agentReport</code>. Precedence: flag &gt; environment variable &gt; config
+file &gt; default.</p>
+<h2 id="environment-variables">Environment variables</h2>
+<p>Every option has an environment variable, so a CI job or a shell can change it without touching files:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Flag</th>
+<th>Option</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DECISIUM_URL</code></td>
+<td><code>--url</code></td>
+<td><code>url</code></td>
+<td>Start URL; overrides <code>@url:</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_RECORD</code></td>
+<td><code>--record</code></td>
+<td><code>record</code></td>
+<td><code>new</code>, <code>none</code> or <code>all</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_REPORT_DIR</code></td>
+<td><code>--report-dir</code></td>
+<td><code>reportDir</code></td>
+<td>Where run folders go.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_CHECK_TIMEOUT</code></td>
+<td><code>--check-timeout</code></td>
+<td><code>checkTimeout</code></td>
+<td>ms.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_ACTION_TIMEOUT</code></td>
+<td><code>--action-timeout</code></td>
+<td><code>actionTimeout</code></td>
+<td>ms.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_MAX_TURNS</code></td>
+<td><code>--max-turns</code></td>
+<td><code>maxTurns</code></td>
+<td>1-20.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_CONFIDENCE_TARGET</code></td>
+<td><code>--confidence-target</code></td>
+<td><code>confidence.target</code></td>
+<td>0 to 1.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_CONFIDENCE_ANSWER</code></td>
+<td><code>--confidence-answer</code></td>
+<td><code>confidence.answer</code></td>
+<td>0 to 1.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_STATES</code></td>
+<td></td>
+<td><code>states</code></td>
+<td>Glob of state files.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_HEADED</code></td>
+<td><code>--headed</code></td>
+<td><code>headed</code></td>
+<td><code>1</code> or <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_JUDGED</code></td>
+<td><code>--judged</code></td>
+<td><code>judged</code></td>
+<td><code>1</code> or <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_STRICT</code></td>
+<td><code>--strict</code></td>
+<td><code>strict</code></td>
+<td><code>1</code> or <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_VERBOSE</code></td>
+<td><code>-v</code></td>
+<td><code>verbose</code></td>
+<td><code>1</code> or <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_DEBUG</code></td>
+<td><code>--debug</code></td>
+<td><code>debug</code></td>
+<td><code>1</code> or <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_NO_AGENT_REPORT</code></td>
+<td><code>--no-agent-report</code></td>
+<td><code>agentReport: false</code></td>
+<td><code>1</code> skips <code>report.md</code>.</td>
+</tr>
+</tbody></table>
+<p>Other variables:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>TYPESAFE_API_KEY</code></td>
+<td>Jev API key for live runs. Read from the environment or from <code>.env</code>; replays need none.</td>
+</tr>
+<tr>
+<td><code>SLOWMO</code></td>
+<td>Milliseconds to pause per browser action, for demos.</td>
+</tr>
+<tr>
+<td>Any name you write as <code>&quot;$NAME&quot;</code> in a Step</td>
+<td>A <a href="https://andletenkov.github.io/decisium/steps.html">secret placeholder</a>: its value is typed but never sent to Jev or logged.</td>
+</tr>
+</tbody></table>
+<p><code>DECISIUM_RUN_ID</code>, <code>DECISIUM_RUN_DIR</code>, <code>DECISIUM_STEP</code> and <code>DECISIUM_NO_INTENT</code> are internal; do not set them.</p>
 <div class="pager"><a class="prev" href="steps.html"><span>Previous</span>Writing Steps</a><a class="next" href="ci.html"><span>Next</span>CI</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#commands">Commands</a><a class="l2" href="#run-flags">run flags</a><a class="l2" href="#options">Options</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#commands">Commands</a><a class="l2" href="#run-flags">run flags</a><a class="l2" href="#options">Options</a><a class="l2" href="#environment-variables">Environment variables</a></aside>
 </div>
 </body>
 </html>
