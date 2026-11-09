@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/andletenkov/decisium/compare/v0.3.0...v0.3.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* replay needs only the target a Turn acts on, not its unchosen candidates ([#67](https://github.com/andletenkov/decisium/issues/67)) ([6648935](https://github.com/andletenkov/decisium/commit/66489353652c3272fb27177f9f12253c448466d0))
+
 ## [0.3.0](https://github.com/andletenkov/decisium/compare/v0.2.1...v0.3.0) (2026-11-09)
 
 
