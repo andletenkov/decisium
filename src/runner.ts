@@ -6,6 +6,7 @@ import {
   gate,
   GATE_TARGET_MARGIN,
   confidence,
+  DONE_THRESHOLD,
   grouped,
   NotYet,
   named,
@@ -121,7 +122,6 @@ const VERBS: Record<string, Action["verb"]> = {
   "switch tab": "SWITCH_TAB",
   enter: "ENTER",
 };
-const DONE_THRESHOLD = 0.8;
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).

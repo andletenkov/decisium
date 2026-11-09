@@ -4,6 +4,9 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import {
   capabilities,
   confidence,
+  DONE_THRESHOLD,
+  goneKey,
+  goneResolution,
   NotYet,
   PAGE,
   plausible,
@@ -237,7 +240,7 @@ const store = (p: Pick, among: Element[] = [], minimum = 0): Answer =>
     ]),
   ].map((k) => {
     const el = among.find((e) => e.ref === k);
-    const target = el ? resolve(el, among) : k;
+    const target = el ? resolve(el, among) : (goneResolution<Resolution>(k) ?? k);
     // A healed Step can mix replayed answers with live ones using different confidence.
     return p.recordedConfidence ? [target, p.probabilities[k], p.recordedConfidence] : [target, p.probabilities[k]];
   });
@@ -249,14 +252,21 @@ class NotOnPage {
   }
 }
 
-/** A recorded answer on this Observation; throws NotOnPage when a Resolution no longer names exactly one element. */
-const load = (a: Answer, among: Element[] = []): Pick => {
+/**
+ * A recorded answer on this Observation. `required` says which recorded elements must still name exactly one element,
+ * else NotOnPage: `all` (a check's subject and area: every plausible reading is evaluated, so every one must exist),
+ * `top` (a Turn's target: only the first is acted on; the rest matter through their probability alone) or `none` (the
+ * Step is done: nothing is acted on). A candidate that is not required and not found stays in the answer as a gone
+ * key, so the gates see the distribution as recorded: its mass still counts against the top's margin.
+ */
+const load = (a: Answer, among: Element[] = [], required: "all" | "top" | "none" = "all"): Pick => {
   const probabilities = Object.fromEntries(
-    a.map(([t, v]) => {
+    a.map(([t, v], i) => {
       if (typeof t === "string") return [t, v];
       const el = find(t, among);
-      if (typeof el === "string") throw new NotOnPage(el);
-      return [el.ref, v];
+      if (typeof el !== "string") return [el.ref, v];
+      if (required === "all" || (required === "top" && i === 0)) throw new NotOnPage(el);
+      return [goneKey(t), v];
     }),
   );
   return {
@@ -333,7 +343,8 @@ export class Cassette {
       ...pick,
       recordedConfidence: pick.recordedConfidence ?? old?.confidence ?? DEFAULTS.confidence,
     });
-    const loadRecorded = (a: Answer, among: Element[] = []) => recorded(load(a, among));
+    const loadRecorded = (a: Answer, among: Element[] = [], required?: Parameters<typeof load>[2]) =>
+      recorded(load(a, among, required));
     let broken: string | undefined; // why replay stopped
     let turn = 0;
     const replayOnly = this.mode === "none";
@@ -386,7 +397,7 @@ export class Cassette {
           const a: TurnAnswer = {
             done: t.done,
             target: {
-              ...loadRecorded(t.target, obs.elements),
+              ...loadRecorded(t.target, obs.elements, t.done >= DONE_THRESHOLD ? "none" : "top"),
               ...(e.pinned?.some((p) => p.turn === i + 1) ? { confirmed: true } : {}),
             },
             action: t.action && loadRecorded(t.action),
@@ -442,7 +453,7 @@ export class Cassette {
           const t = e.turns?.[i];
           const d = t && "drop" in t ? t.drop : undefined;
           if (!d) throw "no recorded drop target";
-          return loadRecorded(d, among);
+          return loadRecorded(d, among, "top");
         });
         const a = r ?? (await live.drop(step, obs, source));
         (now.turns![i] as { drop?: Answer }).drop = store(a, among);

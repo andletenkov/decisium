@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
 import { Cassette, describe, find, pin, RECORD_MODES, resolve, stepKey, UiChanged } from "../src/cassette.ts";
-import { type Decider, NotYet, type Pick } from "../src/decision.ts";
+import { type Decider, fmt, gate, named, NotYet, type Pick } from "../src/decision.ts";
 import { DEFAULTS } from "../src/options.ts";
 import { parseSnapshot } from "../src/observation.ts";
 import type { ParsedStep } from "../src/step.ts";
@@ -628,4 +628,118 @@ test("pin: refuses a missing candidate, an unknown wording, a target that cannot
   }
   const s = ambiguous("combobox");
   assert.throws(() => pin(s, "S: x", 2, action(`I type "a" into the combobox`)), /cannot perform type/);
+});
+
+const goneTarget = { role: "button", name: "Dry run ● Running", container: "" };
+
+test("cassette: a recorded candidate that is gone only counts through its probability; the top is still required", async () => {
+  // A transient label ("Running") that was a second candidate when recorded: replay-only must not need it.
+  const p = recorded({
+    turns: [
+      {
+        done: 0.72,
+        target: [
+          ["none", 0.59],
+          [goneTarget, 0.33],
+        ],
+        action: [["wait", 0.68]],
+      },
+    ],
+  });
+  const a = await new Cassette(p, "m", "none").step("S: x", scripted({}).live).turn("x", page, []);
+  assert.equal(a.target.choice, "none");
+  assert.deepEqual(Object.values(a.target.probabilities).sort(), [0.33, 0.59]);
+  // Not leniency: the gone candidate's mass still narrows the margin exactly as when it was recorded.
+  assert.equal(gate(a.target, 0.5, 0.25), true);
+  assert.equal(gate(a.target, 0.5, 0.27), false);
+  assert.match(fmt(a.target), /button "Dry run ● Running" \(not on the page now\)=0.33/);
+  assert.match(named(a.target, page), /button "Dry run ● Running" \(not on the page now\) 33%/);
+  assert.ok(!(fmt(a.target) + named(a.target, page)).includes("\u0000"));
+
+  // A close second that is gone leaves the recorded ambiguity as it was: still under the target gate (margin 0.1).
+  const close = recorded({
+    turns: [
+      {
+        done: 0,
+        target: [
+          [saveTarget, 0.5],
+          [goneTarget, 0.45],
+        ],
+      },
+    ],
+  });
+  const b = await new Cassette(close, "m", "none").step("S: x", scripted({}).live).turn("x", page, []);
+  assert.equal(b.target.choice, "e2");
+  assert.equal(gate(b.target, 0.5, 0.1), false);
+
+  // The top is acted on, so it must exist: it is waited for, then UI_CHANGED.
+  const top = recorded({
+    turns: [
+      {
+        done: 0,
+        target: [
+          [goneTarget, 0.9],
+          [saveTarget, 0.05],
+        ],
+      },
+    ],
+  });
+  await assert.rejects(new Cassette(top, "m", "none").step("S: x", scripted({}).live).turn("x", page, []), NotYet);
+
+  // A Step recorded as done acts on no target at all.
+  const done = recorded({
+    turns: [
+      {
+        done: 0.97,
+        target: [
+          [goneTarget, 0.6],
+          ["none", 0.3],
+        ],
+      },
+    ],
+  });
+  const c = await new Cassette(done, "m", "none").step("S: x", scripted({}).live).turn("x", page, []);
+  assert.equal(c.done, 0.97);
+});
+
+test("cassette: a check still needs every plausible subject; a heal writes a gone candidate back as its Resolution", async () => {
+  const check = recorded({
+    check: {
+      kind: [["presence", 1]],
+      state: [["none", 1]],
+      subject: [
+        [saveTarget, 0.5],
+        [goneTarget, 0.45],
+      ],
+      area: [["page", 1]],
+    },
+  });
+  await assert.rejects(
+    new Cassette(check, "m", "none").step("S: x", scripted({}).live).assess("x", page, false),
+    NotYet,
+  );
+
+  const p = recorded({
+    turns: [
+      {
+        done: 0,
+        target: [
+          [saveTarget, 0.5],
+          [goneTarget, 0.45],
+        ],
+      },
+    ],
+  });
+  const { live } = scripted({ turn: { done: 0.9, target: sure("none") } });
+  const c = new Cassette(p, "m", "new");
+  const d = c.step("S: x", live);
+  await d.turn("x", page, []); // replayed, with the gone candidate
+  await d.turn("x", page, []); // turn 2 was never recorded: live, the Step heals
+  d.done(true);
+  c.save();
+  const written = read(p).entries["S: x"].turns[0].target;
+  assert.deepEqual(
+    written.map(([t]: [unknown]) => t),
+    [saveTarget, goneTarget],
+  );
 });
