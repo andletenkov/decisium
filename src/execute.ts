@@ -27,6 +27,8 @@ export interface StepContext {
 export interface StepReport extends StepResult {
   /** How the Cassette served the Step; undefined without one, or when nothing was kept. */
   cassette?: "replayed" | "recorded" | "healed";
+  /** Elements the Step acted on that only a position among identical twins identifies: the Step should name which. */
+  positional?: string[];
   seconds: number;
   jevCalls: number;
   inputTokens: number;
@@ -49,6 +51,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     ? { outcome: "DONE" }
     : { outcome: "AMBIGUOUS", reason: "the table has only its header row, so there is no row to act on" };
   const served: StepReport["cassette"][] = [];
+  const positional: string[] = [];
   const unquoted: [string, string][] = []; // values Jev read without quotes: scenario memory too
   for (const [i, row] of rows.entries()) {
     const entry = cassette?.step(perRow ? `${key} (row ${i + 1})` : key, live, log, ctx.generated);
@@ -76,6 +79,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
       } else throw err;
     }
     served.push(entry?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome)));
+    positional.push(...(entry?.positional() ?? []));
     if (r.outcome === "AMBIGUOUS" && r.reason?.startsWith("Jev is unsure what to do next:")) {
       const resolutions =
         cassette?.resolutions(perRow ? `${key} (row ${i + 1})` : key, { text: row, kind, ...arg }) ?? [];
@@ -92,6 +96,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   return {
     ...r,
     cassette: served.find((c) => c !== "replayed") ?? served[0],
+    ...(positional.length ? { positional } : {}),
     seconds: (Date.now() - start) / 1000,
     jevCalls: jevUsage.calls - before.calls,
     inputTokens: jevUsage.inputTokens - before.inputTokens,

@@ -27,6 +27,11 @@ export const HINTS: Record<string, string> = {
 };
 export const KIND: Record<StepKind, string> = { action: "Step", attempt: "Attempt", assertion: "Check" };
 
+/** Prefix of the attachment a Step leaves when it acted on an element only its position identifies. */
+export const POSITIONAL = "POSITIONAL: told apart from identical twins by position only: ";
+export const POSITIONAL_HINT =
+  'If the list is reordered, replay acts on the other one. Name which one in the Step, e.g. quote its row: I open "Done" for "test-agent".';
+
 /** Prefix of the attachment a marginal pass leaves on its Step (task 0027). */
 export const MARGINAL = "MARGINAL: passed, but Jev was barely confident: ";
 export const MARGINAL_HINT =

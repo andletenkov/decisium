@@ -28,7 +28,7 @@ import { forOrigin, SavedStorage, type StorageState } from "./saved.ts";
 import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, type States } from "./states.ts";
 import type { Decider } from "./decision.ts";
 import { JevDecider, MODEL } from "./jev.ts";
-import { MARGINAL, NO_TRACE, outcomeMessage } from "./report.ts";
+import { MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
@@ -348,6 +348,8 @@ async function perform(w: Scenario, text: string, quiet = false) {
   });
   if (r.outcome === "JUDGED_PASSED") w.log(`JUDGED_PASSED: judged by Jev (${r.reason})`);
   // A file attachment any reporter keeps (text/plain opens as .txt); the console formatter reads it by its prefix.
+  if (r.positional)
+    w.attach(`${POSITIONAL}${r.positional.join(", ")}`, { mediaType: "text/plain", fileName: "positional.txt" });
   if (r.marginal) w.attach(`${MARGINAL}${r.marginal}`, { mediaType: "text/plain", fileName: "marginal-pass.txt" });
   if (!ok) {
     // Failed Step only; fileName carries the path to the console formatter.

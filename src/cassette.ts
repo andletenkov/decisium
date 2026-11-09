@@ -19,7 +19,7 @@ import {
   type TurnAnswer,
 } from "./decision.ts";
 import { parseSnapshot, type Element, type Observation } from "./observation.ts";
-import type { ParsedStep } from "./step.ts";
+import { readStep, type ParsedStep } from "./step.ts";
 import { fill } from "./generate.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
@@ -29,13 +29,16 @@ export const RECORD_MODES: RecordMode[] = ["none", "new", "all"];
 /**
  * What a Step resolved to (ADR 0002, reopened by task 0032): the element by role, name, its nearest named container,
  * and, when it has same-named peers there, `near`: the text of its closest own-or-ancestor node that no peer shares
- * (the product card "Backpack $29.99 Add to cart"). Only twins no text tells apart fall back to a position (`nth` of
+ * (the product card "Backpack $29.99 Add to cart"). Before that, `anchor`: a value the Step quotes that only this
+ * element's own part of the page shows ("Spring Sale" for `I open the "Spring Sale" campaign`), the reason it was
+ * chosen and the most stable thing to find it by. Only twins nothing tells apart fall back to a position (`nth` of
  * `of`): a reorder of them is invisible, but so is any difference between them.
  */
 export interface Resolution {
   role: string;
   name: string;
   container: string;
+  anchor?: string;
   near?: string;
   nth?: number;
   of?: number;
@@ -233,10 +236,37 @@ const texts = (el: Element, masked = true) => {
   return out;
 };
 
-export function resolve(el: Element, among: Element[]): Resolution {
+/** The closest own-or-ancestor node of `el` whose text holds `hint` (any case). */
+const holder = (el: Element, hint: string) => {
+  const h = hint.toLowerCase();
+  let p: Element | undefined = el;
+  while (p && !p.text.toLowerCase().includes(h)) p = p.parent;
+  return p;
+};
+const within = (el: Element, node: Element) => {
+  for (let a: Element | undefined = el; a; a = a.parent) if (a === node) return true;
+  return false;
+};
+/**
+ * `hint` tells `el` apart from its same-named `peers`: it is in `el`'s own part of the page (its row, its card) and in
+ * no peer's own part. A hint in every row ("Draft"), or only in what they share (a list heading), tells nothing.
+ */
+const anchors = (el: Element, hint: string, peers: Element[]) => {
+  const own = holder(el, hint);
+  if (!own || peers.some((q) => within(q, own))) return false;
+  return peers.every((q) => {
+    const theirs = holder(q, hint);
+    return !theirs || within(el, theirs);
+  });
+};
+
+/** `hints`: values the Step quotes, preferred over any other text to tell `el` from same-named peers (an action's target). */
+export function resolve(el: Element, among: Element[], hints: string[] = []): Resolution {
   const r = { role: el.role, name: el.name, container: containerOf(el) };
   const peers = among.filter((e) => e !== el && same(e, r));
   if (!peers.length) return r;
+  const anchor = hints.find((h) => h.trim() && anchors(el, h, peers));
+  if (anchor) return { ...r, anchor };
   const near = texts(el).find((t) => !peers.some((p) => texts(p).includes(t)));
   if (near) return { ...r, near };
   const all = among.filter((e) => same(e, r));
@@ -246,8 +276,16 @@ export function resolve(el: Element, among: Element[]): Resolution {
 /** The element a Resolution names on this Observation, or why none does: exactly one must match all of it. */
 export function find(r: Resolution, among: Element[]): Element | string {
   // A `near` from an older cassette holds the raw text; a new one the masked text.
-  const peers = among.filter(
-    (e) => same(e, r) && (r.near === undefined || texts(e).includes(r.near) || texts(e, false).includes(r.near)),
+  const named = among.filter((e) => same(e, r));
+  const peers = named.filter(
+    (e) =>
+      (r.anchor === undefined ||
+        anchors(
+          e,
+          r.anchor,
+          named.filter((q) => q !== e),
+        )) &&
+      (r.near === undefined || texts(e).includes(r.near) || texts(e, false).includes(r.near)),
   );
   if (r.of !== undefined && peers.length === r.of) return peers[r.nth!];
   if (r.of === undefined && peers.length === 1) return peers[0];
@@ -257,10 +295,10 @@ export function find(r: Resolution, among: Element[]): Element | string {
 export const describe = (t: Target) =>
   typeof t === "string"
     ? t
-    : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.near ? ` near "${t.near}"` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
+    : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.anchor ? ` for "${t.anchor}"` : ""}${t.near ? ` near "${t.near}"` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
 
 /** A live answer for the cassette: refs (looked up in `among`) become Resolutions. */
-const store = (p: Pick, among: Element[] = [], minimum = 0): Answer =>
+const store = (p: Pick, among: Element[] = [], minimum = 0, hints: string[] = []): Answer =>
   [
     ...new Set([
       ...plausible(p, Math.max(DEFAULTS.confidence.answer, confidence(p).answer)),
@@ -270,7 +308,7 @@ const store = (p: Pick, among: Element[] = [], minimum = 0): Answer =>
     ]),
   ].map((k) => {
     const el = among.find((e) => e.ref === k);
-    const target = el ? resolve(el, among) : (goneResolution<Resolution>(k) ?? k);
+    const target = el ? resolve(el, among, hints) : (goneResolution<Resolution>(k) ?? k);
     // A healed Step can mix replayed answers with live ones using different confidence.
     return p.recordedConfidence ? [target, p.probabilities[k], p.recordedConfidence] : [target, p.probabilities[k]];
   });
@@ -365,7 +403,7 @@ export class Cassette {
     live: Decider,
     log: (line: string) => void = () => {},
     generated: Record<string, string> = {},
-  ): Decider & { done(keep: boolean): "replayed" | "recorded" | "healed" | undefined } {
+  ): Decider & { done(keep: boolean): "replayed" | "recorded" | "healed" | undefined; positional(): string[] } {
     const saved = this.mode === "all" ? undefined : this.#file.entries[key];
     const old = saved && mapEntry(saved, (value) => fill(value, generated));
     const now: Entry = { confidence: settings().confidence };
@@ -376,6 +414,8 @@ export class Cassette {
     const loadRecorded = (a: Answer, among: Element[] = [], required?: Parameters<typeof load>[2]) =>
       recorded(load(a, among, required));
     let broken: string | undefined; // why replay stopped
+    const positional = new Set<string>(); // acted-on targets only a position tells apart from their twins
+    let offered: { elements: Element[]; hints: string[] } | undefined; // the latest Turn's page, for acted()
     let turn = 0;
     const replayOnly = this.mode === "none";
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
@@ -451,12 +491,15 @@ export class Cassette {
                 ),
               }
             : a.action;
+        const hints = readStep({ text: step, kind: "action" }).quoted;
+        offered = { elements: obs.elements, hints };
         (now.turns ??= [])[i] = {
           done: a.done,
           target: store(
             a.target,
             obs.elements,
             gate(a.target, confidence(a.target).target, GATE_TARGET_MARGIN) ? 0 : 3,
+            hints,
           ),
           action: action && store(action),
         };
@@ -486,7 +529,7 @@ export class Cassette {
           return loadRecorded(d, among, "top");
         });
         const a = r ?? (await live.drop(step, obs, source));
-        (now.turns![i] as { drop?: Answer }).drop = store(a, among);
+        (now.turns![i] as { drop?: Answer }).drop = store(a, among, 0, readStep({ text: step, kind: "action" }).quoted);
         return a;
       },
       dialog: async (step, obs, answers) => {
@@ -545,6 +588,13 @@ export class Cassette {
         now.recall = store(a);
         return a;
       },
+      acted: (ref: string) => {
+        const el = offered?.elements.find((e) => e.ref === ref);
+        const r = el && resolve(el, offered!.elements, offered!.hints);
+        if (r?.of !== undefined) positional.add(describe(r));
+      },
+      /** Elements this Step acted on that only their position among identical twins identifies. */
+      positional: () => [...positional],
       /** `keep`: the Step reached an outcome from its answers (not an error), so they are written back. */
       done: (keep: boolean) => {
         if (!broken && old) {

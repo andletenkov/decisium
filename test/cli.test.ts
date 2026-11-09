@@ -275,3 +275,37 @@ test("cli: run reports every tag problem at once and exits 2 before running anyt
     rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+test("cli: a Step that acts on one of identical twins by position is reported under the Step and at the end", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "decisium-positional-"));
+  try {
+    writeFileSync(
+      join(cwd, "page.html"),
+      `<ul><li><button onclick="o.textContent='first'">Open</button></li><li><button onclick="o.textContent='second'">Open</button></li></ul><p id=o>none</p>`,
+    );
+    writeFileSync(join(cwd, "t.feature"), "Feature: t\n  Scenario: s\n    When I open the second one\n");
+    const twin = { role: "button", name: "Open", container: "", nth: 1, of: 2 };
+    const turns = [
+      { done: 0, target: [[twin, 1]], action: [["click", 1]] },
+      { done: 0.95, target: [["none", 1]] },
+    ];
+    writeFileSync(
+      join(cwd, "t.cassette.json"),
+      JSON.stringify({ model: "jev-1.14.0", entries: { "s: I open the second one": { turns, intent: {} } } }),
+    );
+    const r = spawnSync(process.execPath, [cli, "run", "t.feature", "--url", "page.html", "--record", "none"], {
+      cwd,
+      encoding: "utf8",
+      timeout: 30_000,
+      env: noCoverage({ TYPESAFE_API_KEY: "", DECISIUM_DEBUG: "" }),
+    });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /⚠ told apart by position only: button "Open" \(#2 of 2 identical\)/);
+    assert.match(
+      r.stdout,
+      /Told apart by position only\n\n⚠ s\n {2}Step: I open the second one[\s\S]*What to do: If the list is reordered/,
+    );
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});

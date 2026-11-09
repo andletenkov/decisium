@@ -424,6 +424,7 @@ async function act(
     } catch (err) {
       return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
     }
+    if (el) decider.acted?.(el.ref);
 
     let next = await rt.observe();
     // An effect can land a task or a request later (replay does not settle after actions): wait for it before calling
