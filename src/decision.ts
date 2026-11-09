@@ -23,6 +23,26 @@ export interface TurnAnswer {
 /** The page itself as a target (task 0065): scrolling it, history, tabs, keys, waiting. */
 export const PAGE = "page";
 
+/**
+ * A completed Step needs no target (runner.ts ends it on `done` alone), so replay requires none of the recorded
+ * target's elements to still exist when `done` is at least this.
+ */
+export const DONE_THRESHOLD = 0.8;
+
+/**
+ * A recorded candidate that names no element on this page, kept so its probability still counts for the gates
+ * (margin, coverage) as when it was recorded; it can never be acted on. The key carries the Resolution, which is
+ * what the cassette writes back (cassette.ts).
+ */
+const GONE = "\u0000gone:";
+export const goneKey = (resolution: unknown): string => GONE + JSON.stringify(resolution);
+export const goneResolution = <T = unknown>(key: string): T | undefined =>
+  key.startsWith(GONE) ? JSON.parse(key.slice(GONE.length)) : undefined;
+const goneLine = (key: string) => {
+  const r = goneResolution<{ role: string; name?: string }>(key);
+  return r && `${r.role}${r.name ? ` "${r.name}"` : ""} (not on the page now)`;
+};
+
 /** Everything a target can be used for (task 0065, ADR 0005); capabilities() picks a target's own. */
 export const ACTIONS = {
   click: "Click it.",
@@ -156,7 +176,7 @@ export const named = (p: Pick, obs?: Observation) =>
     .slice(0, 3)
     .map(([k, v]) => {
       const el = obs && [...obs.readable, ...obs.areas, ...obs.elements].find((e) => e.ref === k);
-      return `${el ? el.line : (SPECIAL[k] ?? k)} ${Math.round(v * 100)}%`;
+      return `${el ? el.line : (goneLine(k) ?? SPECIAL[k] ?? k)} ${Math.round(v * 100)}%`;
     })
     .join(", ");
 
@@ -164,7 +184,7 @@ export const fmt = (p: Pick) =>
   Object.entries(p.probabilities)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([k, v]) => `${k}=${v.toFixed(2)}`)
+    .map(([k, v]) => `${goneLine(k) ?? k}=${v.toFixed(2)}`)
     .join(" ");
 
 /**
