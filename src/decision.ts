@@ -219,6 +219,8 @@ export interface Decider {
   dialog(step: string, obs: Observation, answers: string[]): Promise<Pick>;
   /** The Step's wording (no page): asked once per Step; absent in fakes means the wording rules alone. */
   intent?(step: string, check: boolean): Promise<Intent>;
+  /** Told by the runner, not a question: the action on this Turn's target `ref` was performed. */
+  acted?(ref: string): void;
 }
 
 /**
@@ -269,7 +271,7 @@ export function traced(d: Decider, event: (type: string, data: Record<string, un
   return new Proxy(d, {
     get(target, question: string) {
       const ask: unknown = Reflect.get(target, question);
-      if (typeof ask !== "function") return ask;
+      if (typeof ask !== "function" || question === "acted") return ask; // not a question: no answer to trace
       return async (...args: unknown[]) => {
         const answer = await ask.apply(target, args);
         const el = args[2] as Element; // value(step, obs, el, candidates)

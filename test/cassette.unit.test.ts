@@ -877,7 +877,8 @@ test("cassette: an action target is anchored by the Step's quoted value, a check
   const c = new Cassette(p, "m", "new");
   const d = c.step("S: x", scripted({ turn: { done: 0, target: sure("e2"), action: sure("click") } }).live);
   await d.turn(`I open the "Spring Sale" campaign`, obs, []);
-  assert.deepEqual(d.positional(), []);
+  d.acted?.("e2");
+  assert.deepEqual(d.positional(), []); // anchored, not positional
   d.done(true);
   const check = c.step(
     "S: y",
@@ -890,6 +891,9 @@ test("cassette: an action target is anchored by the Step's quoted value, a check
   const twins = campaigns("same", "same");
   const t = c.step("S: z", scripted({ turn: { done: 0, target: sure("e4"), action: sure("click") } }).live);
   await t.turn("I open the second one", { ...page, elements: twins }, []);
+  // Only what the runner acted on: a Step can end (DONE after a new page, AMBIGUOUS) on a twin it never clicked.
+  assert.deepEqual(t.positional(), []);
+  t.acted?.("e4");
   assert.deepEqual(t.positional(), [`button "Open" (#2 of 2 identical)`]);
   t.done(true);
   c.save();

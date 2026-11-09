@@ -66,8 +66,17 @@ export default class DecisiumFormatter extends Formatter {
     super(options);
     const scenarios: { name: string; passed: boolean }[] = [];
     const failures: (() => Omit<AgentFailure, "events">)[] = []; // built at the end: the Playwright trace is saved after the step
-    const warnings: string[] = [];
-    const byPosition: string[] = [];
+    // Warnings a Step leaves as an attachment: shown under the Step and gathered in a block at the end of the run.
+    const notices = [
+      {
+        prefix: POSITIONAL,
+        line: "told apart by position only",
+        title: "Told apart by position only",
+        hint: POSITIONAL_HINT,
+        steps: [] as string[],
+      },
+      { prefix: MARGINAL, line: "marginal pass", title: "Marginal passes", hint: MARGINAL_HINT, steps: [] as string[] },
+    ];
     const hookIds = new Map<string, string>(); // testRunHookStarted id -> hook definition id
     const hookFailures: string[] = []; // a failed BeforeAll/AfterAll (e.g. no TYPESAFE_API_KEY): cucumber runs no scenario
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
@@ -99,15 +108,11 @@ export default class DecisiumFormatter extends Formatter {
         const attachments = stepAttachments[testStepId] ?? [];
         const judged = attachments.some((a) => a.body.startsWith("JUDGED_PASSED"));
         this.log(`  ${failed ? "✗" : "✓"} ${KIND[kind]}: ${label}${judged ? "  (judged by Jev)" : ""}\n`);
-        const marginal = attachments.find((a) => a.body.startsWith(MARGINAL))?.body.slice(MARGINAL.length);
-        if (marginal) {
-          this.log(`      ⚠ marginal pass: ${marginal}\n`);
-          warnings.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${label}\n  Jev was barely confident: ${marginal}`);
-        }
-        const positional = attachments.find((a) => a.body.startsWith(POSITIONAL))?.body.slice(POSITIONAL.length);
-        if (positional) {
-          this.log(`      ⚠ told apart by position only: ${positional}\n`);
-          byPosition.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${label}\n  ${positional}`);
+        for (const n of notices) {
+          const text = attachments.find((a) => a.body.startsWith(n.prefix))?.body.slice(n.prefix.length);
+          if (!text) continue;
+          this.log(`      ⚠ ${n.line}: ${text}\n`);
+          n.steps.push(`⚠ ${pickle.name}\n  ${KIND[kind]}: ${label}\n  ${n.prefix.replace(/^\w+: /, "")}${text}`);
         }
         if (!failed) return;
         const r = parseOutcome(result.message ?? "");
@@ -174,14 +179,9 @@ export default class DecisiumFormatter extends Formatter {
           this.log(
             `\n${"─".repeat(60)}\nFailures\n\n${failed.map((f) => failureReport(f.where, f.scenario, f.kind, f.step, f, f.screenshot, f.trace)).join("\n\n")}\n`,
           );
-        if (byPosition.length)
-          this.log(
-            `\n${"─".repeat(60)}\nTold apart by position only\n\n${byPosition.join("\n\n")}\n\nWhat to do: ${POSITIONAL_HINT}\n`,
-          );
-        if (warnings.length)
-          this.log(
-            `\n${"─".repeat(60)}\nMarginal passes\n\n${warnings.join("\n\n")}\n\nWhat to do: ${MARGINAL_HINT}\n`,
-          );
+        for (const n of notices)
+          if (n.steps.length)
+            this.log(`\n${"─".repeat(60)}\n${n.title}\n\n${n.steps.join("\n\n")}\n\nWhat to do: ${n.hint}\n`);
         const failedNames = scenarios.filter((s) => !s.passed).map((s) => s.name);
         if (!scenarios.length && hookFailures.length) return;
         this.log(

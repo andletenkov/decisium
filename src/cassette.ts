@@ -414,7 +414,8 @@ export class Cassette {
     const loadRecorded = (a: Answer, among: Element[] = [], required?: Parameters<typeof load>[2]) =>
       recorded(load(a, among, required));
     let broken: string | undefined; // why replay stopped
-    const positional = new Set<string>(); // action targets only a position tells apart from their twins
+    const positional = new Set<string>(); // acted-on targets only a position tells apart from their twins
+    let offered: { elements: Element[]; hints: string[] } | undefined; // the latest Turn's page, for acted()
     let turn = 0;
     const replayOnly = this.mode === "none";
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
@@ -490,15 +491,18 @@ export class Cassette {
                 ),
               }
             : a.action;
-        const target = store(
-          a.target,
-          obs.elements,
-          gate(a.target, confidence(a.target).target, GATE_TARGET_MARGIN) ? 0 : 3,
-          readStep({ text: step, kind: "action" }).quoted,
-        );
-        (now.turns ??= [])[i] = { done: a.done, target, action: action && store(action) };
-        const top = target[0]?.[0];
-        if (a.done < DONE_THRESHOLD && typeof top === "object" && top.of !== undefined) positional.add(describe(top));
+        const hints = readStep({ text: step, kind: "action" }).quoted;
+        offered = { elements: obs.elements, hints };
+        (now.turns ??= [])[i] = {
+          done: a.done,
+          target: store(
+            a.target,
+            obs.elements,
+            gate(a.target, confidence(a.target).target, GATE_TARGET_MARGIN) ? 0 : 3,
+            hints,
+          ),
+          action: action && store(action),
+        };
         return a;
       },
       value: async (step, obs, el, candidates) => {
@@ -583,6 +587,11 @@ export class Cassette {
         const a = r ?? (await live.recall(step, earlier));
         now.recall = store(a);
         return a;
+      },
+      acted: (ref: string) => {
+        const el = offered?.elements.find((e) => e.ref === ref);
+        const r = el && resolve(el, offered!.elements, offered!.hints);
+        if (r?.of !== undefined) positional.add(describe(r));
       },
       /** Elements this Step acted on that only their position among identical twins identifies. */
       positional: () => [...positional],
