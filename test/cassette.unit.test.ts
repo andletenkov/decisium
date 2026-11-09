@@ -765,11 +765,16 @@ test("stableText: run-dependent values are masked, content that identifies an it
     ["Cost $0.0042 for 1,200 tokens", "Cost ‹amount› for ‹amount›"],
     ["Progress 45%", "Progress ‹percent›"],
     ["took 250ms", "took ‹duration›"],
+    ["waited 3 minutes", "waited ‹duration›"],
+    ["March 3, 2026", "‹date›"],
+    ["3 Sept 2026", "‹date›"],
     ["id 3f2b8c1a-1234-4abc-9def-0123456789ab", "id ‹id›"],
   ];
   for (const [raw, want] of masked) assert.equal(stableText(raw), want, raw);
-  for (const kept of ["Order 1042", "Item 3 of 5", "Agent test-agent: Done", "Room 12", "Step 2", "v1.4"])
-    assert.equal(stableText(kept), kept);
+  const kept = ["Order 1042", "Item 3 of 5", "Agent test-agent: Done", "Room 12", "Step 2", "v1.4"];
+  // Stable names and test data that only look like run values.
+  kept.push("Marketing 10", "Juniper 12", "Invoice 2024001", "Release 1.2.10", "Size 10 m", "Decimal 3");
+  for (const text of kept) assert.equal(stableText(text), text);
 });
 
 test("resolve and find: look-alikes that differ only in a time or duration are told apart by position", () => {

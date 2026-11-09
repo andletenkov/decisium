@@ -199,18 +199,23 @@ const NEAR_MAX = 200; // a longer text is kept as its start and a hash, so the c
  * id. `near` is meant to tell look-alikes apart in the next run too, so these are masked before texts are compared
  * or recorded. Longer patterns first: a date holds a time.
  */
-const MONTH = "(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\\.?";
+// Whole month names or their abbreviations only: "Marketing 10" or "Juniper 12" are names, not dates.
+const MONTH =
+  "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\\.?";
 const UNIT = "(?:ms|s|secs?|seconds?|m|mins?|minutes?|h|hrs?|hours?|days?|weeks?|months?|years?)";
+// A one-letter unit only when attached ("1.4s", "250ms"): "Size 10 m" is a size, not a duration.
+const DURATION = "(?:ms|s|m|h|\\s?(?:secs?|seconds?|mins?|minutes?|hrs?|hours?|days?|weeks?|months?|years?))";
 const VOLATILE: [RegExp, string][] = [
   [/\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?(?!\d)/g, "‹date›"],
-  [/\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b/g, "‹date›"],
+  [/\b\d{1,2}[./]\d{1,2}[./]\d{4}\b/g, "‹date›"], // a 4-digit year: "1.2.10" is a version
   [new RegExp(`\\b${MONTH} \\d{1,2}(?:,? \\d{4})?\\b|\\b\\d{1,2} ${MONTH}(?: \\d{4})?\\b`, "gi"), "‹date›"],
   [/\b\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s?[AaPp][Mm])?(?!\d)/g, "‹time›"],
   [new RegExp(`\\b(?:just now|(?:\\d+|an?) ${UNIT} ago|in (?:\\d+|an?) ${UNIT})\\b`, "gi"), "‹time›"],
-  [new RegExp(`\\b\\d+(?:[.,]\\d+)?\\s?${UNIT}\\b`, "g"), "‹duration›"],
+  [new RegExp(`\\b\\d+(?:[.,]\\d+)?${DURATION}\\b`, "g"), "‹duration›"],
   [/[$€£¥₽]\s?\d[\d.,]*|\b\d[\d.,]*\s?(?:USD|EUR|GBP|RUB|tokens?|credits?)\b/g, "‹amount›"],
   [/\b\d+(?:[.,]\d+)?\s?%/g, "‹percent›"],
-  [/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b|\b\d{6,}\b/gi, "‹id›"],
+  // A uuid only: a long number ("Invoice 2024001") is often stable test data that tells rows apart.
+  [/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi, "‹id›"],
 ];
 export const stableText = (t: string) => VOLATILE.reduce((out, [re, mask]) => out.replace(re, mask), t);
 
