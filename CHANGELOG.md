@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/andletenkov/decisium/compare/v0.2.1...v0.3.0) (2026-11-09)
+
+
+### Features
+
+* validate Decisium tags in lint and before run ([#59](https://github.com/andletenkov/decisium/issues/59)) ([9e5daae](https://github.com/andletenkov/decisium/commit/9e5daae95de40ee363a51208f9908e4d8ac19dcd))
+
+
+### Performance Improvements
+
+* faster cassette replay waits and observations ([#60](https://github.com/andletenkov/decisium/issues/60)) ([885d7b4](https://github.com/andletenkov/decisium/commit/885d7b4b02ebf49cd16ba1633ca5c45e22c49f00))
+
 ## [0.2.1](https://github.com/andletenkov/decisium/compare/v0.2.0...v0.2.1) (2026-11-06)
 
 
