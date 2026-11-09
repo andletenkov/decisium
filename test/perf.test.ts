@@ -78,6 +78,21 @@ test("perf tally splits settle by what held it", async () => {
   assert.ok((perf["settle:requests:fetch"] ?? 0) > 0 && perf["after:CLICK"] > 0 && perf["perform:CLICK"] >= 0);
 });
 
+test("replay: a change landing a task after the click is seen without a fixed wait", async () => {
+  const b = await Browser.open(url, false, false, {}, ".", undefined, {}, undefined, true);
+  try {
+    const obs = await b.observe();
+    await b.execute({ verb: "CLICK", ref: obs.elements.find((e) => e.name === "Later")!.ref });
+    const t = Date.now();
+    assert.equal(await b.waitForChange((await b.observe()).text), true);
+    const ms = Date.now() - t;
+    // Polling every 20 ms and a short quiet window: about 100 ms; a fixed 100 ms poll plus a full quiet window took over 250.
+    assert.ok(ms < 200, `waitForChange took ${ms} ms`);
+  } finally {
+    await b.close();
+  }
+});
+
 const sure = (choice: string) => ({ choice, probabilities: { [choice]: 1 } });
 /** Reads a presence check of the whole page, as Jev would for `"x" should appear`. */
 const presence = {

@@ -175,6 +175,7 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
         this.dir, // fresh browser per scenario: no shared state
         { ...contextFromTags(pickle.tags), storageState },
         network,
+        record === "none",
       );
     } catch (err) {
       throw infra(err);

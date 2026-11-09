@@ -11,7 +11,7 @@ decisium run checkout.feature --record none    # replay in CI: no model calls
 ```
 
 - **No selectors.** A Step says what the user wants; Decisium finds the element.
-- **Record and replay.** CI replays recorded Steps: fast, free, the same result every run.
+- **Record and replay.** CI replays recorded Steps: no model calls, close to a hand-written Playwright script in speed, the same result every run.
 - **Code decides pass or fail**, not the model.
 - **Built on cucumber-js and Playwright.** Your config, formatters and step definitions keep working.
 
