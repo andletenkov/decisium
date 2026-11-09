@@ -61,6 +61,10 @@ const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
 /** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full `actionTimeout`. */
 const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
+const REPLAY_QUIET_MS = 40; // replay: the next Turn waits for its recorded target anyway, so a shorter quiet window is enough
+const REPLAY_POLL_MS = 10; // replay: how often settle looks again
+const POLL_MS = 20; // waitForChange looks for a DOM change this often
+const IDLE_GAP_MS = 100; // two idle probes this far apart: promise chains (e.g. reading a fetch body) finish in between
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
 // quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
 // `checkTimeout`; ignore such work by URL/type when the waiting costs too much.
@@ -275,7 +279,8 @@ export class Browser {
   /**
    * `trace`: record a Playwright trace, saved by close(tracePath). `secrets`: placeholder token -> value. `files`: the
    * folder UPLOAD paths are relative to; `downloads`: where downloads are saved (none: not saved, not readable).
-   * `context`: options that must exist before the page opens (tags, task 0048); `network`: `@replay-network`.
+   * `context`: options that must exist before the page opens (tags, task 0048); `network`: `@replay-network`;
+   * `replay`: cassette replay without Jev (see `replay`).
    */
   static async open(
     url: string,
@@ -286,6 +291,7 @@ export class Browser {
     downloads?: string,
     context: BrowserContextOptions = {},
     network?: NetworkReplay,
+    replay = false,
   ): Promise<Browser> {
     const browser = await chromium.launch({ headless: !headed, slowMo: Number(process.env.SLOWMO ?? 0) }); // SLOWMO=ms: pause per browser action for demos;
     // Task 0062: copy buttons and paste need the clipboard; granted for every origin (file:// and localhost measured).
@@ -398,6 +404,7 @@ export class Browser {
     b.secrets = secrets;
     b.files = files;
     b.downloads = downloads;
+    b.replay = replay; // the load below settles by the replay rules too
     b.clipboardAtOpen = await b.readClipboard();
     try {
       if (network?.mode === "record") await recordNetwork(b.context, network);
@@ -423,10 +430,10 @@ export class Browser {
    * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
    * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
    */
-  private async settle(): Promise<void> {
+  private async settle(sinceAction = true): Promise<void> {
     const start = Date.now();
     try {
-      await this.settleLoop(start);
+      await this.settleLoop(start, sinceAction);
     } finally {
       this.tally("settle", start);
     }
@@ -442,7 +449,8 @@ export class Browser {
     this.perf[key] = (this.perf[key] ?? 0) + Date.now() - since;
   }
 
-  private async settleLoop(start: number): Promise<void> {
+  /** `sinceAction`: the quiet window starts no earlier than the call (an action's effect may still be coming). */
+  private async settleLoop(start: number, sinceAction: boolean): Promise<void> {
     while (Date.now() < start + settings().actionTimeout) {
       // pages that never go quiet continue after `actionTimeout`
       if (this.open) return; // nothing changes until it is answered
@@ -455,18 +463,18 @@ export class Browser {
           })
           .catch(() => [0, 1]),
       )) ?? [0, 1]; // mid-navigation: not settled yet
-      // The quiet window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
-      const quiet = Math.min(sinceMutation, Date.now() - start);
+      // After an action the window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
+      const quiet = sinceAction ? Math.min(sinceMutation, Date.now() - start) : sinceMutation;
       const waiting = this.waiting();
       const held = this.inflight - this.pending.size + waiting.length; // downloads are in `inflight`, not `pending`
-      if (held === 0 && soon === 0 && quiet >= QUIET_MS) return;
+      if (held === 0 && soon === 0 && quiet >= (this.replay ? REPLAY_QUIET_MS : QUIET_MS)) return;
       const why =
         held > 0
           ? `settle:requests:${waiting[0]?.resourceType() ?? "download"}`
           : soon > 0
             ? "settle:timers"
             : "settle:quiet";
-      await this.page.waitForTimeout(25);
+      await this.page.waitForTimeout(this.replay ? REPLAY_POLL_MS : 25);
       this.tally(why, poll);
     }
   }
@@ -507,10 +515,18 @@ export class Browser {
   }
 
   private async read(): Promise<Observation> {
-    this.stamp = await this.page
-      .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
-      .catch(() => undefined);
-    const found = await this.facts();
+    // The DOM reads that do not depend on the snapshot's refs go out together (each round trip is a wait); the
+    // facts come before the page snapshot, whose refs they give.
+    const [stamp, found, collapsed, titles, title] = await Promise.all([
+      this.page
+        .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
+        .catch(() => undefined),
+      this.facts(),
+      this.collapsed(),
+      this.titles(),
+      this.page.title().catch(() => ""), // mid-navigation
+    ]);
+    this.stamp = stamp;
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
     const snapshot = renderSnapshot((await this.page.ariaSnapshotJSON({ mode: "ai" })) as AriaNode[]);
@@ -520,7 +536,7 @@ export class Browser {
       editable = new Set<string>();
     // One round trip each, all at once: they only read, and the page snapshot above is already taken.
     const fields = [...snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)];
-    const [kinds, current, collapsed, titles, title] = await Promise.all([
+    const [kinds, current] = await Promise.all([
       Promise.all(
         fields.map(([, , ref]) =>
           this.page
@@ -541,9 +557,6 @@ export class Browser {
         ),
       ),
       this.currentLinks(snapshot),
-      this.collapsed(),
-      this.titles(),
-      this.page.title().catch(() => ""), // mid-navigation
     ]);
     fields.forEach(([, role, ref], i) => {
       if (kinds[i] === "secret") secret.add(ref);
@@ -663,14 +676,19 @@ export class Browser {
     for (const f of this.page.frames()) {
       const all = f.locator("body *");
       const hits = await all.evaluateAll(factsIn).catch(() => [] as [number, string[]][]);
-      for (const [i, found] of hits) {
-        const line = await all
-          .nth(i)
-          .ariaSnapshot({ mode: "ai", depth: 0, timeout: 1000 })
-          .catch(() => "");
-        const ref = /\[ref=(\w+)\]/.exec(line)?.[1];
+      // All at once: the element snapshots only read, and each round trip is a wait.
+      const lines = await Promise.all(
+        hits.map(([i]) =>
+          all
+            .nth(i)
+            .ariaSnapshot({ mode: "ai", depth: 0, timeout: 1000 })
+            .catch(() => ""),
+        ),
+      );
+      hits.forEach(([, found], k) => {
+        const ref = /\[ref=(\w+)\]/.exec(lines[k])?.[1];
         if (ref) out.set(ref, found as Fact[]);
-      }
+      });
     }
     return out;
   }
@@ -690,16 +708,17 @@ export class Browser {
         ),
       )
     ).flat();
-    const current = new Set<string>();
-    for (const [ref, url] of links(snapshot)) {
-      if (!hrefs.includes(url)) continue;
-      const value = await this.page
-        .locator(`aria-ref=${ref}`)
-        .getAttribute("aria-current", { timeout: 1000 })
-        .catch(() => null);
-      if (value !== null && value !== "false") current.add(ref);
-    }
-    return current;
+    const candidates = [...links(snapshot)].filter(([, url]) => hrefs.includes(url));
+    // All at once: a page whose many links share an href ("#") otherwise pays one round trip each.
+    const values = await Promise.all(
+      candidates.map(([ref]) =>
+        this.page
+          .locator(`aria-ref=${ref}`)
+          .getAttribute("aria-current", { timeout: 1000 })
+          .catch(() => null),
+      ),
+    );
+    return new Set(candidates.flatMap(([ref], i) => (values[i] !== null && values[i] !== "false" ? [ref] : [])));
   }
 
   /**
@@ -823,9 +842,10 @@ export class Browser {
   async waitForChange(since: string, timeoutMs = settings().actionTimeout): Promise<boolean> {
     const deadline = Date.now() + timeoutMs;
     let idleBefore = false;
+    let idleAt = Date.now(); // first idle probe one gap after the call, as before
     let seen: number | undefined; // __lastMutation at the last snapshot: no DOM mutation since means no new snapshot
     while (Date.now() < deadline) {
-      await this.page.waitForTimeout(100);
+      await this.page.waitForTimeout(POLL_MS);
       const stamp = await this.unblocked(
         this.page
           .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
@@ -834,11 +854,12 @@ export class Browser {
       const moved = stamp === undefined || stamp !== seen;
       seen = stamp;
       if (moved && (await this.observe()).text !== since) {
-        await this.settle();
+        await this.settle(false); // the change is already here: only let it finish
         return true;
       }
-      // Two idle polls 100 ms apart: promise chains (e.g. reading a fetch body) finish in between.
+      if (Date.now() - idleAt < IDLE_GAP_MS) continue;
       const idle = await this.idle();
+      idleAt = Date.now();
       if (idle && idleBefore) return false;
       idleBefore = idle;
     }
