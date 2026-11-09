@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How a Step runs · Decisium</title>
+<title>How it works · Decisium</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/nocturne.css">
 <link rel="stylesheet" href="assets/site.css">
@@ -24,188 +24,27 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html" aria-current="page">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
-<main class="doc"><h1 id="how-a-step-runs">How a Step runs</h1>
-<p>Decisium reads the page, lists what is on it, and asks <strong>Jev</strong> questions whose answers are picks among that list. Jev
-never writes code or values; every answer comes back as a probability per option. Decisium&#39;s code then checks the
-confidence, performs the action with Playwright and decides pass or fail.</p>
-<p>A question is asked in a <strong>request</strong>: one call to Jev carrying the Step&#39;s text, a text snapshot of the page (<code>ui</code>) and
-one or more questions. Questions in the same request read the same page, so their answers are consistent.</p>
-<h2 id="an-action-step">An action Step</h2>
-<p>An action Step runs in <strong>Turns</strong>. Each Turn is one request with three questions:</p>
-<table>
-<thead>
-<tr>
-<th>Question</th>
-<th>Options</th>
-<th>Answer used for</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Given the actions taken for the Step so far, does <code>ui</code> show the Step is fully accomplished?</td>
-<td>yes/no, as a probability</td>
-<td>ending the Step</td>
-</tr>
-<tr>
-<td>Which element in <code>ui</code> should be interacted with next?</td>
-<td>every actionable element, plus &quot;the page itself&quot; and &quot;none&quot;</td>
-<td>the target</td>
-</tr>
-<tr>
-<td>How should that element be used?</td>
-<td>click, type, select, hover, press a key, scroll…</td>
-<td>the action</td>
-</tr>
-</tbody></table>
-<p>Then code decides, in this order:</p>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html" aria-current="page">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
+<main class="doc"><h1 id="how-it-works">How it works</h1>
+<pre><code class="language-text">page ──► list of elements ──► Jev picks one + an action ──► Playwright acts ──► page changed? repeat until done
+</code></pre>
 <ol>
-<li><strong>Done?</strong> <code>done ≥ 0.8</code> ends the Step. After an action that changed the page, <code>done ≥ 0.5</code> with target &quot;none&quot; is
-enough.</li>
-<li><strong>Sure of the target?</strong> The top element needs ≥ 0.5 (<code>confidence.target</code>) and a lead of ≥ 0.1 over the next; otherwise <code>AMBIGUOUS</code>. Target
-&quot;none&quot; is <code>BLOCKED</code>.</li>
-<li><strong>The right control?</strong> A click on a lookalike of a quoted control (&quot;Publish again&quot; when the Step quotes &quot;Publish
-now&quot;) is <code>AMBIGUOUS</code>, and nothing is clicked.</li>
-<li><strong>Act.</strong> Playwright performs it, waits for the requests it started, and the next Turn reads the new page.</li>
+<li><strong>Read.</strong> Decisium reads the page as text: its accessibility tree (roles, names, visible text, states).</li>
+<li><strong>Pick.</strong> Jev chooses from that list: which element, and how to use it (click, type, select, press a key…). It never
+writes code, selectors or values; a typed value always comes from the Step&#39;s quotes.</li>
+<li><strong>Act.</strong> Playwright performs the action, Decisium reads the new page, and the loop repeats until the Step&#39;s task is
+done. <code>I delete the campaign</code> may open a menu first, then click Delete.</li>
+<li><strong>Check.</strong> For a <code>Then</code> Step, Jev only picks the subject and the kind of check. Code compares the quoted value with
+the page.</li>
+<li><strong>Refuse to guess.</strong> When the pick is unclear (two &quot;Save&quot; buttons), the Step fails as <code>AMBIGUOUS</code> instead of
+clicking one.</li>
+<li><strong>Record.</strong> What each Step resolved to (role, name, container) goes into <code>&lt;feature&gt;.cassette.json</code>. The next run
+replays it without Jev; if that element is gone, the Step fails as <code>UI_CHANGED</code>.</li>
 </ol>
-<p>A Step gets at most 8 Turns (<code>maxTurns</code>; then <code>STEP_TIMEOUT</code>). After each action Decisium waits up to 5 s
-(<code>actionTimeout</code>) for requests and DOM changes to settle. Some actions add one request:</p>
-<table>
-<thead>
-<tr>
-<th>When</th>
-<th>Extra question</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>The action types, selects or uploads</td>
-<td>Which value should be entered into the element? Options: the Step&#39;s quoted values, numbers and Doc string, plus &quot;none&quot;.</td>
-</tr>
-<tr>
-<td>A browser dialog is open</td>
-<td>How should it be answered? Options: OK / Cancel, or one of the quoted values for a prompt.</td>
-</tr>
-<tr>
-<td>The action is a drag</td>
-<td>Onto which element should it be dropped?</td>
-</tr>
-</tbody></table>
-<p><code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code> ask nothing: code does them directly.</p>
-<h3 id="example">Example</h3>
-<p>Suppose you are testing a campaign-management app. You are viewing a campaign, and its delete command is inside a
-&quot;More actions&quot; menu. Your Step is <code>When I delete the campaign</code>.</p>
-<p>Decisium can carry out the whole task without a separate Step for each click. Here is one recorded run; the
-probabilities illustrate what Jev answered, not fixed values every run will produce:</p>
-<table>
-<thead>
-<tr>
-<th>Turn</th>
-<th>Page</th>
-<th>done</th>
-<th>target</th>
-<th>Code</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1</td>
-<td>Campaign page</td>
-<td>0.04</td>
-<td>button &quot;More actions&quot; 0.99</td>
-<td>click &quot;More actions&quot;</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Menu open: &quot;Delete campaign&quot;</td>
-<td>0.03</td>
-<td>menuitem &quot;Delete campaign&quot; 1.00</td>
-<td>click &quot;Delete campaign&quot;</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Campaign list, toast &quot;deleted&quot;</td>
-<td>0.98</td>
-<td>none 0.86</td>
-<td><code>DONE</code></td>
-</tr>
-</tbody></table>
-<p>This took 3 requests: open the menu, choose delete, then check whether the task is complete. Opening the menu alone
-did not finish the Step. You do not need to add <code>I click &quot;Delete campaign&quot;</code> afterward—the first Step already did that.
-To verify the result explicitly, follow it with a check that the campaign is no longer listed.</p>
-<h2 id="a-check">A check</h2>
-<p>A check is one request with four questions; Jev only says <em>what</em> to look at, code compares:</p>
-<table>
-<thead>
-<tr>
-<th>Question</th>
-<th>Options</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>What kind of check is it?</td>
-<td>value, presence, absence, state, fuzzy</td>
-</tr>
-<tr>
-<td>Which element is the check about?</td>
-<td>every element with text, plus &quot;none&quot;</td>
-</tr>
-<tr>
-<td>Which control state does it require?</td>
-<td>checked, disabled, expanded, selected…</td>
-</tr>
-<tr>
-<td>Where does it say to look?</td>
-<td>the page&#39;s lists, tables, sections, dialogs; &quot;anywhere&quot; or &quot;named area missing&quot;</td>
-</tr>
-</tbody></table>
-<p>Code then reads the element and compares it with the quoted value. A check that does not pass yet is asked again each
-time the page changes, up to 5 s (<code>checkTimeout</code>): one more request per change. A check that quotes nothing first asks which value from
-an earlier Step it refers to (one more request). A <a href="steps.html#judged-checks">judged check</a> adds a fifth question: does
-<code>ui</code> satisfy the check?</p>
-<h2 id="large-pages">Large pages</h2>
-<ul>
-<li><strong>More than 255 candidates</strong> (a choice question&#39;s limit): they are asked in batches, the top 3 of each batch are kept,
-and the real question is asked over what is left. A page with 336 links costs 2 more requests.</li>
-<li><strong>A snapshot over about 80,000 characters</strong>: it is cut into sections and Jev picks the sections the Step needs, before
-the questions above. More requests, once per Step and page.</li>
-</ul>
-<h2 id="how-many-requests">How many requests</h2>
-<p>Typical counts:</p>
-<table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Requests</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Action done in one click</td>
-<td>2 (act, then confirm done)</td>
-</tr>
-<tr>
-<td>Action through a menu or dialog</td>
-<td>3 or more</td>
-</tr>
-<tr>
-<td>Type into a field</td>
-<td>+ 1 per value typed</td>
-</tr>
-<tr>
-<td>Check that passes at once</td>
-<td>1</td>
-</tr>
-</tbody></table>
-<p>Request counts depend on the path through your app, not just the number of Steps. Typing one value typically takes
-3 requests: choose the field, choose the value, then confirm the task is complete. Menus, loading states and retries
-can add requests. Token usage also depends on how much page text each request includes.</p>
-<p>Replays (<code>--record none</code>) send no request: the cassette holds each Step&#39;s answers. See
-<a href="record-replay.html">Record and replay</a>.</p>
-<h2 id="where-to-see-it">Where to see it</h2>
-<ul>
-<li><code>log.txt</code> in the run directory: every Turn&#39;s page, <code>Decision: done=… action: … target: …</code> and what was executed.</li>
-<li><code>trace.jsonl</code>: per Step <code>jevCalls</code>, <code>inputTokens</code> and <code>outputTokens</code>.</li>
-<li><code>report.md</code>: for a failed Step, Jev&#39;s answers with the top three options each.</li>
-</ul>
-<div class="pager"><a class="prev" href="steps.html"><span>Previous</span>Writing Steps</a><a class="next" href="browser-context.html"><span>Next</span>Browser context</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#an-action-step">An action Step</a><a class="l3" href="#example">Example</a><a class="l2" href="#a-check">A check</a><a class="l2" href="#large-pages">Large pages</a><a class="l2" href="#how-many-requests">How many requests</a><a class="l2" href="#where-to-see-it">Where to see it</a></aside>
+<p>Steps Decisium recognises on its own (<code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code>) skip the model.
+<code>decisium run -v</code> prints every page snapshot and answer.</p>
+<div class="pager"><a class="prev" href="examples.html"><span>Previous</span>Example</a><a class="next" href="steps.html"><span>Next</span>Writing Steps</a></div></main>
+
 </div>
 </body>
 </html>

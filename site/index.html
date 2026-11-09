@@ -24,34 +24,23 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html" aria-current="page">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html" aria-current="page">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
 <main class="doc"><h1 id="decisium">Decisium</h1>
-<p><strong>From behavioral specification to intelligent execution.</strong></p>
-<p>Semantic UI testing with decision models. Decisium runs Gherkin features written in plain English against a real
-browser. You write <code>When I schedule the campaign</code>, not selectors.</p>
-<p>Each Step is executed by <strong>Jev</strong>, TypeSafe&#39;s decision model. Jev does not generate text or code: it picks among the
-options Decisium enumerates from the page (the elements, the actions, the check kinds) and returns a probability for
-each. Decisium&#39;s code, not the model, decides whether a Step passed. No LLM, no prompts, no hallucinated selectors.
-See <a href="how-it-works.html">How a Step runs</a> for the questions it is asked and how many requests a Step takes.</p>
-<pre><code class="language-gherkin">@url:https://shop.example.com
-Feature: Checkout
-
-  Scenario: Buy a backpack
-    When I add the &quot;Backpack&quot; to the cart
-    And I check out with email &quot;ada@example.com&quot;
-    Then the order status should be &quot;Confirmed&quot;
+<p><strong>UI tests in plain English. No selectors.</strong></p>
+<p><img src="assets/demo.gif" alt="Decisium running a checkout scenario"></p>
+<pre><code class="language-sh">npm install -g decisium &amp;&amp; decisium install
+decisium run checkout.feature                  # live: records checkout.cassette.json
+decisium run checkout.feature --record none    # replay in CI: no model calls
 </code></pre>
 <ul>
-<li><strong>No selectors.</strong> Steps name what the user wants. Jev picks the element by meaning, among the ones on the page.</li>
-<li><strong>Record and replay.</strong> What each Step resolved to is saved in a cassette next to the feature. CI replays it with zero
-model calls, and a real UI change fails as <code>UI_CHANGED</code>.</li>
-<li><strong>Built on cucumber-js and Playwright.</strong> Your cucumber configuration, formatters, profiles and step definitions keep
-working.</li>
-<li><strong>Agent-ready failures.</strong> A failed run writes <code>report.md</code>: the Step, the model&#39;s answers, the page text and a rerun
-command, ready for a coding agent.</li>
+<li><strong>No selectors.</strong> A Step says what the user wants; Decisium finds the element.</li>
+<li><strong>Record and replay.</strong> CI replays recorded Steps: fast, free, the same result every run.</li>
+<li><strong>Code decides pass or fail</strong>, not the model.</li>
+<li><strong>Built on cucumber-js and Playwright.</strong> Your config, formatters and step definitions keep working.</li>
 </ul>
-<p>Next: <a href="installation.html">Installation</a>, then the <a href="quick-start.html">Quick start</a>.</p>
-<div class="pager"><a class="next" href="installation.html"><span>Next</span>Installation</a></div></main>
+<p>Steps are resolved by Jev, TypeSafe&#39;s decision model.</p>
+<p><a href="getting-started.html">Getting started</a> · <a href="examples.html">Examples</a> · <a href="how-it-works.html">How it works</a></p>
+<div class="pager"><a class="next" href="getting-started.html"><span>Next</span>Getting started</a></div></main>
 
 </div>
 </body>

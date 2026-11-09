@@ -25,22 +25,22 @@ export function warnings(
   const secret = /\b(?:password|passcode|token|secret|api key)\b[^"“]*["“]([^"”]+)["”]/i.exec(t)?.[1];
   if (secret && !placeholder(secret) && step.kind !== "assertion") {
     out.push(
-      `a literal value next to "password/token/secret" is sent to Jev and written to the cassette and logs; write "$NAME" and set it in the environment (${SEE}, Secrets)`,
+      `a literal value next to "password/token/secret" is sent to Jev and written to the cassette and logs; write "$NAME" and set it in the environment (${SEE}#rules)`,
     );
   }
   if (step.kind !== "assertion") {
     if (/\bsearch(es)? (for|the)\b/i.test(t) && !/\b(open|opens|submit|submits)\b/i.test(t)) {
       out.push(
-        `"search for" runs a search but does not open a result, and Jev may count typing alone as done; say "I open the "X" ... through the search", or add "and submit the search" (${SEE}, Navigate)`,
+        `"search for" runs a search but does not open a result, and Jev may count typing alone as done; say "I open the "X" ... through the search", or add "and submit the search" (${SEE}#actions)`,
       );
     }
     if (/^(I\s+)?(un)?(check|tick)\b/i.test(t) && /\b(and|then)\b|,/i.test(t))
       out.push(
-        `checking a box is decided by code only when the Step does nothing else; split "and ..." into its own Step (${SEE}, Submit and act)`,
+        `checking a box is decided by code only when the Step does nothing else; split "and ..." into its own Step (${SEE}#actions)`,
       );
     for (const name of read.unknownKeys)
       out.push(
-        `"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}, Keys)`,
+        `"${name}" is not a key name, so it is never pressed; use Escape, Tab, ArrowDown, PageDown, Home, F2, Esc, down arrow, Space, Ctrl+K... (${SEE}#actions)`,
       );
     // A key named without "press"/"hit" is read by Jev at run time (issue #31): no warning.
     if (
@@ -49,11 +49,11 @@ export function warnings(
       )
     )
       out.push(
-        `a browser dialog is answered by the Step that opens it and dismissed when that Step ends, so this Step finds none open; say the intent in the Step that opens it ("I delete the note", "I start deleting the note but cancel") (${SEE}, Browser dialogs)`,
+        `a browser dialog is answered by the Step that opens it and dismissed when that Step ends, so this Step finds none open; say the intent in the Step that opens it ("I delete the note", "I start deleting the note but cancel") (${SEE}#actions)`,
       );
     if (step.table && read.header && step.table.length < 2)
       out.push(
-        `an action's table with 3+ columns starts with its header row, so this one has no row to act on: AMBIGUOUS; add one row per entry under the header (${SEE}, Data tables)`,
+        `an action's table with 3+ columns starts with its header row, so this one has no row to act on: AMBIGUOUS; add one row per entry under the header (${SEE}#tables-doc-strings-unique-values)`,
       );
     return out;
   }
@@ -61,11 +61,11 @@ export function warnings(
   if (step.table) {
     if (read.header && step.table.length < 2)
       out.push(
-        `a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}, Data tables)`,
+        `a check's table with 2+ columns starts with its header row, so this one has no row to compare: UNVERIFIABLE; add a header row naming the page table's columns (${SEE}#tables-doc-strings-unique-values)`,
       );
     if (read.header && /\b(not|no longer|never)\b/i.test(t))
       out.push(
-        `code can check that table rows are shown, not that they are absent: UNVERIFIABLE; check each row's absence in its own Step (${SEE}, Data tables)`,
+        `code can check that table rows are shown, not that they are absent: UNVERIFIABLE; check each row's absence in its own Step (${SEE}#tables-doc-strings-unique-values)`,
       );
     return out;
   }
@@ -80,23 +80,23 @@ export function warnings(
   if (!values.length && !state && !subjective) {
     out.push(
       earlier.length
-        ? `quotes nothing: Jev must work out which earlier value it means (${[...new Set(earlier)].map((v) => `"${v}"`).join(", ")}); if it is unsure the check is UNVERIFIABLE, so quote the value when there are several (${SEE}, Memory)`
-        : `quotes nothing for code to compare: UNVERIFIABLE; quote the expected text or value (${SEE}, Presence)`,
+        ? `quotes nothing: Jev must work out which earlier value it means (${[...new Set(earlier)].map((v) => `"${v}"`).join(", ")}); if it is unsure the check is UNVERIFIABLE, so quote the value when there are several (${SEE}#checks)`
+        : `quotes nothing for code to compare: UNVERIFIABLE; quote the expected text or value (${SEE}#checks)`,
     );
   }
   if (values.length > 1 && /\bshould (be|say|show|read|equal)\b(?! (shown|visible|displayed|listed))/i.test(t)) {
     out.push(
-      `a value check compares exactly one quoted value; with ${values.length} it is UNVERIFIABLE (split it into one check per value) (${SEE}, Value checks)`,
+      `a value check compares exactly one quoted value; with ${values.length} it is UNVERIFIABLE (split it into one check per value) (${SEE}#checks)`,
     );
   }
   if (/\btitle\b/i.test(t) && !/\b(page|tab|browser|window) title\b/i.test(t)) {
     out.push(
-      `"title" also names the browser tab's title, so Jev may be unsure which one you mean (AMBIGUOUS); say "heading" (${SEE}, Value checks)`,
+      `"title" also names the browser tab's title, so Jev may be unsure which one you mean (AMBIGUOUS); say "heading" (${SEE}#checks)`,
     );
   }
   if (subjective) {
     out.push(
-      `reads as subjective: code cannot compare it (UNVERIFIABLE) unless the run has --judged; quote something concrete (${SEE}, Value checks)`,
+      `reads as subjective: code cannot compare it (UNVERIFIABLE) unless the run has --judged; quote something concrete (${SEE}#checks)`,
     );
   }
   const AREA =
@@ -111,7 +111,7 @@ export function warnings(
   const noun = area?.[1].split(" ").at(-1) ?? "";
   if (area && /\bopen/i.test(lastAction) && !new RegExp(`\\b${noun}`, "i").test(lastAction))
     out.push(
-      `looks only in "${area[1]}", but the Step before opened something else: if that area is not on the screen, the check is AMBIGUOUS; open it first (${SEE}, Scoped presence)`,
+      `looks only in "${area[1]}", but the Step before opened something else: if that area is not on the screen, the check is AMBIGUOUS; open it first (${SEE}#checks)`,
     );
   return out;
 }

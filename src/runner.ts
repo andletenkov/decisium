@@ -127,6 +127,17 @@ const DONE_THRESHOLD = 0.8;
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
  */
 const DONE_AFTER_ACTION = 0.5;
+const pageUrl = (obs: Observation) => obs.readable.find((e) => e.ref === "url")?.value;
+/**
+ * `value` left the fields and shows on the page: a typed value submitted (added to a list, posted). A field that still
+ * holds it (a search box over its suggestions) is not submitted.
+ */
+const shownOutsideFields = (obs: Observation, value: string) => {
+  const fields = obs.elements.filter((e) => e.verb === "TYPE");
+  if (fields.some((f) => f.value.includes(value))) return false;
+  const refs = new Set(fields.map((e) => e.ref));
+  return obs.readable.some((e) => !refs.has(e.ref) && (e.name.includes(value) || e.value.includes(value)));
+};
 
 /**
  * Jev classifies the check and picks the element it is about; code decides pass/fail.
@@ -287,6 +298,9 @@ async function act(
   }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
+  let navigated = false; // the last action opened another URL
+  let submitted = false; // the last action put every value this Step typed onto the page
+  const typed: string[] = []; // values this Step typed, secrets excluded
   let obs = await rt.observe();
 
   const { maxTurns } = settings();
@@ -312,11 +326,16 @@ async function act(
 
     let t: TurnAnswer;
     [obs, t] = await settled(rt, obs, (o) => decider.turn(said, o, recent, attempt, read.keys));
-    t = { ...t, target: grouped(t.target, obs) }; // equivalent links count as one (task 0065)
+    t = { ...t, target: grouped(t.target, obs, t.action) }; // equivalent targets count as one (task 0065)
     log(`  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`);
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
       return end("DONE");
+    // A new page after an action is evidence too: what it offers next belongs to the next Step (SauceDemo "I continue":
+    // Continue opened the overview, done 0.78, then the Step clicked Finish). Language-neutral, like the TYPE case.
+    // Likewise a typed value that now shows outside the field (TodoMVC "I add a todo": Enter added it, done 0.63, and
+    // Jev still leaned to the empty field: it typed the todo again, or split with "none" and failed AMBIGUOUS).
+    if ((navigated || submitted) && t.done >= DONE_AFTER_ACTION) return end("DONE");
     if (alreadyToggled(t.target, obs, read.toggle)) {
       log("  Toggle: already done");
       return end("DONE");
@@ -373,7 +392,8 @@ async function act(
           // Nothing to type, right after an action that changed the page: the field belongs to the next Step, so
           // done counts at the after-action bar (German "ich zur Kasse gehe": Checkout clicked, done 0.77, then the
           // First Name field was AMBIGUOUS). Language-neutral: evidence is the page change, not the wording.
-          if (action.verb === "TYPE" && recent.length && unchanged === 0 && t.done >= DONE_AFTER_ACTION)
+          // After a new page that is evidence enough on its own (Spanish "empiezo el pago": done 0.38).
+          if (action.verb === "TYPE" && recent.length && unchanged === 0 && (navigated || t.done >= DONE_AFTER_ACTION))
             return end("DONE");
           return end(
             "AMBIGUOUS",
@@ -428,6 +448,12 @@ async function act(
     }
     // By the effect, not the raw text: focus alone ([active]) is no change (task 0067, false DONE on the hover menu).
     unchanged = effect === "no visible change" ? unchanged + 1 : 0;
+    navigated = pageUrl(next) !== undefined && pageUrl(next) !== pageUrl(before);
+    if (action.verb === "TYPE" && action.value && !el?.secret) typed.push(action.value);
+    submitted =
+      typed.length > 0 &&
+      typed.every((v) => shownOutsideFields(next, v)) &&
+      typed.some((v) => !shownOutsideFields(before, v));
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;
   }

@@ -1,6 +1,6 @@
 // Builds the docs site into site/*.html (task 0050): static pages with relative links, so it opens from file:// and
-// deploys to GitHub Pages as is. Sources: docs/site/*.md, docs/configuration.md, the agent skill and
-// the example features. Run: node scripts/site.ts
+// deploys to GitHub Pages as is. Sources: docs/site/*.md, docs/configuration.md and
+// the example feature. Run: node scripts/site.ts
 import { readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Marked } from "marked";
@@ -13,44 +13,24 @@ const read = (p: string) => readFileSync(join(root, p), "utf8");
 
 const NAV: [group: string, pages: [slug: string, title: string, source: string][]][] = [
   [
-    "Getting started",
+    "Start",
     [
       ["index", "Introduction", "docs/site/index.md"],
-      ["installation", "Installation", "docs/site/installation.md"],
-      ["quick-start", "Quick start", "docs/site/quick-start.md"],
+      ["getting-started", "Getting started", "docs/site/getting-started.md"],
+      ["examples", "Example", ""],
+      ["how-it-works", "How it works", "docs/site/how-it-works.md"],
     ],
   ],
   [
-    "Writing tests",
+    "Use",
     [
-      ["writing-features", "Features and scenarios", "docs/site/writing-features.md"],
       ["steps", "Writing Steps", "docs/site/steps.md"],
-      ["how-it-works", "How a Step runs", "docs/site/how-it-works.md"],
-      ["browser-context", "Browser context", "docs/site/browser-context.md"],
-      ["client-steps", "Client steps", "docs/site/client-steps.md"],
-      ["states", "States", "docs/site/states.md"],
-    ],
-  ],
-  [
-    "Running",
-    [
-      ["cli", "Command line", "docs/site/cli.md"],
-      ["record-replay", "Record and replay", "docs/site/record-replay.md"],
-      ["network-replay", "Network replay", "docs/site/network-replay.md"],
-      ["configuration", "Configuration", "docs/configuration.md"],
-      ["reports", "Reports and debugging", "docs/site/reports.md"],
+      ["configuration", "CLI and configuration", "docs/configuration.md"],
       ["ci", "CI", "docs/site/ci.md"],
-      ["cucumber-js", "Running with cucumber-js", "docs/site/cucumber-js.md"],
-    ],
-  ],
-  [
-    "Guides",
-    [
       ["troubleshooting", "Troubleshooting", "docs/site/troubleshooting.md"],
-      ["agent-skill", "Agent skill", "skills/decisium/SKILL.md"],
+      ["advanced", "Advanced", "docs/site/advanced.md"],
     ],
   ],
-  ["Reference", [["examples", "Examples", ""]]],
 ];
 const slugs = new Set(NAV.flatMap(([, ps]) => ps.map(([s]) => s)));
 
@@ -93,21 +73,17 @@ function render(md: string) {
   return { html: marked.parse(md) as string, toc };
 }
 
-/** Real public sites a user can run as is, each replaying from its committed cassette. */
+/** A real public site a user can run as is. */
 const EXAMPLES: [file: string, about: string][] = [
-  ["examples/saucedemo.feature", "A shop: login, a locked-out user, sorting, the cart and checkout validation."],
-  ["examples/todomvc.feature", "List state: a Background, counters, filters and absence checks scoped to the list."],
-  ["examples/the-internet.feature", "Classic widgets: checkboxes, dropdowns, and a start URL per scenario."],
-  ["examples/github.feature", "A large live site with no login: tabs, headings and releases."],
+  ["examples/saucedemo.feature", "A shop: login, sorting, the cart and checkout."],
 ];
 
-/** The examples page: the EXAMPLES features with an anchor per line. */
+/** The example page: the EXAMPLES features with an anchor per line. */
 function examples() {
   const md =
-    "# Examples\n\nFeatures against real public sites. Copy one into your project and run it:\n\n" +
-    "```sh\ndecisium run saucedemo.feature\n```\n\nThe first run calls Jev and writes `saucedemo.cassette.json` next to it; " +
-    "after that, `--record none` replays it with no model calls. How to word each kind of Step is in " +
-    "[Writing Steps](steps.md).\n";
+    "# Example\n\nA real public shop. Save the feature and run it:\n\n" +
+    "```sh\ndecisium run saucedemo.feature                  # live: records saucedemo.cassette.json\n" +
+    "decisium run saucedemo.feature --record none    # replay: no model calls\n```\n";
   const toc: { level: number; id: string; text: string }[] = [];
   const blocks = EXAMPLES.map(([f, about]) => {
     const name = basename(f, ".feature");
@@ -122,14 +98,7 @@ function examples() {
   return { html: render(md).html + blocks.join("\n"), toc };
 }
 
-function source(path: string) {
-  let md = read(path).replace(/^---\n[\s\S]*?\n---\n/, ""); // front matter
-  if (path.startsWith("skills/"))
-    md =
-      "# Agent skill\n\nInstall it into your coding agent (Claude Code, Cursor, Codex, pi, …):\n\n```sh\nnpx skills add andletenkov/decisium\n```\n\nIt also ships in the npm package: `$(npm root -g)/decisium/skills/decisium/SKILL.md`.\n\n" +
-      md;
-  return md;
-}
+const source = (path: string) => read(path);
 
 // Theme: ?theme= (carried on internal links), else localStorage, else the system. The link carries it because Safari
 // keeps a separate localStorage per file:// page.

@@ -46,7 +46,7 @@ Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (
   formatter package, e.g. --format junit:junit.xml or --format cucumberjs-qase-reporter:/dev/null. Only one formatter may
   write to stdout: one configured without a path takes it, else Decisium's console output does.
 --import: your own cucumber step definitions or hooks. A line one of them matches runs it, not Jev; the World gives them
-  this.page (the current tab) and this.context (Playwright). See andletenkov.github.io/decisium/client-steps.html.
+  this.page (the current tab) and this.context (Playwright). See andletenkov.github.io/decisium/advanced.html#client-steps.
 Options in the configuration: worldParameters: { decisium: { url, record, headed, judged, strict, verbose, debug,
   agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns } }; flags and DECISIUM_*
   env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, DECISIUM_MAX_TURNS, ...) override them.

@@ -21,4 +21,4 @@ Feature: TodoMVC (list state, counters, filters)
     When I mark all todos as complete
     And I clear the completed todos
     Then "Buy milk" should not appear in the todo list
-    And the todo list should be empty
+    And "Call mom" should not appear in the todo list

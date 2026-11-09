@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Configuration · Decisium</title>
+<title>CLI and configuration · Decisium</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/nocturne.css">
 <link rel="stylesheet" href="assets/site.css">
@@ -24,35 +24,102 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
     <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
 </header>
 <div class="layout">
-<nav class="sidebar"><div class="nav-group"><span class="nav-title">Getting started</span><a href="index.html">Introduction</a><a href="installation.html">Installation</a><a href="quick-start.html">Quick start</a></div><div class="nav-group"><span class="nav-title">Writing tests</span><a href="writing-features.html">Features and scenarios</a><a href="steps.html">Writing Steps</a><a href="how-it-works.html">How a Step runs</a><a href="browser-context.html">Browser context</a><a href="client-steps.html">Client steps</a><a href="states.html">States</a></div><div class="nav-group"><span class="nav-title">Running</span><a href="cli.html">Command line</a><a href="record-replay.html">Record and replay</a><a href="network-replay.html">Network replay</a><a href="configuration.html" aria-current="page">Configuration</a><a href="reports.html">Reports and debugging</a><a href="ci.html">CI</a><a href="cucumber-js.html">Running with cucumber-js</a></div><div class="nav-group"><span class="nav-title">Guides</span><a href="troubleshooting.html">Troubleshooting</a><a href="agent-skill.html">Agent skill</a></div><div class="nav-group"><span class="nav-title">Reference</span><a href="examples.html">Examples</a></div></nav>
-<main class="doc"><h1 id="configuration-and-reporters">Configuration and reporters</h1>
-<p><code>decisium run</code> loads configuration exactly like cucumber-js:
-your <code>cucumber.{js,mjs,cjs,json,yaml}</code>, <code>-p &lt;profile&gt;</code>, and cucumber&#39;s <code>--format name[:path]</code> and <code>--import &lt;file&gt;</code>
-flags, added to the file&#39;s values. Decisium adds its own step definitions to <code>import</code>.</p>
-<h2 id="decisium-options">Decisium options</h2>
-<p>In <code>worldParameters.decisium</code>, so raw <code>npx cucumber-js</code> reads them too. Flags (<code>--url</code>, <code>--record</code>, <code>--strict</code>, ...)
-and <code>DECISIUM_*</code> env (<code>DECISIUM_URL</code>, <code>DECISIUM_RECORD</code>, <code>DECISIUM_STRICT=1</code>, ...) override them.</p>
-<pre><code class="language-js">// cucumber.mjs
-export default {
-  worldParameters: { decisium: { record: &quot;none&quot;, strict: true } },
-  // url, record, headed, judged, strict, verbose, debug, agentReport,
-  // reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns
-};
-</code></pre>
-<p>Precedence: flag &gt; <code>DECISIUM_*</code> env &gt; <code>worldParameters.decisium</code> &gt; default. A value of the wrong type or out of range
-fails at startup (exit 2). <code>--parallel</code> workers read the same values.</p>
-<h3 id="tuning">Tuning</h3>
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html" aria-current="page">CLI and configuration</a><a href="ci.html">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
+<main class="doc"><h1 id="cli-and-configuration">CLI and configuration</h1>
+<h2 id="commands">Commands</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>decisium run &lt;file.feature[:line]&gt;...</code></td>
+<td>Runs features; <code>:line</code> runs one scenario.</td>
+</tr>
+<tr>
+<td><code>decisium step &quot;&lt;step&gt;&quot; --url &lt;url&gt;</code></td>
+<td>Runs one Step, no feature file. For trying a wording.</td>
+</tr>
+<tr>
+<td><code>decisium lint &lt;file.feature&gt;...</code></td>
+<td>No browser, no model: how each Step will be read, and wordings to avoid.</td>
+</tr>
+<tr>
+<td><code>decisium pin &lt;file.feature:line&gt; &lt;n&gt;</code></td>
+<td>Confirms candidate <code>n</code> of an <code>AMBIGUOUS</code> action. See <a href="https://andletenkov.github.io/decisium/ci.html#pin-an-ambiguous-target">Pin</a>.</td>
+</tr>
+<tr>
+<td><code>decisium install [--with-deps]</code></td>
+<td>Downloads Chromium (<code>--with-deps</code>: Linux system libraries too).</td>
+</tr>
+<tr>
+<td><code>decisium doctor [&lt;file.feature&gt;...]</code></td>
+<td>Checks Node, Chromium, the API key and the start URLs.</td>
+</tr>
+</tbody></table>
+<p>Exit codes: <code>0</code> passed, <code>1</code> a scenario failed, <code>2</code> configuration or infrastructure error.</p>
+<h2 id="run-flags">run flags</h2>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--url &lt;url|file&gt;</code></td>
+<td>Start URL; overrides <code>@url:</code>.</td>
+</tr>
+<tr>
+<td><code>--record new|none|all</code></td>
+<td><code>new</code> (default): replay, record what is missing. <code>none</code>: replay only (CI). <code>all</code>: re-record everything.</td>
+</tr>
+<tr>
+<td><code>--parallel &lt;n|auto&gt;</code></td>
+<td>Run features in parallel workers.</td>
+</tr>
+<tr>
+<td><code>--headed</code></td>
+<td>Show the browser.</td>
+</tr>
+<tr>
+<td><code>--strict</code></td>
+<td>Fail checks that passed with low confidence.</td>
+</tr>
+<tr>
+<td><code>--judged</code></td>
+<td>Let Jev judge subjective checks.</td>
+</tr>
+<tr>
+<td><code>--format &lt;name[:path]&gt;</code></td>
+<td>Any cucumber formatter, e.g. <code>junit:junit.xml</code>. Repeatable.</td>
+</tr>
+<tr>
+<td><code>--import &lt;file&gt;</code></td>
+<td>Your step definitions or hooks. Repeatable.</td>
+</tr>
+<tr>
+<td><code>-p &lt;profile&gt;</code></td>
+<td>A cucumber profile.</td>
+</tr>
+<tr>
+<td><code>--no-agent-report</code></td>
+<td>Do not write <code>report.md</code>.</td>
+</tr>
+<tr>
+<td><code>-v</code>, <code>--debug</code></td>
+<td>Print every page snapshot and answer; show stack traces.</td>
+</tr>
+</tbody></table>
+<h2 id="options">Options</h2>
+<p><code>decisium run</code> loads your <code>cucumber.{js,mjs,cjs,json,yaml}</code> like cucumber-js does. Decisium options go in
+<code>worldParameters.decisium</code>:</p>
 <pre><code class="language-js">// cucumber.mjs
 export default {
   worldParameters: {
-    decisium: {
-      url: &quot;http://localhost:3000&quot;,
-      reportDir: &quot;e2e/runs&quot;,
-      confidence: { target: 0.6, answer: 0.85 },
-      checkTimeout: 10000,
-      actionTimeout: 10000,
-      maxTurns: 12,
-    },
+    decisium: { url: &quot;http://localhost:3000&quot;, reportDir: &quot;e2e/runs&quot;, checkTimeout: 10000 },
   },
 };
 </code></pre>
@@ -61,115 +128,59 @@ export default {
 <tr>
 <th>Option</th>
 <th>Default</th>
-<th>Flag</th>
-<th>Env</th>
-<th>Affects</th>
+<th>When to change</th>
 </tr>
 </thead>
 <tbody><tr>
+<td><code>url</code></td>
+<td></td>
+<td>Start URL for features without <code>@url:</code>.</td>
+</tr>
+<tr>
+<td><code>record</code></td>
+<td><code>&quot;new&quot;</code></td>
+<td><code>&quot;none&quot;</code> in CI.</td>
+</tr>
+<tr>
 <td><code>reportDir</code></td>
 <td><code>&quot;runs&quot;</code></td>
-<td><code>--report-dir</code></td>
-<td><code>DECISIUM_REPORT_DIR</code></td>
-<td>Where <code>&lt;reportDir&gt;/&lt;timestamp&gt;/</code> (log, trace, screenshots, <code>report.md</code>) is written.</td>
-</tr>
-<tr>
-<td><code>confidence.target</code></td>
-<td><code>0.5</code></td>
-<td><code>--confidence-target</code></td>
-<td><code>DECISIUM_CONFIDENCE_TARGET</code></td>
-<td>How sure Jev must be of the element an action acts on (and a drag&#39;s drop target). In (0, 1].</td>
-</tr>
-<tr>
-<td><code>confidence.answer</code></td>
-<td><code>0.8</code></td>
-<td><code>--confidence-answer</code></td>
-<td><code>DECISIUM_CONFIDENCE_ANSWER</code></td>
-<td>Every other answer: a check&#39;s required state, the value to type or select, which earlier value a check refers to, a dialog answer. A pass under <code>answer</code> + 0.1 is marginal. In (0, 1].</td>
+<td>To match your CI artifact path.</td>
 </tr>
 <tr>
 <td><code>checkTimeout</code></td>
 <td><code>5000</code></td>
-<td><code>--check-timeout</code></td>
-<td><code>DECISIUM_CHECK_TIMEOUT</code></td>
-<td>Ms a check waits for the page to reach the expected state.</td>
+<td>Slow page: ms a check waits for the expected state.</td>
 </tr>
 <tr>
 <td><code>actionTimeout</code></td>
 <td><code>5000</code></td>
-<td><code>--action-timeout</code></td>
-<td><code>DECISIUM_ACTION_TIMEOUT</code></td>
-<td>Ms after an action to wait for requests and DOM changes to settle.</td>
+<td>Slow app: ms to wait for the page to settle after an action.</td>
 </tr>
 <tr>
 <td><code>maxTurns</code></td>
 <td><code>8</code></td>
-<td><code>--max-turns</code></td>
-<td><code>DECISIUM_MAX_TURNS</code></td>
-<td>Turns an action Step may take before <code>STEP_TIMEOUT</code>, 1-20.</td>
+<td>Long flows in one Step (1–20). Or split the Step.</td>
+</tr>
+<tr>
+<td><code>confidence.target</code></td>
+<td><code>0.5</code></td>
+<td>How sure Jev must be of the element. Reword the Step first.</td>
+</tr>
+<tr>
+<td><code>confidence.answer</code></td>
+<td><code>0.8</code></td>
+<td>How sure Jev must be of other answers. Below <code>0.6</code> warns.</td>
 </tr>
 <tr>
 <td><code>states</code></td>
 <td><code>&quot;**/*.state.feature&quot;</code></td>
-<td></td>
-<td><code>DECISIUM_STATES</code></td>
-<td>Glob of <a href="https://andletenkov.github.io/decisium/states.html">state definition</a> files.</td>
+<td>Where <a href="https://andletenkov.github.io/decisium/advanced.html#states">state</a> files live.</td>
 </tr>
 </tbody></table>
-<h3 id="reportdir">reportDir</h3>
-<p>Default <code>&quot;runs&quot;</code>; <code>--report-dir</code>, <code>DECISIUM_REPORT_DIR</code>. Non-empty path containing timestamped run folders.
-Change it to match your CI artifact upload path.</p>
-<h3 id="confidencetarget">confidence.target</h3>
-<p>Default <code>0.5</code>; <code>--confidence-target</code>, <code>DECISIUM_CONFIDENCE_TARGET</code>. Top probability in (0, 1] for action and drop targets.
-Reword ambiguous Steps first; tune this only when the intended control is clear.</p>
-<h3 id="confidenceanswer">confidence.answer</h3>
-<p>Default <code>0.8</code>; <code>--confidence-answer</code>, <code>DECISIUM_CONFIDENCE_ANSWER</code>. Probability in (0, 1] for other answers and plausible
-check readings. Marginal-pass line is this value + 0.1. Lowering it below 0.6 warns once per run; prefer rewording.</p>
-<h3 id="checktimeout">checkTimeout</h3>
-<p>Default <code>5000</code> ms; <code>--check-timeout</code>, <code>DECISIUM_CHECK_TIMEOUT</code>. Positive integer; how long checks wait for the expected
-state. Raise for slow pages.</p>
-<h3 id="actiontimeout">actionTimeout</h3>
-<p>Default <code>5000</code> ms; <code>--action-timeout</code>, <code>DECISIUM_ACTION_TIMEOUT</code>. Positive integer; how long actions wait for requests
-and DOM changes to settle. Raise when slow actions finish too early.</p>
-<h3 id="maxturns">maxTurns</h3>
-<p>Default <code>8</code>; <code>--max-turns</code>, <code>DECISIUM_MAX_TURNS</code>. Integer 1–20; action Turns before <code>STEP_TIMEOUT</code>.
-Raise for long wizards, or split them into smaller Steps.</p>
-<p>Only the top probability is configurable; the lead over the runner-up stays fixed (0.1 target, 0.3 answer): it is
-what catches &quot;two controls look the same&quot;. Confidence affects live answers only (a replay reuses recorded
-resolutions with their recorded confidence; older cassettes use the original defaults); timeouts and <code>maxTurns</code> apply to replays too. The effective values go into the run event in
-<code>trace.jsonl</code>, and <code>report.md</code> says when confidence was not the default.</p>
-<p>When to change them:</p>
-<ul>
-<li>Slow app: raise <code>checkTimeout</code> and <code>actionTimeout</code>.</li>
-<li>Long flow in one Step (a wizard): raise <code>maxTurns</code>, or split the Step.</li>
-<li><code>AMBIGUOUS</code> on a clear page: reword the Step first, then raise or lower <code>confidence.target</code>.</li>
-<li>Marginal passes: reword. Lowering <code>confidence.answer</code> below 0.6 prints a warning: a wrong reading can then pass.</li>
-</ul>
-<h2 id="reporters">Reporters</h2>
-<p>Any cucumber formatter: cucumber&#39;s own <code>junit</code>, <code>json</code>, <code>html</code>, <code>message</code>, or a package such as the official Qase
-reporter. Only one formatter may write to stdout: one configured without a path takes it; otherwise Decisium&#39;s console
-output does.</p>
-<pre><code class="language-sh">decisium run features/login.feature --format junit:reports/junit.xml
-</code></pre>
-<h3 id="qase">Qase</h3>
-<p>Decisium ships nothing Qase-specific; wire the official reporter as in any cucumber project.</p>
-<pre><code class="language-sh">npm install --save-dev cucumberjs-qase-reporter
-echo &#39;{&quot;mode&quot;:&quot;report&quot;}&#39; &gt; qase.config.json   # or mode &quot;testops&quot; with QASE_TESTOPS_API_TOKEN, QASE_TESTOPS_PROJECT
-decisium run features/login.feature --format cucumberjs-qase-reporter:/dev/null
-</code></pre>
-<p>Or in your configuration, which raw <code>npx cucumber-js</code> uses too:</p>
-<pre><code class="language-js">// cucumber.mjs
-export default {
-  // Raw cucumber-js only: Decisium&#39;s steps and formatter (decisium run adds both itself).
-  import: [&quot;node_modules/decisium/dist/steps.js&quot;],
-  format: [&quot;decisium/formatter&quot;, &quot;cucumberjs-qase-reporter:/dev/null&quot;],
-};
-</code></pre>
-<p>Tag scenarios <code>@QaseID=&lt;id&gt;</code>. A failing Step&#39;s message starts with its outcome; app failures (<code>ASSERTION_FAILED</code>,
-<code>JUDGED_FAILED</code>, <code>BLOCKED</code>, <code>ACTION_FAILED</code>) report as <code>failed</code>, every other outcome as <code>invalid</code>. A marginal pass
-reaches every reporter as a <code>text/plain</code> attachment <code>marginal-pass.txt</code> on its Step (Qase stores it as <code>file.txt</code>).</p>
-<div class="pager"><a class="prev" href="network-replay.html"><span>Previous</span>Network replay</a><a class="next" href="reports.html"><span>Next</span>Reports and debugging</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#decisium-options">Decisium options</a><a class="l3" href="#tuning">Tuning</a><a class="l3" href="#reportdir">reportDir</a><a class="l3" href="#confidencetarget">confidence.target</a><a class="l3" href="#confidenceanswer">confidence.answer</a><a class="l3" href="#checktimeout">checkTimeout</a><a class="l3" href="#actiontimeout">actionTimeout</a><a class="l3" href="#maxturns">maxTurns</a><a class="l2" href="#reporters">Reporters</a><a class="l3" href="#qase">Qase</a></aside>
+<p>Also <code>headed</code>, <code>judged</code>, <code>strict</code>, <code>verbose</code>, <code>debug</code>, <code>agentReport</code>. Every option has a flag (<code>--check-timeout</code>) and an
+environment variable (<code>DECISIUM_CHECK_TIMEOUT</code>). Precedence: flag &gt; environment &gt; config file &gt; default.</p>
+<div class="pager"><a class="prev" href="steps.html"><span>Previous</span>Writing Steps</a><a class="next" href="ci.html"><span>Next</span>CI</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#commands">Commands</a><a class="l2" href="#run-flags">run flags</a><a class="l2" href="#options">Options</a></aside>
 </div>
 </body>
 </html>

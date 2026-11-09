@@ -126,8 +126,12 @@ export function parseSnapshot(
   const wrappers = new Map<Element, number>(); // nameless container -> its line in `kept`, dropped unless it holds text
   let pageText = "";
   let lastCombobox: { el: Element; indent: number } | undefined;
+  const lines: { indent: number; at?: number }[] = []; // every snapshot line, and where it went in `kept`
 
   for (let raw of snapshot.split("\n")) {
+    const line: { indent: number; at?: number } = { indent: /^ */.exec(raw)![0].length };
+    if (raw.trim()) lines.push(line);
+    const keep = (text: string) => (line.at = kept.push(text) - 1);
     // The snapshot marks only checked boxes. Without a mark for the other state, Jev never read "uncheck X" as done
     // (task 0031: 8 clicks, then STEP_TIMEOUT).
     if (/^\s*- (checkbox|radio|switch|menuitemcheckbox|menuitemradio)\b/.test(raw) && !/\[checked/.test(raw))
@@ -141,7 +145,7 @@ export function parseSnapshot(
       continue;
     }
     if (!m) {
-      if (raw.trim()) kept.push(cap(raw));
+      if (raw.trim()) keep(cap(raw));
       continue;
     }
     const [, indent, role, name = "", attrs = "", rest = ""] = m;
@@ -153,7 +157,7 @@ export function parseSnapshot(
     if (role === "option" && !ref && lastCombobox && indent.length > lastCombobox.indent) {
       lastCombobox.el.options.push(name);
       if (/\[selected\]/.test(attrs)) lastCombobox.el.value = name;
-      kept.push(cap(raw));
+      keep(cap(raw));
       continue;
     }
     // Drop nameless structural wrappers that cannot hold anything readable; the ref'd ones are decided below.
@@ -166,8 +170,7 @@ export function parseSnapshot(
       areas.add(o.el);
       if (ref && name) named.set(o.el, [...(named.get(o.el) ?? []), name]);
     }
-    const at =
-      kept.push(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : cap(raw)) - 1;
+    const at = keep(secret && rest ? `${indent}- ${role}${name ? ` "${name}"` : ""}${attrs}: ${MASK}` : cap(raw));
 
     // Text with no element of its own (a bare `- text:` line, or text split across children): the nearest ref'd
     // container is the only thing a check can read it from, so that container becomes readable (task 0006).
@@ -222,6 +225,15 @@ export function parseSnapshot(
     wrappers.delete(el); // Jev must see its line to pick it
   }
   for (const at of wrappers.values()) kept[at] = undefined;
+  // Indent by kept ancestors only: a dropped wrapper's indentation made a line look nested in the list above it
+  // (GitHub "Raw" lined up with the "File view" buttons, and Jev scoped a check to that list).
+  const stack: { indent: number; kept: boolean }[] = [];
+  for (const l of lines) {
+    while (stack.length && stack.at(-1)!.indent >= l.indent) stack.pop();
+    const shown = l.at !== undefined && kept[l.at] !== undefined;
+    if (shown) kept[l.at!] = "  ".repeat(stack.filter((a) => a.kept).length) + kept[l.at!]!.trimStart();
+    stack.push({ indent: l.indent, kept: shown });
+  }
   for (const el of [...readable, ...areas]) {
     if (el.options.length) el.verb = "SELECT";
     // A long value (a whole file in a code view) would bury the description; the full value stays in `value`.

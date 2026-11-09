@@ -1,6 +1,7 @@
 # CI
 
-Replay committed cassettes: no model calls, no API key, the same outcome every run.
+Record locally, commit the cassettes, replay in CI with `--record none`: no API key, no model calls, the same result
+every run.
 
 ```yaml
 # .github/workflows/e2e.yml
@@ -13,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
-      - run: npm ci # decisium in devDependencies: replays with the version that recorded
+      - run: npm ci
       - run: npx decisium install --with-deps
       - run: npx decisium run features/*.feature --record none --parallel auto --format junit:reports/junit.xml
       - if: failure()
@@ -21,24 +22,35 @@ jobs:
         with: { name: decisium-runs, path: runs/ }
 ```
 
-With a global install instead, replace `npm ci` with `npm install -g decisium@0.1.4` (the version that recorded the
-cassettes) and drop `npx`.
+`runs/` holds the screenshots, Playwright trace and `report.md` of every failed scenario.
 
-Upload `runs/` (or your `reportDir`) on failure: it holds the screenshots, Playwright trace and `report.md` for every failed scenario.
+## When the UI changes
 
-## Docker image
-
-Every release is published as `ghcr.io/andletenkov/decisium:<version>` (also `:<major>.<minor>`), for amd64 and arm64.
-Chromium and its system libraries are already installed, so `decisium install` is not needed. The image's entrypoint is
-`decisium`, and its working directory is `/work`:
+CI fails as `UI_CHANGED`. If the change is intended, re-record locally and commit the cassette:
 
 ```sh
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/work" ghcr.io/andletenkov/decisium:0.1.5 \
-  run features/*.feature --record none --format junit:reports/junit.xml
+decisium run features/campaign.feature --record new
 ```
 
-Use the image version that recorded your cassettes.
+Optional, to collapse cassette diffs on GitHub: add `*.cassette.json linguist-generated=true` to `.gitattributes`.
 
-To record cassettes or heal Steps, pass the key: `-e TYPESAFE_API_KEY`. Any runner that can start a container (a
-Kubernetes Job, a test orchestrator, a CI service) runs features the same way: mount or check out the project into the
-working directory and collect `reports/` and `runs/` as artifacts.
+## Pin an ambiguous target
+
+When an action fails as `AMBIGUOUS`, the report lists the candidates, each with a ready pin command. Check the
+screenshot, run the right one, replay:
+
+```sh
+decisium pin features/campaign.feature:12 2
+decisium run features/campaign.feature --record none
+```
+
+Works for single-action Steps such as `I click the "Save" button` or `I type "Ada" into the "Name" field`.
+
+## Docker
+
+```sh
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/work" ghcr.io/andletenkov/decisium:<version> \
+  run features/*.feature --record none
+```
+
+Chromium is preinstalled. Use the version that recorded your cassettes; pass `-e TYPESAFE_API_KEY` to record.

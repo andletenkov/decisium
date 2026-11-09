@@ -134,9 +134,9 @@ test("parseSnapshot: the text Jev reads, which elements act, read and hold, and 
       `- combobox "Search" [ref=e7]`,
       `- generic [ref=e8]:`,
       `  - text: Total 5`,
-      `  - text: Email`,
-      `  - textbox "Email" [ref=e10]`,
-      `  - button "Go" [disabled] [ref=e12]`,
+      `- text: Email`,
+      `- textbox "Email" [ref=e10]`,
+      `- button "Go" [disabled] [ref=e12]`,
       `- table [ref=e13]:`,
       `  - row [ref=e14]:`,
       `    - columnheader "Name" [ref=e15]`,
@@ -379,4 +379,28 @@ test("pseudo-element top lines are capped at 200 characters", () => {
   const long = "z".repeat(300);
   assert.equal(withClipboard(empty(), long).text, `- clipboard "copied text": ${long}`.slice(0, 200) + "…");
   assert.equal(withPage(empty(), "u", long).text.split("\n")[0], `- page "${long}`.slice(0, 200) + "…");
+});
+
+test("parseSnapshot: dropped wrappers leave no gaps, so a line never looks nested in a list it is not in", () => {
+  // GitHub file view: "Raw" sits next to the "File view" list, not in it. With the wrappers' indentation kept, it lined
+  // up with the list's buttons and Jev scoped `"Raw" should appear` to the list (AMBIGUOUS).
+  const obs = parseSnapshot(
+    [
+      `- list "File view" [ref=e1]:`,
+      `  - listitem [ref=e2]:`,
+      `    - button "Code" [ref=e3]`,
+      `- generic:`,
+      `  - generic:`,
+      `    - link "Raw" [ref=e4]`,
+    ].join("\n"),
+  );
+  assert.equal(
+    obs.text,
+    [
+      `- list "File view" [ref=e1]:`,
+      `  - listitem [ref=e2]:`,
+      `    - button "Code" [ref=e3]`,
+      `- link "Raw" [ref=e4]`,
+    ].join("\n"),
+  );
 });

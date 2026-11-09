@@ -52,6 +52,7 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "site": "node scripts/site.ts",
+    "demo": "node scripts/demo/make.mjs",
     "pack:smoke": "scripts/pack-smoke.sh",
     "test:unit": "node --test test/*.unit.test.ts",
     "test:mutation": "stryker run",

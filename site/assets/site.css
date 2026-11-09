@@ -134,3 +134,5 @@ pre.feature .ln:target a { color: var(--signal); }
 .search input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .npm-version { width: auto; gap: 6px; padding: 0 8px; font: 12px var(--font-mono); color: var(--color-neutral-300); text-decoration: none; }
 .npm-version:hover { color: var(--color-text); }
+
+.doc img { max-width: 100%; height: auto; border-radius: 8px; }

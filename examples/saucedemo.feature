@@ -28,4 +28,4 @@ Feature: Sauce Demo shop (login, sorting, cart, checkout validation)
     And I continue
     Then the item total should be "$29.99"
     When I finish the order
-    Then I should see "Thank you for your order!"
+    Then the confirmation should say "Thank you for your order!"

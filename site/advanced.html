@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advanced · Decisium</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nocturne.css">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/search-index.js" defer></script>
+<script src="assets/search.js" defer></script>
+<script>const q = new URLSearchParams(location.search).get("theme");
+let saved = null; try { saved = localStorage.getItem("theme"); } catch {}
+document.documentElement.dataset.theme = q || saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+function setTheme(t) { document.documentElement.dataset.theme = t; try { localStorage.setItem("theme", t); } catch {} }
+document.addEventListener("click", e => { const a = e.target.closest("a[href]"); if (!a || /^(https?:|#)/.test(a.getAttribute("href"))) return;
+  const u = new URL(a.href); u.searchParams.set("theme", document.documentElement.dataset.theme); a.href = u.href; });</script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html"><svg class="mark" width="24" height="24" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 8H30A24 24 0 0 1 30 56H8ZM31 19L44 32L31 45L18 32Z" fill="currentColor" fill-rule="evenodd"/><path d="M31 22L41 32L31 42L21 32Z" fill="var(--a)"/></svg><span class="wordmark" aria-label="decisium">dec<span class="i">ı</span>s<span class="i">ı</span>um</span></a>
+  <div class="search"><input type="search" id="search" placeholder="Search docs" aria-label="Search docs" autocomplete="off"><kbd>/</kbd><div class="search-results" role="listbox" hidden></div></div>
+  <nav class="top-links"><a class="icon-link" href="https://github.com/andletenkov/decisium" aria-label="GitHub" title="GitHub"><svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a><a class="icon-link npm-version" href="https://www.npmjs.com/package/decisium" aria-label="npm, version 0.2.1" title="npm"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></svg><span>v0.2.1</span></a>
+    <button class="theme-toggle" type="button" aria-label="Switch light/dark theme" onclick="setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light')"><svg class="moon" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M233.5 137.9a8 8 0 0 0-10-5.7A88 88 0 0 1 123.8 32.5a8 8 0 0 0-10-10A104.1 104.1 0 1 0 233.5 147.9a8 8 0 0 0 0-10Z"/></svg><svg class="sun" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M128 64a64 64 0 1 0 64 64 64.1 64.1 0 0 0-64-64Zm-8-24V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm0 200v-24a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0ZM40 136H16a8 8 0 0 1 0-16h24a8 8 0 0 1 0 16Zm208-8a8 8 0 0 1-8 8h-24a8 8 0 0 1 0-16h24a8 8 0 0 1 8 8ZM58.3 69.7l-16-16a8 8 0 0 1 11.4-11.4l16 16a8 8 0 0 1-11.4 11.4Zm139.4 0a8 8 0 0 1 0-11.4l16-16a8 8 0 0 1 11.4 11.4l-16 16a8 8 0 0 1-11.4 0ZM69.7 186.3a8 8 0 0 1 0 11.4l-16 16a8 8 0 0 1-11.4-11.4l16-16a8 8 0 0 1 11.4 0Zm144 16a8 8 0 0 1-11.4 11.4l-16-16a8 8 0 0 1 11.4-11.4Z"/></svg></button></nav>
+</header>
+<div class="layout">
+<nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html" aria-current="page">Advanced</a></div></nav>
+<main class="doc"><h1 id="advanced">Advanced</h1>
+<h2 id="browser-context">Browser context</h2>
+<p>Tags on a feature or scenario set up its browser.</p>
+<pre><code class="language-gherkin">@url:https://shop.example.com @locale:de-DE @timezone:Europe/Berlin
+Feature: Shop in German
+
+  @viewport:iPhone-13 @geolocation:52.52,13.40
+  Scenario: Checkout on a phone
+    When I add the &quot;Backpack&quot; to the cart
+    Then the cart badge should show &quot;1&quot;
+</code></pre>
+<p><code>@viewport:</code> takes <code>390x844</code> or a Playwright device name (dashes for spaces). A scenario&#39;s tag wins over the feature&#39;s.</p>
+<h2 id="client-steps">Client steps</h2>
+<p>Your own cucumber step definitions run next to Decisium: a line they match runs your code, every other line goes to
+Jev. Use them for setup the page cannot do (mocks, cookies, API login).</p>
+<pre><code class="language-ts">// steps/campaigns.steps.ts
+import { Given } from &quot;@cucumber/cucumber&quot;;
+
+Given(&quot;the campaigns API returns {string}&quot;, async function (name: string) {
+  await this.context.route(&quot;**/api/campaigns&quot;, (route) =&gt; route.fulfill({ json: [{ id: 1, name }] }));
+});
+</code></pre>
+<pre><code class="language-sh">decisium run features/campaigns.feature --import steps/campaigns.steps.ts
+</code></pre>
+<p><code>this.page</code> is the current Playwright <code>Page</code>, <code>this.context</code> the <code>BrowserContext</code>. Client steps call no model and are
+not recorded.</p>
+<h2 id="states">States</h2>
+<p>A reusable precondition, defined once in a <code>*.state.feature</code> file and used with <code>@state:</code>.</p>
+<pre><code class="language-gherkin"># features/shop.state.feature
+@url:https://shop.example.com
+Feature: Shop states
+
+  @state-def:logged-in @save:storage
+  Scenario: Logged in
+    When I log in as &quot;$USERNAME&quot; with password &quot;$PASSWORD&quot;
+    Then the header should show &quot;Admin&quot;
+</code></pre>
+<pre><code class="language-gherkin">@state:logged-in
+Scenario: Checkout shows the total
+  When I open the checkout
+  Then the order total should be &quot;59.97&quot;
+</code></pre>
+<p><code>@save:storage</code> logs in once per run and reuses the cookies and <code>localStorage</code>. States can chain
+(<code>@state-def:cart @state:logged-in</code>). A failing state is a setup error, not a test failure.</p>
+<h2 id="network-replay">Network replay</h2>
+<p><code>@replay-network:&lt;glob&gt;</code> records matching browser requests and replays them, for a slow, costly or unstable backend
+(an app that calls an LLM).</p>
+<pre><code class="language-gherkin">@replay-network:**/api/**
+Scenario: The assistant answers
+  When I ask the assistant &quot;What is my balance?&quot;
+  Then the answer should mention &quot;balance&quot;
+</code></pre>
+<p>It follows <code>--record</code> like the cassette and is saved to <code>&lt;feature&gt;.network/&lt;scenario&gt;.har</code>; commit it. WebSockets are
+not recorded.</p>
+<h2 id="running-with-cucumber-js">Running with cucumber-js</h2>
+<p><code>decisium run</code> already runs inside cucumber-js. To run Decisium Steps from plain <code>npx cucumber-js</code> (per-project
+install only):</p>
+<pre><code class="language-js">// cucumber.mjs
+export default {
+  import: [&quot;node_modules/decisium/dist/steps.js&quot;, &quot;steps/**/*.js&quot;],
+  format: [&quot;decisium/formatter&quot;],
+  worldParameters: { decisium: { record: &quot;none&quot; } },
+};
+</code></pre>
+<h2 id="agent-skill">Agent skill</h2>
+<p>A skill for coding agents (Claude Code, Cursor, Codex, pi…): designs scenarios from app code or requirements, writes
+features and repairs failing Steps.</p>
+<pre><code class="language-sh">npx skills add andletenkov/decisium
+</code></pre>
+<p>It also ships in the package: <code>$(npm root -g)/decisium/skills/decisium/SKILL.md</code>.</p>
+<div class="pager"><a class="prev" href="troubleshooting.html"><span>Previous</span>Troubleshooting</a></div></main>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#browser-context">Browser context</a><a class="l2" href="#client-steps">Client steps</a><a class="l2" href="#states">States</a><a class="l2" href="#network-replay">Network replay</a><a class="l2" href="#running-with-cucumber-js">Running with cucumber-js</a><a class="l2" href="#agent-skill">Agent skill</a></aside>
+</div>
+</body>
+</html>
