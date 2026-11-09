@@ -19,7 +19,7 @@ jobs:
       pr_branch: ${{ steps.rp.outputs.pr && fromJSON(steps.rp.outputs.pr).headBranchName }}
     steps:
       - id: rp
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }} # a PAT, so the release PR and its pushes trigger CI
           config-file: release-please-config.json
