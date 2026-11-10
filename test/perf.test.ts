@@ -80,12 +80,11 @@ test("perf tally splits settle by what held it", async () => {
   assert.ok((perf["settle:requests:fetch"] ?? 0) > 0 && perf["after:CLICK"] > 0 && perf["perform:CLICK"] >= 0);
 });
 
-test("replay: a change landing a task after the click is seen without a fixed wait", async () => {
+test("replay: waitForChange sees a change that lands well after the click, not the click's own focus", async () => {
   const b = await Browser.open(url);
   b.replay = true;
   try {
     const obs = await b.observe();
-    const clicked = Date.now();
     await b.execute({ verb: "CLICK", ref: obs.elements.find((e) => e.name === "Much later")!.ref });
     // From a snapshot after the click, so its own focus ([active]) is no change; the timer is long enough to fire
     // after that snapshot even on a loaded machine.
@@ -93,10 +92,8 @@ test("replay: a change landing a task after the click is seen without a fixed wa
     assert.doesNotMatch(since, /much later/);
     assert.equal(await b.waitForChange(since), true);
     assert.match((await b.observe()).text, /much later/);
-    const late = Date.now() - clicked - DELAY;
-    // Measured after the change lands: 60-90 ms now (20 ms polls, a short quiet window), 160-230 ms with the fixed
-    // 100 ms poll and full quiet window before PR #60.
-    assert.ok(late < 125, `waitForChange saw the change ${late} ms after it landed`);
+    // No time bound: the faster polling of PR #60 gains ~100 ms here, too little to tell from a slow CI runner
+    // (140 ms there, 60-90 ms locally). scripts/replay-bench.ts measures replay speed.
   } finally {
     await b.close();
   }
