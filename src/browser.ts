@@ -856,7 +856,9 @@ export class Browser {
       const moved = stamp === undefined || stamp !== seen;
       seen = stamp;
       if (moved && (await this.observe()).text !== since) {
-        await this.settle(false); // the change is already here: only let it finish
+        // The change is already here. Live, let it finish before Jev reads the page; on replay what comes next waits for
+        // what it needs (a recorded target, a check's expected state), as a Playwright spec does.
+        if (!this.replay) await this.settle(false);
         return true;
       }
       if (Date.now() - idleAt < IDLE_GAP_MS) continue;
