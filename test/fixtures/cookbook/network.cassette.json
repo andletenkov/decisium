@@ -1,8 +1,13 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-47-54-150Z",
+  "run": "runs/2026-11-10T18-58-41-901Z",
   "entries": {
     "Context tags: the Viewport should be \"390x844\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -11,23 +16,31 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.58,
+          "confidence": 0.62,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.26,
-            "checked": 0.62,
-            "unchecked": 0.03,
-            "expanded": 0.03,
+            "enabled": 0.23,
+            "checked": 0.66,
+            "unchecked": 0.04,
+            "expanded": 0.02,
             "collapsed": 0.01,
-            "selected": 0.03,
+            "selected": 0.02,
             "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0.01
@@ -41,7 +54,7 @@
               "container": "",
               "near": "390x844"
             },
-            0.96
+            0.97
           ]
         ],
         "area": [
@@ -51,13 +64,18 @@
               "name": "",
               "container": ""
             },
-            0.72
+            0.7
           ],
-          ["page", 0.24]
+          ["page", 0.29]
         ]
       }
     },
     "Context tags: the Locale should be \"de-DE\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -66,26 +84,34 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.62,
+          "confidence": 0.59,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.14,
-            "checked": 0.66,
+            "enabled": 0.18,
+            "checked": 0.63,
             "unchecked": 0.04,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.13,
+            "selected": 0.12,
             "unselected": 0.01,
-            "pressed": 0.01,
-            "unpressed": 0
+            "pressed": 0,
+            "unpressed": 0.01
           }
         },
         "subject": [
@@ -96,7 +122,7 @@
               "container": "",
               "near": "de-DE"
             },
-            0.98
+            0.97
           ]
         ],
         "area": [
@@ -106,9 +132,9 @@
               "name": "",
               "container": ""
             },
-            0.74
+            0.75
           ],
-          ["page", 0.26]
+          ["page", 0.24]
         ]
       }
     },
@@ -146,31 +172,44 @@
       ]
     },
     "A client step mocks the API: \"Mocked Sale\" should be shown": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.41,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 0.47,
-            "presence": 0.53,
-            "absence": 0,
+            "value": 0.03,
+            "presence": 0.97,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.2,
+          "confidence": 0.21,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.27999999999999997,
-            "checked": 0.21,
+            "enabled": 0.29,
+            "checked": 0.19,
             "unchecked": 0.01,
-            "expanded": 0.19,
+            "expanded": 0.23,
             "collapsed": 0.01,
-            "selected": 0.24,
+            "selected": 0.21,
             "unselected": 0.04,
             "pressed": 0.01,
             "unpressed": 0.01
@@ -193,13 +232,18 @@
               "name": "Campaigns",
               "container": ""
             },
-            0.58
+            0.54
           ],
-          ["page", 0.41]
+          ["page", 0.45]
         ]
       }
     },
     "A client step mocks the API: the status should be \"Loaded 1 campaigns\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -208,26 +252,34 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "pressed",
-          "confidence": 0.5,
+          "confidence": 0.46,
           "probabilities": {
-            "disabled": 0.09,
-            "enabled": 0.27,
+            "disabled": 0.18,
+            "enabled": 0.23,
             "checked": 0.04,
             "unchecked": 0,
             "expanded": 0.01,
             "collapsed": 0,
             "selected": 0.01,
             "unselected": 0,
-            "pressed": 0.55,
-            "unpressed": 0.03
+            "pressed": 0.51,
+            "unpressed": 0.02
           }
         },
         "subject": [
@@ -287,31 +339,44 @@
       ]
     },
     "Backend calls replayed from the recording: \"Autumn Sale\" should be shown": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.4,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 0.48,
-            "presence": 0.52,
-            "absence": 0,
+            "value": 0.03,
+            "presence": 0.97,
             "state": 0,
             "fuzzy": 0
           }
         },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
+          }
+        },
         "state": {
           "type": "choice",
-          "choice": "checked",
-          "confidence": 0.23,
+          "choice": "enabled",
+          "confidence": 0.29,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.28,
-            "checked": 0.31,
+            "enabled": 0.36,
+            "checked": 0.22,
             "unchecked": 0.01,
-            "expanded": 0.17,
-            "collapsed": 0.01,
-            "selected": 0.19,
+            "expanded": 0.18,
+            "collapsed": 0,
+            "selected": 0.2,
             "unselected": 0.02,
             "pressed": 0.01,
             "unpressed": 0
@@ -328,17 +393,74 @@
           ]
         ],
         "area": [
-          ["page", 0.52],
+          ["page", 0.61],
           [
             {
               "role": "list",
               "name": "Campaigns",
               "container": ""
             },
-            0.47
+            0.39
           ]
         ]
       }
+    },
+    "A client step mocks the API: the campaigns API returns \"Mocked Sale\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {
+        "attempt": false,
+        "pressOnly": false,
+        "clear": false
+      },
+      "turns": [
+        {
+          "done": 0.02,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              1
+            ]
+          ],
+          "action": [["click", 1]]
+        },
+        {
+          "done": 0.2,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              0.57
+            ],
+            ["none", 0.37]
+          ],
+          "action": [["click", 0.87]]
+        },
+        {
+          "done": 0.3,
+          "target": [
+            [
+              {
+                "role": "button",
+                "name": "Load campaigns",
+                "container": ""
+              },
+              0.58
+            ],
+            ["none", 0.37]
+          ],
+          "action": [["click", 0.72], ["hover", 0.02], ["right click", 0.02], ["upload", 0], ["double click", 0]]
+        }
+      ]
     }
   }
 }

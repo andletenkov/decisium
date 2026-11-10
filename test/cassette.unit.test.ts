@@ -144,7 +144,13 @@ test("cassette: generated values are recorded as templates and replayed with new
 test("cassette: a recorded Step stores every answer as Resolutions and replays them with no Jev call", async () => {
   const p = tmp();
   const turn = { done: 0.1, target: pick({ e1: 0.9, e2: 0.1 }), action: pick({ type: 0.7, click: 0.3 }) };
-  const assessment = { kind: sure("value"), state: sure("disabled"), subject: sure("e4"), area: sure("e3") };
+  const assessment = {
+    kind: sure("value"),
+    negated: sure("no"),
+    state: sure("disabled"),
+    subject: sure("e4"),
+    area: sure("e3"),
+  };
   const { live, calls } = scripted({
     turn,
     value: sure("Ada"),
@@ -180,6 +186,7 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
     ],
     check: {
       kind: sure("value"),
+      negated: sure("no"),
       state: sure("disabled"),
       subject: [[{ role: "listitem", name: "One", container: `list "Items"` }, 1]],
       area: [[{ role: "list", name: "Items", container: "" }, 1]],
@@ -716,6 +723,7 @@ test("cassette: a check still needs every plausible subject; a heal writes a gon
   const check = recorded({
     check: {
       kind: [["presence", 1]],
+      negated: sure("no"),
       state: [["none", 1]],
       subject: [
         [saveTarget, 0.5],
@@ -908,7 +916,13 @@ test("cassette: an action target is anchored by the Step's quoted value, a check
   const check = c.step(
     "S: y",
     scripted({
-      assess: { kind: sure("value"), subject: sure("e2"), area: sure("page"), state: sure("disabled") },
+      assess: {
+        kind: sure("value"),
+        negated: sure("no"),
+        subject: sure("e2"),
+        area: sure("page"),
+        state: sure("disabled"),
+      },
     }).live,
   );
   await check.assess(`the "Spring Sale" status should be "Draft"`, obs, false);

@@ -52,6 +52,8 @@ type Answer = [Target, number, Settings["confidence"]?][];
 type Turn = { done: number; target: Answer; action?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check {
   kind: Pick;
+  /** Absent in entries recorded before issue #81: their kinds folded negation in (`absence`), so they are re-recorded. */
+  negated?: Pick;
   state: Pick;
   subject: Answer;
   area: Answer;
@@ -571,8 +573,10 @@ export class Cassette {
         }
         const r = replay((e): Assessment => {
           if (!e.check) throw "no recorded check";
+          if (!e.check.negated) throw "the check was recorded before negation was its own answer (issue #81)";
           return {
             kind: recorded(e.check.kind),
+            negated: recorded(e.check.negated),
             state: recorded(e.check.state),
             subject: loadRecorded(e.check.subject, obs.readable),
             area: loadRecorded(e.check.area, obs.areas),
@@ -581,6 +585,7 @@ export class Cassette {
         const a = r ?? (await live.assess(step, obs, judged));
         now.check = {
           kind: a.kind,
+          negated: a.negated,
           state: a.state,
           subject: store(a.subject, obs.readable),
           area: store(a.area, obs.areas),

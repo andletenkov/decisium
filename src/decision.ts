@@ -128,12 +128,20 @@ export function grouped(p: Pick, obs: Observation, action?: Pick): Pick {
   return { ...p, choice, probabilities };
 }
 
+/** What a check compares; whether it says "not" is NEGATED (a state names its own polarity: enabled, unchecked). */
 export const ASSERTION_KINDS = {
-  value: "Checks that some element shows a specific text or value.",
-  presence: "Checks that something is shown or exists on the page.",
-  absence: "Checks that something is not shown or does not exist on the page.",
+  value:
+    'Checks the text or value one element or file shows (e.g. the status should be "Draft"; the alert should say "Saved"; the downloaded file should contain "Ada").',
+  presence:
+    'Checks whether a text appears on the page or in an area of it (e.g. "Saved" should appear; "Spring Sale" should not appear in the list).',
   state: "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
   fuzzy: "A subjective or holistic check that none of the other kinds can express.",
+} as const;
+
+/** Whether a text or value check says it should NOT be shown: code applies it after comparing. */
+export const NEGATED = {
+  no: "No: `check` says a text or value should be shown.",
+  yes: 'Yes: `check` says a text or value should NOT be shown (e.g. "Spring Sale" should not appear; the status should not be "Draft").',
 } as const;
 
 /** State labels Jev can pick; code reads the matching snapshot flag. */
@@ -150,15 +158,17 @@ export const STATES = {
   unpressed: "not pressed / toggled off",
 } as const;
 
+/**
+ * How Jev resolved a check's meaning and references (issue #81): never whether it passes. Code evaluates the condition
+ * on the page. Only an opted-in `--judged` check carries Jev's own verdict.
+ */
 export interface Assessment {
   kind: Pick;
+  negated: Pick; // NEGATED: a text or value check says it should not be shown
   subject: Pick; // element ref the check is about, or "none"
-  area: Pick; // presence/absence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
-  state: Pick; // required control state, used by `state` checks
-  judged?: number; // P(step holds), only when asked
-  // P(the UI satisfies the check), always asked: the veto on an inexact text match, where only language can tell
-  // whether "Not Scheduled" shows "Scheduled" (issue #28). Undefined (older cassettes, scripted deciders): no veto.
-  satisfied?: number;
+  area: Pick; // presence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
+  state: Pick; // the control state the check names, used by `state` checks
+  judged?: number; // P(step holds), asked only with --judged
 }
 
 export const AREA_PAGE = "page";
@@ -213,7 +223,7 @@ export interface Decider {
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Drag: the readable element or area to drop `source` onto, or "none" (task 0045). */
   drop(step: string, obs: Observation, source: Element): Promise<Pick>;
-  /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
+  /** Assertion steps, one request: what kind of check, negated or not, and which element or area. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;

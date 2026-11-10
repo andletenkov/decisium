@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-47-57-877Z",
+  "run": "runs/2026-11-10T18-55-07-103Z",
   "entries": {
     "A panel that loads more when scrolled down: I scroll down the Inbox until \"Message 15\" is shown": {
       "turns": [
@@ -37,32 +37,45 @@
       ]
     },
     "A panel that loads more when scrolled down: \"Message 15\" should appear in the Inbox": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.75,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 0.19,
-            "presence": 0.8,
-            "absence": 0,
+            "value": 0.03,
+            "presence": 0.97,
             "state": 0,
-            "fuzzy": 0.01
+            "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "expanded",
-          "confidence": 0.48,
+          "confidence": 0.5,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.19,
-            "checked": 0.16,
+            "enabled": 0.18,
+            "checked": 0.14,
             "unchecked": 0.01,
-            "expanded": 0.53,
+            "expanded": 0.55,
             "collapsed": 0.02,
             "selected": 0.07,
-            "unselected": 0.02,
+            "unselected": 0.03,
             "pressed": 0,
             "unpressed": 0
           }
@@ -124,32 +137,45 @@
       ]
     },
     "A chat log that loads older messages when scrolled up: \"Chat line 5\" should appear in the Chat": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.49,
+          "confidence": 0.99,
           "probabilities": {
-            "value": 0.41,
-            "presence": 0.59,
-            "absence": 0,
+            "value": 0.01,
+            "presence": 0.99,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "expanded",
-          "confidence": 0.43,
+          "confidence": 0.36,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.3,
-            "checked": 0.14,
+            "enabled": 0.33,
+            "checked": 0.21,
             "unchecked": 0.01,
-            "expanded": 0.49,
-            "collapsed": 0.02,
+            "expanded": 0.42,
+            "collapsed": 0.01,
             "selected": 0.01,
-            "unselected": 0.03,
+            "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
           }
@@ -162,7 +188,7 @@
               "container": "list \"Chat\"",
               "near": "Chat line 5"
             },
-            1
+            0.99
           ]
         ],
         "area": [

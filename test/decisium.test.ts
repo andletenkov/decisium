@@ -364,7 +364,7 @@ const oracle: Decider = {
   },
 };
 
-// Scripted assessment: answers what a correct model would.
+// Scripted assessment: answers what a correct model would. "absence": presence, negated.
 const assessing = (
   kind: string,
   pick: (obs: Observation) => Partial<Assessment> = () => ({}),
@@ -374,7 +374,8 @@ const assessing = (
   async assess(_step, obs, wantJudged) {
     const status = obs.readable.find((e) => e.role === "paragraph")?.ref ?? "none";
     return {
-      kind: sure(kind),
+      kind: sure(kind === "absence" ? "presence" : kind),
+      negated: sure(kind === "absence" ? "yes" : "no"),
       subject: sure(status),
       area: sure("page"),
       state: sure("disabled"),
@@ -501,7 +502,9 @@ test("runAssertion: presence, absence, state and judged checks", async () => {
     const split = (probabilities: Record<string, number>) =>
       assessing("value", () => ({ kind: { choice: "presence", probabilities } }));
     assert.equal(await run(`the status should show "Draft"`, split({ presence: 0.6, value: 0.4 })), "PASSED");
-    assert.equal(await run(`the status should show "Draft"`, split({ absence: 0.6, value: 0.4 })), "AMBIGUOUS");
+    // Unsure whether the check is negated: AMBIGUOUS.
+    const unsure = assessing("value", () => ({ negated: { choice: "no", probabilities: { no: 0.6, yes: 0.4 } } }));
+    assert.equal(await run(`the status should show "Draft"`, unsure), "AMBIGUOUS");
   } finally {
     await b.close();
   }
@@ -524,6 +527,114 @@ test("runAssertion: a state reading that cannot apply to the element drops out (
     assert.equal(await run(split({ state: 0.9, value: 0.1 })), "UNVERIFIABLE"); // only the inapplicable reading: no evidence
   } finally {
     await b.close();
+  }
+});
+
+test("observe: the page's own loading signals and a request in flight are evidence a check can wait on (issue #81)", async () => {
+  const b = await Browser.open(`data:text/html,<ul aria-busy="true" aria-label="Campaigns"><li>Autumn Sale</li></ul>
+    <progress></progress><progress value="3" max="10"></progress><div role="progressbar" aria-valuenow="5">5</div>`);
+  try {
+    const obs = await b.observe();
+    assert.deepEqual(
+      obs.busy?.map((e) => e.role),
+      ["list", "progressbar"], // a progress bar with a value is not loading
+    );
+    assert.equal(obs.loading, undefined);
+  } finally {
+    await b.close();
+  }
+});
+
+test("runAssertion: an absence on a screen still loading its list waits for the list, live and on replay (refactor bench)", async () => {
+  const { createServer } = await import("node:http");
+  const server = createServer((req, res) => {
+    if (req.url === "/") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      return res.end(`<main><h1>Campaigns</h1><p>Loading campaigns…</p></main>`);
+    }
+    setTimeout(() => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(["Autumn Sale", "Spring Sale"]));
+    }, 800);
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const app = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const api = `${app}api/campaigns`;
+  // Jev takes the main area for the campaign list: it is on the screen while the list loads, with no text to find.
+  const main: Decider = {
+    ...oracle,
+    assess: async (_s, obs) => ({
+      kind: sure("presence"),
+      negated: sure("yes"),
+      subject: sure("none"),
+      area: sure(obs.areas.find((e) => e.role === "main")!.ref),
+      state: sure("disabled"),
+    }),
+  };
+  try {
+    for (const replay of [false, true]) {
+      const b = await Browser.open(app);
+      b.replay = replay;
+      try {
+        // The list loads after the Step that opened it ended (a click that navigated, unsettled on replay).
+        const sent = b.page.waitForRequest(api);
+        await b.page.evaluate((url) => {
+          void fetch(url)
+            .then((r) => r.json())
+            .then((names: string[]) => {
+              document.querySelector("main")!.innerHTML =
+                `<h1>Campaigns</h1><ul>${names.map((n) => `<li>${n}</li>`).join("")}</ul>`;
+            });
+        }, api);
+        await sent;
+        const r = await runAssertion(`"Spring Sale" should not appear in the campaign list`, b, main, () => {});
+        assert.equal(r.outcome, "ASSERTION_FAILED", `replay=${replay}: ${r.reason}`);
+      } finally {
+        await b.close();
+      }
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test("runAssertion: a load the last action started is waited for however long it takes (issue #81)", async () => {
+  const { createServer } = await import("node:http");
+  const server = createServer((req, res) => {
+    if (req.url === "/") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      return res.end(`<main><h1>Campaigns</h1><button onclick="fetch('/api').then((r) => r.json()).then((names) => {
+        document.querySelector('main').innerHTML = '<h1>Campaigns</h1><ul>' + names.map((n) => '<li>' + n + '</li>').join('') + '</ul>';
+      })">Show campaigns</button></main>`);
+    }
+    setTimeout(() => res.end(JSON.stringify(["Autumn Sale", "Spring Sale"])), 1200); // slower than actionTimeout
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const app = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const main: Decider = {
+    ...oracle,
+    assess: async (_s, obs) => ({
+      kind: sure("presence"),
+      negated: sure("yes"),
+      subject: sure("none"),
+      area: sure(obs.areas.find((e) => e.role === "main")!.ref),
+      state: sure("disabled"),
+    }),
+  };
+  const before = process.env.DECISIUM_ACTION_TIMEOUT;
+  process.env.DECISIUM_ACTION_TIMEOUT = "500"; // the click's settle gives up while the list still loads
+  const b = await Browser.open(app);
+  try {
+    const button = (await b.observe()).elements.find((e) => e.name === "Show campaigns")!;
+    await b.execute({ verb: "CLICK", ref: button.ref });
+    await new Promise((r) => setTimeout(r, 600)); // older than actionTimeout by the time the check looks
+    const r = await runAssertion(`"Spring Sale" should not appear in the campaign list`, b, main, () => {});
+    assert.equal(r.outcome, "ASSERTION_FAILED", r.reason ?? "");
+  } finally {
+    if (before === undefined) delete process.env.DECISIUM_ACTION_TIMEOUT;
+    else process.env.DECISIUM_ACTION_TIMEOUT = before;
+    await b.close();
+    server.close();
   }
 });
 
@@ -726,7 +837,13 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
     },
     async assess(_s, obs) {
       calls++;
-      return { kind: sure("value"), subject: sure(obs.readable[0].ref), area: sure("page"), state: sure("disabled") };
+      return {
+        kind: sure("value"),
+        negated: sure("no"),
+        subject: sure(obs.readable[0].ref),
+        area: sure("page"),
+        state: sure("disabled"),
+      };
     },
   };
   const go = async (cassette: InstanceType<typeof Cassette>, obs: Observation) => {
@@ -905,18 +1022,21 @@ test("scoped presence: code looks for the quoted text inside the area Jev names"
     ).then((r) => r.outcome);
   assert.equal(await run(`"Winter Sale" should appear in the calendar`, "presence", "e2"), "PASSED");
   assert.equal(await run(`"Summer Sale" should appear in the calendar`, "presence", "e2"), "ASSERTION_FAILED"); // only the toast mentions it
-  assert.equal(await run(`the campaign list should contain "Spring Sale"`, "presence", "missing"), "ASSERTION_FAILED"); // heading, no list
-  assert.equal(await run(`"Spring Sale" should not appear in the campaign list`, "absence", "missing"), "PASSED");
+  // Heading, no list: the list is not on this screen, so neither check has evidence either way (issue #81).
+  assert.equal(await run(`the campaign list should contain "Spring Sale"`, "presence", "missing"), "UNVERIFIABLE");
+  assert.equal(await run(`"Spring Sale" should not appear in the campaign list`, "absence", "missing"), "UNVERIFIABLE");
   assert.equal(await run(`"Summer Sale" is shown`, "presence", "page"), "PASSED");
-  // Unsure which area: fine when the plausible areas agree, AMBIGUOUS when they don't.
+  // Unsure which area: fine when the plausible areas agree, AMBIGUOUS when they don't; an area not on the screen
+  // has no evidence, which the page's pass does not outvote.
   const split = (probabilities: Record<string, number>) =>
     assessing("presence", () => ({ area: { choice: "", probabilities } }));
   const go = (s: string, d: Decider) => runAssertion(s, rt, d, () => {}).then((r) => r.outcome);
   assert.equal(await go(`"Winter Sale" should appear in the calendar`, split({ e2: 0.6, page: 0.4 })), "PASSED");
   assert.equal(
     await go(`the campaign list should contain "Spring Sale"`, split({ missing: 0.6, page: 0.4 })),
-    "AMBIGUOUS",
+    "UNVERIFIABLE",
   );
+  assert.equal(await go(`"Summer Sale" should appear in the calendar`, split({ e2: 0.6, page: 0.4 })), "AMBIGUOUS");
 });
 
 test("memory: a check that quotes nothing uses the value an earlier Step named", async () => {
@@ -1283,7 +1403,8 @@ test("subject: when Jev is unsure which element a check is about, every plausibl
   assert.equal(await split("value", { e2: 0.55, e3: 0.4, e4: 0.05 }), "PASSED");
   assert.equal(await split("value", { e2: 0.99 }), "PASSED");
   assert.equal(await split("value", { e3: 0.5, e4: 0.45 }), "AMBIGUOUS"); // the heading shows it, the status does not
-  assert.equal(await split("value", { e3: 0.5, none: 0.45 }), "AMBIGUOUS"); // "nothing matches" is a reading too
+  // "Nothing is the subject" is a reading too: it shows no value, so the heading's pass does not outvote it.
+  assert.equal(await split("value", { e3: 0.5, none: 0.45 }), "UNVERIFIABLE");
   // A button's text is its label, not a value it shows: no evidence, so the other reading decides.
   assert.equal(await split("value", { e6: 0.55, e4: 0.4 }), "ASSERTION_FAILED");
   assert.equal(await split("value", { e6: 0.99 }), "UNVERIFIABLE");
@@ -1568,10 +1689,8 @@ test("runAssertion: a check's table is matched row by row under the page table's
     "ASSERTION_FAILED",
   );
   assert.equal(await outcome("the cart should list in this order:", [["Product", "Quantity"], pack, bike]), "PASSED");
-  assert.equal(
-    await outcome("the cart should contain:", [["Product", "Quantity"], pack], "missing"),
-    "ASSERTION_FAILED",
-  );
+  // The cart is not on this screen: no evidence either way.
+  assert.equal(await outcome("the cart should contain:", [["Product", "Quantity"], pack], "missing"), "UNVERIFIABLE");
   // Only a header row: nothing to compare.
   assert.equal(await outcome("the cart should show:", [["Product", "Backpack"]]), "UNVERIFIABLE");
   // One column: a list of values that must all be shown in the area.
@@ -2509,7 +2628,13 @@ test("upload through a hidden input behind a button, never a missing file; downl
     const subject = (await download())!.ref;
     const assess = (): Decider => ({
       ...oracle,
-      assess: async () => ({ kind: sure("value"), subject: sure(subject), area: sure("page"), state: sure("checked") }),
+      assess: async () => ({
+        kind: sure("value"),
+        negated: sure("no"),
+        subject: sure(subject),
+        area: sure("page"),
+        state: sure("checked"),
+      }),
     });
     assert.equal(
       (await runAssertion(`the downloaded file should contain "a,b"`, b, assess(), () => {})).outcome,

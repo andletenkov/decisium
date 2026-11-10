@@ -4,7 +4,7 @@ Feature: Browser dialogs (task 0040)
 
   Scenario: Confirm a deletion
     When I delete the "Groceries" note
-    Then "Groceries" should not appear in the notes
+    Then "Groceries" should not appear in the notes list
     And the confirm should say "Delete the Groceries note?"
 
   Scenario: Cancel a confirm
@@ -28,4 +28,4 @@ Feature: Browser dialogs (task 0040)
   Scenario: A Step that only answers the dialog
     When I click the delete button of "Groceries"
     And I accept the confirm
-    Then "Groceries" should not appear in the notes
+    Then "Groceries" should not appear in the notes list

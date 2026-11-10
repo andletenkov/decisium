@@ -44,6 +44,7 @@ Inputs take ISO values: `"2026-10-20"`, `"14:30"`. iframes and open shadow roots
 | To check | Write |
 |---|---|
 | A value | `the campaign status should be "Draft"` · `the Email field should be "ada@example.com"` |
+| Not a value | `the campaign status should not be "Scheduled"` |
 | An error | `the error should say "Set an activation date before scheduling"` |
 | Text on the page | `"Saved" should appear` |
 | Text in an area | `"Winter Sale" should appear in the calendar` |
@@ -57,6 +58,12 @@ Inputs take ISO values: `"2026-10-20"`, `"14:30"`. iframes and open shadow roots
 
 States: disabled, enabled, checked, unchecked, expanded, collapsed, selected, pressed. A subjective check
 (`the article should be well written`) runs only with `--judged` and reports `JUDGED_PASSED` / `JUDGED_FAILED`.
+
+Quoted text is found as whole words, in a value or on the page: "Status: Draft" shows "Draft". It cannot tell a
+negated value ("Not Scheduled" shows "Scheduled"): quote the whole value where the app can show either. Absence, a missing table row and "exactly these
+rows" need the whole area on the screen and done loading; until then the check waits, then reports `UNVERIFIABLE`.
+The app's own signals count (`aria-busy`, a progress bar, a request in flight). An app that shows none while a list
+loads needs a Step that waits for the loaded list first, e.g. `"Autumn Sale" should appear in the campaign list`.
 
 ## Tables, doc strings, unique values
 

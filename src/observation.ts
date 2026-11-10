@@ -66,6 +66,10 @@ export interface Observation {
   readable: Element[]; // every ref'd node with text, for Assertion steps
   areas: Element[]; // ref'd nodes with children (lists, tables, regions): where a presence check can look
   pageText: string; // all visible names and values
+  /** Elements the page marks as still loading (`aria-busy`, an indeterminate progress bar): their content is not final. */
+  busy?: Element[];
+  /** Why the page may still be filling in content (a request it made is in flight); absent: nothing known pending. */
+  loading?: string;
   dialog?: Dialog; // a browser dialog, open or the last one shown (task 0040)
 }
 
@@ -120,6 +124,7 @@ export function parseSnapshot(
   const readable: Element[] = [];
   const kept: (string | undefined)[] = [];
   const areas = new Set<Element>();
+  const busy: Element[] = [];
   const open: { el: Element; indent: number }[] = []; // ancestors of the current line, by indentation
   const bare = new Map<Element, string[]>(); // container -> text it holds that has no element of its own
   const named = new Map<Element, string[]>(); // container -> names of the ref'd elements inside it
@@ -199,6 +204,7 @@ export function parseSnapshot(
       parent: host,
     };
     open.push({ el, indent: indent.length });
+    if (/\[busy\]/.test(attrs)) busy.push(el);
     if (host?.role === "row" && CELLS.has(role)) (host.cells ??= []).push(el);
     const scrollable = /\[scrollable\]/.test(attrs);
     if (role === "generic" && !name && !value && !scrollable) wrappers.set(el, at);
@@ -234,13 +240,20 @@ export function parseSnapshot(
     if (shown) kept[l.at!] = "  ".repeat(stack.filter((a) => a.kept).length) + kept[l.at!]!.trimStart();
     stack.push({ indent: l.indent, kept: shown });
   }
-  for (const el of [...readable, ...areas]) {
+  for (const el of [...readable, ...areas, ...busy]) {
     if (el.options.length) el.verb = "SELECT";
     // A long value (a whole file in a code view) would bury the description; the full value stays in `value`.
     const value = clip(el.value);
     el.line = `${el.role}${el.name ? ` "${el.name}"` : ""}${value ? ` value="${value}"` : ""}${el.description ? ` description="${el.description}"` : ""}${el.state ? " " + el.state : ""}`;
   }
-  return { text: kept.filter((l) => l !== undefined).join("\n"), elements, readable, areas: [...areas], pageText };
+  return {
+    text: kept.filter((l) => l !== undefined).join("\n"),
+    elements,
+    readable,
+    areas: [...areas],
+    pageText,
+    busy,
+  };
 }
 
 /** A value cut to 60 characters for an element's line. */

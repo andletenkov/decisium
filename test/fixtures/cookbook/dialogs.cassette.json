@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-46-23-954Z",
+  "run": "runs/2026-11-10T18-53-53-909Z",
   "entries": {
     "Confirm a deletion: I delete the \"Groceries\" note": {
       "turns": [
@@ -28,89 +28,123 @@
         }
       ]
     },
-    "Confirm a deletion: \"Groceries\" should not appear in the notes": {
+    "Confirm a deletion: \"Groceries\" should not appear in the notes list": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {
+        "exact": false
+      },
       "check": {
         "kind": {
           "type": "choice",
-          "choice": "absence",
+          "choice": "presence",
           "confidence": 1,
           "probabilities": {
             "value": 0,
-            "presence": 0,
-            "absence": 1,
+            "presence": 1,
             "state": 0,
             "fuzzy": 0
           }
         },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 1,
+          "probabilities": {
+            "no": 0,
+            "yes": 1
+          }
+        },
         "state": {
           "type": "choice",
-          "choice": "collapsed",
-          "confidence": 0.38,
+          "choice": "unselected",
+          "confidence": 0.31,
           "probabilities": {
-            "disabled": 0.03,
-            "enabled": 0.05,
-            "checked": 0.05,
-            "unchecked": 0.13,
-            "expanded": 0.03,
-            "collapsed": 0.44,
+            "disabled": 0.01,
+            "enabled": 0.02,
+            "checked": 0.03,
+            "unchecked": 0.14,
+            "expanded": 0.01,
+            "collapsed": 0.34,
             "selected": 0.02,
-            "unselected": 0.17,
+            "unselected": 0.38,
             "pressed": 0.01,
-            "unpressed": 0.07
+            "unpressed": 0.04
           }
         },
         "subject": [
-          [
-            {
-              "role": "confirm",
-              "name": "browser dialog",
-              "container": ""
-            },
-            0.81
-          ]
-        ],
-        "area": [
-          ["page", 0.41000000000000003],
-          ["missing", 0.31],
           [
             {
               "role": "list",
               "name": "Notes",
               "container": ""
             },
-            0.15
+            0.72
+          ],
+          [
+            {
+              "role": "confirm",
+              "name": "browser dialog",
+              "container": ""
+            },
+            0.14
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Notes",
+              "container": ""
+            },
+            1
           ]
         ]
       }
     },
     "Confirm a deletion: the confirm should say \"Delete the Groceries note?\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 1,
+          "confidence": 0.97,
           "probabilities": {
-            "value": 1,
-            "presence": 0,
-            "absence": 0,
+            "value": 0.98,
+            "presence": 0.02,
             "state": 0,
             "fuzzy": 0
           }
         },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
+          }
+        },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.24,
+          "choice": "expanded",
+          "confidence": 0.28,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.32,
-            "checked": 0.2,
+            "enabled": 0.28,
+            "checked": 0.17,
             "unchecked": 0.01,
-            "expanded": 0.32,
-            "collapsed": 0.08,
-            "selected": 0.02,
+            "expanded": 0.35,
+            "collapsed": 0.09,
+            "selected": 0.04,
             "unselected": 0.01,
-            "pressed": 0.02,
+            "pressed": 0.03,
             "unpressed": 0.01
           }
         },
@@ -124,20 +158,7 @@
             0.98
           ]
         ],
-        "area": [
-          ["missing", 0.43],
-          ["page", 0.29],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "nth": 0,
-              "of": 2
-            },
-            0.22
-          ]
-        ]
+        "area": [["missing", 0.53], ["page", 0.3]]
       }
     },
     "Cancel a confirm: I start deleting the \"Ideas\" note but cancel": {
@@ -177,34 +198,47 @@
       ]
     },
     "Cancel a confirm: \"Ideas\" should still appear in the notes list": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.82,
+          "confidence": 1,
           "probabilities": {
-            "value": 0.08,
-            "presence": 0.86,
-            "absence": 0.05,
+            "value": 0,
+            "presence": 1,
             "state": 0,
-            "fuzzy": 0.01
+            "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
-          "choice": "enabled",
-          "confidence": 0.28,
+          "choice": "disabled",
+          "confidence": 0.22,
           "probabilities": {
-            "disabled": 0.28,
-            "enabled": 0.35,
-            "checked": 0.09,
+            "disabled": 0.3,
+            "enabled": 0.3,
+            "checked": 0.08,
             "unchecked": 0.01,
-            "expanded": 0.01,
+            "expanded": 0.02,
             "collapsed": 0.01,
-            "selected": 0.08,
-            "unselected": 0.03,
-            "pressed": 0.09,
-            "unpressed": 0.05
+            "selected": 0.09,
+            "unselected": 0.06,
+            "pressed": 0.07,
+            "unpressed": 0.06
           }
         },
         "subject": [
@@ -225,7 +259,7 @@
               "name": "Notes",
               "container": ""
             },
-            0.92
+            0.95
           ]
         ]
       }
@@ -254,33 +288,46 @@
       ]
     },
     "Read an alert: the alert should say \"Settings saved\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.9,
+          "confidence": 1,
           "probabilities": {
-            "value": 0.92,
-            "presence": 0.04,
-            "absence": 0.02,
+            "value": 1,
+            "presence": 0,
             "state": 0,
-            "fuzzy": 0.02
+            "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.53,
+          "confidence": 0.39,
           "probabilities": {
-            "disabled": 0.11,
-            "enabled": 0.58,
-            "checked": 0.07,
-            "unchecked": 0,
-            "expanded": 0.05,
-            "collapsed": 0.07,
+            "disabled": 0.13,
+            "enabled": 0.45,
+            "checked": 0.1,
+            "unchecked": 0.01,
+            "expanded": 0.08,
+            "collapsed": 0.08,
             "selected": 0.01,
             "unselected": 0,
-            "pressed": 0.1,
+            "pressed": 0.13,
             "unpressed": 0.01
           }
         },
@@ -291,10 +338,10 @@
               "name": "browser dialog",
               "container": ""
             },
-            1
+            0.99
           ]
         ],
-        "area": [["missing", 0.54], ["page", 0.35]]
+        "area": [["missing", 0.5], ["page", 0.33]]
       }
     },
     "Answer a prompt: I rename the list to \"Errands\"": {
@@ -334,33 +381,46 @@
       ]
     },
     "Answer a prompt: the list heading should be \"Errands\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 1,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 1,
-            "presence": 0,
-            "absence": 0,
+            "value": 0.97,
+            "presence": 0.03,
             "state": 0,
             "fuzzy": 0
           }
         },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
+          }
+        },
         "state": {
           "type": "choice",
-          "choice": "checked",
-          "confidence": 0.4,
+          "choice": "enabled",
+          "confidence": 0.33,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.36,
-            "checked": 0.45999999999999996,
+            "enabled": 0.4,
+            "checked": 0.39,
             "unchecked": 0.02,
-            "expanded": 0.01,
+            "expanded": 0.02,
             "collapsed": 0.01,
-            "selected": 0.09,
+            "selected": 0.08,
             "unselected": 0.01,
-            "pressed": 0.03,
+            "pressed": 0.06,
             "unpressed": 0.01
           }
         },
@@ -381,9 +441,9 @@
               "name": "",
               "container": ""
             },
-            0.7
+            0.67
           ],
-          ["page", 0.13]
+          ["page", 0.14]
         ]
       }
     },
@@ -456,31 +516,44 @@
       ]
     },
     "Leave a page with unsaved changes: the page heading should be \"Search\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 1,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 1,
-            "presence": 0,
-            "absence": 0,
+            "value": 0.97,
+            "presence": 0.03,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.4,
+          "confidence": 0.42,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.46,
-            "checked": 0.14,
+            "enabled": 0.48,
+            "checked": 0.22,
             "unchecked": 0.01,
-            "expanded": 0.02,
-            "collapsed": 0,
-            "selected": 0.34,
+            "expanded": 0.03,
+            "collapsed": 0.01,
+            "selected": 0.23,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0
@@ -493,7 +566,7 @@
               "name": "Search",
               "container": ""
             },
-            0.99
+            1
           ]
         ],
         "area": [
@@ -503,7 +576,7 @@
               "name": "",
               "container": ""
             },
-            0.83
+            0.85
           ]
         ]
       }

@@ -12,6 +12,7 @@ import {
   AREA_MISSING,
   AREA_PAGE,
   ASSERTION_KINDS,
+  NEGATED,
   capabilities,
   describeAction,
   PAGE,
@@ -404,21 +405,25 @@ export class ModelDecider implements Decider {
       state,
       questions: {
         kind: choice("What kind of check is `check`?", ASSERTION_KINDS),
+        negated: choice(
+          "Read only the words of `check`, not `ui`: do they say that a text or value should NOT be shown?",
+          NEGATED,
+        ),
         subject: choice(subjectQ, subjects),
         state: choice("Which control state does `check` require?", STATES),
         area: choice(areaQ, areas),
-        // Asked in the same call whether or not --judged: code uses it only to veto an inexact text match.
-        satisfied: noul("Does `ui` satisfy `check`?"),
+        // A verdict on the whole check: asked only for an opted-in --judged check (issue #81), never to decide another.
+        ...(judged ? { satisfied: noul("Does `ui` satisfy `check`?") } : {}),
       },
     });
-    const a = res.answers as typeof res.answers & { satisfied: { noul: number } };
+    const a = res.answers as typeof res.answers & { satisfied?: { noul: number } };
     return {
       kind: a.kind,
+      negated: a.negated,
       subject: a.subject,
       area: a.area,
       state: a.state,
-      satisfied: a.satisfied.noul,
-      judged: judged ? a.satisfied.noul : undefined,
+      judged: judged ? a.satisfied?.noul : undefined,
     };
   }
 }

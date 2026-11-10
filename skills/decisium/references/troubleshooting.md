@@ -32,7 +32,8 @@ expression or profile filtered them out, or `file.feature:<line>` points at no s
 |---|---|---|
 | `ASSERTION_FAILED` | The app is wrong. | Check the app, not the Step. |
 | `AMBIGUOUS` | The Step could mean more than one thing. | Name the element or area; quote its label, or pin a reported action-target Resolution. |
-| `UNVERIFIABLE` | The check quotes nothing to compare. | Quote the expected value or text. |
+| `UNVERIFIABLE` | The check quotes nothing to compare, or its evidence never arrived: the area or subject it names is not on the screen, or the area was still loading. | Quote the expected value or text; name an area as the page shows it; check what the loaded page shows first. |
+| absence `UNVERIFIABLE`: "a request is in flight" | The last action started a request that never ends (a long poll, a live feed), so the page never proves the text is gone. | Check what replaces the text (`"X" should appear`), or check the absence before the action that opens the feed. |
 | `BLOCKED` | The task cannot be done on this page. | Check the start URL and the Steps before it; a hover menu needs "hover". |
 | `ELEMENT_NOT_FOUND` | Nothing matches what the Step names. | Use the page's own label. |
 | `ACTION_FAILED` | The action ran but did not take effect (e.g. a field rejected the value). | Check the value's format; for dates use ISO. |

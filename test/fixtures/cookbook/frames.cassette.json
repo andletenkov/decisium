@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-47-11-223Z",
+  "run": "runs/2026-11-10T18-54-34-269Z",
   "entries": {
     "A form inside an iframe: I enter \"ada@example.com\" in Email": {
       "turns": [
@@ -70,6 +70,11 @@
       ]
     },
     "A form inside an iframe: the newsletter status should be \"Subscribed ada@example.com\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -78,26 +83,34 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.51,
+          "confidence": 0.69,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.56,
-            "checked": 0.24,
+            "enabled": 0.72,
+            "checked": 0.15,
             "unchecked": 0,
-            "expanded": 0.01,
+            "expanded": 0,
             "collapsed": 0,
-            "selected": 0.12,
+            "selected": 0.07,
             "unselected": 0,
-            "pressed": 0.06,
-            "unpressed": 0
+            "pressed": 0.04,
+            "unpressed": 0.01
           }
         },
         "subject": [
@@ -118,21 +131,18 @@
               "name": "",
               "container": ""
             },
-            0.51
+            0.59
           ],
-          ["page", 0.26],
-          [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.2
-          ]
+          ["page", 0.29]
         ]
       }
     },
     "A form inside an iframe: the Email field should be \"ada@example.com\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -141,19 +151,27 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.71,
+          "confidence": 0.76,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.74,
-            "checked": 0.19,
+            "enabled": 0.78,
+            "checked": 0.15,
             "unchecked": 0.01,
             "expanded": 0,
             "collapsed": 0,
@@ -180,9 +198,9 @@
               "name": "",
               "container": ""
             },
-            0.78
+            0.73
           ],
-          ["page", 0.14]
+          ["page", 0.19]
         ]
       }
     },
@@ -220,6 +238,11 @@
       ]
     },
     "A button inside a web component: the Like button should be pressed": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -228,9 +251,17 @@
           "probabilities": {
             "value": 0,
             "presence": 0,
-            "absence": 0,
             "state": 1,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.98,
+          "probabilities": {
+            "no": 0.99,
+            "yes": 0.01
           }
         },
         "state": {
@@ -260,31 +291,34 @@
             1
           ]
         ],
-        "area": [
-          ["page", 0.79],
-          [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.17
-          ]
-        ]
+        "area": [["page", 0.87]]
       }
     },
     "A button inside a web component: \"1 like\" should be shown": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.97,
+          "confidence": 0.61,
           "probabilities": {
-            "value": 0.98,
-            "presence": 0.02,
-            "absence": 0,
+            "value": 0.71,
+            "presence": 0.29,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
@@ -293,7 +327,7 @@
           "confidence": 0.92,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.03,
+            "enabled": 0.04,
             "checked": 0.02,
             "unchecked": 0,
             "expanded": 0,
@@ -315,7 +349,7 @@
           ]
         ],
         "area": [
-          ["page", 0.68],
+          ["page", 0.7],
           [
             {
               "role": "main",

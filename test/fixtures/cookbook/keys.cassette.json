@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-47-23-802Z",
+  "run": "runs/2026-11-10T18-54-42-641Z",
   "entries": {
     "Close a dialog with Escape: I open the keyboard help": {
       "turns": [
@@ -36,33 +36,46 @@
       ]
     },
     "Close a dialog with Escape: \"Close it with Escape.\" should appear": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
-          "choice": "value",
-          "confidence": 0.95,
+          "choice": "presence",
+          "confidence": 0.87,
           "probabilities": {
-            "value": 0.96,
-            "presence": 0.04,
-            "absence": 0,
+            "value": 0.1,
+            "presence": 0.9,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "expanded",
-          "confidence": 0.73,
+          "confidence": 0.84,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.07,
-            "checked": 0.03,
+            "enabled": 0.06,
+            "checked": 0.02,
             "unchecked": 0,
-            "expanded": 0.76,
-            "collapsed": 0.05,
+            "expanded": 0.86,
+            "collapsed": 0.03,
             "selected": 0,
             "unselected": 0,
-            "pressed": 0.09,
+            "pressed": 0.03,
             "unpressed": 0
           }
         },
@@ -83,56 +96,69 @@
               "name": "Keyboard help",
               "container": ""
             },
-            0.71
+            0.69
           ],
-          ["page", 0.27]
+          ["page", 0.3]
         ]
       }
     },
     "Close a dialog with Escape: I press Escape": {},
     "Close a dialog with Escape: \"Close it with Escape.\" should not appear": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
-          "choice": "absence",
-          "confidence": 1,
+          "choice": "presence",
+          "confidence": 0.99,
           "probabilities": {
-            "value": 0,
-            "presence": 0,
-            "absence": 1,
+            "value": 0.01,
+            "presence": 0.99,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 1,
+          "probabilities": {
+            "no": 0,
+            "yes": 1
           }
         },
         "state": {
           "type": "choice",
           "choice": "collapsed",
-          "confidence": 0.59,
+          "confidence": 0.66,
           "probabilities": {
-            "disabled": 0.03,
+            "disabled": 0.02,
             "enabled": 0.02,
             "checked": 0.01,
-            "unchecked": 0.05,
-            "expanded": 0.05,
-            "collapsed": 0.63,
+            "unchecked": 0.03,
+            "expanded": 0.06,
+            "collapsed": 0.69,
             "selected": 0,
-            "unselected": 0.02,
-            "pressed": 0.04,
-            "unpressed": 0.15
+            "unselected": 0.01,
+            "pressed": 0.06,
+            "unpressed": 0.1
           }
         },
         "subject": [
-          ["none", 0.63],
+          ["none", 0.66],
           [
             {
               "role": "button",
               "name": "Keyboard help",
               "container": ""
             },
-            0.33
+            0.24
           ]
         ],
-        "area": [["page", 0.91]]
+        "area": [["page", 0.86]]
       }
     },
     "Open the command palette with a shortcut: I open the command palette by pressing Ctrl+K": {
@@ -150,32 +176,45 @@
       ]
     },
     "Open the command palette with a shortcut: \"Go to settings\" should appear in the command palette": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.57,
+          "confidence": 0.99,
           "probabilities": {
-            "value": 0.34,
-            "presence": 0.66,
-            "absence": 0,
+            "value": 0.01,
+            "presence": 0.99,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "expanded",
-          "confidence": 0.52,
+          "confidence": 0.51,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.29,
-            "checked": 0.05,
+            "enabled": 0.28,
+            "checked": 0.02,
             "unchecked": 0,
-            "expanded": 0.5700000000000001,
+            "expanded": 0.56,
             "collapsed": 0,
-            "selected": 0.06,
-            "unselected": 0.03,
+            "selected": 0.1,
+            "unselected": 0.04,
             "pressed": 0,
             "unpressed": 0
           }
@@ -188,7 +227,7 @@
               "container": "dialog \"Command palette\"",
               "near": "Go to settings"
             },
-            1
+            0.99
           ]
         ],
         "area": [
@@ -198,13 +237,18 @@
               "name": "Command palette",
               "container": ""
             },
-            0.9
+            0.89
           ]
         ]
       }
     },
     "Move through a list with the arrow keys: I press the down arrow": {},
     "Move through a list with the arrow keys: \"Banana\" should be selected": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -213,9 +257,17 @@
           "probabilities": {
             "value": 0.01,
             "presence": 0,
-            "absence": 0,
             "state": 0.99,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
@@ -252,13 +304,18 @@
               "name": "Fruits",
               "container": ""
             },
-            0.64
+            0.66
           ],
-          ["page", 0.35]
+          ["page", 0.33]
         ]
       }
     },
     "Move through a list with the arrow keys: \"Apple\" should be unselected": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -267,9 +324,17 @@
           "probabilities": {
             "value": 0,
             "presence": 0,
-            "absence": 0,
             "state": 1,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 0.38,
+          "probabilities": {
+            "no": 0.31,
+            "yes": 0.69
           }
         },
         "state": {
@@ -306,14 +371,19 @@
               "name": "Fruits",
               "container": ""
             },
-            0.68
+            0.72
           ],
-          ["page", 0.31]
+          ["page", 0.27]
         ]
       }
     },
     "Move the focus with Tab: I press \"Tab\"": {},
     "Move the focus with Tab: the status should be \"Focus: Note\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -322,23 +392,31 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
           }
         },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
+          }
+        },
         "state": {
           "type": "choice",
-          "choice": "selected",
-          "confidence": 0.38,
+          "choice": "enabled",
+          "confidence": 0.49,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.42,
+            "enabled": 0.54,
             "checked": 0.08,
             "unchecked": 0,
-            "expanded": 0.03,
-            "collapsed": 0.01,
-            "selected": 0.44,
+            "expanded": 0.02,
+            "collapsed": 0,
+            "selected": 0.34,
             "unselected": 0.01,
             "pressed": 0.01,
             "unpressed": 0
@@ -362,7 +440,7 @@
               "name": "",
               "container": ""
             },
-            0.16
+            0.18
           ]
         ]
       }
