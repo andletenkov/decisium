@@ -130,7 +130,11 @@ const factsIn = (els: Element[]) =>
     // What the snapshot cannot tell: a password field, a field typed into (an editable combobox is a search box with
     // suggestions, not a button-like one), a link marked aria-current. Read here, in the same pass, not per field.
     if (e.matches('input[type="password"]')) out.push("secret");
-    else if (e.matches('input, textarea, [contenteditable]:not([contenteditable="false"])')) out.push("editable");
+    // Only what can be a combobox (the one place it is used): every checkbox or hidden input would cost one more call.
+    else if (
+      e.matches('input[list], [role="combobox"]:is(input, textarea, [contenteditable]:not([contenteditable="false"]))')
+    )
+      out.push("editable");
     if (e.matches('a[aria-current]:not([aria-current="false"])')) out.push("current");
     if (/auto|scroll/.test(style.overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement)
       out.push("scrollable");

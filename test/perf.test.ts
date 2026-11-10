@@ -169,3 +169,25 @@ test("observe: a second read with nothing changed is reused; an action, a field 
     await b.close();
   }
 });
+
+test("observe: a page with many form fields is read at about the cost of a small one", async () => {
+  const rows = Array.from(
+    { length: 200 },
+    (_, i) => `<li><label><input type=checkbox> Item ${i}</label><input type=hidden value=${i}></li>`,
+  ).join("");
+  const big = createServer((_, res) => res.setHeader("content-type", "text/html").end(`<ul>${rows}</ul>`));
+  await new Promise<void>((r) => big.listen(0, "127.0.0.1", r));
+  const b = await Browser.open(`http://127.0.0.1:${(big.address() as AddressInfo).port}/`);
+  try {
+    await b.observe(); // warm
+    b.forget();
+    const t = Date.now();
+    await b.observe();
+    const ms = Date.now() - t;
+    // ~15 ms; one browser call per checkbox and hidden input (a fact read for each) took ~165 ms.
+    assert.ok(ms < 100, `reading the page took ${ms} ms`);
+  } finally {
+    await b.close();
+    big.close();
+  }
+});
