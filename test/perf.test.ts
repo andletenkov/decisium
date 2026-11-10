@@ -81,12 +81,15 @@ test("perf tally splits settle by what held it", async () => {
 test("replay: a change landing a task after the click is seen without a fixed wait", async () => {
   const b = await Browser.open(url, false, false, {}, ".", undefined, {}, undefined, true);
   try {
+    // Diff from the page before the click: a snapshot taken after it may already hold the change on a loaded machine
+    // (the click's 30 ms timer fires during that observe), and then there is nothing left to wait for.
     const obs = await b.observe();
-    await b.execute({ verb: "CLICK", ref: obs.elements.find((e) => e.name === "Later")!.ref });
     const t = Date.now();
-    assert.equal(await b.waitForChange((await b.observe()).text), true);
+    await b.execute({ verb: "CLICK", ref: obs.elements.find((e) => e.name === "Later")!.ref });
+    assert.equal(await b.waitForChange(obs.text), true);
     const ms = Date.now() - t;
-    // Polling every 20 ms and a short quiet window: about 100 ms; a fixed 100 ms poll plus a full quiet window took over 250.
+    // Click, 30 ms timer, polling every 20 ms, a short quiet window: about 100 ms; a fixed 100 ms poll plus a full
+    // quiet window took over 250.
     assert.ok(ms < 200, `waitForChange took ${ms} ms`);
   } finally {
     await b.close();
