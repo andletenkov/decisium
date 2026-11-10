@@ -46,6 +46,21 @@ jobs:
         with: { name: decisium-runs, path: runs/ }
 </code></pre>
 <p><code>runs/</code> holds the screenshots, Playwright trace and <code>report.md</code> of every failed scenario.</p>
+<h2 id="one-set-of-features-several-environments">One set of features, several environments</h2>
+<p><code>--url</code> (or <code>DECISIUM_URL</code>) overrides <code>@url:</code>, so features written without <code>@url:</code> run against any environment:</p>
+<pre><code class="language-yaml">jobs:
+  e2e:
+    strategy:
+      matrix:
+        env: [dev, staging]
+    steps:
+      # ...checkout, setup-node, install as above
+      - run: npx decisium run features/*.feature --record none --url ${{ vars[format(&#39;URL_{0}&#39;, matrix.env)] }}
+        env:
+          USERNAME: ${{ secrets[format(&#39;USERNAME_{0}&#39;, matrix.env)] }}   # &quot;$USERNAME&quot; in a Step
+</code></pre>
+<p>Cassettes record which element a Step meant, not the environment, so one cassette serves environments whose pages match.
+If an environment&#39;s UI differs, replay fails as <code>UI_CHANGED</code>.</p>
 <h2 id="when-the-ui-changes">When the UI changes</h2>
 <p>CI fails as <code>UI_CHANGED</code>. If the change is intended, re-record locally and commit the cassette:</p>
 <pre><code class="language-sh">decisium run features/campaign.feature --record new
@@ -64,7 +79,7 @@ decisium run features/campaign.feature --record none
 </code></pre>
 <p>Chromium is preinstalled. Use the version that recorded your cassettes; pass <code>-e TYPESAFE_API_KEY</code> to record.</p>
 <div class="pager"><a class="prev" href="configuration.html"><span>Previous</span>CLI and configuration</a><a class="next" href="troubleshooting.html"><span>Next</span>Troubleshooting</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#when-the-ui-changes">When the UI changes</a><a class="l2" href="#pin-an-ambiguous-target">Pin an ambiguous target</a><a class="l2" href="#docker">Docker</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#one-set-of-features-several-environments">One set of features, several environments</a><a class="l2" href="#when-the-ui-changes">When the UI changes</a><a class="l2" href="#pin-an-ambiguous-target">Pin an ambiguous target</a><a class="l2" href="#docker">Docker</a></aside>
 </div>
 </body>
 </html>

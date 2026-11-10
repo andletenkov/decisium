@@ -24,6 +24,26 @@ jobs:
 
 `runs/` holds the screenshots, Playwright trace and `report.md` of every failed scenario.
 
+## One set of features, several environments
+
+`--url` (or `DECISIUM_URL`) overrides `@url:`, so features written without `@url:` run against any environment:
+
+```yaml
+jobs:
+  e2e:
+    strategy:
+      matrix:
+        env: [dev, staging]
+    steps:
+      # ...checkout, setup-node, install as above
+      - run: npx decisium run features/*.feature --record none --url ${{ vars[format('URL_{0}', matrix.env)] }}
+        env:
+          USERNAME: ${{ secrets[format('USERNAME_{0}', matrix.env)] }}   # "$USERNAME" in a Step
+```
+
+Cassettes record which element a Step meant, not the environment, so one cassette serves environments whose pages match.
+If an environment's UI differs, replay fails as `UI_CHANGED`.
+
 ## When the UI changes
 
 CI fails as `UI_CHANGED`. If the change is intended, re-record locally and commit the cassette:
