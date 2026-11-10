@@ -70,10 +70,6 @@ const IDLE_GAP_MS = 100; // two idle probes this far apart: promise chains (e.g.
 // `checkTimeout`; ignore such work by URL/type when the waiting costs too much.
 // Not tracked: Web Workers, and timers inside cross-origin iframes.
 
-/** Snapshot links with their `/url` line: [ref, url]. */
-const links = (snapshot: string): [string, string][] =>
-  [...snapshot.matchAll(/- link\b[^\n]*\[ref=(\w+)\][^\n]*\n\s*- \/url: "?(.*?)"?$/gm)].map((m) => [m[1], m[2]]);
-
 /** Adds `[current]` to the given refs' lines (Playwright's snapshot drops aria-current). */
 const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
   refs.size ? snapshot.replace(/ \[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? ` [current]${m}` : m)) : snapshot;
@@ -119,7 +115,7 @@ const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
   refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? `${m} [${flag}]` : m)) : snapshot;
 
 /** Facts the snapshot lacks, per element (tasks 0045, 0061, 0064); each stays separate for track B. */
-type Fact = "draggable" | "scrollable" | "pointer" | "tabindex";
+type Fact = "draggable" | "scrollable" | "pointer" | "tabindex" | "secret" | "editable" | "current";
 
 /**
  * `factsIn`: indexes of `els` with a fact, and which. Runs in the page. Native controls are skipped for the target facts: their
@@ -131,6 +127,11 @@ const factsIn = (els: Element[]) =>
     const out: string[] = [];
     const style = getComputedStyle(e);
     if (e.getAttribute("draggable") === "true") out.push("draggable");
+    // What the snapshot cannot tell: a password field, a field typed into (an editable combobox is a search box with
+    // suggestions, not a button-like one), a link marked aria-current. Read here, in the same pass, not per field.
+    if (e.matches('input[type="password"]')) out.push("secret");
+    else if (e.matches('input, textarea, [contenteditable]:not([contenteditable="false"])')) out.push("editable");
+    if (e.matches('a[aria-current]:not([aria-current="false"])')) out.push("current");
     if (/auto|scroll/.test(style.overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement)
       out.push("scrollable");
     if (!e.matches("a[href], button, input, select, textarea, summary, label, option, iframe") && e.checkVisibility()) {
@@ -581,38 +582,10 @@ export class Browser {
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
     const snapshot = renderSnapshot((await this.page.ariaSnapshotJSON({ mode: "ai" })) as AriaNode[]);
-    // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
-    // from a button-like one; ask the DOM.
-    const secret = new Set<string>(),
-      editable = new Set<string>();
-    // One round trip each, all at once: they only read, and the page snapshot above is already taken.
-    const fields = [...snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)];
-    const [kinds, current] = await Promise.all([
-      Promise.all(
-        fields.map(([, , ref]) =>
-          this.page
-            .locator(`aria-ref=${ref}`)
-            .evaluate(
-              (el) =>
-                (el as HTMLInputElement).type === "password"
-                  ? "secret"
-                  : el instanceof HTMLInputElement ||
-                      el instanceof HTMLTextAreaElement ||
-                      (el as HTMLElement).isContentEditable
-                    ? "editable"
-                    : "",
-              undefined,
-              { timeout: 1000 },
-            )
-            .catch(() => ""),
-        ),
-      ),
-      this.currentLinks(snapshot),
-    ]);
-    fields.forEach(([, role, ref], i) => {
-      if (kinds[i] === "secret") secret.add(ref);
-      else if (kinds[i] === "editable" && role === "combobox") editable.add(ref);
-    });
+    const combobox = new Set([...snapshot.matchAll(/- combobox\b[^\n]*\[ref=(\w+)\]/g)].map((m) => m[1]));
+    const secret = refs("secret");
+    const editable = new Set([...refs("editable")].filter((ref) => combobox.has(ref)));
+    const current = refs("current");
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(
@@ -747,34 +720,6 @@ export class Browser {
       });
     }
     return out;
-  }
-
-  /**
-   * Refs of links marked aria-current (the current page or tab in a navigation). The hrefs of aria-current links pick
-   * the candidates; each candidate is then read by ref, since links that share an href ("#") can differ.
-   */
-  private async currentLinks(snapshot: string): Promise<Set<string>> {
-    const hrefs = (
-      await Promise.all(
-        this.page.frames().map((f) =>
-          f
-            .locator('a[aria-current]:not([aria-current="false"])')
-            .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""))
-            .catch(() => [] as string[]),
-        ),
-      )
-    ).flat();
-    const candidates = [...links(snapshot)].filter(([, url]) => hrefs.includes(url));
-    // All at once: a page whose many links share an href ("#") otherwise pays one round trip each.
-    const values = await Promise.all(
-      candidates.map(([ref]) =>
-        this.page
-          .locator(`aria-ref=${ref}`)
-          .getAttribute("aria-current", { timeout: 1000 })
-          .catch(() => null),
-      ),
-    );
-    return new Set(candidates.flatMap(([ref], i) => (values[i] !== null && values[i] !== "false" ? [ref] : [])));
   }
 
   /**
