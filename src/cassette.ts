@@ -57,6 +57,7 @@ interface Check {
   area: Answer;
 }
 interface Entry {
+  decisions?: import("./decision-provider.ts").DecisionMetadata[];
   confidence?: Settings["confidence"];
   turns?: Turn[];
   check?: Check;
@@ -422,6 +423,7 @@ export class Cassette {
     const saved = this.mode === "all" ? undefined : this.#file.entries[key];
     const old = saved && mapEntry(saved, (value) => fill(value, generated));
     const now: Entry = { confidence: settings().confidence };
+    const decisionStart = live.decisions?.length ?? 0;
     const recorded = (pick: Pick): Pick => ({
       ...pick,
       recordedConfidence: pick.recordedConfidence ?? old?.confidence ?? DEFAULTS.confidence,
@@ -617,6 +619,8 @@ export class Cassette {
           return "replayed";
         }
         if (!keep || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
+        const decisions = [...(old?.decisions ?? []), ...(live.decisions?.slice(decisionStart) ?? [])];
+        if (decisions.length) now.decisions = decisions;
         this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));
         this.#dirty = true;
         if (old) {

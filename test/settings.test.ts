@@ -245,6 +245,9 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
     env,
   );
   assert.deepEqual(s, {
+    provider: "typesafe",
+    model: "jev-1.14.0",
+    decisionTimeout: 10000,
     reportDir: "e2e/runs",
     confidence: { target: 0.6, answer: 0.85 },
     checkTimeout: 10000,
@@ -252,6 +255,9 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
     maxTurns: 3, // env (a flag) wins
   });
   assert.deepEqual(settings({}), {
+    provider: "typesafe",
+    model: "jev-1.14.0",
+    decisionTimeout: 10000,
     reportDir: "runs",
     confidence: { target: 0.5, answer: 0.8 },
     checkTimeout: 5000,

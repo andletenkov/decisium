@@ -56,6 +56,10 @@ Node 22.18+ or 23.6+. A failed run writes `runs/<timestamp>/report.md`, ready fo
 [Writing Steps](https://andletenkov.github.io/decisium/steps.html) · [CLI and configuration](https://andletenkov.github.io/decisium/configuration.html) · [CI](https://andletenkov.github.io/decisium/ci.html) ·
 [Troubleshooting](https://andletenkov.github.io/decisium/troubleshooting.html) · [Advanced](https://andletenkov.github.io/decisium/advanced.html)
 
+OpenRouter is optional: `npm install @openrouter/sdk`, set `OPENROUTER_API_KEY`, then run with
+`--provider openrouter` (default model `~typesafe/jev-latest`). TypeSafe remains the default.
+See [provider configuration](docs/configuration.md#decision-providers) for the supported SDK version and provenance.
+
 Every option also has a `DECISIUM_*` environment variable: [CLI and configuration](https://andletenkov.github.io/decisium/configuration.html#environment-variables).
 
 Agent skill for coding agents: `npx skills add andletenkov/decisium`.

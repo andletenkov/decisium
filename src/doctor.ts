@@ -1,10 +1,11 @@
 // `decisium doctor`: the setup checks a CI job wants before the first run, one [OK]/[FAIL] line each.
-import { noul, TypeSafeClient } from "@typesafe-ai/sdk";
+import { noul } from "./decision-provider.ts";
+import { createProvider, credentialName } from "./providers.ts";
+import { settings } from "./options.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { Browser } from "./browser.ts";
 import { parseFeature, toUrl, type Scenario } from "./feature.ts";
-import { MODEL } from "./jev.ts";
 
 /** Node with type stripping on by default: the CLI runs .ts files directly. */
 export const nodeOk = (version = process.versions.node) => {
@@ -29,13 +30,18 @@ export async function doctor(files: string[]): Promise<number> {
 
   line(nodeOk(), `Node ${process.versions.node} (needs 22.18+ or 23.6+)`);
   line(existsSync(chromium.executablePath()), `Chromium at ${chromium.executablePath()} (else: decisium install)`);
-  if (!process.env.TYPESAFE_API_KEY) line(false, "TYPESAFE_API_KEY is not set");
+  const config = settings();
+  const key = credentialName(config.provider);
+  if (!process.env[key]) line(false, `${key} is not set`);
   else
-    await attempt(`TYPESAFE_API_KEY accepted by Jev (${MODEL})`, () =>
-      new TypeSafeClient({ defaultModel: MODEL }).systemOne({
-        state: { word: "yes" },
-        questions: { q: noul("Is `word` yes?") },
-      }),
+    await attempt(`${key} accepted by ${config.provider} (${config.model})`, () =>
+      createProvider().decide(
+        {
+          state: { word: "yes" },
+          questions: { q: noul("Is `word` yes?") },
+        },
+        { timeoutMs: config.decisionTimeout },
+      ),
     );
 
   const scenarios: Scenario[] = [];

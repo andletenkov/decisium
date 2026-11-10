@@ -1,0 +1,424 @@
+import {
+  choice,
+  noul,
+  type ChoiceQuestion,
+  type DecisionProvider,
+  type DecisionRequest,
+  type Question,
+  type DecisionResponse,
+} from "./decision-provider.ts";
+import { createProvider } from "./providers.ts";
+import {
+  AREA_MISSING,
+  AREA_PAGE,
+  ASSERTION_KINDS,
+  capabilities,
+  describeAction,
+  PAGE,
+  STATES,
+  type Assessment,
+  type Decider,
+  type Intent,
+  type Pick,
+  type TurnAnswer,
+} from "./decision.ts";
+import type { Element, Observation } from "./observation.ts";
+import { settings } from "./options.ts";
+import { spans } from "./step.ts";
+
+/** What answering each kind of browser dialog means, for Jev (task 0040). */
+const DIALOG_ANSWERS = {
+  accept: {
+    confirm: "Click OK: `step` clearly asks for what `dialog` asks to confirm.",
+    beforeunload: "Leave the page: `step` clearly intends to leave this page, even if changes are lost.",
+  },
+  dismiss: {
+    confirm: "Click Cancel: `step` does not clearly ask for what `dialog` asks to confirm, or says to cancel.",
+    beforeunload: "Stay on the page: `step` does not clearly intend to leave this page.",
+    prompt: "Click Cancel: none of the other answers is what `step` asks to enter, or `step` says to cancel.",
+  },
+} as Record<string, Record<string, string>>;
+
+const refs = (els: Element[]): Record<string, string> => Object.fromEntries(els.map((e) => [e.ref, e.line]));
+
+/** Jev API limit: options per choice question. */
+const MAX_CHOICES = 255;
+const FINALISTS = 3; // kept from each batch
+
+/**
+ * Pages can offer more candidates than one question accepts (GitHub: 336 links and buttons). Ask in batches, keep each
+ * batch's most likely candidates, repeat until they fit; the caller asks the real question over what is left, so the
+ * confidence gate still reads one comparable distribution. `fixed` answers (none, scroll, ...) are in every batch.
+ */
+export async function narrow(
+  candidates: Record<string, string>,
+  fixed: Record<string, string>,
+  ask: (criteria: Record<string, string>) => Promise<Pick>,
+  max = MAX_CHOICES,
+): Promise<Record<string, string>> {
+  let left = Object.entries(candidates);
+  const size = max - Object.keys(fixed).length;
+  while (left.length > size) {
+    const kept: [string, string][] = [];
+    for (let i = 0; i < left.length; i += size) {
+      const batch = left.slice(i, i + size);
+      const { probabilities } = await ask({ ...Object.fromEntries(batch), ...fixed });
+      const best = batch
+        .map(([k]) => k)
+        .sort((a, b) => (probabilities[b] ?? 0) - (probabilities[a] ?? 0))
+        .slice(0, FINALISTS);
+      kept.push(...batch.filter(([k]) => best.includes(k)));
+    }
+    left = kept;
+  }
+  return { ...Object.fromEntries(left), ...fixed };
+}
+
+/**
+ * Jev rejects requests over its token limit (`max_tokens_exceeded`): measured between 115k and 117k characters of
+ * Wikipedia snapshot in one request. `ui` stays under this budget so 255 choices still fit next to it (task 0021).
+ */
+export const UI_BUDGET = 80_000;
+const SECTION = 8_000; // a page over budget is read in sections of about this size
+
+/**
+ * A `ui` over budget, reduced to the sections that matter for `step`. Sections are cut at lines and carry their
+ * ancestor lines (so a list item keeps its list); narrow() keeps the likeliest ones per batch until they fit, so every
+ * question of the Turn reads one reduced `ui` and their probabilities stay comparable.
+ */
+export async function reduceUi(
+  ui: string,
+  ask: (sections: Record<string, string>) => Promise<Pick>,
+  budget = UI_BUDGET,
+  section = SECTION,
+): Promise<string> {
+  if (ui.length <= budget) return ui;
+  const lines = ui.split("\n");
+  const indent = (l: string) => /^\s*/.exec(l)![0].length;
+  const parts: number[][] = [];
+  const open: number[] = []; // ancestors of the current line, by indentation
+  let part: number[] = [],
+    size = 0;
+  lines.forEach((l, i) => {
+    while (open.length && indent(lines[open.at(-1)!]) >= indent(l)) open.pop();
+    if (size + l.length > section && part.length) {
+      parts.push(part);
+      part = [...open];
+      size = open.reduce((n, a) => n + lines[a].length + 1, 0);
+    }
+    part.push(i);
+    size += l.length + 1;
+    open.push(i);
+  });
+  parts.push(part);
+  const text = (p: number[]) => p.map((i) => lines[i]).join("\n");
+  const kept = await narrow(
+    Object.fromEntries(parts.map((p, i) => [`s${i}`, text(p)])),
+    {},
+    ask,
+    Math.floor(budget / (section * 1.5)),
+  );
+  const keep = new Set(Object.keys(kept).flatMap((k) => parts[Number(k.slice(1))]));
+  return lines.filter((_, i) => keep.has(i)).join("\n");
+}
+
+const YES_NO = { yes: "Yes.", no: "No." }; // noul stayed 0.6-0.7 on clear yeses (bench-intent); a 2-way choice does not
+const INTENT_KEYS = [
+  ..."Escape Tab Enter Backspace Delete Home End PageUp PageDown ArrowUp ArrowDown ArrowLeft ArrowRight Space".split(
+    " ",
+  ),
+  ..."Control+A Control+C Control+V Control+K Control+Z Meta+K Shift+Tab".split(" "),
+];
+const NAVIGATIONS = {
+  none: "None of these: `step` is not only a browser navigation.",
+  BACK: "Go back in the browser history.",
+  FORWARD: "Go forward in the browser history.",
+  RELOAD: "Reload the page.",
+  GOTO: "Go to a URL or path that `step` gives.",
+  CLOSE_TAB: "Close the current browser tab.",
+  SWITCH_TAB: "Switch to the previous browser tab.",
+};
+/** A confident answer, else undefined (gated like checks: 0.8 / 0.3 by default). */
+const sure = (p: Pick, top = settings().confidence.answer) => {
+  const [a = 0, b = 0] = Object.values(p.probabilities).sort((x, y) => y - x);
+  return a >= top && a - b >= 0.3 ? p.choice : undefined;
+};
+const yes = (p: Pick, top?: number) => (sure(p, top) === undefined ? undefined : p.choice === "yes");
+
+/** Live Jev requests of this process and their tokens; cassette replays cost nothing and are not counted. */
+export const modelUsage = { calls: 0, inputTokens: 0, outputTokens: 0, unavailable: 0 };
+
+/** Every question sends the Step text as-is, so a value quoted in a Step (a password included) reaches the API. */
+export class ModelDecider implements Decider {
+  private provider?: DecisionProvider;
+  constructor(provider?: DecisionProvider) {
+    this.provider = provider;
+  }
+  readonly decisions: Omit<DecisionResponse<Record<string, Question>>, "answers">[] = [];
+  #reduced = new WeakMap<Observation, Map<string, Promise<string>>>(); // per Observation and Step: asked once per Turn
+
+  /** `ui` for `step` on this Observation, reduced to the sections that matter when the page is over budget. */
+  #ui(obs: Observation, about: "step" | "check", step: string): Promise<string> {
+    const byStep = this.#reduced.get(obs) ?? new Map<string, Promise<string>>();
+    this.#reduced.set(obs, byStep);
+    if (!byStep.has(step))
+      byStep.set(
+        step,
+        reduceUi(obs.text, async (sections) => {
+          const res = await this.#ask({
+            state: { [about]: step, ...sections },
+            questions: {
+              pick: choice(
+                `Which of these sections of the page holds what \`${about}\` needs?`,
+                Object.fromEntries(Object.keys(sections).map((k) => [k, `section \`${k}\``])),
+              ),
+            },
+          });
+          return res.answers.pick;
+        }),
+      );
+    return byStep.get(step)!;
+  }
+
+  async #ask<Q extends Record<string, Question>>(request: DecisionRequest<Q>) {
+    const res = await (this.provider ??= createProvider()).decide(request, { timeoutMs: settings().decisionTimeout });
+    modelUsage.calls++;
+    modelUsage.inputTokens += res.usage?.inputTokens ?? 0;
+    modelUsage.outputTokens += res.usage?.outputTokens ?? 0;
+    if (res.usage?.inputTokens == null || res.usage.outputTokens == null) modelUsage.unavailable++;
+    this.decisions.push({ provenance: res.provenance, usage: res.usage });
+    return res;
+  }
+
+  /** One choice question over `criteria`, for narrow(). */
+  #choose(state: Record<string, string | string[]>, question: string) {
+    return async (criteria: Record<string, string>): Promise<Pick> =>
+      (await this.#ask({ state, questions: { pick: choice(question, criteria) } })).answers.pick;
+  }
+
+  async turn(
+    step: string,
+    obs: Observation,
+    recent: string[],
+    attempt = false,
+    keys: string[] = [],
+  ): Promise<TurnAnswer> {
+    const state = {
+      step,
+      ui: await this.#ui(obs, "step", step),
+      actions_taken_for_step: recent.length ? recent : "none yet",
+    };
+    const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
+    const page = `page "${obs.readable.find((e) => e.ref === "title")?.value ?? ""}": the page itself (scroll it, wait, history, tabs, keys)`;
+    const targets = await narrow(
+      refs(obs.elements),
+      { none: "No element on screen helps accomplish `step`.", [PAGE]: page },
+      this.#choose(state, question),
+    );
+    // Every action some target offers; code keeps the chosen target's own (task 0065, ADR 0005).
+    const actions = [
+      ...new Set([PAGE as typeof PAGE | Element, ...obs.elements].flatMap((t) => capabilities(t, obs, keys))),
+    ];
+    const res = await this.#ask({
+      state,
+      questions: {
+        done: attempt
+          ? noul(
+              "Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?",
+            )
+          : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
+        target: choice(question, targets),
+        // Same request as target: one call per Turn (task 0065: as accurate as asking after the target, half the time).
+        action: choice(
+          "How should the element chosen to interact with next be used to accomplish `step`?",
+          Object.fromEntries(actions.map((a) => [a, describeAction(a)])),
+        ),
+      },
+    });
+    return { done: res.answers.done.noul, target: res.answers.target, action: res.answers.action };
+  }
+
+  async drop(step: string, obs: Observation, source: Element): Promise<Pick> {
+    const state = { step, ui: await this.#ui(obs, "step", step), dragged: source.line };
+    const question =
+      "`dragged` is being dragged with the mouse to accomplish `step`. Onto which element in `ui` should it be dropped?";
+    const among = [...new Set([...obs.readable, ...obs.areas])].filter((e) => e !== source);
+    const targets = await narrow(
+      refs(among),
+      { none: "No element in `ui` is where `step` says to drop it." },
+      this.#choose(state, question),
+    );
+    return (await this.#ask({ state, questions: { target: choice(question, targets) } })).answers.target;
+  }
+
+  async recall(step: string, earlier: Record<string, string>): Promise<Pick> {
+    const values = Object.keys(earlier);
+    const criteria: Record<string, string> = Object.fromEntries(
+      values.map((v, i) => [`v${i}`, `"${v}", from the earlier step: ${earlier[v]}`]),
+    );
+    criteria.none = "`check` does not refer to any of these values.";
+    const res = await this.#ask({
+      state: { check: step },
+      questions: {
+        value: choice(
+          '`check` quotes no value. Which value from an earlier step of the same test does it refer to (e.g. "the campaign" meaning the campaign named earlier)?',
+          criteria,
+        ),
+      },
+    });
+    const a: Pick = res.answers.value;
+    const name = (k: string) => (k === "none" ? k : (values[Number(k.slice(1))] ?? k));
+    return {
+      choice: name(a.choice),
+      probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
+    };
+  }
+
+  async dialog(step: string, obs: Observation, answers: string[]): Promise<Pick> {
+    const { type, message } = obs.dialog!;
+    const criteria = Object.fromEntries(
+      answers.map((a, i) =>
+        a === "accept" || a === "dismiss" ? [a, DIALOG_ANSWERS[a][type]] : [`v${i}`, `Enter "${a}" and click OK.`],
+      ),
+    );
+    const res = await this.#ask({
+      state: { step, dialog: message },
+      questions: {
+        answer: choice(
+          `A browser ${type === "beforeunload" ? '"Leave site?"' : type} dialog is open, saying \`dialog\`. How should it be answered to accomplish \`step\`?`,
+          criteria,
+        ),
+      },
+    });
+    const a: Pick = res.answers.answer;
+    const name = (k: string) => (/^v\d+$/.test(k) ? answers[Number(k.slice(1))] : k);
+    return {
+      choice: name(a.choice),
+      probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
+    };
+  }
+
+  async value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick> {
+    const state = { step, ui: await this.#ui(obs, "step", step), element: el.line };
+    // A clicked element gets a value only to upload a file (task 0044): "entered into a button" read as nothing.
+    const question =
+      el.verb === "CLICK"
+        ? "Which file should be uploaded with `element` to accomplish `step`?"
+        : "Which value should be entered into `element` to accomplish `step`?";
+    const criteria = await narrow(
+      Object.fromEntries(candidates.map((c, i) => [`v${i}`, c])),
+      { none: "None of these values is what `step` asks for." },
+      this.#choose(state, question),
+    );
+    const res = await this.#ask({ state, questions: { value: choice(question, criteria) } });
+    const a: Pick = res.answers.value;
+    // Map label keys back to the values so traces and execution use real text.
+    const name = (k: string) => (criteria[k] !== undefined && k !== "none" ? criteria[k] : k);
+    return {
+      choice: name(a.choice),
+      probabilities: Object.fromEntries(Object.entries(a.probabilities).map(([k, p]) => [name(k), p])),
+    };
+  }
+
+  /** One request, no page (issue #31): what the wording means, as the rules in step.ts would read it. */
+  async intent(step: string, check: boolean): Promise<Intent> {
+    const sp = spans(step);
+    const value = choice(
+      check
+        ? "Which part of `step` is the exact text or value the page is expected to show?"
+        : "Which words of `step` are free text the user types, selects or visits, as opposed to names of buttons, links, pages or fields?",
+      {
+        none: "None: `step` only names actions, controls, pages or fields.",
+        ...Object.fromEntries(sp.map((s, i) => [`s${i}`, `"${s}"`])),
+      },
+    );
+    const questions: Record<string, ChoiceQuestion> = check
+      ? {
+          value,
+          exact: choice("Does `step` say a list must match exactly, with nothing else, or in a given order?", YES_NO),
+        }
+      : {
+          value,
+          attempt: choice(
+            "Does `step` try something the app may refuse (a negative path), so it is done once performed, whether or not the app accepts it?",
+            YES_NO,
+          ),
+          toggle: choice("If `step` sets a checkbox or switch, how should it end?", {
+            on: "Turned on / checked.",
+            off: "Turned off / unchecked.",
+            na: "`step` sets no checkbox or switch.",
+          }),
+          navigation: choice("Is `step` only one of these browser navigations?", NAVIGATIONS),
+          // Two questions: one choice over "none" + every key spread "none" thin ("I go back": none < 0.3).
+          presses: choice("Does `step` press a keyboard key (not click a button)?", YES_NO),
+          key: choice(
+            "Which keyboard key does `step` press?",
+            Object.fromEntries(INTENT_KEYS.map((k, i) => [`k${i}`, `The ${k} key.`])),
+          ),
+          pressOnly: choice("Is pressing keyboard keys all that `step` asks for?", YES_NO),
+          clear: choice("Does `step` ask to empty a field, removing its text?", YES_NO),
+        };
+    const a = (await this.#ask({ state: { step }, questions })).answers;
+    const out: Intent = {};
+    const v = sure(a.value);
+    if (v && v !== "none") out.value = sp[Number(v.slice(1))];
+    if (check) {
+      out.exact = yes(a.exact);
+    } else {
+      // Bench: a 0.95 gate still read `I enter "invalid" in Email` as an attempt (harmless: typing is done once typed)
+      // and lost a real one, so attempts use the normal gate.
+      out.attempt = yes(a.attempt);
+      const t = sure(a.toggle);
+      out.toggle = t === "on" ? true : t === "off" ? false : undefined;
+      const n = sure(a.navigation);
+      if (n && n !== "none") out.navigation = n as Intent["navigation"];
+      const k = yes(a.presses) ? sure(a.key) : undefined;
+      if (k) out.key = INTENT_KEYS[Number(k.slice(1))];
+      out.pressOnly = yes(a.pressOnly);
+      out.clear = yes(a.clear);
+    }
+    return Object.fromEntries(Object.entries(out).filter(([, x]) => x !== undefined)) as Intent;
+  }
+
+  async assess(step: string, obs: Observation, judged: boolean): Promise<Assessment> {
+    const state = { check: step, ui: await this.#ui(obs, "check", step) };
+    const subjectQ = "Which element in `ui` is the one `check` is about, regardless of whether the check passes?";
+    const areaQ =
+      "Where does `check` say to look? Pick the element in `ui` that is that area (a list, table, section, dialog...), regardless of whether the check passes.";
+    const [subjects, areas] = await Promise.all([
+      narrow(
+        refs(obs.readable),
+        { none: "No element in `ui` is the one `check` is about." },
+        this.#choose(state, subjectQ),
+      ),
+      narrow(
+        refs(obs.areas),
+        {
+          [AREA_PAGE]: "`check` names no specific area; anywhere on the page counts.",
+          [AREA_MISSING]: "`check` names a specific area, but no element in `ui` is that area.",
+        },
+        this.#choose(state, areaQ),
+      ),
+    ]);
+    const res = await this.#ask({
+      state,
+      questions: {
+        kind: choice("What kind of check is `check`?", ASSERTION_KINDS),
+        subject: choice(subjectQ, subjects),
+        state: choice("Which control state does `check` require?", STATES),
+        area: choice(areaQ, areas),
+        // Asked in the same call whether or not --judged: code uses it only to veto an inexact text match.
+        satisfied: noul("Does `ui` satisfy `check`?"),
+      },
+    });
+    const a = res.answers as typeof res.answers & { satisfied: { noul: number } };
+    return {
+      kind: a.kind,
+      subject: a.subject,
+      area: a.area,
+      state: a.state,
+      satisfied: a.satisfied.noul,
+      judged: judged ? a.satisfied.noul : undefined,
+    };
+  }
+}
