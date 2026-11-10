@@ -410,7 +410,10 @@ export class JevDecider implements Decider {
     };
   }
 
-  /** One request about a text alone, not the page or the check: does it state the value (issue #81)? */
+  /**
+   * One request about a text alone, not the page or the check: does it state the value (issue #81)? The Step is not
+   * shown to Jev, so its answer cannot be a verdict on the check; it is a Decider argument for traces and cassettes.
+   */
   async affirms(_step: string, text: string, value: string): Promise<Pick> {
     const res = await this.#ask({
       state: { text, value },

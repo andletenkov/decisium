@@ -190,6 +190,7 @@ contradicts absence, at once.
 | `the error should say "Set an activation date before scheduling"` | |
 | `the activation period should be "2 weeks"` | Reads a select's chosen option. |
 | `the Email field should be "ada@example.com"` | A field's current value. |
+| `the campaign status should not be "Scheduled"` | Passes on any other value; a missing status is `UNVERIFIABLE`. |
 
 The subject is picked by meaning: if the status says "Draft" while a filter elsewhere says "Scheduled",
 `the campaign status should be "Scheduled"` correctly fails. A value is read for meaning too: equal text passes, and

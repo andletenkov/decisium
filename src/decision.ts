@@ -130,6 +130,8 @@ export function grouped(p: Pick, obs: Observation, action?: Pick): Pick {
 
 export const ASSERTION_KINDS = {
   value: "Checks that some element shows a specific text or value.",
+  "not value":
+    'Checks that some element does not show a specific text or value (e.g. the status should not be "Draft").',
   presence: "Checks that something is shown or exists on the page.",
   absence: "Checks that something is not shown or does not exist on the page.",
   state: "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",

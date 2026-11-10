@@ -594,7 +594,8 @@ export class Cassette {
       affirms: async (step, text, value) => {
         const r = replay((e) => {
           const read = e.check?.affirms?.find(([t, v]) => t === text && v === value);
-          // Not recorded: the page may still show the recorded text, else the cassette predates readings.
+          // Not recorded for this text: replay-only waits for the page to change (a recorded text may still come, as a
+          // recorded element may), then reports it; a cassette from before readings were stored never has one.
           if (!read)
             throw new NotOnPage(
               `Jev's reading of "${text}" for "${value}" is not recorded (record it with --record new)`,

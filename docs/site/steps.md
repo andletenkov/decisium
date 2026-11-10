@@ -44,6 +44,7 @@ Inputs take ISO values: `"2026-10-20"`, `"14:30"`. iframes and open shadow roots
 | To check | Write |
 |---|---|
 | A value | `the campaign status should be "Draft"` · `the Email field should be "ada@example.com"` |
+| Not a value | `the campaign status should not be "Scheduled"` |
 | An error | `the error should say "Set an activation date before scheduling"` |
 | Text on the page | `"Saved" should appear` |
 | Text in an area | `"Winter Sale" should appear in the calendar` |

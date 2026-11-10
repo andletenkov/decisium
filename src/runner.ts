@@ -141,10 +141,8 @@ const shownOutsideFields = (obs: Observation, value: string) => {
 };
 
 /**
- * Jev classifies the check and picks the element it is about; code decides pass/fail.
+ * Jev resolves what the check means and which element or area it is about; code decides pass/fail (check.ts).
  * `judged` opts in to fuzzy checks, which Jev answers directly and are reported as JUDGED_*, never PASSED.
- */
-/**
  * `earlier`: quoted values from this scenario's earlier Steps (value -> Step), for checks that quote none.
  * `arg`: a doc string is one more quoted value; a one-column table is a list of values that must all be shown, a wider
  * one is matched row by row to the page table under its column headers.
@@ -194,7 +192,7 @@ export async function runAssertion(
     const outcome = verdict.outcome === "PENDING" ? "UNVERIFIABLE" : verdict.outcome;
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
-    if (outcome === "UNVERIFIABLE") verdict.reason += recallNote;
+    if (outcome === "UNVERIFIABLE") verdict.reason = `${verdict.reason ?? ""}${recallNote}`;
     if (final || left <= 0) return end(outcome, verdict.reason, verdict.marginal);
     log(
       verdict.outcome === "PENDING"

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { affirmKey, verdict as evaluate, type Expectation } from "../src/check.ts";
 import type { Assessment, Pick } from "../src/decision.ts";
-import { parseSnapshot, type Observation } from "../src/observation.ts";
+import { parseSnapshot, withPage, type Observation } from "../src/observation.ts";
 
 const pick = (probabilities: Record<string, number>): Pick => ({
   choice: Object.keys(probabilities).sort((a, b) => probabilities[b] - probabilities[a])[0],
@@ -125,6 +125,50 @@ test("Check: negation preserves unknown; a missing subject or area never gives a
     assert.deepEqual([r.outcome, r.reason], ["PENDING", "no element on the page is the control the check is about"]);
   }
   assert.equal(verdict(assessment(none), detail, { values: ["Draft"] }).outcome, "PENDING");
+});
+
+test("Check: a negated value check evaluates the value, then expects it not to hold; unknown stays unknown", () => {
+  const not = (snap: string, value: string, more: Partial<Assessment> = {}, read?: (text: string) => Pick) =>
+    verdict(assessment({ kind: pick({ "not value": 1 }), ...more }), parseSnapshot(snap), { values: [value] }, read);
+  const draft = not("- paragraph [ref=e1]: Draft", "Draft");
+  assert.deepEqual(
+    [draft.outcome, draft.reason],
+    ["ASSERTION_FAILED", `expected anything but "Draft", but paragraph shows "Draft"`],
+  );
+  assert.equal(not("- paragraph [ref=e1]: Scheduled", "Draft").outcome, "PASSED");
+  // "Not Draft" does not state "Draft": the negated check holds. An unsure reading stays unsure.
+  assert.equal(not("- paragraph [ref=e1]: Not Draft", "Draft").outcome, "PASSED");
+  assert.equal(not("- paragraph [ref=e1]: Status: Draft", "Draft").outcome, "ASSERTION_FAILED");
+  assert.equal(
+    not("- paragraph [ref=e1]: Not Draft", "Draft", {}, () => pick({ yes: 0.5, no: 0.5 })).outcome,
+    "AMBIGUOUS",
+  );
+  // No subject, or one still loading, shows no value: never "not that value".
+  assert.equal(not("- paragraph [ref=e1]: Draft", "Draft", { subject: pick({ none: 1 }) }).outcome, "PENDING");
+  assert.equal(not(`- region "S" [busy] [ref=r1]:\n  - paragraph [ref=e1]: Saving`, "Draft").outcome, "PENDING");
+  // A label is not a value either way.
+  assert.equal(not(`- button "Draft" [ref=e1]`, "Draft").outcome, "UNVERIFIABLE");
+  // The URL, literally.
+  const url = withPage(parseSnapshot(""), "https://x.test/campaigns/2", "T");
+  const urlNot = (v: string) =>
+    verdict(assessment({ kind: pick({ "not value": 1 }), subject: pick({ url: 1 }) }), url, { values: [v] });
+  assert.equal(urlNot("/admin").outcome, "PASSED");
+  assert.equal(
+    urlNot("/campaigns").reason,
+    `expected the URL not to contain "/campaigns", but it is "https://x.test/campaigns/2"`,
+  );
+  // A list the check says must not be shown: absence of each item.
+  const list = { values: ["Draft"], table: [["Draft"]], list: true };
+  assert.equal(
+    verdict(assessment({ kind: pick({ "not value": 1 }) }), parseSnapshot("- paragraph [ref=e1]: Draft"), list).outcome,
+    "ASSERTION_FAILED",
+  );
+  // Negated table rows stay unsupported, whichever negative kind Jev reads.
+  const rows = { values: [], table: [["Status"], ["Draft"]] };
+  assert.equal(
+    verdict(assessment({ kind: pick({ "not value": 1 }) }), parseSnapshot(""), rows).outcome,
+    "UNVERIFIABLE",
+  );
 });
 
 test("Check: an incomplete collection cannot prove absence, a missing row or exact contents; a witness proves presence", () => {
