@@ -37,9 +37,17 @@ TypeSafe remains the default: its SDK is bundled, `TYPESAFE_API_KEY` is unchange
 
 ```sh
 npm install @openrouter/sdk
-export OPENROUTER_API_KEY=... # or put it in .env; never commit keys
-npx decisium run test.feature --provider openrouter --model '~typesafe/jev-latest'
+export DECISIUM_MODEL_PROVIDER=openrouter
+export DECISIUM_MODEL='~typesafe/jev-latest'
+export DECISIUM_MODEL_API_KEY=... # or put it in .env; never commit keys
+npx decisium run test.feature
 ```
+
+Credential precedence: `DECISIUM_MODEL_API_KEY` wins over the selected provider\'s native variable
+(`TYPESAFE_API_KEY` or `OPENROUTER_API_KEY`). The other provider\'s key is never used, and providers never switch
+automatically. Native variables let you retain both providers\' credentials while switching `DECISIUM_MODEL_PROVIDER`.
+An explicitly empty generic key fails authentication rather than falling back. Keys are **environment-only** (shell or
+`.env`): no API-key CLI argument or `worldParameters.decisium` field. They are excluded from reports, logs, traces and cassettes.
 
 The supported optional peer is **`@openrouter/sdk@1.5.75`** (also pinned in development). This alpha API can change;
 install that version explicitly if npm offers a newer incompatible release. It is loaded only on a live OpenRouter
@@ -112,7 +120,10 @@ Every option has an environment variable, so a CI job or a shell can change it w
 |---|---|---|---|
 | `DECISIUM_URL` | `--url` | `url` | Start URL; overrides `@url:`. |
 | `DECISIUM_RECORD` | `--record` | `record` | `new`, `none` or `all`. |
-| `DECISIUM_PROVIDER` | `--provider` | `provider` | `typesafe` or `openrouter`. |
+| `DECISIUM_MODEL_PROVIDER` | `--provider` | `provider` | `typesafe` or `openrouter`. |
+| `DECISIUM_MODEL_API_KEY` | — | — | Environment-only key for the selected provider; overrides its native key. |
+| `TYPESAFE_API_KEY` | — | — | TypeSafe fallback when `DECISIUM_MODEL_API_KEY` is unset. |
+| `OPENROUTER_API_KEY` | — | — | OpenRouter fallback when `DECISIUM_MODEL_API_KEY` is unset. |
 | `DECISIUM_MODEL` | `--model` | `model` | Provider-specific model ID. |
 | `DECISIUM_DECISION_TIMEOUT` | `--decision-timeout` | `decisionTimeout` | Positive whole ms. |
 | `DECISIUM_REPORT_DIR` | `--report-dir` | `reportDir` | Where run folders go. |
@@ -133,7 +144,6 @@ Other variables:
 
 | Variable | Does |
 |---|---|
-| `TYPESAFE_API_KEY` | Jev API key for live runs. Read from the environment or from `.env`; replays need none. |
 | `SLOWMO` | Milliseconds to pause per browser action, for demos. |
 | Any name you write as `"$NAME"` in a Step | A [secret placeholder](https://andletenkov.github.io/decisium/steps.html): its value is typed but never sent to Jev or logged. |
 

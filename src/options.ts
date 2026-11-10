@@ -7,7 +7,7 @@ export const OPENROUTER_MODEL = "~typesafe/jev-latest";
 
 const ENV = {
   url: "URL",
-  provider: "PROVIDER",
+  provider: "MODEL_PROVIDER",
   model: "MODEL",
   decisionTimeout: "DECISION_TIMEOUT",
   record: "RECORD",
@@ -54,7 +54,7 @@ export function settings(env: Record<string, string | undefined> = process.env):
   const ms = (n: number) => Number.isInteger(n) && n > 0;
   if (env.DECISIUM_REPORT_DIR !== undefined && !env.DECISIUM_REPORT_DIR.trim())
     throw new Error("reportDir must be a non-empty string");
-  const provider = env.DECISIUM_PROVIDER ?? DEFAULTS.provider;
+  const provider = env.DECISIUM_MODEL_PROVIDER ?? DEFAULTS.provider;
   if (!["typesafe", "openrouter"].includes(provider)) throw new Error("provider must be typesafe or openrouter");
   if (env.DECISIUM_MODEL !== undefined && !env.DECISIUM_MODEL.trim())
     throw new Error("model must be a non-empty string");

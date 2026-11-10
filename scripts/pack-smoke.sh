@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Release gate (task 0050): installs the `npm pack` tarball into a fresh project and runs it as a client would.
 # With TYPESAFE_API_KEY: doctor, a live run that records the cassette, then replays with the key unset (zero Jev calls).
-# OPENROUTER_API_KEY enables the same live smoke via OpenRouter. Without keys: packaging and fake HTTP contracts.
+# Native keys enable each provider; DECISIUM_MODEL_API_KEY enables only DECISIUM_MODEL_PROVIDER (default typesafe).
+# Live commands use the generic key alone; replay unsets all keys. Without keys: packaging and fake HTTP contracts.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 tmp=$(mktemp -d)
@@ -65,16 +66,24 @@ EOF
 
 (npx decisium 2>&1 || true) | grep Usage: >/dev/null
 npx decisium install --dry-run | grep -q 'chromium-' # resolves its own Playwright from dist/
-if [ -n "${TYPESAFE_API_KEY:-}${OPENROUTER_API_KEY:-}" ]; then
+if [ -n "${DECISIUM_MODEL_API_KEY:-}${TYPESAFE_API_KEY:-}${OPENROUTER_API_KEY:-}" ]; then
   npx decisium install # the tarball may resolve a newer Playwright than our lockfile
 fi
 for provider in typesafe openrouter; do
-  if { [ "$provider" = typesafe ] && [ -z "${TYPESAFE_API_KEY:-}" ]; } || { [ "$provider" = openrouter ] && [ -z "${OPENROUTER_API_KEY:-}" ]; }; then
+  if [ "${DECISIUM_MODEL_API_KEY+x}" = x ]; then
+    [ "$provider" = "${DECISIUM_MODEL_PROVIDER:-typesafe}" ] || continue
+    smoke_key=$DECISIUM_MODEL_API_KEY
+  elif [ "$provider" = typesafe ]; then
+    smoke_key=${TYPESAFE_API_KEY:-}
+  else
+    smoke_key=${OPENROUTER_API_KEY:-}
+  fi
+  if [ -z "$smoke_key" ]; then
     echo "$provider key unset: skipping live smoke"
     continue
   fi
-  npx decisium doctor sample.feature --provider "$provider"
-  npx decisium run sample.feature --record all --provider "$provider"
+  env -u TYPESAFE_API_KEY -u OPENROUTER_API_KEY DECISIUM_MODEL_API_KEY="$smoke_key" npx decisium doctor sample.feature --provider "$provider"
+  env -u TYPESAFE_API_KEY -u OPENROUTER_API_KEY DECISIUM_MODEL_API_KEY="$smoke_key" npx decisium run sample.feature --record all --provider "$provider"
   EXPECTED_PROVIDER="$provider" node --input-type=module <<'JS'
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
@@ -83,7 +92,7 @@ const decisions = Object.values(c.entries).flatMap(e => e.decisions ?? []);
 assert(decisions.length);
 assert(decisions.every(d => d.provenance.provider === process.env.EXPECTED_PROVIDER && d.provenance.requestedModel === c.model && d.provenance.resolvedModel));
 JS
-  env -u TYPESAFE_API_KEY -u OPENROUTER_API_KEY npx decisium run sample.feature --record none --provider "$provider"
-  env -u TYPESAFE_API_KEY -u OPENROUTER_API_KEY DECISIUM_PROVIDER="$provider" npx cucumber-js sample.feature
+  env -u DECISIUM_MODEL_API_KEY -u TYPESAFE_API_KEY -u OPENROUTER_API_KEY npx decisium run sample.feature --record none --provider "$provider"
+  env -u DECISIUM_MODEL_API_KEY -u TYPESAFE_API_KEY -u OPENROUTER_API_KEY DECISIUM_MODEL_PROVIDER="$provider" npx cucumber-js sample.feature
 done
 echo "pack smoke OK"

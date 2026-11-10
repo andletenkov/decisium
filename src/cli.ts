@@ -94,7 +94,7 @@ Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.
   doctor: {
     synopsis: "decisium doctor [<file.feature>...]",
     notes:
-      "Checks Node, Chromium and TYPESAFE_API_KEY (one tiny Jev call); given features, also opens every start URL.",
+      "Checks Node, Chromium and the selected provider key (DECISIUM_MODEL_API_KEY, else TYPESAFE_API_KEY or OPENROUTER_API_KEY); given features, also opens every start URL.",
   },
   lint: {
     synopsis: "decisium lint <file.feature>...",
@@ -228,7 +228,7 @@ async function main(): Promise<number> {
     VERBOSE: flag(values.verbose),
     DEBUG: flag(values.debug),
     REPORT_DIR: values["report-dir"],
-    PROVIDER: values.provider,
+    MODEL_PROVIDER: values.provider,
     MODEL: values.model,
     DECISION_TIMEOUT: values["decision-timeout"],
     CONFIDENCE_TARGET: values["confidence-target"],

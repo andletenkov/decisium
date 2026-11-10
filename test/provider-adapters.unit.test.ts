@@ -39,6 +39,53 @@ for (const Provider of [TypeSafeProvider, OpenRouterProvider]) {
     assert.deepEqual(sent.questions, request.questions);
     assert.equal(JSON.stringify(result).includes("test-secret"), false);
   });
+  test(`${Provider.name}: generic key wins, native key is selected-provider-only`, async () => {
+    const native = Provider === TypeSafeProvider ? "TYPESAFE_API_KEY" : "OPENROUTER_API_KEY";
+    const other = Provider === TypeSafeProvider ? "OPENROUTER_API_KEY" : "TYPESAFE_API_KEY";
+    const names = ["DECISIUM_MODEL_API_KEY", native, other];
+    const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+    let authorization: string | null = null;
+    const fake: typeof fetch = async (input, init) => {
+      authorization = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined)).get(
+        "authorization",
+      );
+      return fetcher(wire())(input, init);
+    };
+    try {
+      process.env.DECISIUM_MODEL_API_KEY = "generic-secret";
+      process.env[native] = "native-secret";
+      process.env[other] = "other-secret";
+      const result = await new Provider("model", undefined, fake).decide(request);
+      assert.equal(authorization, "Bearer generic-secret");
+      assert.doesNotMatch(JSON.stringify(result), /generic-secret|native-secret|other-secret/);
+      delete process.env[native];
+      await new Provider("model", undefined, fake).decide(request);
+      assert.equal(authorization, "Bearer generic-secret");
+      process.env[native] = "native-secret";
+      process.env.DECISIUM_MODEL_API_KEY = "";
+      authorization = null;
+      await assert.rejects(
+        async () => new Provider("model", undefined, fake).decide(request),
+        (e: unknown) => e instanceof ProviderError && e.code === "authentication",
+      );
+      assert.equal(authorization, null);
+      delete process.env.DECISIUM_MODEL_API_KEY;
+      await new Provider("model", undefined, fake).decide(request);
+      assert.equal(authorization, "Bearer native-secret");
+      delete process.env[native];
+      authorization = null;
+      await assert.rejects(
+        async () => new Provider("model", undefined, fake).decide(request),
+        (e: unknown) => e instanceof ProviderError && e.code === "authentication",
+      );
+      assert.equal(authorization, null);
+    } finally {
+      for (const name of names) {
+        if (saved[name] === undefined) delete process.env[name];
+        else process.env[name] = saved[name];
+      }
+    }
+  });
   test(`${Provider.name}: SDK debug environment cannot log credentials`, async (t) => {
     const log = t.mock.method(console, "log", () => {});
     const group = t.mock.method(console, "group", () => {});
@@ -150,10 +197,16 @@ test("TypeSafe preserves partial token usage rather than dropping measured count
 
 test("provider configuration follows env > world options > defaults", () => {
   assert.equal(settings({}).model, "jev-1.14.0");
-  assert.equal(settings({ DECISIUM_PROVIDER: "openrouter" }).model, "~typesafe/jev-latest");
+  assert.equal(settings({ DECISIUM_MODEL_PROVIDER: "openrouter" }).model, "~typesafe/jev-latest");
   assert.equal(applyOptions({ provider: "openrouter", model: "alias", decisionTimeout: 99 }, {}).model, "alias");
-  assert.equal(applyOptions({ provider: "openrouter" }, { DECISIUM_PROVIDER: "typesafe" }).provider, "typesafe");
-  assert.throws(() => settings({ DECISIUM_PROVIDER: "chat" }));
+  assert.equal(applyOptions({ provider: "openrouter" }, { DECISIUM_MODEL_PROVIDER: "typesafe" }).provider, "typesafe");
+  assert.throws(() => settings({ DECISIUM_MODEL_PROVIDER: "chat" }));
+  assert.throws(() => applyOptions({ modelApiKey: "secret" }, {}), /is not an option/);
+  assert.throws(() => applyOptions({ apiKey: "secret" }, {}), /is not an option/);
+  const env: Record<string, string | undefined> = {};
+  applyOptions({ provider: "openrouter" }, env);
+  assert.equal(env.DECISIUM_MODEL_PROVIDER, "openrouter");
+  assert.equal(env.DECISIUM_PROVIDER, undefined);
   assert.throws(() => settings({ DECISIUM_MODEL: " " }));
   assert.throws(() => settings({ DECISIUM_DECISION_TIMEOUT: "0" }));
 });

@@ -10,16 +10,21 @@ import { settings, TYPESAFE_MODEL, OPENROUTER_MODEL } from "./options.ts";
 export { TYPESAFE_MODEL, OPENROUTER_MODEL } from "./options.ts";
 export const OPENROUTER_MISSING =
   "OpenRouter provider requires @openrouter/sdk. Install it with: npm install @openrouter/sdk";
-export const credentialName = (provider: string) =>
-  provider === "openrouter" ? "OPENROUTER_API_KEY" : "TYPESAFE_API_KEY";
+/** Credentials are environment-only. Never fall back to a different provider\'s key. */
+export const credentialName = (provider: string, env: Record<string, string | undefined> = process.env) =>
+  env.DECISIUM_MODEL_API_KEY !== undefined
+    ? "DECISIUM_MODEL_API_KEY"
+    : provider === "openrouter"
+      ? "OPENROUTER_API_KEY"
+      : "TYPESAFE_API_KEY";
 type Options = { signal?: AbortSignal; timeoutMs?: number };
 
 export class TypeSafeProvider implements DecisionProvider {
   #client: TypeSafeClient;
   private model: string;
-  constructor(model = TYPESAFE_MODEL, apiKey = process.env.TYPESAFE_API_KEY, fetcher?: typeof fetch) {
+  constructor(model = TYPESAFE_MODEL, apiKey = process.env[credentialName("typesafe")], fetcher?: typeof fetch) {
     this.model = model;
-    if (!apiKey) throw new ProviderError("authentication", "TYPESAFE_API_KEY is not set.");
+    if (!apiKey) throw new ProviderError("authentication", `${credentialName("typesafe")} is not set.`);
     this.#client = new TypeSafeClient({
       apiKey,
       defaultModel: model,
@@ -51,7 +56,7 @@ export class OpenRouterProvider implements DecisionProvider {
   private model: string;
   private apiKey?: string;
   private fetcher?: typeof fetch;
-  constructor(model = OPENROUTER_MODEL, apiKey = process.env.OPENROUTER_API_KEY, fetcher?: typeof fetch) {
+  constructor(model = OPENROUTER_MODEL, apiKey = process.env[credentialName("openrouter")], fetcher?: typeof fetch) {
     this.model = model;
     this.apiKey = apiKey;
     this.fetcher = fetcher;
@@ -66,7 +71,7 @@ export class OpenRouterProvider implements DecisionProvider {
           throw new ProviderError("configuration", OPENROUTER_MISSING);
         });
         signal.throwIfAborted();
-        if (!this.apiKey) throw new ProviderError("authentication", "OPENROUTER_API_KEY is not set.");
+        if (!this.apiKey) throw new ProviderError("authentication", `${credentialName("openrouter")} is not set.`);
         const client = new OpenRouter({
           apiKey: this.apiKey,
           // OPENROUTER_DEBUG otherwise logs Authorization headers to the captured run log.
