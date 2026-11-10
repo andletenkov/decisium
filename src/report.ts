@@ -201,7 +201,7 @@ function failureSection(f: AgentFailure, n: number): string[] {
     ? undefined
     : "done" in last
       ? last.target.choice
-      : ["presence", "absence"].includes(last.kind.choice)
+      : last.kind.choice === "presence"
         ? last.area.choice
         : last.subject.choice;
   let from = Math.max(

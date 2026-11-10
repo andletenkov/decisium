@@ -19,6 +19,7 @@ test("settings: plausible readings honor higher answer confidence", async () => 
   const obs = parseSnapshot("- paragraph [ref=e1]: Done\n- paragraph [ref=e2]: Pending");
   const a = {
     kind: sure("value"),
+    negated: sure("no"),
     state: sure("disabled"),
     area: sure("page"),
     subject: { choice: "e1", probabilities: { e1: 0.84, e2: 0.16 } },
@@ -40,6 +41,7 @@ test("settings: replay retains recorded confidence and failed outcomes", async (
     ...base,
     assess: async () => ({
       kind: sure("state"),
+      negated: sure("no"),
       subject: sure("e1"),
       area: sure("page"),
       state: { choice: "disabled", probabilities: { disabled: 0.7, enabled: 0.3 } },
@@ -230,7 +232,14 @@ const sure = (choice: string): Pick => ({ choice, probabilities: { [choice]: 0.9
 const unused = async (): Promise<never> => {
   throw new Error("not used");
 };
-const base: Decider = { turn: unused, value: unused, assess: unused, recall: unused, dialog: unused, drop: unused };
+const base: Decider = {
+  turn: unused,
+  value: unused,
+  assess: unused,
+  recall: unused,
+  dialog: unused,
+  drop: unused,
+};
 
 test("settings: worldParameters fill env, env wins, values are validated", () => {
   const env: Record<string, string | undefined> = { DECISIUM_MAX_TURNS: "3" };
@@ -300,7 +309,13 @@ test("settings: the gates read confidence.answer and confidence.target", async (
   const state = { choice: "disabled", probabilities: { disabled: 0.7, enabled: 0.3 } };
   const checking: Decider = {
     ...base,
-    assess: async () => ({ kind: sure("state"), subject: sure("e1"), area: sure("page"), state }),
+    assess: async () => ({
+      kind: sure("state"),
+      negated: sure("no"),
+      subject: sure("e1"),
+      area: sure("page"),
+      state,
+    }),
   };
   const check = () => runAssertion("the Save button should be disabled", rt, checking, () => {});
   assert.equal((await withEnv({}, check)).outcome, "AMBIGUOUS");
@@ -334,7 +349,13 @@ test("settings: maxTurns and checkTimeout stop a page that never settles", async
 
   const checking: Decider = {
     ...base,
-    assess: async () => ({ kind: sure("value"), subject: sure("e2"), area: sure("page"), state: sure("disabled") }),
+    assess: async () => ({
+      kind: sure("value"),
+      negated: sure("no"),
+      subject: sure("e2"),
+      area: sure("page"),
+      state: sure("disabled"),
+    }),
   };
   const t = Date.now();
   const c = await withEnv({ CHECK_TIMEOUT: "200" }, () =>

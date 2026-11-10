@@ -140,6 +140,10 @@ works, in any language Jev reads (<code># language: de</code>). <code>decisium l
 <td><code>the campaign status should be &quot;Draft&quot;</code> · <code>the Email field should be &quot;ada@example.com&quot;</code></td>
 </tr>
 <tr>
+<td>Not a value</td>
+<td><code>the campaign status should not be &quot;Scheduled&quot;</code></td>
+</tr>
+<tr>
 <td>An error</td>
 <td><code>the error should say &quot;Set an activation date before scheduling&quot;</code></td>
 </tr>
@@ -182,6 +186,11 @@ works, in any language Jev reads (<code># language: de</code>). <code>decisium l
 </tbody></table>
 <p>States: disabled, enabled, checked, unchecked, expanded, collapsed, selected, pressed. A subjective check
 (<code>the article should be well written</code>) runs only with <code>--judged</code> and reports <code>JUDGED_PASSED</code> / <code>JUDGED_FAILED</code>.</p>
+<p>Quoted text is found as whole words, in a value or on the page: &quot;Status: Draft&quot; shows &quot;Draft&quot;. It cannot tell a
+negated value (&quot;Not Scheduled&quot; shows &quot;Scheduled&quot;): quote the whole value where the app can show either. Absence, a missing table row and &quot;exactly these
+rows&quot; need the whole area on the screen and done loading; until then the check waits, then reports <code>UNVERIFIABLE</code>.
+The app&#39;s own signals count (<code>aria-busy</code>, a progress bar, a request in flight). An app that shows none while a list
+loads needs a Step that waits for the loaded list first, e.g. <code>&quot;Autumn Sale&quot; should appear in the campaign list</code>.</p>
 <h2 id="tables-doc-strings-unique-values">Tables, doc strings, unique values</h2>
 <pre><code class="language-gherkin">When I fill in the new contact:
   | First name | Ada      |

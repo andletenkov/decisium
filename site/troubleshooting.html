@@ -49,8 +49,8 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 </tr>
 <tr>
 <td><code>UNVERIFIABLE</code></td>
-<td>The check quotes nothing to compare.</td>
-<td>Quote the expected value.</td>
+<td>The check quotes nothing to compare, or its evidence never arrived: the area it names is not on the screen, or was still loading.</td>
+<td>Quote the expected value; name an area that is on the screen; check what the loaded page shows first.</td>
 </tr>
 <tr>
 <td><code>ELEMENT_NOT_FOUND</code></td>
@@ -74,7 +74,7 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 </tr>
 <tr>
 <td><code>UI_CHANGED</code></td>
-<td>A replayed Step no longer matches the page.</td>
+<td>A replayed Step no longer matches the page, or its cassette predates a reading the check now needs.</td>
 <td>Re-record with <code>--record new</code> if intended.</td>
 </tr>
 <tr>
@@ -91,6 +91,11 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 <td>check fails on a slow page</td>
 <td>The state came after the check gave up.</td>
 <td>Raise <code>checkTimeout</code>.</td>
+</tr>
+<tr>
+<td>absence <code>UNVERIFIABLE</code>: &quot;a request is in flight&quot;</td>
+<td>The last action started a request that never ends (a long poll, a live feed), so the page never proves the text is gone.</td>
+<td>Check what the page shows instead (<code>&quot;X&quot; should appear</code> for the state that replaces it), or put the absence check before the action that opens the feed.</td>
 </tr>
 </tbody></table>
 <h2 id="a-step-passes-sometimes">A Step passes sometimes</h2>

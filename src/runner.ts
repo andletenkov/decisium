@@ -12,6 +12,7 @@ import {
   named,
   fmt,
   PAGE,
+  type Assessment,
   type Decider,
   type Intent,
   type Pick,
@@ -140,10 +141,8 @@ const shownOutsideFields = (obs: Observation, value: string) => {
 };
 
 /**
- * Jev classifies the check and picks the element it is about; code decides pass/fail.
+ * Jev resolves what the check means and which element or area it is about; code decides pass/fail (check.ts).
  * `judged` opts in to fuzzy checks, which Jev answers directly and are reported as JUDGED_*, never PASSED.
- */
-/**
  * `earlier`: quoted values from this scenario's earlier Steps (value -> Step), for checks that quote none.
  * `arg`: a doc string is one more quoted value; a one-column table is a list of values that must all be shown, a wider
  * one is matched row by row to the page table under its column headers.
@@ -178,27 +177,44 @@ export async function runAssertion(
     } else recallNote = `; Jev could not tell which earlier value it refers to (${named(r)})`;
   }
 
-  // Like Playwright's expect: a check that does not pass is re-evaluated whenever the UI changes, until
-  // the UI stops changing within the wait cap. Jev is asked again only after a change.
+  // One temporal policy (issue #81), like Playwright's expect: a check that does not pass is evaluated again whenever
+  // the UI changes, until its deadline. Only a pass on valid evidence ends it early (and a check code cannot compare).
+  // At the deadline, or once the page has nothing left that could change it: a known contradiction is
+  // ASSERTION_FAILED, evidence still missing UNVERIFIABLE, conflicting meanings AMBIGUOUS. Jev is asked again only
+  // after a change.
   const deadline = Date.now() + settings().checkTimeout;
+  let assessed: { text: string; a: Assessment } | undefined;
+  // Looking again at an unchanged page (a request in flight) logs nothing new.
+  let logged = { details: "", waiting: "" };
   let obs = await rt.observe();
   for (;;) {
     let verdict: Verdict;
     [obs, verdict] = await settled(rt, obs, check);
+    const outcome = verdict.outcome === "PENDING" ? "UNVERIFIABLE" : verdict.outcome;
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
-    if (verdict.outcome === "UNVERIFIABLE") verdict.reason += recallNote;
-    if (final || left <= 0) return end(verdict.outcome, verdict.reason, verdict.marginal);
-    log("  (not passed yet; waiting for the UI to change)");
-    if (!(await rt.waitForChange(obs.text, left))) return end(verdict.outcome, verdict.reason);
+    if (outcome === "UNVERIFIABLE") verdict.reason = `${verdict.reason ?? ""}${recallNote}`;
+    const details = `${obs.text}\n${verdict.details.join("\n")}`;
+    if (details !== logged.details) {
+      for (const line of verdict.details) log(line);
+      logged = { details, waiting: "" };
+    }
+    if (final || left <= 0) return end(outcome, verdict.reason, verdict.marginal);
+    const waiting =
+      verdict.outcome === "PENDING"
+        ? `  (not known yet: ${verdict.reason}; waiting for the UI to change)`
+        : "  (not passed yet; waiting for the UI to change)";
+    if (waiting !== logged.waiting) log(waiting);
+    logged.waiting = waiting;
+    // A request still in flight may change the page after it has gone quiet: look again until it ends.
+    if (!(await rt.waitForChange(obs.text, left)) && !obs.loading) return end(outcome, verdict.reason);
     obs = await rt.observe();
   }
 
   async function check(obs: Observation): Promise<Verdict> {
-    const a = await decider.assess(said, obs, judged);
-    const result = checkVerdict(a, obs, { values, table, list, exact, recall });
-    for (const line of result.details) log(line);
-    return result;
+    // The same page as last time (a request ended, the page did not change): the same answer, Jev is not asked again.
+    if (assessed?.text !== obs.text) assessed = { text: obs.text, a: await decider.assess(said, obs, judged) };
+    return checkVerdict(assessed.a, obs, { values, table, list, exact, recall });
   }
 }
 
