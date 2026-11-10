@@ -11,9 +11,11 @@ import type { Decider } from "../src/decision.ts";
 import { runAssertion, runStep } from "../src/runner.ts";
 import { RunDir } from "../src/trace.ts";
 
+const DELAY = 300; // ms after the click before the "Much later" text lands
 const PAGE = `<input aria-label=name oninput="clearTimeout(window.d);d=setTimeout(()=>fetch('/ok').then(()=>v.textContent='valid'),50)"><p id=v></p><button onclick="fetch('/hang',{method:'POST'});fetch('/ok').then(()=>o.textContent='done')">Go</button>
 <button id=img onclick="document.body.append(Object.assign(new Image(),{src:'/slow.png'}))">Img</button><p id=o>idle</p>
 <button onclick="setTimeout(()=>o.textContent='later',30)">Later</button>
+<button onclick="setTimeout(()=>o.textContent='much later',${DELAY})">Much later</button>
 <button onclick="fetch('/slow').then(()=>o.textContent='loaded')">Load</button>`;
 let server: Server;
 let url: string;
@@ -79,18 +81,22 @@ test("perf tally splits settle by what held it", async () => {
 });
 
 test("replay: a change landing a task after the click is seen without a fixed wait", async () => {
-  const b = await Browser.open(url, false, false, {}, ".", undefined, {}, undefined, true);
+  const b = await Browser.open(url);
+  b.replay = true;
   try {
-    // Diff from the page before the click: a snapshot taken after it may already hold the change on a loaded machine
-    // (the click's 30 ms timer fires during that observe), and then there is nothing left to wait for.
     const obs = await b.observe();
-    const t = Date.now();
-    await b.execute({ verb: "CLICK", ref: obs.elements.find((e) => e.name === "Later")!.ref });
-    assert.equal(await b.waitForChange(obs.text), true);
-    const ms = Date.now() - t;
-    // Click, 30 ms timer, polling every 20 ms, a short quiet window: about 100 ms; a fixed 100 ms poll plus a full
-    // quiet window took over 250.
-    assert.ok(ms < 200, `waitForChange took ${ms} ms`);
+    const clicked = Date.now();
+    await b.execute({ verb: "CLICK", ref: obs.elements.find((e) => e.name === "Much later")!.ref });
+    // From a snapshot after the click, so its own focus ([active]) is no change; the timer is long enough to fire
+    // after that snapshot even on a loaded machine.
+    const since = (await b.observe()).text;
+    assert.doesNotMatch(since, /much later/);
+    assert.equal(await b.waitForChange(since), true);
+    assert.match((await b.observe()).text, /much later/);
+    const late = Date.now() - clicked - DELAY;
+    // Measured after the change lands: 60-90 ms now (20 ms polls, a short quiet window), 160-230 ms with the fixed
+    // 100 ms poll and full quiet window before PR #60.
+    assert.ok(late < 125, `waitForChange saw the change ${late} ms after it landed`);
   } finally {
     await b.close();
   }
