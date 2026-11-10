@@ -55,3 +55,33 @@ test("grouped: links with the same name and URL count as one; other URLs and but
   const b = grouped({ choice: "e8", probabilities: { e8: 0.5, e9: 0.5 } }, obs);
   assert.deepEqual(b.probabilities, { e8: 0.5, e9: 0.5 });
 });
+
+test("grouped: a clickable element that is all a control shows is that control; a control inside another is not", () => {
+  const model = parseSnapshot(
+    '- button "Model" [ref=e1]:\n  - generic [ref=e2] [cursor=pointer]: mock-model\n- button "Run" [ref=e3]',
+    new Set(),
+    new Set(),
+    new Set(["e2"]),
+  );
+  assert.ok(model.elements.some((e) => e.ref === "e2"));
+  assert.deepEqual(grouped({ choice: "e2", probabilities: { e2: 0.5, e1: 0.25, e3: 0.25 } }, model), {
+    choice: "e1",
+    probabilities: { e1: 0.75, e3: 0.25 },
+  });
+  // The clickable part shows more than the control's own content, or is a control itself: two targets.
+  const card = parseSnapshot(
+    '- button "Model" [ref=e1]:\n  - generic [ref=e2] [cursor=pointer]: mock-model\n  - text: v2\n- generic [ref=e4] [cursor=pointer]:\n  - button "Delete" [ref=e5]',
+    new Set(),
+    new Set(),
+    new Set(["e2", "e4"]),
+  );
+  assert.deepEqual(grouped({ choice: "e2", probabilities: { e2: 0.5, e1: 0.4, e3: 0.1 } }, card).probabilities, {
+    e2: 0.5,
+    e1: 0.4,
+    e3: 0.1,
+  });
+  assert.deepEqual(grouped({ choice: "e5", probabilities: { e5: 0.5, e4: 0.5 } }, card).probabilities, {
+    e5: 0.5,
+    e4: 0.5,
+  });
+});

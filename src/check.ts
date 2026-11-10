@@ -11,7 +11,7 @@ import {
   type Pick,
 } from "./decision.ts";
 import { confidence } from "./decision.ts";
-import { assertableText, type Element, type Observation } from "./observation.ts";
+import { assertableText, sameContent, type Element, type Observation } from "./observation.ts";
 import type { StepOutcome } from "./runner.ts";
 
 export interface Expectation {
@@ -183,12 +183,15 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
   // No subject applies: unchanged from a single reading. A value check on a label stays a final UNVERIFIABLE, so a
   // plausible presence reading of the same check cannot pass on the label's text.
   if (!readings.length) return kind === "value" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0];
-  const marginal = weakMass(
-    "subject",
-    a.subject,
-    subjects.filter((_, i) => !all[i].inapplicable),
-    obs,
-  );
+  // A subject that cannot be read but only wraps one that can (a button "Model" holding "mock-model") is the same
+  // answer: its confidence counts for the reading.
+  const read = subjects.filter((_, i) => !all[i].inapplicable);
+  const element = (ref: string) => obs.readable.find((e) => e.ref === ref);
+  const wrapping = subjects.filter((ref, i) => {
+    const el = element(ref);
+    return all[i].inapplicable && el && read.some((r) => element(r) && sameContent(el, element(r)!));
+  });
+  const marginal = weakMass("subject", a.subject, [...read, ...wrapping], obs);
   const what = kind === "state" ? "control" : "element";
   return agreement(
     readings,
