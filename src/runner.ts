@@ -184,6 +184,8 @@ export async function runAssertion(
   // after a change.
   const deadline = Date.now() + settings().checkTimeout;
   let assessed: { text: string; a: Assessment } | undefined;
+  // Looking again at an unchanged page (a request in flight) logs nothing new.
+  let logged = { details: "", waiting: "" };
   let obs = await rt.observe();
   for (;;) {
     let verdict: Verdict;
@@ -192,12 +194,18 @@ export async function runAssertion(
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
     if (outcome === "UNVERIFIABLE") verdict.reason = `${verdict.reason ?? ""}${recallNote}`;
+    const details = `${obs.text}\n${verdict.details.join("\n")}`;
+    if (details !== logged.details) {
+      for (const line of verdict.details) log(line);
+      logged = { details, waiting: "" };
+    }
     if (final || left <= 0) return end(outcome, verdict.reason, verdict.marginal);
-    log(
+    const waiting =
       verdict.outcome === "PENDING"
         ? `  (not known yet: ${verdict.reason}; waiting for the UI to change)`
-        : "  (not passed yet; waiting for the UI to change)",
-    );
+        : "  (not passed yet; waiting for the UI to change)";
+    if (waiting !== logged.waiting) log(waiting);
+    logged.waiting = waiting;
     // A request still in flight may change the page after it has gone quiet: look again until it ends.
     if (!(await rt.waitForChange(obs.text, left)) && !obs.loading) return end(outcome, verdict.reason);
     obs = await rt.observe();
@@ -206,9 +214,7 @@ export async function runAssertion(
   async function check(obs: Observation): Promise<Verdict> {
     // The same page as last time (a request ended, the page did not change): the same answer, Jev is not asked again.
     if (assessed?.text !== obs.text) assessed = { text: obs.text, a: await decider.assess(said, obs, judged) };
-    const result = checkVerdict(assessed.a, obs, { values, table, list, exact, recall });
-    for (const line of result.details) log(line);
-    return result;
+    return checkVerdict(assessed.a, obs, { values, table, list, exact, recall });
   }
 }
 

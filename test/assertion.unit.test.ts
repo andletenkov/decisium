@@ -120,6 +120,22 @@ test("runAssertion: a request that ends without changing the page is looked at a
   assert.equal(d.assessed, 1);
 });
 
+test("runAssertion: looking again at an unchanged page while a request is in flight logs it once", async () => {
+  const loadingList = inFlight(list("Autumn Sale"));
+  let looks = 0;
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (++looks < 20 ? loadingList : list("Autumn Sale")),
+    execute: async () => {},
+    waitForChange: async () => false, // the page went quiet, the request did not end
+  };
+  const lines: string[] = [];
+  assert.equal((await runAssertion(ABSENT, rt, model(), (l: string) => lines.push(l))).outcome, "PASSED");
+  assert.equal(looks, 20);
+  assert.equal(lines.filter((l) => l.includes("not known yet")).length, 1);
+  assert.equal(lines.filter((l) => l.startsWith("  Kind:")).length, 1); // the same answer on every look
+});
+
 test("runAssertion: one Jev request per look at the page, never a question whether the check passes", async () => {
   const d = model();
   const status = parseSnapshot("- paragraph [ref=e1]: Status: Draft");

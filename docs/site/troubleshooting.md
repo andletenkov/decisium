@@ -18,6 +18,7 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 | `PAGE_TOO_LARGE` | The page is over the model's limit. | Test a narrower page or state. |
 | marginal pass | Passed, but Jev was barely sure. | Make the Step more specific. `--strict` fails it. |
 | check fails on a slow page | The state came after the check gave up. | Raise `checkTimeout`. |
+| absence `UNVERIFIABLE`: "a request is in flight" | The last action started a request that never ends (a long poll, a live feed), so the page never proves the text is gone. | Check what the page shows instead (`"X" should appear` for the state that replaces it), or put the absence check before the action that opens the feed. |
 
 ## A Step passes sometimes
 

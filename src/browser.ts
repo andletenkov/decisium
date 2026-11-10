@@ -521,6 +521,9 @@ export class Browser {
    * and on replay alike. A request the last action started is its load, however long it takes (the check's deadline
    * bounds the wait). An older one counts only while younger than `actionTimeout`, as for settle(): past that it is
    * long-lived (polling, streams). A quiet network still proves nothing.
+   * shortcut: a request the last action started that never ends (a long poll, a hung script) counts until the next
+   * action, so absence checks until then end UNVERIFIABLE; any age cap short enough to help would let a slow load
+   * pass an absence check while its list is still empty.
    */
   private loading(): string | undefined {
     const now = Date.now();
