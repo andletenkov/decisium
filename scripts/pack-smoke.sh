@@ -47,7 +47,7 @@ npm install --silent @openrouter/sdk@1.5.75
 node --input-type=module <<'JS'
 import assert from 'node:assert/strict';
 import { OpenRouterProvider } from './node_modules/decisium/dist/providers.js';
-const result = await new OpenRouterProvider('~typesafe/jev-latest', 'key', async () => new Response(JSON.stringify({ model: '~typesafe/jev-latest', answers: { ok: { type: 'noul', noul: 1 } }, usage: { input_tokens: 0, output_tokens: 0 } }), { headers: { 'content-type': 'application/json' } })).decide({ state: {}, questions: { ok: { type: 'noul', instructions: 'OK?' } } });
+const result = await new OpenRouterProvider('typesafe/jev-1.14', 'key', async () => new Response(JSON.stringify({ model: 'typesafe/jev-1.14-20261014', answers: { ok: { type: 'noul', noul: 1 } }, usage: { input_tokens: 0, output_tokens: 0 } }), { headers: { 'content-type': 'application/json' } })).decide({ state: {}, questions: { ok: { type: 'noul', instructions: 'OK?' } } });
 assert.equal(result.answers.ok.noul, 1);
 assert.deepEqual(result.usage, { inputTokens: 0, outputTokens: 0 });
 JS

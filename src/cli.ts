@@ -51,7 +51,7 @@ Options in the configuration: worldParameters: { decisium: { url, record, headed
   agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns } }; flags and DECISIUM_*
   env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, DECISIUM_MAX_TURNS, ...) override them.
 --provider <typesafe|openrouter>: decision provider (default typesafe).
---model <id>: provider-specific model ID (defaults: jev-1.14.0 / ~typesafe/jev-latest).
+--model <id>: provider-specific model ID (defaults: jev-1.14.0 / typesafe/jev-1.14).
 --decision-timeout <ms>: total deadline per decision (default 10000; no retries).
 --report-dir <dir>: where run folders go (default runs).
 --confidence-target <p>: how sure Jev must be of the element an action acts on (default 0.5).

@@ -205,7 +205,7 @@ test("missing key message names the empty generic key instead of calling it unse
 
 test("provider configuration follows env > world options > defaults", () => {
   assert.equal(settings({}).model, "jev-1.14.0");
-  assert.equal(settings({ DECISIUM_MODEL_PROVIDER: "openrouter" }).model, "~typesafe/jev-latest");
+  assert.equal(settings({ DECISIUM_MODEL_PROVIDER: "openrouter" }).model, "typesafe/jev-1.14");
   assert.equal(applyOptions({ provider: "openrouter", model: "alias", decisionTimeout: 99 }, {}).model, "alias");
   assert.equal(applyOptions({ provider: "openrouter" }, { DECISIUM_MODEL_PROVIDER: "typesafe" }).provider, "typesafe");
   assert.throws(() => settings({ DECISIUM_MODEL_PROVIDER: "chat" }));

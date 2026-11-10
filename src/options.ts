@@ -3,7 +3,7 @@
 // are written back to DECISIUM_* env, which the hooks and the console formatter read.
 
 export const TYPESAFE_MODEL = "jev-1.14.0";
-export const OPENROUTER_MODEL = "~typesafe/jev-latest";
+export const OPENROUTER_MODEL = "typesafe/jev-1.14";
 
 const ENV = {
   url: "URL",

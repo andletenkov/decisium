@@ -38,7 +38,7 @@ TypeSafe remains the default: its SDK is bundled, `TYPESAFE_API_KEY` is unchange
 ```sh
 npm install @openrouter/sdk
 export DECISIUM_MODEL_PROVIDER=openrouter
-export DECISIUM_MODEL='~typesafe/jev-latest'
+export DECISIUM_MODEL=typesafe/jev-1.14 # pinned; ~typesafe/jev-latest is a moving alias
 export DECISIUM_MODEL_API_KEY=... # or put it in .env; never commit keys
 npx decisium run test.feature
 ```
@@ -69,7 +69,7 @@ never put secrets in literal Step text.
 
 New cassette entries and Step trace results include `decisions`: provider, requested model, returned `resolvedModel`
 and upstream provider when available, plus token usage (`null` when unavailable; individual unavailable counts are also `null`; measured zero stays zero).
-`resolvedModel` is the API's exact identifier: `jev-latest` is still an alias, **not a pinned version**. Legacy aggregate
+`resolvedModel` is the API's exact identifier: OpenRouter answers `typesafe/jev-1.14` with its dated snapshot (e.g. `typesafe/jev-1.14-20261014`), while `jev-latest` is still an alias, **not a pinned version**. Legacy aggregate
 Step token totals count only measured tokens; `usageUnavailable: true` marks incomplete accounting.
 Older cassettes remain replayable unchanged. The legacy top-level `model` is the recording configuration, not proof
 of every entry's origin; per-entry metadata preserves old and new providers when a recording is partially healed.
@@ -99,7 +99,7 @@ export default {
 | `url` | | Start URL for every scenario. Overrides `@url:`, so one set of features runs against dev, staging and prod. |
 | `record` | `"new"` | `"none"` in CI. |
 | `provider` | `"typesafe"` | `"openrouter"` for OpenRouter. |
-| `model` | `"jev-1.14.0"` / `"~typesafe/jev-latest"` | Provider-specific ID; no automatic translation. |
+| `model` | `"jev-1.14.0"` / `"typesafe/jev-1.14"` | Provider-specific ID; no automatic translation. |
 | `decisionTimeout` | `10000` | Total ms per live decision. |
 | `reportDir` | `"runs"` | To match your CI artifact path. |
 | `checkTimeout` | `5000` | Slow page: ms a check waits for the expected state. |
