@@ -519,12 +519,24 @@ export class Browser {
     return now === undefined || now !== this.stamp;
   }
 
-  private read(): Promise<Observation> {
-    return this.reuse().then((same) => (same && this.cached ? this.cached : this.readNow()));
+  /**
+   * The page's read, reused while nothing can have changed it: no action of ours or of a client step, and the same
+   * print (DOM mutation time, field values, checked boxes, focus, URL). Steps observe twice in a row at their boundary
+   * (the last Turn of one, the first of the next); the second read is skipped. Main frame only: a page with frames is
+   * always read. After an action the print is not asked first, it comes with the read (one round trip less).
+   * shortcut: values of fields inside shadow roots are not part of the print; a script that changes one between two
+   * Steps without touching the DOM is read only at the next change.
+   */
+  private async read(): Promise<Observation> {
+    if (!this.touched && this.cached && this.page.frames().length === 1) {
+      const { print } = await this.pagePrint();
+      if (print !== undefined && print === this.print) return this.cached;
+    }
+    return this.readNow();
   }
 
-  private cached?: Observation; // the latest page read, reused while nothing can have changed it (reuse())
-  private print?: string; // the page's state when `cached` was read
+  private cached?: Observation; // the latest page read
+  private print?: string; // the page's print when `cached` was read
   /** Set by execute() and by client steps (forget()): the page may have changed in ways no DOM mutation shows. */
   private touched = true;
 
@@ -533,16 +545,9 @@ export class Browser {
     this.touched = true;
   }
 
-  /**
-   * True when nothing can have changed the page since the latest read: no action of ours or of a client step, and no
-   * DOM mutation, field value, checked box, focus or URL change since (one round trip). Steps observe twice in a row
-   * at their boundary (the last Turn of one, the first of the next); the second read is skipped. Main frame only: a
-   * page with frames is always read.
-   * shortcut: values of fields inside shadow roots are not part of the print; a script that changes one between two
-   * Steps without touching the DOM is read only at the next change.
-   */
-  private async reuse(): Promise<boolean> {
-    const print = await this.page
+  /** What the page holds that its snapshot shows, as one string; and the time of its latest DOM mutation. */
+  private async pagePrint(): Promise<{ print?: string; stamp?: number }> {
+    const got = await this.page
       .evaluate(() => {
         const w = window as unknown as { __lastMutation?: number; __ids?: WeakMap<Element, number> };
         let h = 2166136261; // FNV-1a, so field values (passwords too) never leave the page
@@ -557,28 +562,28 @@ export class Browser {
         const ids = (w.__ids ??= new WeakMap()); // an id per focused element, so focus moving shows in the print
         const active = document.activeElement;
         if (active && !ids.has(active)) ids.set(active, performance.now());
-        return `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`;
+        return [
+          w.__lastMutation,
+          `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`,
+        ] as const;
       })
       .catch(() => undefined);
-    const same = !this.touched && print !== undefined && print === this.print && this.page.frames().length === 1;
-    this.print = print;
-    this.touched = false;
-    return same;
+    return { stamp: got?.[0], print: got?.[1] };
   }
 
   private async readNow(): Promise<Observation> {
     // The DOM reads that do not depend on the snapshot's refs go out together (each round trip is a wait); the
     // facts come before the page snapshot, whose refs they give.
-    const [stamp, found, collapsed, titles, title] = await Promise.all([
-      this.page
-        .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
-        .catch(() => undefined),
+    this.touched = false; // an action from here on sets it again
+    const [{ stamp, print }, found, collapsed, titles, title] = await Promise.all([
+      this.pagePrint(), // before the snapshot below: a change after it shows as another print
       this.facts(),
       this.collapsed(),
       this.titles(),
       this.page.title().catch(() => ""), // mid-navigation
     ]);
     this.stamp = stamp;
+    this.print = print;
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
     const snapshot = renderSnapshot((await this.page.ariaSnapshotJSON({ mode: "ai" })) as AriaNode[]);
