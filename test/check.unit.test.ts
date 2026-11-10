@@ -32,11 +32,13 @@ test("Check: Jev vetoes any inexact match the surrounding words negate (issue #2
   assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, expected).outcome, "ASSERTION_FAILED");
   // The veto never touches an exact value: code alone decides equality.
   assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, { values: ["Not Scheduled"] }).outcome, "PASSED");
-  // Presence reads the same text, so it is vetoed the same way; absence then holds.
-  const vetoed = (k: string) => ({ kind: pick({ [k]: 1 }), satisfied: 0.02 });
-  assert.equal(verdict(assessment(vetoed("presence")), obs, expected).outcome, "ASSERTION_FAILED");
+  // Presence reads the same text, so it is vetoed the same way. For an absence check "satisfied" means "not shown":
+  // Jev saying the absence holds is what vetoes the match.
+  const said = (k: string, satisfied: number) => ({ kind: pick({ [k]: 1 }), satisfied });
+  assert.equal(verdict(assessment(said("presence", 0.02)), obs, expected).outcome, "ASSERTION_FAILED");
   assert.equal(verdict(assessment({ kind: pick({ absence: 1 }) }), obs, expected).outcome, "ASSERTION_FAILED");
-  assert.equal(verdict(assessment(vetoed("absence")), obs, expected).outcome, "PASSED");
+  assert.equal(verdict(assessment(said("absence", 0.98)), obs, expected).outcome, "PASSED");
+  assert.equal(verdict(assessment(said("absence", 0.02)), obs, expected).outcome, "ASSERTION_FAILED");
   // A table cell is matched the same way.
   const rows = parseSnapshot(`- table [ref=t1]:
   - row [ref=r0]:
@@ -46,6 +48,16 @@ test("Check: Jev vetoes any inexact match the surrounding words negate (issue #2
   const table = { values: [], table: [["Status"], ["Scheduled"]] };
   assert.equal(verdict(assessment(), rows, table).outcome, "PASSED");
   assert.equal(verdict(assessment({ satisfied: 0.02 }), rows, table).outcome, "ASSERTION_FAILED");
+});
+
+test("Check: an absence check fails when Jev sees the text still shown (refactor bench b-delete)", () => {
+  const obs = parseSnapshot(`- table [ref=t1]:
+  - row [ref=r1]:
+    - cell [ref=c1]: Spring Sale
+    - cell [ref=c2]: Draft
+- status [ref=s1]: Campaign "Spring Sale" deleted`);
+  const a = assessment({ kind: pick({ absence: 1 }), satisfied: 0.02 });
+  assert.equal(verdict(a, obs, { values: ["Spring Sale"] }).outcome, "ASSERTION_FAILED");
 });
 
 test("Check: subjects and areas agree on outcomes; only passes carry marginal warnings", () => {
