@@ -1,5 +1,5 @@
-# Lint/format, audit, typecheck, tests, the docs build, the packed-tarball and Docker image smoke tests on every push to
-# main and every PR.
+# Lint/format, audit, typecheck, tests, the docs build, the packed-tarball and Docker image smoke tests, and the replay
+# speed bench on every push to main and every PR.
 # No secrets: the suite runs without TYPESAFE_API_KEY (the one live test skips) and the smoke test checks install + bin.
 name: ci
 on:
@@ -30,6 +30,21 @@ jobs:
       - run: npm run test:coverage # fails under 85% lines/branches/functions of src/
       - run: node scripts/site.ts && git diff --exit-code site/ # committed site/ matches the markdown
       - run: npm run pack:smoke
+  # Cassette replay against a hand-written Playwright script on the same runner (issue #2): a ratio, so a slow runner
+  # slows both. Fails over 1.5x; replays measure about 1.2x.
+  replay-bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 15
+      - run: node scripts/replay-bench.ts --runs 5 | tee -a "$GITHUB_STEP_SUMMARY" # bash -eo pipefail: keeps its exit code
   image:
     runs-on: ubuntu-latest
     timeout-minutes: 20
