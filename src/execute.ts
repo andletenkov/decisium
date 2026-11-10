@@ -1,7 +1,8 @@
 // Step execution (task 0051): one Gherkin Step from text to Step outcome, without cucumber. steps.ts adapts it.
 import { UiChanged, type Cassette } from "./cassette.ts";
 import type { Decider } from "./decision.ts";
-import { jevUsage } from "./jev.ts";
+import { modelUsage } from "./model-decider.ts";
+import type { DecisionMetadata } from "./decision-provider.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { readStep, type StepArgument, type StepKind } from "./step.ts";
 
@@ -31,6 +32,8 @@ export interface StepReport extends StepResult {
   positional?: string[];
   seconds: number;
   jevCalls: number;
+  decisions?: DecisionMetadata[];
+  usageUnavailable?: boolean;
   inputTokens: number;
   outputTokens: number;
 }
@@ -42,7 +45,8 @@ export interface StepReport extends StepResult {
 export async function executeStep(text: string, ctx: StepContext): Promise<StepReport> {
   const { rt, live, cassette, key, kind, arg, earlier, log, trace = (d) => d } = ctx;
   const start = Date.now(),
-    before = { ...jevUsage };
+    before = { ...modelUsage };
+  const decisionStart = live.decisions?.length ?? 0;
   const { table, docString } = arg;
   const perRow = !!table && kind !== "assertion";
   const { rows } = readStep({ text, kind, ...arg });
@@ -98,8 +102,10 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     cassette: served.find((c) => c !== "replayed") ?? served[0],
     ...(positional.length ? { positional } : {}),
     seconds: (Date.now() - start) / 1000,
-    jevCalls: jevUsage.calls - before.calls,
-    inputTokens: jevUsage.inputTokens - before.inputTokens,
-    outputTokens: jevUsage.outputTokens - before.outputTokens,
+    jevCalls: modelUsage.calls - before.calls,
+    inputTokens: modelUsage.inputTokens - before.inputTokens,
+    outputTokens: modelUsage.outputTokens - before.outputTokens,
+    ...(modelUsage.unavailable > before.unavailable ? { usageUnavailable: true } : {}),
+    ...(live.decisions?.length ? { decisions: live.decisions.slice(decisionStart) } : {}),
   };
 }

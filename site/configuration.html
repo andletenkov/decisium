@@ -117,6 +117,46 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <td>The options below, one flag each.</td>
 </tr>
 </tbody></table>
+<h2 id="decision-providers">Decision providers</h2>
+<p>TypeSafe remains the default: its SDK is bundled, <code>TYPESAFE_API_KEY</code> is unchanged, and the default model is
+<code>jev-1.14.0</code>. To use OpenRouter&#39;s typed Decisions API:</p>
+<pre><code class="language-sh">npm install @openrouter/sdk
+export DECISIUM_MODEL_PROVIDER=openrouter
+export DECISIUM_MODEL=typesafe/jev-1.14 # pinned; ~typesafe/jev-latest is a moving alias
+export DECISIUM_MODEL_API_KEY=... # or put it in .env; never commit keys
+npx decisium run test.feature
+</code></pre>
+<p>Credential precedence: <code>DECISIUM_MODEL_API_KEY</code> wins over the selected provider&#39;s native variable
+(<code>TYPESAFE_API_KEY</code> or <code>OPENROUTER_API_KEY</code>). The other provider&#39;s key is never used, and providers never switch
+automatically. Native variables let you retain both providers&#39; credentials while switching <code>DECISIUM_MODEL_PROVIDER</code>.
+An explicitly empty generic key fails authentication rather than falling back. Keys are <strong>environment-only</strong> (shell or
+<code>.env</code>): no API-key CLI argument or <code>worldParameters.decisium</code> field. They are excluded from reports, logs, traces and cassettes.</p>
+<p>The supported optional peer is <strong><code>@openrouter/sdk@1.5.75</code></strong> (also pinned in development). This alpha API can change;
+install that version explicitly if npm offers a newer incompatible release. It is loaded only on a live OpenRouter
+request. TypeSafe and replay-only runs do not import it. <code>--record none</code> needs neither SDK installation nor API keys
+for replay; <code>--judged</code> explicitly requests live judgments. There is no cross-provider or chat-completion fallback.
+<code>decisium doctor --provider openrouter</code> checks the selected provider.</p>
+<p>Both adapters send the shared structured state object, with string/string-array values, and <code>choice</code>/<code>noul</code> questions.
+They require full choice distributions and noul probabilities, rejecting missing, refused or malformed answers.
+The shared candidate and UI budgets remain the conservative <strong>Jev</strong> limits (255 choices, 80,000 UI characters), not a
+claim that all models have identical capabilities. Only Jev models are currently smoke-tested; other typed models
+must support these two question kinds and complete probability distributions.</p>
+<p>Each decision has a total <code>decisionTimeout</code> (default 10 seconds), including SDK loading. Cancellation aborts the
+transport. Neither adapter retries automatically. Failures use sanitized codes: <code>authentication</code>, <code>rate_limit</code>,
+<code>unsupported</code>, <code>transport</code>, <code>malformed_response</code>, <code>timeout</code>, <code>cancelled</code>, <code>configuration</code>, <code>request_too_large</code>.
+SDK errors, request headers and credentials are not serialized. Step text still goes to the selected provider;
+never put secrets in literal Step text.</p>
+<p>New cassette entries and Step trace results include <code>decisions</code>: provider, requested model, returned <code>resolvedModel</code>
+and upstream provider when available, plus token usage (<code>null</code> when unavailable; individual unavailable counts are also <code>null</code>; measured zero stays zero).
+<code>resolvedModel</code> is the API&#39;s exact identifier: OpenRouter answers <code>typesafe/jev-1.14</code> with its dated snapshot (e.g. <code>typesafe/jev-1.14-20261014</code>), while <code>jev-latest</code> is still an alias, <strong>not a pinned version</strong>. Legacy aggregate
+Step token totals count only measured tokens; <code>usageUnavailable: true</code> marks incomplete accounting.
+Older cassettes remain replayable unchanged. The legacy top-level <code>model</code> is the recording configuration, not proof
+of every entry&#39;s origin; per-entry metadata preserves old and new providers when a recording is partially healed.
+Legacy entries without metadata have unknown provenance. No cassette format bump or SDK object serialization is needed.</p>
+<p>Verified against the official SDK&#39;s <a href="https://github.com/OpenRouterTeam/typescript-sdk/blob/main/docs/sdks/decisions/README.md">Decisions API</a>
+and <code>1.5.75</code> generated <code>decisionsrequest</code>, <code>decisionsresponse</code> and error schemas. OpenRouter accepts string, object or
+array state; this integration uses objects. Its SDK exposes camelCase usage; TypeSafe exposes snake_case usage.
+Contract tests run both real SDK serializers over fake HTTP, including cancellation and error sanitization.</p>
 <h2 id="options">Options</h2>
 <p><code>decisium run</code> loads your <code>cucumber.{js,mjs,cjs,json,yaml}</code> like cucumber-js does. Decisium options go in
 <code>worldParameters.decisium</code>:</p>
@@ -144,6 +184,21 @@ export default {
 <td><code>record</code></td>
 <td><code>&quot;new&quot;</code></td>
 <td><code>&quot;none&quot;</code> in CI.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>&quot;typesafe&quot;</code></td>
+<td><code>&quot;openrouter&quot;</code> for OpenRouter.</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td><code>&quot;jev-1.14.0&quot;</code> / <code>&quot;typesafe/jev-1.14&quot;</code></td>
+<td>Provider-specific ID; no automatic translation.</td>
+</tr>
+<tr>
+<td><code>decisionTimeout</code></td>
+<td><code>10000</code></td>
+<td>Total ms per live decision.</td>
 </tr>
 <tr>
 <td><code>reportDir</code></td>
@@ -205,6 +260,42 @@ file &gt; default.</p>
 <td><code>--record</code></td>
 <td><code>record</code></td>
 <td><code>new</code>, <code>none</code> or <code>all</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_MODEL_PROVIDER</code></td>
+<td><code>--provider</code></td>
+<td><code>provider</code></td>
+<td><code>typesafe</code> or <code>openrouter</code>.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_MODEL_API_KEY</code></td>
+<td>—</td>
+<td>—</td>
+<td>Environment-only key for the selected provider; overrides its native key.</td>
+</tr>
+<tr>
+<td><code>TYPESAFE_API_KEY</code></td>
+<td>—</td>
+<td>—</td>
+<td>TypeSafe fallback when <code>DECISIUM_MODEL_API_KEY</code> is unset.</td>
+</tr>
+<tr>
+<td><code>OPENROUTER_API_KEY</code></td>
+<td>—</td>
+<td>—</td>
+<td>OpenRouter fallback when <code>DECISIUM_MODEL_API_KEY</code> is unset.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_MODEL</code></td>
+<td><code>--model</code></td>
+<td><code>model</code></td>
+<td>Provider-specific model ID.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_DECISION_TIMEOUT</code></td>
+<td><code>--decision-timeout</code></td>
+<td><code>decisionTimeout</code></td>
+<td>Positive whole ms.</td>
 </tr>
 <tr>
 <td><code>DECISIUM_REPORT_DIR</code></td>
@@ -294,10 +385,6 @@ file &gt; default.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>TYPESAFE_API_KEY</code></td>
-<td>Jev API key for live runs. Read from the environment or from <code>.env</code>; replays need none.</td>
-</tr>
-<tr>
 <td><code>SLOWMO</code></td>
 <td>Milliseconds to pause per browser action, for demos.</td>
 </tr>
@@ -308,7 +395,7 @@ file &gt; default.</p>
 </tbody></table>
 <p><code>DECISIUM_RUN_ID</code>, <code>DECISIUM_RUN_DIR</code>, <code>DECISIUM_STEP</code> and <code>DECISIUM_NO_INTENT</code> are internal; do not set them.</p>
 <div class="pager"><a class="prev" href="steps.html"><span>Previous</span>Writing Steps</a><a class="next" href="ci.html"><span>Next</span>CI</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#commands">Commands</a><a class="l2" href="#run-flags">run flags</a><a class="l2" href="#options">Options</a><a class="l2" href="#environment-variables">Environment variables</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#commands">Commands</a><a class="l2" href="#run-flags">run flags</a><a class="l2" href="#decision-providers">Decision providers</a><a class="l2" href="#options">Options</a><a class="l2" href="#environment-variables">Environment variables</a></aside>
 </div>
 </body>
 </html>

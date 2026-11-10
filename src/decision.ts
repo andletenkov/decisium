@@ -214,6 +214,8 @@ export interface Intent {
 
 /** The seam to the decision model: Jev implements it (jev.ts); tests use a scripted fake. */
 export interface Decider {
+  /** Sanitized live request metadata; absent on replay/test deciders. */
+  readonly decisions?: readonly import("./decision-provider.ts").DecisionMetadata[];
   /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
   /** `attempt`: done means the user performed the actions, whether or not the app accepted them. */
   /** `keys`: the Named keys the Step's text names (readStep), offered as the page's `press <key>` actions. */

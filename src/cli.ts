@@ -13,7 +13,7 @@ import { doctor } from "./doctor.ts";
 import { install } from "./install.ts";
 import { lint } from "./lint.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
-import { MODEL } from "./jev.ts";
+import { credentialName, missingCredential } from "./providers.ts";
 import { readStep } from "./step.ts";
 import { SavedStorage } from "./saved.ts";
 import { consumerChain, discoverStates, isStateFile, loadStates, tagProblems, type StateDef } from "./states.ts";
@@ -50,6 +50,9 @@ Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (
 Options in the configuration: worldParameters: { decisium: { url, record, headed, judged, strict, verbose, debug,
   agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns } }; flags and DECISIUM_*
   env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, DECISIUM_MAX_TURNS, ...) override them.
+--provider <typesafe|openrouter>: decision provider (default typesafe).
+--model <id>: provider-specific model ID (defaults: jev-1.14.0 / typesafe/jev-1.14).
+--decision-timeout <ms>: total deadline per decision (default 10000; no retries).
 --report-dir <dir>: where run folders go (default runs).
 --confidence-target <p>: how sure Jev must be of the element an action acts on (default 0.5).
 --confidence-answer <p>: how sure Jev must be of every other answer (default 0.8; lower lets a wrong reading pass).
@@ -91,7 +94,7 @@ Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.
   doctor: {
     synopsis: "decisium doctor [<file.feature>...]",
     notes:
-      "Checks Node, Chromium and TYPESAFE_API_KEY (one tiny Jev call); given features, also opens every start URL.",
+      "Checks Node, Chromium and the selected provider key (DECISIUM_MODEL_API_KEY, else TYPESAFE_API_KEY or OPENROUTER_API_KEY); given features, also opens every start URL.",
   },
   lint: {
     synopsis: "decisium lint <file.feature>...",
@@ -136,6 +139,9 @@ async function main(): Promise<number> {
       verbose: { type: "boolean", short: "v" },
       debug: { type: "boolean" },
       "report-dir": { type: "string" },
+      provider: { type: "string" },
+      model: { type: "string" },
+      "decision-timeout": { type: "string" },
       "confidence-target": { type: "string" },
       "confidence-answer": { type: "string" },
       "check-timeout": { type: "string" },
@@ -222,6 +228,9 @@ async function main(): Promise<number> {
     VERBOSE: flag(values.verbose),
     DEBUG: flag(values.debug),
     REPORT_DIR: values["report-dir"],
+    MODEL_PROVIDER: values.provider,
+    MODEL: values.model,
+    DECISION_TIMEOUT: values["decision-timeout"],
     CONFIDENCE_TARGET: values["confidence-target"],
     CONFIDENCE_ANSWER: values["confidence-answer"],
     CHECK_TIMEOUT: values["check-timeout"],
@@ -331,8 +340,8 @@ async function main(): Promise<number> {
   }
   // Each CLI run has a new ID; workers inherit the same ID.
   env.DECISIUM_RUN_ID = newRunId();
-  if (!env.TYPESAFE_API_KEY && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
-    console.error("TYPESAFE_API_KEY is not set.");
+  if (!env[credentialName(settings.provider)] && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
+    console.error(missingCredential(settings.provider));
     return 2;
   }
   // Opt-in: features sharing one stateful app (campaign-manager) break each other's state when run side by side.
@@ -348,7 +357,7 @@ async function main(): Promise<number> {
   Object.assign(env, { DECISIUM_STEP: cmd === "step" ? "1" : "", DECISIUM_RUN_DIR: run.path });
   run.event("run", { settings });
   for (const w of settingWarnings(settings)) console.warn(w);
-  console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
+  console.log(`Provider: ${settings.provider}\nModel: ${settings.model}\nRun directory: ${run.path}`);
   const { success } = await runCucumber(runConfiguration);
   run.done();
   new SavedStorage(run.path).remove(); // saved state storage lives for this run only

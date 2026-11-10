@@ -2,8 +2,14 @@
 // `npx cucumber-js` reads them too; DECISIUM_* env (which `decisium run` flags set) overrides them. The merged values
 // are written back to DECISIUM_* env, which the hooks and the console formatter read.
 
+export const TYPESAFE_MODEL = "jev-1.14.0";
+export const OPENROUTER_MODEL = "typesafe/jev-1.14";
+
 const ENV = {
   url: "URL",
+  provider: "MODEL_PROVIDER",
+  model: "MODEL",
+  decisionTimeout: "DECISION_TIMEOUT",
   record: "RECORD",
   headed: "HEADED",
   judged: "JUDGED",
@@ -19,12 +25,15 @@ const ENV = {
   "confidence.target": "CONFIDENCE_TARGET",
   "confidence.answer": "CONFIDENCE_ANSWER",
 } as const;
-const TEXT = ["url", "record", "reportDir", "states"];
+const TEXT = ["url", "record", "reportDir", "states", "provider", "model"];
 const BOOL = ["headed", "judged", "strict", "verbose", "debug", "agentReport"];
 
 /** Tuning values (issue 16): defaults, overridden by DECISIUM_* env (filled from worldParameters.decisium). */
 export const DEFAULTS = {
   reportDir: "runs",
+  provider: "typesafe",
+  model: TYPESAFE_MODEL,
+  decisionTimeout: 10_000,
   confidence: { target: 0.5, answer: 0.8 },
   checkTimeout: 5000,
   actionTimeout: 5000,
@@ -45,7 +54,14 @@ export function settings(env: Record<string, string | undefined> = process.env):
   const ms = (n: number) => Number.isInteger(n) && n > 0;
   if (env.DECISIUM_REPORT_DIR !== undefined && !env.DECISIUM_REPORT_DIR.trim())
     throw new Error("reportDir must be a non-empty string");
+  const provider = env.DECISIUM_MODEL_PROVIDER ?? DEFAULTS.provider;
+  if (!["typesafe", "openrouter"].includes(provider)) throw new Error("provider must be typesafe or openrouter");
+  if (env.DECISIUM_MODEL !== undefined && !env.DECISIUM_MODEL.trim())
+    throw new Error("model must be a non-empty string");
   return {
+    provider,
+    model: env.DECISIUM_MODEL ?? (provider === "typesafe" ? DEFAULTS.model : OPENROUTER_MODEL),
+    decisionTimeout: num("decisionTimeout", DEFAULTS.decisionTimeout, ms, "a positive whole number of ms"),
     reportDir: env.DECISIUM_REPORT_DIR ?? DEFAULTS.reportDir,
     confidence: {
       target: num("confidence.target", DEFAULTS.confidence.target, prob, "a number in (0, 1]"),

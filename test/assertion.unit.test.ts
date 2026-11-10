@@ -218,11 +218,21 @@ test("Jev: a check's request asks for its meaning and references, a verdict only
   const { JevDecider } = await import("../src/jev.ts");
   const key = process.env.TYPESAFE_API_KEY;
   process.env.TYPESAFE_API_KEY = "test";
-  const requests: { state: Record<string, unknown>; questions: Record<string, unknown> }[] = [];
+  const requests: {
+    state: Record<string, unknown>;
+    questions: Record<string, { type: string; criteria?: Record<string, string> }>;
+  }[] = [];
   t.mock.method(TypeSafeClient.prototype, "systemOne", (async (request: (typeof requests)[number]) => {
     requests.push(request);
-    const answers = Object.fromEntries(Object.keys(request.questions).map((q) => [q, sure("x")]));
-    return { model: "test", answers: { ...answers, satisfied: { noul: 0.9 } } };
+    // Contract-valid answers: a full distribution over the offered criteria, a noul in [0, 1].
+    const answers = Object.fromEntries(
+      Object.entries(request.questions).map(([q, question]) => {
+        if (question.type === "noul") return [q, { noul: 0.9 }];
+        const keys = Object.keys(question.criteria ?? {});
+        return [q, { choice: keys[0], probabilities: Object.fromEntries(keys.map((k, i) => [k, i ? 0 : 1])) }];
+      }),
+    );
+    return { model: "test", answers };
   }) as never);
   try {
     const jev = new JevDecider();

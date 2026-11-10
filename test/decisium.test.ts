@@ -1455,36 +1455,51 @@ test("Jev decider maps model choices back to values and element refs", async (t)
   const { TypeSafeClient } = await import("@typesafe-ai/sdk");
   const key = process.env.TYPESAFE_API_KEY;
   process.env.TYPESAFE_API_KEY = "test";
-  const pick = (choice: string) => ({ choice, probabilities: { [choice]: 1 } });
-  t.mock.method(TypeSafeClient.prototype, "systemOne", (async () => ({
+  const selected: Record<string, string> = {
+    target: "e1",
+    action: "type",
+    value: "v0",
+    answer: "v0",
+    kind: "value",
+    subject: "e1",
+    state: "checked",
+    area: "page",
+    exact: "no",
+    attempt: "no",
+    toggle: "na",
+    navigation: "none",
+    presses: "no",
+    key: "k0",
+    pressOnly: "no",
+    clear: "no",
+  };
+  // The real API returns every offered probability, and cannot choose a target omitted from the request.
+  t.mock.method(TypeSafeClient.prototype, "systemOne", (async (
+    request: import("../src/decision-provider.ts").DecisionRequest,
+  ) => ({
     model: "test",
-    answers: {
-      done: { noul: 0 },
-      target: pick("e1"),
-      action: pick("type"),
-      value: pick("v0"),
-      answer: pick("v0"),
-      kind: pick("value"),
-      subject: pick("e1"),
-      state: pick("checked"),
-      area: pick("page"),
-      satisfied: { noul: 1 },
-      exact: pick("no"),
-      attempt: pick("no"),
-      toggle: pick("na"),
-      navigation: pick("none"),
-      presses: pick("no"),
-      key: pick("k0"),
-      pressOnly: pick("no"),
-      clear: pick("no"),
-    },
+    answers: Object.fromEntries(
+      Object.entries(request.questions).map(([key, question]) => {
+        if (question.type === "noul") return [key, { noul: key === "done" ? 0 : 1 }];
+        const choice = Object.hasOwn(question.criteria, selected[key])
+          ? selected[key]
+          : Object.keys(question.criteria)[0];
+        return [
+          key,
+          {
+            choice,
+            probabilities: Object.fromEntries(Object.keys(question.criteria).map((k) => [k, k === choice ? 1 : 0])),
+          },
+        ];
+      }),
+    ),
   })) as never);
   try {
     const jev = new JevDecider();
     const obs = parseSnapshot('- textbox "Name" [ref=e1]\n- button "Save" [ref=e2]');
     assert.equal((await jev.turn('type "Ada"', obs, [])).target.choice, "e1");
     assert.equal((await jev.value('type "Ada"', obs, obs.elements[0], ["Ada"])).choice, "Ada");
-    assert.equal((await jev.drop("drop", obs, obs.elements[0])).choice, "e1");
+    assert.equal((await jev.drop("drop", obs, obs.elements[0])).choice, "e2");
     assert.equal((await jev.recall("check it", { Ada: "typed earlier" })).choice, "Ada");
     const dialog = withDialog(obs, { type: "prompt", message: "Name?", state: "open" });
     assert.equal((await jev.dialog("answer", dialog, ["Ada"])).choice, "Ada");

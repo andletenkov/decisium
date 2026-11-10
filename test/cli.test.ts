@@ -32,6 +32,14 @@ function invoke(args: string[]) {
   }
 }
 
+test("cli: API keys cannot be passed as flags and are not echoed", () => {
+  for (const flag of ["--model-api-key", "--api-key"]) {
+    const result = invoke(["run", flag, "credential-secret"]);
+    assert.equal(result.status, 2);
+    assert.doesNotMatch(result.stdout + result.stderr, /credential-secret/);
+  }
+});
+
 test("cli: TypeScript client steps resolve extensionless imports in serial and parallel", () => {
   const cwd = mkdtempSync(join(tmpdir(), "decisium-ts-"));
   try {

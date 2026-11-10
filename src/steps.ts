@@ -27,13 +27,14 @@ import { contextFromTags, fromPickle, ownTags, tagValue, toUrl, urlFromTags } fr
 import { forOrigin, SavedStorage, type StorageState } from "./saved.ts";
 import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, type States } from "./states.ts";
 import type { Decider } from "./decision.ts";
-import { JevDecider, MODEL } from "./jev.ts";
+import { ModelDecider } from "./model-decider.ts";
+import { credentialName, missingCredential } from "./providers.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
 import { fill, newRunId } from "./generate.ts";
-import { applyOptions, settingWarnings } from "./options.ts";
+import { applyOptions, settingWarnings, settings } from "./options.ts";
 
 let runId: string;
 
@@ -96,8 +97,8 @@ BeforeAll(function () {
   const settings = applyOptions(this.parameters.decisium);
   record = (env.DECISIUM_RECORD || "new") as RecordMode;
   if (!RECORD_MODES.includes(record)) throw new Error(`DECISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
-  if (!env.TYPESAFE_API_KEY && (record !== "none" || opt("STEP") || opt("JUDGED")))
-    throw new Error("TYPESAFE_API_KEY is not set.");
+  if (!env[credentialName(settings.provider)] && (record !== "none" || opt("STEP") || opt("JUDGED")))
+    throw new Error(missingCredential(settings.provider));
   run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
   runId = env.DECISIUM_RUN_ID ||= newRunId();
   saved = new SavedStorage(run.path);
@@ -106,7 +107,7 @@ BeforeAll(function () {
   run.event("run", { settings });
   if (!env.CUCUMBER_WORKER_ID || env.CUCUMBER_WORKER_ID === "0")
     for (const w of settingWarnings(settings)) console.warn(w);
-  console.log(`Model: ${MODEL}\nRun directory: ${run.path}`);
+  console.log(`Provider: ${settings.provider}\nModel: ${settings.model}\nRun directory: ${run.path}`);
 });
 
 // Its own timeout: live state Steps run inside it, and a worker may wait for another to save a state's storage.
@@ -132,8 +133,8 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
       // a corrupt cassette is a setup error, not a failed scenario
       const cassette = opt("STEP")
         ? undefined
-        : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", MODEL, record, run.path);
-      deciders.set(pickle.uri, { cassette, live: new JevDecider() });
+        : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", settings().model, record, run.path);
+      deciders.set(pickle.uri, { cassette, live: new ModelDecider() });
     }
   } catch (err) {
     throw infra(err);
@@ -427,7 +428,7 @@ function infra(err: unknown): Error {
   if (opt("DEBUG")) return err as Error;
   const e = err as Error & { status?: number };
   const out = new Error(
-    `${e.message.split("\n")[0]}${e.status === 401 ? " (check TYPESAFE_API_KEY in .env)" : ""}\nRerun with --debug for details.`,
+    `${e.message.split("\n")[0]}${e.status === 401 ? ` (check ${credentialName(settings().provider)} in .env)` : ""}\nRerun with --debug for details.`,
   );
   out.stack = out.message;
   return out;
