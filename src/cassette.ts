@@ -271,7 +271,10 @@ export function resolve(el: Element, among: Element[], hints: string[] = []): Re
 
 /** The element a Resolution names on this Observation, or why none does: exactly one must match all of it. */
 export function find(r: Resolution, among: Element[]): Element | string {
-  // A `near` from an older cassette holds the raw text; a new one the masked text.
+  // A `near` recorded before masking existed holds the raw text, so mask it the same way the page's texts are
+  // masked: its date or time would otherwise stop matching a day later. The raw fallback keeps a `near` masking
+  // cannot repair (a long text kept as its start plus a hash of the raw text) working while the page still shows it.
+  const near = r.near === undefined ? undefined : stableText(r.near);
   const named = among.filter((e) => same(e, r));
   const peers = named.filter(
     (e) =>
@@ -281,7 +284,7 @@ export function find(r: Resolution, among: Element[]): Element | string {
           r.anchor,
           named.filter((q) => q !== e),
         )) &&
-      (r.near === undefined || texts(e).includes(r.near) || texts(e, false).includes(r.near)),
+      (near === undefined || texts(e).includes(near) || texts(e, false).includes(r.near as string)),
   );
   if (r.of !== undefined && peers.length === r.of) return peers[r.nth!];
   if (r.of === undefined && peers.length === 1) return peers[0];

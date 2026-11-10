@@ -815,10 +815,11 @@ test("resolve and find: a stable text keeps telling look-alikes apart across run
   assert.match(r.near!, /^Run alpha ‹time› ‹duration› Open$/);
   const after = rows("20:11:42 0.8s", "20:11:44 3.3s");
   assert.equal(find(r, after), after[0]);
-  // Written before values were masked: the raw text of that run.
+  // Written before values were masked: the raw text of that run. Masking it on read keeps it working in the run it
+  // was recorded in and in every later one, instead of breaking as soon as the clock moves on.
   const old = { role: "button", name: "Open", container: "", near: "Run alpha 19:40:08 1.4s Open" };
   assert.equal(find(old, before), before[0]);
-  assert.match(find(old, after) as string, /matches 0 elements now/);
+  assert.equal(find(old, after), after[0]);
 });
 
 const campaigns = (a: string, b: string) =>
