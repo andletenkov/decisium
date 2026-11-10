@@ -30,9 +30,23 @@ jobs:
       - run: npm run test:coverage # fails under 85% lines/branches/functions of src/
       - run: node scripts/site.ts && git diff --exit-code site/ # committed site/ matches the markdown
       - run: npm run pack:smoke
-      # Cassette replay against a hand-written Playwright script on this runner (issue #2): a ratio, so a slow runner
-      # slows both. Fails over 1.5x; about 1.35x on GitHub runners (1.2x locally).
-      - run: node scripts/replay-bench.ts --runs 5 | tee -a "$GITHUB_STEP_SUMMARY" # bash -eo pipefail: keeps its exit code
+  # Cassette replay against a hand-written Playwright script on a fresh runner (issue #2): a ratio, so a slow runner
+  # slows both. Fails over 1.5x; about 1.35x on GitHub runners (1.2x locally). Its own job: after the test suite on the
+  # same runner it measured 1.65x.
+  replay-bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        timeout-minutes: 15
+      - run: node scripts/replay-bench.ts --runs 5 | tee -a "$GITHUB_STEP_SUMMARY"
+        shell: bash # bash -eo pipefail; the default bash -e loses the bench's exit code in the pipe
   image:
     runs-on: ubuntu-latest
     timeout-minutes: 20
