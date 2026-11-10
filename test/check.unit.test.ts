@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { verdict } from "../src/check.ts";
+import { affirmKey, verdict as evaluate, type Expectation } from "../src/check.ts";
 import type { Assessment, Pick } from "../src/decision.ts";
-import { parseSnapshot } from "../src/observation.ts";
+import { parseSnapshot, type Observation } from "../src/observation.ts";
 
 const pick = (probabilities: Record<string, number>): Pick => ({
   choice: Object.keys(probabilities).sort((a, b) => probabilities[b] - probabilities[a])[0],
@@ -15,6 +15,28 @@ const assessment = (overrides: Partial<Assessment> = {}): Assessment => ({
   state: pick({ disabled: 1 }),
   ...overrides,
 });
+/** Jev's reading of a text that holds the value with more words, as a correct model answers: a negated value is not stated. */
+const negation = (text: string): Pick =>
+  pick(/\bnot\b/i.test(text) ? { no: 0.98, yes: 0.02 } : { yes: 0.98, no: 0.02 });
+/** The verdict once every text it needs is read (the runner's loop), and the texts it asked for. */
+const verdict = (
+  a: Assessment,
+  obs: Observation,
+  expectation: Expectation,
+  read: (text: string) => Pick = negation,
+) => {
+  const affirmed = new Map<string, Pick>();
+  const asked: string[] = [];
+  let v = evaluate(a, obs, expectation, affirmed);
+  while (v.needs.length) {
+    for (const { text, value } of v.needs) {
+      asked.push(text);
+      affirmed.set(affirmKey(text, value), read(text));
+    }
+    v = evaluate(a, obs, expectation, affirmed);
+  }
+  return { ...v, asked };
+};
 
 test("Check: plausible kinds must agree, and agreeing kinds carry the pass together", () => {
   const obs = parseSnapshot("- paragraph [ref=e1]: Draft");
@@ -24,40 +46,180 @@ test("Check: plausible kinds must agree, and agreeing kinds carry the pass toget
   assert.equal(verdict(assessment({ kind: pick({ value: 0.55, absence: 0.45 }) }), obs, expected).outcome, "AMBIGUOUS");
 });
 
-test("Check: Jev vetoes any inexact match the surrounding words negate (issue #28)", () => {
+test("Check: a value's text is read for meaning, a presence check's text literally (issues #28, #81)", () => {
   const obs = parseSnapshot("- paragraph [ref=e1]: Not Scheduled");
   const expected = { values: ["Scheduled"] };
-  // No answer (older cassettes, any language): the containment match stands.
-  assert.equal(verdict(assessment(), obs, expected).outcome, "PASSED");
-  assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, expected).outcome, "ASSERTION_FAILED");
-  // The veto never touches an exact value: code alone decides equality.
-  assert.equal(verdict(assessment({ satisfied: 0.02 }), obs, { values: ["Not Scheduled"] }).outcome, "PASSED");
-  // Presence reads the same text, so it is vetoed the same way. For an absence check "satisfied" means "not shown":
-  // Jev saying the absence holds is what vetoes the match.
-  const said = (k: string, satisfied: number) => ({ kind: pick({ [k]: 1 }), satisfied });
-  assert.equal(verdict(assessment(said("presence", 0.02)), obs, expected).outcome, "ASSERTION_FAILED");
-  assert.equal(verdict(assessment({ kind: pick({ absence: 1 }) }), obs, expected).outcome, "ASSERTION_FAILED");
-  assert.equal(verdict(assessment(said("absence", 0.98)), obs, expected).outcome, "PASSED");
-  assert.equal(verdict(assessment(said("absence", 0.02)), obs, expected).outcome, "ASSERTION_FAILED");
-  // A table cell is matched the same way.
+  // The subject's value: "Not Scheduled" does not state "Scheduled". Jev reads that text alone, not the check.
+  const negated = verdict(assessment(), obs, expected);
+  assert.deepEqual(
+    [negated.outcome, negated.reason],
+    ["ASSERTION_FAILED", `expected "Scheduled", but paragraph shows "Not Scheduled"`],
+  );
+  assert.deepEqual(negated.asked, ["Not Scheduled"]);
+  assert.match(negated.details.join("\n"), /Reading: does "Not Scheduled" state "Scheduled"\? no=0.98 yes=0.02/);
+  // An unsure reading stays unsure: neither a pass nor a failure.
+  const unsure = verdict(assessment(), obs, expected, () => pick({ yes: 0.55, no: 0.45 }));
+  assert.deepEqual(
+    [unsure.outcome, unsure.reason],
+    ["AMBIGUOUS", `Jev is unsure whether "Not Scheduled" states "Scheduled": yes 55%, no 45%`],
+  );
+  // Equality is code's alone: nothing to read.
+  const equal = verdict(assessment(), obs, { values: ["not  scheduled"] });
+  assert.deepEqual([equal.outcome, equal.asked], ["PASSED", []]);
+  assert.deepEqual(
+    verdict(assessment(), parseSnapshot("- paragraph [ref=e1]: Status: Scheduled"), expected).outcome,
+    "PASSED",
+  );
+  // Presence is literal visible text: "Scheduled" appears on the page, whatever the words around it mean.
+  for (const [kind, outcome] of [
+    ["presence", "PASSED"],
+    ["absence", "ASSERTION_FAILED"],
+  ]) {
+    const literal = verdict(assessment({ kind: pick({ [kind]: 1 }) }), obs, expected, () => {
+      throw new Error("a literal check reads no text");
+    });
+    assert.equal(literal.outcome, outcome, kind);
+  }
+  // A table cell is a subject's value too.
   const rows = parseSnapshot(`- table [ref=t1]:
   - row [ref=r0]:
     - columnheader [ref=c0]: Status
   - row [ref=r1]:
     - cell [ref=c1]: Not Scheduled`);
   const table = { values: [], table: [["Status"], ["Scheduled"]] };
-  assert.equal(verdict(assessment(), rows, table).outcome, "PASSED");
-  assert.equal(verdict(assessment({ satisfied: 0.02 }), rows, table).outcome, "ASSERTION_FAILED");
+  assert.equal(verdict(assessment(), rows, table).outcome, "ASSERTION_FAILED");
+  assert.equal(verdict(assessment(), rows, table, () => pick({ yes: 0.98, no: 0.02 })).outcome, "PASSED");
 });
 
-test("Check: an absence check fails when Jev sees the text still shown (refactor bench b-delete)", () => {
+test("Check: an absence check fails when the text is still shown (refactor bench b-delete)", () => {
   const obs = parseSnapshot(`- table [ref=t1]:
   - row [ref=r1]:
     - cell [ref=c1]: Spring Sale
     - cell [ref=c2]: Draft
 - status [ref=s1]: Campaign "Spring Sale" deleted`);
-  const a = assessment({ kind: pick({ absence: 1 }), satisfied: 0.02 });
+  const a = assessment({ kind: pick({ absence: 1 }), area: pick({ t1: 1 }) });
   assert.equal(verdict(a, obs, { values: ["Spring Sale"] }).outcome, "ASSERTION_FAILED");
+});
+
+test("Check: negation preserves unknown; a missing subject or area never gives a truth value (issue #81)", () => {
+  // The detail screen after a delete that never happened: no campaign list, a toast naming the campaign.
+  const detail = parseSnapshot(`- main [ref=m1]:
+  - heading "Spring Sale" [level=1] [ref=h1]
+  - button "Schedule" [ref=b1]
+- status [ref=s1]: Campaign "Spring Sale" saved`);
+  const missing = { area: pick({ missing: 1 }) };
+  const quoted = { values: ["Spring Sale"] };
+  for (const kind of ["presence", "absence"]) {
+    const r = verdict(assessment({ kind: pick({ [kind]: 1 }), ...missing }), detail, quoted);
+    assert.deepEqual([r.outcome, r.reason], ["PENDING", "the area the check names is not on this screen"], kind);
+  }
+  // Refactor bench: Jev splits the area between the missing list and the page. The page holds the text only in
+  // unrelated places; neither that pass nor that failure outvotes the reading that has no evidence.
+  const split = { area: pick({ missing: 0.66, page: 0.16, m1: 0.13 }) };
+  for (const kind of ["presence", "absence"])
+    assert.equal(verdict(assessment({ kind: pick({ [kind]: 1 }), ...split }), detail, quoted).outcome, "PENDING", kind);
+  // A control or value that is not on the page shows no state and no value: "enabled" is not "not disabled" here.
+  const none = { subject: pick({ none: 1 }) };
+  for (const state of ["disabled", "enabled"]) {
+    const r = verdict(assessment({ kind: pick({ state: 1 }), state: pick({ [state]: 1 }), ...none }), detail, quoted);
+    assert.deepEqual([r.outcome, r.reason], ["PENDING", "no element on the page is the control the check is about"]);
+  }
+  assert.equal(verdict(assessment(none), detail, { values: ["Draft"] }).outcome, "PENDING");
+});
+
+test("Check: an incomplete collection cannot prove absence, a missing row or exact contents; a witness proves presence", () => {
+  const list = (marker: string) =>
+    parseSnapshot(`- heading "Campaigns" [ref=h1]
+- list "Campaigns" [ref=l1]${marker}:
+  - listitem [ref=i1]: Autumn Sale
+  - progressbar [ref=p1]${marker ? "" : " [busy]"}
+- status [ref=s1]: Campaign "Spring Sale" deleted`);
+  const inList = (kind: string) => assessment({ kind: pick({ [kind]: 1 }), area: pick({ l1: 1 }) });
+  const ready = parseSnapshot(`- list "Campaigns" [ref=l1]:
+  - listitem [ref=i1]: Autumn Sale`);
+  // Complete: the absence holds, a missing text fails.
+  assert.equal(verdict(inList("absence"), ready, { values: ["Spring Sale"] }).outcome, "PASSED");
+  assert.equal(verdict(inList("presence"), ready, { values: ["Spring Sale"] }).outcome, "ASSERTION_FAILED");
+  // Marked as loading, on the list or inside it (an indeterminate progress bar): no witness proves nothing yet.
+  for (const marker of [" [busy]", ""]) {
+    const loading = list(marker);
+    const absent = verdict(inList("absence"), loading, { values: ["Spring Sale"] });
+    assert.equal(absent.outcome, "PENDING", marker);
+    assert.match(absent.reason!, /^"Spring Sale" is not shown in list "Campaigns".*, but .* is still loading$/);
+    assert.equal(verdict(inList("presence"), loading, { values: ["Spring Sale"] }).outcome, "PENDING", marker);
+    // A witness is evidence whatever else loads; a shown text contradicts an absence at once.
+    assert.equal(verdict(inList("presence"), loading, { values: ["Autumn Sale"] }).outcome, "PASSED", marker);
+    assert.equal(verdict(inList("absence"), loading, { values: ["Autumn Sale"] }).outcome, "ASSERTION_FAILED");
+  }
+  // A busy marker elsewhere does not hold up an area; the page as the area includes it.
+  const elsewhere = parseSnapshot(`- list "Campaigns" [ref=l1]:
+  - listitem [ref=i1]: Autumn Sale
+- region "Feed" [busy] [ref=r1]:
+  - paragraph [ref=e1]: x`);
+  assert.equal(verdict(inList("absence"), elsewhere, { values: ["Spring Sale"] }).outcome, "PASSED");
+  assert.equal(
+    verdict(assessment({ kind: pick({ absence: 1 }) }), elsewhere, { values: ["Spring Sale"] }).outcome,
+    "PENDING",
+  );
+  // A request in flight: the page may still fill in any area.
+  const inFlight = { ...ready, loading: "the page is still loading (a request is in flight)" };
+  assert.deepEqual(
+    [verdict(inList("absence"), inFlight, { values: ["Spring Sale"] }).reason],
+    [`"Spring Sale" is not shown in list "Campaigns", but the page is still loading (a request is in flight)`],
+  );
+  // A value or state the app marks as still updating is not final either.
+  const saving = parseSnapshot(`- region "Status" [busy] [ref=r1]:
+  - paragraph [ref=e1]: Draft
+  - button "Schedule" [disabled] [ref=b1]`);
+  assert.equal(verdict(assessment(), saving, { values: ["Draft"] }).outcome, "PENDING");
+  const disabled = assessment({ kind: pick({ state: 1 }), subject: pick({ b1: 1 }) });
+  assert.equal(verdict(disabled, saving, { values: [] }).outcome, "PENDING");
+
+  // Table rows: a matched row is a witness; a missing row or "exactly these rows" needs the complete table.
+  const rows = (busy: boolean) =>
+    parseSnapshot(`- table "Cart" [ref=t1]${busy ? " [busy]" : ""}:
+  - row [ref=h1]:
+    - columnheader "Product" [ref=c1]
+  - row [ref=r1]:
+    - cell "Pen" [ref=c2]
+  - row [ref=r2]:
+    - cell "Ink" [ref=c3]`);
+  const table = (want: string[], exact = false) => ({
+    values: [],
+    table: [["Product"], ...want.map((w) => [w])],
+    exact,
+  });
+  const inTable = assessment({ area: pick({ t1: 1 }) });
+  for (const [want, exact, done, loading] of [
+    [["Pen"], false, "PASSED", "PASSED"],
+    [["Cap"], false, "ASSERTION_FAILED", "PENDING"],
+    [["Pen", "Ink"], true, "PASSED", "PENDING"],
+    [["Pen", "Ink", "Cap"], true, "ASSERTION_FAILED", "PENDING"],
+    [["Ink", "Pen"], true, "ASSERTION_FAILED", "PENDING"],
+    [["Pen"], true, "ASSERTION_FAILED", "ASSERTION_FAILED"], // "Ink" is a row no expected one matches
+  ] as const) {
+    const label = `${want} exact=${exact}`;
+    assert.equal(verdict(inTable, rows(false), table([...want], exact)).outcome, done, label);
+    assert.equal(verdict(inTable, rows(true), table([...want], exact)).outcome, loading, label);
+  }
+});
+
+test("Check: every plausible reading counts; one without evidence is not outvoted by one that passed", () => {
+  const obs = parseSnapshot(`- paragraph [ref=e1]: Draft
+- region "Feed" [busy] [ref=r1]:
+  - paragraph [ref=e2]: x`);
+  // As a value check it passes; as a presence check of an area not on the screen it is not known yet.
+  const r = verdict(assessment({ kind: pick({ value: 0.6, presence: 0.4 }), area: pick({ missing: 1 }) }), obs, {
+    values: ["Draft"],
+  });
+  assert.deepEqual([r.outcome, r.reason], ["PENDING", "the area the check names is not on this screen"]);
+  const pending = verdict(assessment({ kind: pick({ presence: 0.6, value: 0.4 }), subject: pick({ none: 1 }) }), obs, {
+    values: ["Draft"],
+  });
+  assert.deepEqual(
+    [pending.outcome, pending.reason],
+    ["PENDING", "no element on the page shows what the check describes"],
+  );
 });
 
 test("Check: subjects and areas agree on outcomes; only passes carry marginal warnings", () => {
@@ -153,7 +315,7 @@ test("Check: inapplicable readings contribute no confidence, but a label-only va
       obs,
       expected,
     ).outcome,
-    "AMBIGUOUS",
+    "UNVERIFIABLE", // read as a value check it cannot be compared, and the presence pass does not outvote that
   );
 });
 
@@ -228,7 +390,8 @@ test("Check reasons: fuzzy, presence and absence", () => {
     outcome: "ASSERTION_FAILED",
     reason: '"Kiwi" and "Apple" is not shown in the page',
   });
-  assert.deepEqual(run(snap, presence, ["Kiwi"]).details, ["  Kind: presence=1.00"]);
+  // Text nowhere on the page still needs the area's answer: it decides whether the evidence is complete.
+  assert.deepEqual(run(snap, presence, ["Kiwi"]).details, ["  Kind: presence=1.00", "  Area: page=1.00"]);
   assert.deepEqual(reading(run(snap, { ...presence, area: pick({ a1: 1 }) }, ["Apple", "Pear"])), {
     outcome: "PASSED",
     reason: undefined,
@@ -251,8 +414,8 @@ test("Check reasons: fuzzy, presence and absence", () => {
     reason: undefined,
   });
   assert.deepEqual(reading(run(snap, { ...presence, area: pick({ missing: 1 }) }, ["Plum"])), {
-    outcome: "ASSERTION_FAILED",
-    reason: `"Plum" is not shown in the area the check names (that area is not on this screen)`,
+    outcome: "PENDING",
+    reason: "the area the check names is not on this screen",
   });
   assert.deepEqual(reading(run(snap, { ...presence, area: pick({ gone: 1 }) }, ["Plum"])), {
     outcome: "ELEMENT_NOT_FOUND",
@@ -268,8 +431,11 @@ test("Check reasons: fuzzy, presence and absence", () => {
     `area: region "R" 89%, anywhere on the page 11%`,
   ]);
   // agreeing readings: the last agreeing area is reported
-  const both = run(snap, { ...presence, area: pick({ a1: 0.5, missing: 0.5 }) }, ["Plum"]);
-  assert.equal(both.reason, `"Plum" is not shown in the area the check names (that area is not on this screen)`);
+  const both = run(snap, { ...presence, area: pick({ a1: 0.5, page: 0.5 }) }, ["Kiwi"]);
+  assert.equal(both.reason, `"Kiwi" is not shown in the page`);
+  // a failing area does not outvote one not on the screen
+  const missing = run(snap, { ...presence, area: pick({ a1: 0.5, missing: 0.5 }) }, ["Plum"]);
+  assert.deepEqual(reading(missing), { outcome: "PENDING", reason: "the area the check names is not on this screen" });
 });
 
 test("Check reasons: state", () => {
@@ -312,8 +478,8 @@ test("Check reasons: state", () => {
   assert.deepEqual(state("e7", "selected"), { outcome: "UNVERIFIABLE", reason: "a textbox cannot be selected" });
   assert.deepEqual(state("e7", "expanded"), { outcome: "UNVERIFIABLE", reason: "a textbox cannot be expanded" });
   assert.deepEqual(state("none", "disabled"), {
-    outcome: "ASSERTION_FAILED",
-    reason: "no element on the page matches what the check describes",
+    outcome: "PENDING",
+    reason: "no element on the page is the control the check is about",
   });
   assert.deepEqual(state("gone", "disabled"), {
     outcome: "ELEMENT_NOT_FOUND",
@@ -368,7 +534,7 @@ test("Check reasons: value", () => {
     reason: `button "Go" has no text to compare (only a label)`,
   });
   assert.deepEqual(reading(value("none", ["Go"])), {
-    outcome: "ASSERTION_FAILED",
+    outcome: "PENDING",
     reason: "no element on the page shows what the check describes",
   });
   assert.deepEqual(reading(value("gone", ["Go"])), {
@@ -392,23 +558,17 @@ test("Check reasons: value", () => {
     outcome: "ASSERTION_FAILED",
     reason: `expected "2 items right", but link shows "2"`,
   });
-  assert.deepEqual(reading(value("e7", ["done"], { satisfied: 0.1 })), {
+  assert.deepEqual(reading(value("e7", ["done"])), {
     outcome: "ASSERTION_FAILED",
     reason: `expected "done", but link shows "Not"`,
   });
-  const vetoed = value(
-    "e1",
-    ["Draft"].map(() => "Dra"),
-    { satisfied: 0.1 },
-  );
-  assert.equal(vetoed.outcome, "ASSERTION_FAILED");
-  const negated = run(`- paragraph [ref=e1]: Not Draft`, { satisfied: 0.2 }, ["Draft"]);
+  assert.equal(value("e1", ["Dra"]).outcome, "ASSERTION_FAILED"); // not a whole word
+  const negated = run(`- paragraph [ref=e1]: Not Draft`, {}, ["Draft"]);
   assert.deepEqual(reading(negated), {
     outcome: "ASSERTION_FAILED",
     reason: `expected "Draft", but paragraph shows "Not Draft"`,
   });
-  assert.equal(negated.details.at(-1), `  Jev reads "Not Draft" as not satisfying the check (p=0.20)`);
-  assert.equal(run(`- paragraph [ref=e1]: Not Draft`, { satisfied: 0.21 }, ["Draft"]).outcome, "PASSED");
+  assert.equal(negated.details.at(-1), `  Reading: does "Not Draft" state "Draft"? no=0.98 yes=0.02`);
 });
 
 test("Check reasons: URL and download pseudo-elements", async () => {
@@ -429,8 +589,9 @@ test("Check reasons: URL and download pseudo-elements", async () => {
   assert.equal(verdict(assessment({ subject: pick({ download: 1 }) }), full, { values: ["abc"] }).outcome, "PASSED");
 });
 
-test("Check: a kind reading that cannot decide does not veto one that passed; the pass is marginal", () => {
-  // GitHub `"screenshot" should appear in the issue list`: presence 79% passed, value 19% could not pick a subject.
+test("Check: a kind reading that cannot decide is not outvoted by one that passed (issue #81)", () => {
+  // GitHub `"screenshot" should appear in the issue list`: presence 79% passed, value 21% could not pick a subject.
+  // That reading is plausible and unsure, so the check is unsure too (it used to pass as marginal).
   const snap = `- heading "Issues" [ref=e4]\n- list "Issues" [ref=e1]:\n  - link "Fix screenshot timeout" [ref=e2]\n  - link "Add screenshot option" [ref=e3]`;
   const a = {
     kind: pick({ presence: 0.79, value: 0.21 }),
@@ -438,9 +599,11 @@ test("Check: a kind reading that cannot decide does not veto one that passed; th
     subject: pick({ e2: 0.5, e4: 0.5 }),
   };
   const r = run(snap, a, ["screenshot"]);
-  assert.equal(r.outcome, "PASSED");
-  assert.ok(r.marginal?.includes("as a value check Jev could not decide"), String(r.marginal));
-  // A reading that fails still vetoes.
+  assert.equal(r.outcome, "AMBIGUOUS");
+  assert.match(r.reason!, /^Jev is unsure which element the check is about/);
+  // A confident kind leaves the other reading out: presence alone passes.
+  assert.equal(run(snap, { ...a, kind: pick({ presence: 0.9, value: 0.1 }) }, ["screenshot"]).outcome, "PASSED");
+  // A reading that fails vetoes too.
   assert.equal(run(snap, { ...a, kind: pick({ presence: 0.6, absence: 0.4 }) }, ["screenshot"]).outcome, "AMBIGUOUS");
   // Nothing decided at all stays AMBIGUOUS.
   assert.equal(run(snap, { ...a, kind: pick({ value: 1 }) }, ["screenshot"]).outcome, "AMBIGUOUS");
@@ -561,7 +724,7 @@ test("Check reasons: table rows", () => {
     reason: `list "Empty" shows no table rows`,
   });
   assert.deepEqual(rows([["Product"], ["Cap"]], { missing: 1 }), {
-    outcome: "ASSERTION_FAILED",
+    outcome: "PENDING",
     reason: "the table the check names is not on this screen",
   });
   assert.deepEqual(rows([["Product"], ["Cap"]], { gone: 1 }), {

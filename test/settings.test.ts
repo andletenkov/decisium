@@ -230,7 +230,15 @@ const sure = (choice: string): Pick => ({ choice, probabilities: { [choice]: 0.9
 const unused = async (): Promise<never> => {
   throw new Error("not used");
 };
-const base: Decider = { turn: unused, value: unused, assess: unused, recall: unused, dialog: unused, drop: unused };
+const base: Decider = {
+  turn: unused,
+  value: unused,
+  assess: unused,
+  affirms: unused,
+  recall: unused,
+  dialog: unused,
+  drop: unused,
+};
 
 test("settings: worldParameters fill env, env wins, values are validated", () => {
   const env: Record<string, string | undefined> = { DECISIUM_MAX_TURNS: "3" };

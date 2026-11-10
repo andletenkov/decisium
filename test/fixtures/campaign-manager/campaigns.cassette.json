@@ -430,7 +430,8 @@
             0.79
           ],
           ["page", 0.17]
-        ]
+        ],
+        "affirms": [["2026-12-01: Winter Sale (2 weeks)", "Winter Sale", [["yes", 0.96]]]]
       }
     },
     "Scheduling needs an activation date: I open the \"Spring Sale\" campaign": {

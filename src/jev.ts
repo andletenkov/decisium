@@ -2,6 +2,7 @@ import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
 import {
   AREA_MISSING,
   AREA_PAGE,
+  AFFIRMS,
   ASSERTION_KINDS,
   capabilities,
   describeAction,
@@ -395,18 +396,26 @@ export class JevDecider implements Decider {
         subject: choice(subjectQ, subjects),
         state: choice("Which control state does `check` require?", STATES),
         area: choice(areaQ, areas),
-        // Asked in the same call whether or not --judged: code uses it only to veto an inexact text match.
-        satisfied: noul("Does `ui` satisfy `check`?"),
+        // A verdict on the whole check: asked only for an opted-in --judged check (issue #81), never to decide another.
+        ...(judged ? { satisfied: noul("Does `ui` satisfy `check`?") } : {}),
       },
     });
-    const a = res.answers as typeof res.answers & { satisfied: { noul: number } };
+    const a = res.answers as typeof res.answers & { satisfied?: { noul: number } };
     return {
       kind: a.kind,
       subject: a.subject,
       area: a.area,
       state: a.state,
-      satisfied: a.satisfied.noul,
-      judged: judged ? a.satisfied.noul : undefined,
+      judged: judged ? a.satisfied?.noul : undefined,
     };
+  }
+
+  /** One request about a text alone, not the page or the check: does it state the value (issue #81)? */
+  async affirms(_step: string, text: string, value: string): Promise<Pick> {
+    const res = await this.#ask({
+      state: { text, value },
+      questions: { affirms: choice("Does `text` state `value`?", AFFIRMS) },
+    });
+    return res.answers.affirms;
   }
 }

@@ -150,16 +150,23 @@ export const STATES = {
   unpressed: "not pressed / toggled off",
 } as const;
 
+/**
+ * How Jev resolved a check's meaning and references (issue #81): never whether it passes. Code evaluates the condition
+ * on the page. Only an opted-in `--judged` check carries Jev's own verdict.
+ */
 export interface Assessment {
   kind: Pick;
   subject: Pick; // element ref the check is about, or "none"
   area: Pick; // presence/absence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
   state: Pick; // required control state, used by `state` checks
-  judged?: number; // P(step holds), only when asked
-  // P(the UI satisfies the check), always asked: the veto on an inexact text match, where only language can tell
-  // whether "Not Scheduled" shows "Scheduled" (issue #28). Undefined (older cassettes, scripted deciders): no veto.
-  satisfied?: number;
+  judged?: number; // P(step holds), asked only with --judged
 }
+
+/** Jev's reading of a text that holds a check's value with more words around it: `yes` it states it, or `no`. */
+export const AFFIRMS = {
+  yes: "Yes: `text` states `value` as it is.",
+  no: "No: `text` negates `value` (e.g. `Not Scheduled` for `Scheduled`), or `value` is only part of a different value.",
+} as const;
 
 export const AREA_PAGE = "page";
 export const AREA_MISSING = "missing";
@@ -213,6 +220,11 @@ export interface Decider {
   drop(step: string, obs: Observation, source: Element): Promise<Pick>;
   /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
+  /**
+   * A value check's text that holds the quoted `value` with more words ("Not Scheduled" for "Scheduled"): does it state
+   * it? A question about that text alone (AFFIRMS), not about the check; asked only when equality cannot decide.
+   */
+  affirms(step: string, text: string, value: string): Promise<Pick>;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;
   /** The open browser dialog (`obs.dialog`): "accept", "dismiss", or for a prompt one of the Step's quoted values. */

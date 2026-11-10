@@ -12,12 +12,13 @@ import {
   named,
   fmt,
   PAGE,
+  type Assessment,
   type Decider,
   type Intent,
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
-import { verdict as checkVerdict, type Verdict } from "./check.ts";
+import { affirmKey, verdict as checkVerdict, type Verdict } from "./check.ts";
 import { changes } from "./change.ts";
 import { MASK, type Dialog, type Element, type Observation } from "./observation.ts";
 
@@ -178,25 +179,45 @@ export async function runAssertion(
     } else recallNote = `; Jev could not tell which earlier value it refers to (${named(r)})`;
   }
 
-  // Like Playwright's expect: a check that does not pass is re-evaluated whenever the UI changes, until
-  // the UI stops changing within the wait cap. Jev is asked again only after a change.
+  // One temporal policy (issue #81), like Playwright's expect: a check that does not pass is evaluated again whenever
+  // the UI changes, until its deadline. Only a pass on valid evidence ends it early (and a check code cannot compare).
+  // At the deadline, or once the page has nothing left that could change it: a known contradiction is
+  // ASSERTION_FAILED, evidence still missing UNVERIFIABLE, conflicting meanings AMBIGUOUS. Jev is asked again only
+  // after a change.
   const deadline = Date.now() + settings().checkTimeout;
+  const affirmed = new Map<string, Pick>();
+  let assessed: { text: string; a: Assessment } | undefined;
   let obs = await rt.observe();
   for (;;) {
     let verdict: Verdict;
     [obs, verdict] = await settled(rt, obs, check);
+    const outcome = verdict.outcome === "PENDING" ? "UNVERIFIABLE" : verdict.outcome;
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();
-    if (verdict.outcome === "UNVERIFIABLE") verdict.reason += recallNote;
-    if (final || left <= 0) return end(verdict.outcome, verdict.reason, verdict.marginal);
-    log("  (not passed yet; waiting for the UI to change)");
-    if (!(await rt.waitForChange(obs.text, left))) return end(verdict.outcome, verdict.reason);
+    if (outcome === "UNVERIFIABLE") verdict.reason += recallNote;
+    if (final || left <= 0) return end(outcome, verdict.reason, verdict.marginal);
+    log(
+      verdict.outcome === "PENDING"
+        ? `  (not known yet: ${verdict.reason}; waiting for the UI to change)`
+        : "  (not passed yet; waiting for the UI to change)",
+    );
+    // A request still in flight may change the page after it has gone quiet: look again until it ends.
+    if (!(await rt.waitForChange(obs.text, left)) && !obs.loading) return end(outcome, verdict.reason);
     obs = await rt.observe();
   }
 
   async function check(obs: Observation): Promise<Verdict> {
-    const a = await decider.assess(said, obs, judged);
-    const result = checkVerdict(a, obs, { values, table, list, exact, recall });
+    // The same page as last time (a request ended, the page did not change): the same answer, Jev is not asked again.
+    if (assessed?.text !== obs.text) assessed = { text: obs.text, a: await decider.assess(said, obs, judged) };
+    const { a } = assessed;
+    const expectation = { values, table, list, exact, recall };
+    let result = checkVerdict(a, obs, expectation, affirmed);
+    // Texts holding the value with more words: Jev reads each (never the check itself), then code decides.
+    while (result.needs.length) {
+      for (const { text, value } of result.needs)
+        affirmed.set(affirmKey(text, value), await decider.affirms(said, text, value));
+      result = checkVerdict(a, obs, expectation, affirmed);
+    }
     for (const line of result.details) log(line);
     return result;
   }

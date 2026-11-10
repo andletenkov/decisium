@@ -28,7 +28,14 @@
         }
       ]
     },
-    "Confirm a deletion: \"Groceries\" should not appear in the notes": {
+    "Confirm a deletion: \"Groceries\" should not appear in the notes list": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {
+        "exact": false
+      },
       "check": {
         "kind": {
           "type": "choice",
@@ -44,41 +51,39 @@
         },
         "state": {
           "type": "choice",
-          "choice": "collapsed",
-          "confidence": 0.38,
+          "choice": "unselected",
+          "confidence": 0.3,
           "probabilities": {
-            "disabled": 0.03,
-            "enabled": 0.05,
-            "checked": 0.05,
-            "unchecked": 0.13,
-            "expanded": 0.03,
-            "collapsed": 0.44,
-            "selected": 0.02,
-            "unselected": 0.17,
+            "disabled": 0.01,
+            "enabled": 0.03,
+            "checked": 0.04,
+            "unchecked": 0.11,
+            "expanded": 0.01,
+            "collapsed": 0.35,
+            "selected": 0.03,
+            "unselected": 0.37,
             "pressed": 0.01,
-            "unpressed": 0.07
+            "unpressed": 0.04
           }
         },
         "subject": [
-          [
-            {
-              "role": "confirm",
-              "name": "browser dialog",
-              "container": ""
-            },
-            0.81
-          ]
-        ],
-        "area": [
-          ["page", 0.41000000000000003],
-          ["missing", 0.31],
           [
             {
               "role": "list",
               "name": "Notes",
               "container": ""
             },
-            0.15
+            0.82
+          ]
+        ],
+        "area": [
+          [
+            {
+              "role": "list",
+              "name": "Notes",
+              "container": ""
+            },
+            1
           ]
         ]
       }

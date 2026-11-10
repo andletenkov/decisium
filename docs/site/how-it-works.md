@@ -9,8 +9,10 @@ page ──► list of elements ──► Jev picks one + an action ──► Pl
    writes code, selectors or values; a typed value always comes from the Step's quotes.
 3. **Act.** Playwright performs the action, Decisium reads the new page, and the loop repeats until the Step's task is
    done. `I delete the campaign` may open a menu first, then click Delete.
-4. **Check.** For a `Then` Step, Jev only picks the subject and the kind of check. Code compares the quoted value with
-   the page.
+4. **Check.** For a `Then` Step, Jev only says what the check means: its kind, its subject or area. Code collects the
+   page's evidence and compares; Jev is never asked whether the check passes (except `--judged`). Evidence that is
+   missing (the area is not on the screen, the list is still loading) is waited for, then reported as `UNVERIFIABLE`,
+   never as a pass.
 5. **Refuse to guess.** When the pick is unclear (two "Save" buttons), the Step fails as `AMBIGUOUS` instead of
    clicking one.
 6. **Record.** What each Step resolved to (role, name, container) goes into `<feature>.cassette.json`. The next run

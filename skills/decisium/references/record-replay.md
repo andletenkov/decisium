@@ -22,6 +22,11 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
 2. Run CI with `--record none`: same outcome every run, zero model calls.
 3. When the UI really changes, CI fails as `UI_CHANGED`. Heal locally with `--record new` and commit the cassette.
 
+A cassette stores Jev's answers, never the page's evidence: a replayed check is evaluated on the page it runs on, by
+the same rules as a live one. A value check whose text holds the value among more words ("Status: Scheduled") also
+stores Jev's reading of that text. Cassettes recorded before readings were stored lack it: such a check fails as
+`UI_CHANGED` in `--record none` until `--record new` records the reading.
+
 To collapse cassette diffs on GitHub and exclude them from language statistics, add this to `.gitattributes`:
 
 ```gitattributes
@@ -74,7 +79,9 @@ Older cassettes may have fewer than three candidates. Only recorded candidates c
 A replay waits the way a Playwright spec does, not after every action:
 
 - An action does not wait for the page to settle. The next action waits until its recorded element is on the page.
-- A check retries until it passes or the page has nothing left pending (up to 5 s).
+- A check retries until it passes or the page has nothing left pending (up to 5 s). A check whose evidence needs a
+  complete area (absence, a missing row) waits for the requests in flight, live and on replay alike; one pending
+  longer than `actionTimeout` counts as long-lived (polling) and is not waited for.
 - An action that shows no change yet waits for one before it counts as having done nothing.
 - A request pending for over 1.5 s (a hung analytics or error-report call) stops counting as pending.
 

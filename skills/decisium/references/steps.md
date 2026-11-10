@@ -171,12 +171,16 @@ Elements inside iframes and open shadow roots are part of the page like any othe
 
 ## Checks
 
-A check is decided by code, not by the model. Jev only identifies *what* to look at (the subject) and *what kind* of
-check it is; code then compares. A check that cannot be compared is `UNVERIFIABLE`, not passed.
+A check is decided by code, not by the model. Jev only identifies *what* to look at (the subject or area) and *what
+kind* of check it is; code then collects the page's evidence and compares. Jev is never asked whether a check passes
+(only `--judged` checks). A check that cannot be compared is `UNVERIFIABLE`, not passed.
 
 Like Playwright's `expect`, a check that does not pass yet is retried each time the page changes, until it passes or
 the page has nothing left pending (up to 5 s). A check that already holds passes at once, so check what only the new
-state shows.
+state shows. Evidence that may still arrive is waited for, then reported as `UNVERIFIABLE`: an area or subject not on
+the screen, or, for absence, a missing table row or "exactly these rows", an area that is still loading (`aria-busy`,
+a progress bar without a value, a request in flight). A witness needs no wait: a shown text proves presence, and
+contradicts absence, at once.
 
 ### Value checks
 
@@ -188,7 +192,9 @@ state shows.
 | `the Email field should be "ada@example.com"` | A field's current value. |
 
 The subject is picked by meaning: if the status says "Draft" while a filter elsewhere says "Scheduled",
-`the campaign status should be "Scheduled"` correctly fails.
+`the campaign status should be "Scheduled"` correctly fails. A value is read for meaning too: equal text passes, and
+a text holding the value among more words ("Status: Not Scheduled") is read by Jev on its own (does it state the
+value?), so "Not Scheduled" is not "Scheduled". An unsure reading is `AMBIGUOUS`.
 
 **Avoid**: `the article title should be "Ada Lovelace"` ("title" is also the tab's title; say "heading"),
 `… should be "Ada" or "Ada Lovelace"` (exactly one value), `the article should be well written` (subjective; see
@@ -202,12 +208,20 @@ The subject is picked by meaning: if the status says "Draft" while a filter else
 | `the article should say "born 10 December 1815"` | The text anywhere in the subject. |
 | `"Charles Babbage" should not appear in the results` | Absence. |
 
+Presence is literal: `"Scheduled" should appear` passes on "Not Scheduled". Quote a value check for meaning.
+
 **Avoid** `the results should be shown`: it quotes nothing to look for.
 
 ### Scoped presence
 
 `"Winter Sale" should appear in the calendar`, `"Spring Sale" should not appear in the campaign list`. Only text inside
 the named area counts; the same name in a toast elsewhere does not. The area must be on the screen: open it first.
+An area not on the screen gives no evidence either way, so both checks end `UNVERIFIABLE` there. Name the area as the
+page shows it (`the notes list`, not `the notes`): if Jev thinks the area may be missing, the check cannot pass.
+
+An absence passes only once the area is complete. An app that loads a list without `aria-busy`, a progress bar or a
+request in flight needs a Step that waits for the loaded list first (`"Autumn Sale" should appear in the campaign
+list`), then the absence.
 
 ### State checks
 
@@ -228,9 +242,11 @@ and the result is reported as `JUDGED_PASSED` or `JUDGED_FAILED`, never as a pla
 ### Marginal passes
 
 A check that passed while the model was barely sure what it was looking at is reported as a **marginal pass**: passed,
-with a warning. A check is also a marginal pass when one reading of it passed and another could not decide (for
-example, read as a value check, Jev could not pick the element). Treat it like an unclear wording and make the Step
-more specific; `--strict` fails it as `AMBIGUOUS`.
+with a warning. Treat it like an unclear wording and make the Step more specific; `--strict` fails it as `AMBIGUOUS`.
+
+Every plausible reading of a check counts. Readings that pass together pass; readings that disagree are `AMBIGUOUS`;
+a reading that cannot decide (no evidence, unsure) is not outvoted by one that passed, so the check is `AMBIGUOUS` or
+`UNVERIFIABLE`, never a pass.
 
 ## More
 

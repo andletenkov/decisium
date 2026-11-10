@@ -49,8 +49,8 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 </tr>
 <tr>
 <td><code>UNVERIFIABLE</code></td>
-<td>The check quotes nothing to compare.</td>
-<td>Quote the expected value.</td>
+<td>The check quotes nothing to compare, or its evidence never arrived: the area it names is not on the screen, or was still loading.</td>
+<td>Quote the expected value; name an area that is on the screen; check what the loaded page shows first.</td>
 </tr>
 <tr>
 <td><code>ELEMENT_NOT_FOUND</code></td>
@@ -74,7 +74,7 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 </tr>
 <tr>
 <td><code>UI_CHANGED</code></td>
-<td>A replayed Step no longer matches the page.</td>
+<td>A replayed Step no longer matches the page, or its cassette predates a reading the check now needs.</td>
 <td>Re-record with <code>--record new</code> if intended.</td>
 </tr>
 <tr>

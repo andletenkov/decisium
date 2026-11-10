@@ -115,7 +115,7 @@ const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
   refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? `${m} [${flag}]` : m)) : snapshot;
 
 /** Facts the snapshot lacks, per element (tasks 0045, 0061, 0064); each stays separate for track B. */
-type Fact = "draggable" | "scrollable" | "pointer" | "tabindex" | "secret" | "editable" | "current";
+type Fact = "draggable" | "scrollable" | "pointer" | "tabindex" | "secret" | "editable" | "current" | "busy";
 
 /**
  * `factsIn`: indexes of `els` with a fact, and which. Runs in the page. Native controls are skipped for the target facts: their
@@ -136,6 +136,9 @@ const factsIn = (els: Element[]) =>
     )
       out.push("editable");
     if (e.matches('a[aria-current]:not([aria-current="false"])')) out.push("current");
+    // Still loading, as the app says (issue #81): the snapshot shows neither aria-busy nor whether a progress bar has a value.
+    if (e.matches('[aria-busy="true"], progress:not([value]), [role="progressbar"]:not([aria-valuenow])'))
+      out.push("busy");
     if (/auto|scroll/.test(style.overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement)
       out.push("scrollable");
     if (!e.matches("a[href], button, input, select, textarea, summary, label, option, iframe") && e.checkVisibility()) {
@@ -502,13 +505,26 @@ export class Browser {
     if (page) this.under = page;
     const clip = page ? read : undefined;
     const copied = clip && clip !== this.clipboardAtOpen ? this.mask(clip) : undefined;
-    return (this.last = withDialog(
+    const obs = withDialog(
       withClipboard(
         withDownload(this.under ?? withPage(parseSnapshot(""), this.page.url(), ""), this.download),
         copied,
       ),
       this.dialog,
-    ));
+    );
+    const loading = this.loading();
+    return (this.last = loading ? { ...obs, loading } : obs);
+  }
+
+  /**
+   * A check's evidence that the page may still be filling in content (issue #81): a request it made in flight, live
+   * and on replay alike. Requests pending longer than `actionTimeout` count as long-lived (polling, streams), as for
+   * settle(); a quiet network still proves nothing.
+   */
+  private loading(): string | undefined {
+    const now = Date.now();
+    const n = [...this.pending.values()].filter((t) => now - t < settings().actionTimeout).length;
+    if (n) return `the page is still loading (${n === 1 ? "a request is" : `${n} requests are`} in flight)`;
   }
 
   private stamp?: number; // __lastMutation when the latest Observation was read
@@ -600,12 +616,16 @@ export class Browser {
     const marked = this.mask(
       markRefs(
         markRefs(
-          markTitles(markCollapsed(markCurrent(snapshot, current), collapsed), titles),
-          refs("draggable"),
-          "draggable",
+          markRefs(
+            markTitles(markCollapsed(markCurrent(snapshot, current), collapsed), titles),
+            refs("draggable"),
+            "draggable",
+          ),
+          refs("scrollable"),
+          "scrollable",
         ),
-        refs("scrollable"),
-        "scrollable",
+        refs("busy"),
+        "busy",
       ),
     );
     const pageTitle = this.mask(title);

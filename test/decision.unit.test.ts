@@ -25,6 +25,9 @@ test("traced: one event per question with the Step and the answer; a secret valu
     async dialog() {
       return sure("accept");
     }
+    async affirms() {
+      return sure("yes");
+    }
     async drop() {
       return sure("e1");
     }

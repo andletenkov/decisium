@@ -144,7 +144,8 @@
             1
           ]
         ],
-        "area": [["page", 0.89]]
+        "area": [["page", 0.89]],
+        "affirms": [["Status: Scheduled", "Scheduled", [["yes", 0.91]]]]
       }
     },
     "Set the activation period: I set the activation period to 2 weeks": {

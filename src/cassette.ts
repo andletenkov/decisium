@@ -55,6 +55,11 @@ interface Check {
   state: Pick;
   subject: Answer;
   area: Answer;
+  /**
+   * Jev's readings of texts that hold a value with more words (Decider.affirms): text, value, answer. Absent in entries
+   * recorded before issue #81, which never stored one: such a check that needs a reading is re-recorded, not passed.
+   */
+  affirms?: [text: string, value: string, answer: Answer][];
 }
 interface Entry {
   confidence?: Settings["confidence"];
@@ -582,7 +587,25 @@ export class Cassette {
           state: a.state,
           subject: store(a.subject, obs.readable),
           area: store(a.area, obs.areas),
+          ...(now.check?.affirms ? { affirms: now.check.affirms } : {}),
         };
+        return a;
+      },
+      affirms: async (step, text, value) => {
+        const r = replay((e) => {
+          const read = e.check?.affirms?.find(([t, v]) => t === text && v === value);
+          // Not recorded: the page may still show the recorded text, else the cassette predates readings.
+          if (!read)
+            throw new NotOnPage(
+              `Jev's reading of "${text}" for "${value}" is not recorded (record it with --record new)`,
+            );
+          return loadRecorded(read[2]);
+        });
+        const a = r ?? (await live.affirms(step, text, value));
+        if (now.check) {
+          const reads = (now.check.affirms ??= []).filter(([t, v]) => t !== text || v !== value);
+          now.check.affirms = [...reads, [text, value, store(a)]];
+        }
         return a;
       },
       intent: async (step, check) => {
