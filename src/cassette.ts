@@ -271,25 +271,41 @@ export function resolve(el: Element, among: Element[], hints: string[] = []): Re
 
 /** The element a Resolution names on this Observation, or why none does: exactly one must match all of it. */
 export function find(r: Resolution, among: Element[]): Element | string {
-  // A `near` recorded before masking existed holds the raw text, so mask it the same way the page's texts are
-  // masked: its date or time would otherwise stop matching a day later. The raw fallback keeps a `near` masking
-  // cannot repair (a long text kept as its start plus a hash of the raw text) working while the page still shows it.
-  const near = r.near === undefined ? undefined : stableText(r.near);
   const named = among.filter((e) => same(e, r));
-  const peers = named.filter(
+  const anchored = named.filter(
     (e) =>
-      (r.anchor === undefined ||
-        anchors(
-          e,
-          r.anchor,
-          named.filter((q) => q !== e),
-        )) &&
-      (near === undefined || texts(e).includes(near) || texts(e, false).includes(r.near as string)),
+      r.anchor === undefined ||
+      anchors(
+        e,
+        r.anchor,
+        named.filter((q) => q !== e),
+      ),
   );
-  if (r.of !== undefined && peers.length === r.of) return peers[r.nth!];
-  if (r.of === undefined && peers.length === 1) return peers[0];
-  return `${describe(r)} matches ${peers.length} elements now, needs ${r.of ?? "exactly 1"}`;
+  const pick = (peers: Element[]) =>
+    r.of !== undefined
+      ? peers.length === r.of
+        ? peers[r.nth!]
+        : undefined
+      : peers.length === 1
+        ? peers[0]
+        : undefined;
+  const { near } = r;
+  if (near === undefined) return pick(anchored) ?? fail(r, anchored.length);
+  // A `near` recorded before masking existed holds the raw text. Match it as written first: it is the most specific
+  // (rows that differ only by a time). Then masked, the way the page's texts are masked, so its date or time still
+  // matches a day later. A new `near` is already masked, so the raw pass finds nothing and the masked one decides.
+  const raw = anchored.filter((e) => texts(e, false).includes(near));
+  const masked = anchored.filter((e) => texts(e).includes(stableText(near)));
+  return pick(raw) ?? pick(masked) ?? fail(r, masked.length);
 }
+
+/** A long text is kept as its start and a hash; masking cannot repair a hash taken over a date or time. */
+const HASHED = /… \[[0-9a-f]{8}\]$/;
+const fail = (r: Resolution, found: number) =>
+  `${describe(r)} matches ${found} elements now, needs ${r.of ?? "exactly 1"}` +
+  (found === 0 && r.near !== undefined && HASHED.test(r.near)
+    ? "; its near is a hashed long text, which changes with any date or time in it: re-record with --record new"
+    : "");
 
 export const describe = (t: Target) =>
   typeof t === "string"

@@ -822,6 +822,30 @@ test("resolve and find: a stable text keeps telling look-alikes apart across run
   assert.equal(find(old, after), after[0]);
 });
 
+test("find: an older raw near still tells apart rows that differ only by a time", () => {
+  const els = parseSnapshot(
+    [
+      `- listitem [ref=e1]:`,
+      `  - text: Run alpha 19:40`,
+      `  - button "Open" [ref=e2]`,
+      `- listitem [ref=e3]:`,
+      `  - text: Run alpha 19:41`,
+      `  - button "Open" [ref=e4]`,
+    ].join("\n"),
+  ).elements;
+  const open = els.filter((e) => e.name === "Open");
+  const old = { role: "button", name: "Open", container: "", near: "Run alpha 19:41 Open" };
+  assert.equal(find(old, els), open[1]);
+});
+
+test("find: a hashed long near that matches nothing says to re-record", () => {
+  const els = parseSnapshot(`- listitem [ref=e1]:\n  - text: Short\n  - button "Open" [ref=e2]`).elements;
+  const old = { role: "button", name: "Open", container: "", near: `${"x".repeat(80)}… [0123abcd]` };
+  assert.match(find(old, els) as string, /matches 0 elements now.*--record new/);
+  const plain = { role: "button", name: "Open", container: "", near: "Gone" };
+  assert.doesNotMatch(find(plain, els) as string, /--record new/);
+});
+
 const campaigns = (a: string, b: string) =>
   parseSnapshot(
     [
