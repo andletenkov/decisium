@@ -518,12 +518,13 @@ export class Browser {
 
   /**
    * A check's evidence that the page may still be filling in content (issue #81): a request it made in flight, live
-   * and on replay alike. Requests pending longer than `actionTimeout` count as long-lived (polling, streams), as for
-   * settle(); a quiet network still proves nothing.
+   * and on replay alike. A request the last action started is its load, however long it takes (the check's deadline
+   * bounds the wait). An older one counts only while younger than `actionTimeout`, as for settle(): past that it is
+   * long-lived (polling, streams). A quiet network still proves nothing.
    */
   private loading(): string | undefined {
     const now = Date.now();
-    const n = [...this.pending.values()].filter((t) => now - t < settings().actionTimeout).length;
+    const n = [...this.pending.values()].filter((t) => t >= this.actedAt || now - t < settings().actionTimeout).length;
     if (n) return `the page is still loading (${n === 1 ? "a request is" : `${n} requests are`} in flight)`;
   }
 
@@ -563,7 +564,10 @@ export class Browser {
   /** Drops the latest read: a client step drove the page through `this.page`, not through execute(). */
   forget() {
     this.touched = true;
+    this.actedAt = Date.now();
   }
+  /** When the page was last acted on (opened, execute(), a client step): requests since are its loads. */
+  private actedAt = Date.now();
 
   /** What the page holds that its snapshot shows, as one string; and the time of its latest DOM mutation. */
   private async pagePrint(): Promise<{ print?: string; stamp?: number }> {
@@ -758,6 +762,7 @@ export class Browser {
   async execute(action: Action): Promise<void> {
     const { verb, value = "" } = action;
     this.touched = true;
+    this.actedAt = Date.now();
     if (verb === "ACCEPT" || verb === "DISMISS") {
       const d = this.open;
       if (!d) throw new Error("no browser dialog is open");

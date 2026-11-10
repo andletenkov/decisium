@@ -80,8 +80,9 @@ A replay waits the way a Playwright spec does, not after every action:
 
 - An action does not wait for the page to settle. The next action waits until its recorded element is on the page.
 - A check retries until it passes or the page has nothing left pending (up to 5 s). A check whose evidence needs a
-  complete area (absence, a missing row) waits for the requests in flight, live and on replay alike; one pending
-  longer than `actionTimeout` counts as long-lived (polling) and is not waited for.
+  complete area (absence, a missing row) waits for the requests in flight, live and on replay alike: every one the
+  last action started, however long it takes; an older one pending longer than `actionTimeout` counts as long-lived
+  (polling) and is not waited for.
 - An action that shows no change yet waits for one before it counts as having done nothing.
 - A request pending for over 1.5 s (a hung analytics or error-report call) stops counting as pending.
 

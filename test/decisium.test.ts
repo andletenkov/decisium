@@ -598,6 +598,45 @@ test("runAssertion: an absence on a screen still loading its list waits for the 
   }
 });
 
+test("runAssertion: a load the last action started is waited for however long it takes (issue #81)", async () => {
+  const { createServer } = await import("node:http");
+  const server = createServer((req, res) => {
+    if (req.url === "/") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      return res.end(`<main><h1>Campaigns</h1><button onclick="fetch('/api').then((r) => r.json()).then((names) => {
+        document.querySelector('main').innerHTML = '<h1>Campaigns</h1><ul>' + names.map((n) => '<li>' + n + '</li>').join('') + '</ul>';
+      })">Show campaigns</button></main>`);
+    }
+    setTimeout(() => res.end(JSON.stringify(["Autumn Sale", "Spring Sale"])), 1200); // slower than actionTimeout
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const app = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const main: Decider = {
+    ...oracle,
+    assess: async (_s, obs) => ({
+      kind: sure("absence"),
+      subject: sure("none"),
+      area: sure(obs.areas.find((e) => e.role === "main")!.ref),
+      state: sure("disabled"),
+    }),
+  };
+  const before = process.env.DECISIUM_ACTION_TIMEOUT;
+  process.env.DECISIUM_ACTION_TIMEOUT = "500"; // the click's settle gives up while the list still loads
+  const b = await Browser.open(app);
+  try {
+    const button = (await b.observe()).elements.find((e) => e.name === "Show campaigns")!;
+    await b.execute({ verb: "CLICK", ref: button.ref });
+    await new Promise((r) => setTimeout(r, 600)); // older than actionTimeout by the time the check looks
+    const r = await runAssertion(`"Spring Sale" should not appear in the campaign list`, b, main, () => {});
+    assert.equal(r.outcome, "ASSERTION_FAILED", r.reason ?? "");
+  } finally {
+    if (before === undefined) delete process.env.DECISIUM_ACTION_TIMEOUT;
+    else process.env.DECISIUM_ACTION_TIMEOUT = before;
+    await b.close();
+    server.close();
+  }
+});
+
 test("slow UI: WAIT returns on change, assertions retry until the UI shows the expected state", async () => {
   const b = await Browser.open(APP + "?slow=1");
   try {
