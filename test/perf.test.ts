@@ -143,3 +143,51 @@ test("replay: an effect that lands a task after the click still counts as the ac
     await b.close();
   }
 });
+
+test("observe: a second read with nothing changed is reused; an action, a field value, focus or a client step forces a new one", async () => {
+  const b = await Browser.open(url);
+  b.replay = true;
+  try {
+    const first = await b.observe();
+    assert.equal((await b.observe()).elements, first.elements); // the same read
+    // A script sets a value: no DOM mutation, but the print changes.
+    await b.page.evaluate(() => {
+      (document.querySelector("input") as HTMLInputElement).value = "typed by a script";
+    });
+    const valued = await b.observe();
+    assert.notEqual(valued.elements, first.elements);
+    assert.match(valued.text, /typed by a script/);
+    await b.page.evaluate(() => (document.querySelector("button") as HTMLElement).focus());
+    const focused = await b.observe();
+    assert.notEqual(focused.elements, valued.elements);
+    b.forget(); // a client step ran
+    assert.notEqual((await b.observe()).elements, focused.elements);
+    const before = await b.observe();
+    await b.execute({ verb: "PRESS", value: "Shift" });
+    assert.notEqual((await b.observe()).elements, before.elements);
+  } finally {
+    await b.close();
+  }
+});
+
+test("observe: a page with many form fields is read at about the cost of a small one", async () => {
+  const rows = Array.from(
+    { length: 200 },
+    (_, i) => `<li><label><input type=checkbox> Item ${i}</label><input type=hidden value=${i}></li>`,
+  ).join("");
+  const big = createServer((_, res) => res.setHeader("content-type", "text/html").end(`<ul>${rows}</ul>`));
+  await new Promise<void>((r) => big.listen(0, "127.0.0.1", r));
+  const b = await Browser.open(`http://127.0.0.1:${(big.address() as AddressInfo).port}/`);
+  try {
+    await b.observe(); // warm
+    b.forget();
+    const t = Date.now();
+    await b.observe();
+    const ms = Date.now() - t;
+    // ~15 ms; one browser call per checkbox and hidden input (a fact read for each) took ~165 ms.
+    assert.ok(ms < 100, `reading the page took ${ms} ms`);
+  } finally {
+    await b.close();
+    big.close();
+  }
+});

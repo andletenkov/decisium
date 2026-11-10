@@ -71,6 +71,7 @@ class Scenario extends World {
   cassette?: Cassette;
   live!: Decider;
   key = ""; // the running Step in its cassette: scenario, position, text
+  decided = false; // the Step ran through Decisium (perform), not a client step definition
   dir = "";
   kind: StepKind = "action";
   arg: StepArgument = {}; // the running Step's data table or doc string
@@ -282,6 +283,9 @@ function networkMissed(browser?: Browser) {
 }
 AfterStep(function (this: Scenario) {
   networkMissed(this.browser);
+  // A client step drove the page through this.page, not through the Browser: its next read must not be reused.
+  if (!this.decided) this.browser?.forget();
+  this.decided = false;
 });
 
 BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
@@ -308,6 +312,7 @@ async function step(this: Scenario, text: string) {
 
 /** Runs one Step through Jev (or its cassette); throws on a failed outcome, with the screenshot attached. */
 async function perform(w: Scenario, text: string, quiet = false) {
+  w.decided = true;
   const log = (line: string) => {
     run.log(line);
     if (opt("VERBOSE")) console.log(line);

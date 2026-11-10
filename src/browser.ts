@@ -70,10 +70,6 @@ const IDLE_GAP_MS = 100; // two idle probes this far apart: promise chains (e.g.
 // `checkTimeout`; ignore such work by URL/type when the waiting costs too much.
 // Not tracked: Web Workers, and timers inside cross-origin iframes.
 
-/** Snapshot links with their `/url` line: [ref, url]. */
-const links = (snapshot: string): [string, string][] =>
-  [...snapshot.matchAll(/- link\b[^\n]*\[ref=(\w+)\][^\n]*\n\s*- \/url: "?(.*?)"?$/gm)].map((m) => [m[1], m[2]]);
-
 /** Adds `[current]` to the given refs' lines (Playwright's snapshot drops aria-current). */
 const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
   refs.size ? snapshot.replace(/ \[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? ` [current]${m}` : m)) : snapshot;
@@ -119,7 +115,7 @@ const markRefs = (snapshot: string, refs: ReadonlySet<string>, flag: string) =>
   refs.size ? snapshot.replace(/\[ref=(\w+)\]/g, (m, ref) => (refs.has(ref) ? `${m} [${flag}]` : m)) : snapshot;
 
 /** Facts the snapshot lacks, per element (tasks 0045, 0061, 0064); each stays separate for track B. */
-type Fact = "draggable" | "scrollable" | "pointer" | "tabindex";
+type Fact = "draggable" | "scrollable" | "pointer" | "tabindex" | "secret" | "editable" | "current";
 
 /**
  * `factsIn`: indexes of `els` with a fact, and which. Runs in the page. Native controls are skipped for the target facts: their
@@ -131,6 +127,15 @@ const factsIn = (els: Element[]) =>
     const out: string[] = [];
     const style = getComputedStyle(e);
     if (e.getAttribute("draggable") === "true") out.push("draggable");
+    // What the snapshot cannot tell: a password field, a field typed into (an editable combobox is a search box with
+    // suggestions, not a button-like one), a link marked aria-current. Read here, in the same pass, not per field.
+    if (e.matches('input[type="password"]')) out.push("secret");
+    // Only what can be a combobox (the one place it is used): every checkbox or hidden input would cost one more call.
+    else if (
+      e.matches('input[list], [role="combobox"]:is(input, textarea, [contenteditable]:not([contenteditable="false"]))')
+    )
+      out.push("editable");
+    if (e.matches('a[aria-current]:not([aria-current="false"])')) out.push("current");
     if (/auto|scroll/.test(style.overflowY) && e.scrollHeight > e.clientHeight && e !== document.scrollingElement)
       out.push("scrollable");
     if (!e.matches("a[href], button, input, select, textarea, summary, label, option, iframe") && e.checkVisibility()) {
@@ -214,6 +219,7 @@ export class Browser {
     context.on("requestfailed", done);
     context.on("page", (p) => {
       this.page = p;
+      this.touched = true;
       this.watchDownloads(p);
     });
     this.watchDownloads(page);
@@ -489,9 +495,12 @@ export class Browser {
   }
 
   private async observeNow(): Promise<Observation> {
-    const page = this.open ? undefined : await this.unblocked(this.read());
+    // The clipboard read goes out with the page read: each round trip to the browser is a wait.
+    const [page, read] = this.open
+      ? [undefined, undefined]
+      : await Promise.all([this.unblocked(this.read()), this.unblocked(this.readClipboard())]);
     if (page) this.under = page;
-    const clip = page ? await this.readClipboard() : undefined;
+    const clip = page ? read : undefined;
     const copied = clip && clip !== this.clipboardAtOpen ? this.mask(clip) : undefined;
     return (this.last = withDialog(
       withClipboard(
@@ -514,54 +523,78 @@ export class Browser {
     return now === undefined || now !== this.stamp;
   }
 
+  /**
+   * The page's read, reused while nothing can have changed it: no action of ours or of a client step, and the same
+   * print (DOM mutation time, field values, checked boxes, focus, URL). Steps observe twice in a row at their boundary
+   * (the last Turn of one, the first of the next); the second read is skipped. Main frame only: a page with frames is
+   * always read. After an action the print is not asked first, it comes with the read (one round trip less).
+   * shortcut: values of fields inside shadow roots are not part of the print; a script that changes one between two
+   * Steps without touching the DOM is read only at the next change.
+   */
   private async read(): Promise<Observation> {
+    if (!this.touched && this.cached && this.page.frames().length === 1) {
+      const { print } = await this.pagePrint();
+      if (print !== undefined && print === this.print) return this.cached;
+    }
+    return this.readNow();
+  }
+
+  private cached?: Observation; // the latest page read
+  private print?: string; // the page's print when `cached` was read
+  /** Set by execute() and by client steps (forget()): the page may have changed in ways no DOM mutation shows. */
+  private touched = true;
+
+  /** Drops the latest read: a client step drove the page through `this.page`, not through execute(). */
+  forget() {
+    this.touched = true;
+  }
+
+  /** What the page holds that its snapshot shows, as one string; and the time of its latest DOM mutation. */
+  private async pagePrint(): Promise<{ print?: string; stamp?: number }> {
+    const got = await this.page
+      .evaluate(() => {
+        const w = window as unknown as { __lastMutation?: number; __ids?: WeakMap<Element, number> };
+        let h = 2166136261; // FNV-1a, so field values (passwords too) never leave the page
+        const mix = (s: string) => {
+          for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+        };
+        for (const e of document.querySelectorAll("input, textarea, select")) {
+          const f = e as HTMLInputElement;
+          mix(f.type === "checkbox" || f.type === "radio" ? `${f.checked}` : f.value);
+          mix("\u0001");
+        }
+        const ids = (w.__ids ??= new WeakMap()); // an id per focused element, so focus moving shows in the print
+        const active = document.activeElement;
+        if (active && !ids.has(active)) ids.set(active, performance.now());
+        return [
+          w.__lastMutation,
+          `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`,
+        ] as const;
+      })
+      .catch(() => undefined);
+    return { stamp: got?.[0], print: got?.[1] };
+  }
+
+  private async readNow(): Promise<Observation> {
     // The DOM reads that do not depend on the snapshot's refs go out together (each round trip is a wait); the
     // facts come before the page snapshot, whose refs they give.
-    const [stamp, found, collapsed, titles, title] = await Promise.all([
-      this.page
-        .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
-        .catch(() => undefined),
+    this.touched = false; // an action from here on sets it again
+    const [{ stamp, print }, found, collapsed, titles, title] = await Promise.all([
+      this.pagePrint(), // before the snapshot below: a change after it shows as another print
       this.facts(),
       this.collapsed(),
       this.titles(),
       this.page.title().catch(() => ""), // mid-navigation
     ]);
     this.stamp = stamp;
+    this.print = print;
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
     const snapshot = renderSnapshot((await this.page.ariaSnapshotJSON({ mode: "ai" })) as AriaNode[]);
-    // The snapshot cannot tell a password field from a textbox, or an editable combobox (search box with suggestions)
-    // from a button-like one; ask the DOM.
-    const secret = new Set<string>(),
-      editable = new Set<string>();
-    // One round trip each, all at once: they only read, and the page snapshot above is already taken.
-    const fields = [...snapshot.matchAll(/- (textbox|combobox)\b[^\n]*\[ref=(\w+)\]/g)];
-    const [kinds, current] = await Promise.all([
-      Promise.all(
-        fields.map(([, , ref]) =>
-          this.page
-            .locator(`aria-ref=${ref}`)
-            .evaluate(
-              (el) =>
-                (el as HTMLInputElement).type === "password"
-                  ? "secret"
-                  : el instanceof HTMLInputElement ||
-                      el instanceof HTMLTextAreaElement ||
-                      (el as HTMLElement).isContentEditable
-                    ? "editable"
-                    : "",
-              undefined,
-              { timeout: 1000 },
-            )
-            .catch(() => ""),
-        ),
-      ),
-      this.currentLinks(snapshot),
-    ]);
-    fields.forEach(([, role, ref], i) => {
-      if (kinds[i] === "secret") secret.add(ref);
-      else if (kinds[i] === "editable" && role === "combobox") editable.add(ref);
-    });
+    const combobox = new Set([...snapshot.matchAll(/- combobox\b[^\n]*\[ref=(\w+)\]/g)].map((m) => m[1]));
+    const secret = refs("secret");
+    const editable = new Set([...refs("editable")].filter((ref) => combobox.has(ref)));
+    const current = refs("current");
     // shortcut: masks the value as the snapshot spells it; a value with quotes or backslashes (escaped there) or shown
     // reformatted would slip through, and screenshots show a secret typed into a non-password field; mask those if needed.
     const marked = this.mask(
@@ -578,7 +611,12 @@ export class Browser {
     const pageTitle = this.mask(title);
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
-    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), pageTitle, where);
+    return (this.cached = withPage(
+      parseSnapshot(marked, secret, editable, targets),
+      this.mask(this.page.url()),
+      pageTitle,
+      where,
+    ));
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -694,39 +732,12 @@ export class Browser {
   }
 
   /**
-   * Refs of links marked aria-current (the current page or tab in a navigation). The hrefs of aria-current links pick
-   * the candidates; each candidate is then read by ref, since links that share an href ("#") can differ.
-   */
-  private async currentLinks(snapshot: string): Promise<Set<string>> {
-    const hrefs = (
-      await Promise.all(
-        this.page.frames().map((f) =>
-          f
-            .locator('a[aria-current]:not([aria-current="false"])')
-            .evaluateAll((els) => els.map((e) => e.getAttribute("href") ?? ""))
-            .catch(() => [] as string[]),
-        ),
-      )
-    ).flat();
-    const candidates = [...links(snapshot)].filter(([, url]) => hrefs.includes(url));
-    // All at once: a page whose many links share an href ("#") otherwise pays one round trip each.
-    const values = await Promise.all(
-      candidates.map(([ref]) =>
-        this.page
-          .locator(`aria-ref=${ref}`)
-          .getAttribute("aria-current", { timeout: 1000 })
-          .catch(() => null),
-      ),
-    );
-    return new Set(candidates.flatMap(([ref], i) => (values[i] !== null && values[i] !== "false" ? [ref] : [])));
-  }
-
-  /**
    * Executes one action and checks its effect where the effect is deterministic (TYPE/SELECT). An action that opens a
    * dialog returns once it is open (its effect check is skipped); ACCEPT/DISMISS answer it.
    */
   async execute(action: Action): Promise<void> {
     const { verb, value = "" } = action;
+    this.touched = true;
     if (verb === "ACCEPT" || verb === "DISMISS") {
       const d = this.open;
       if (!d) throw new Error("no browser dialog is open");
@@ -854,7 +865,9 @@ export class Browser {
       const moved = stamp === undefined || stamp !== seen;
       seen = stamp;
       if (moved && (await this.observe()).text !== since) {
-        await this.settle(false); // the change is already here: only let it finish
+        // The change is already here. Live, let it finish before Jev reads the page; on replay what comes next waits for
+        // what it needs (a recorded target, a check's expected state), as a Playwright spec does.
+        if (!this.replay) await this.settle(false);
         return true;
       }
       if (Date.now() - idleAt < IDLE_GAP_MS) continue;
