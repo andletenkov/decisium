@@ -176,24 +176,46 @@ test("observe: a second read with nothing changed is reused; an action, a field 
   }
 });
 
-test("observe: a page with many form fields is read at about the cost of a small one", async () => {
-  const rows = Array.from(
-    { length: 200 },
-    (_, i) => `<li><label><input type=checkbox> Item ${i}</label><input type=hidden value=${i}></li>`,
-  ).join("");
-  const big = createServer((_, res) => res.setHeader("content-type", "text/html").end(`<ul>${rows}</ul>`));
+test("observe: a page with many form fields is read at about the cost of a small one", async (t) => {
+  const page = (n: number) =>
+    `<ul>${Array.from(
+      { length: n },
+      (_, i) => `<li><label><input type=checkbox> Item ${i}</label><input type=hidden value=${i}></li>`,
+    ).join("")}</ul>`;
+  let html = page(1);
+  const big = createServer((_, res) => res.setHeader("content-type", "text/html").end(html));
   await new Promise<void>((r) => big.listen(0, "127.0.0.1", r));
-  const b = await Browser.open(`http://127.0.0.1:${(big.address() as AddressInfo).port}/`);
+  const url = `http://127.0.0.1:${(big.address() as AddressInfo).port}/`;
+  // Browser round trips per read, counted: wall-clock time on a shared CI runner under coverage (120-165 ms) could not
+  // tell this apart from the regression it guards, one call per checkbox and hidden input (~165 ms).
+  const calls = async (n: number) => {
+    html = page(n);
+    const b = await Browser.open(url);
+    try {
+      await b.observe(); // warm
+      b.forget();
+      const proto = Object.getPrototypeOf(b.page.locator("body"));
+      let count = 0;
+      const counted = (name: string) => {
+        const original = proto[name];
+        t.mock.method(proto, name, function (this: unknown, ...args: unknown[]) {
+          count++;
+          return original.apply(this, args);
+        });
+      };
+      for (const name of ["ariaSnapshot", "evaluate", "evaluateAll"]) counted(name);
+      await b.observe();
+      t.mock.restoreAll();
+      return count;
+    } finally {
+      t.mock.restoreAll();
+      await b.close();
+    }
+  };
   try {
-    await b.observe(); // warm
-    b.forget();
-    const t = Date.now();
-    await b.observe();
-    const ms = Date.now() - t;
-    // ~15 ms; one browser call per checkbox and hidden input (a fact read for each) took ~165 ms.
-    assert.ok(ms < 100, `reading the page took ${ms} ms`);
+    const small = await calls(1);
+    assert.equal(await calls(200), small, "a read must not make one browser call per form field");
   } finally {
-    await b.close();
     big.close();
   }
 });
