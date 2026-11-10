@@ -43,9 +43,9 @@ export DECISIUM_MODEL_API_KEY=... # or put it in .env; never commit keys
 npx decisium run test.feature
 ```
 
-Credential precedence: `DECISIUM_MODEL_API_KEY` wins over the selected provider\'s native variable
-(`TYPESAFE_API_KEY` or `OPENROUTER_API_KEY`). The other provider\'s key is never used, and providers never switch
-automatically. Native variables let you retain both providers\' credentials while switching `DECISIUM_MODEL_PROVIDER`.
+Credential precedence: `DECISIUM_MODEL_API_KEY` wins over the selected provider's native variable
+(`TYPESAFE_API_KEY` or `OPENROUTER_API_KEY`). The other provider's key is never used, and providers never switch
+automatically. Native variables let you retain both providers' credentials while switching `DECISIUM_MODEL_PROVIDER`.
 An explicitly empty generic key fails authentication rather than falling back. Keys are **environment-only** (shell or
 `.env`): no API-key CLI argument or `worldParameters.decisium` field. They are excluded from reports, logs, traces and cassettes.
 

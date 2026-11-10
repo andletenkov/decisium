@@ -28,7 +28,7 @@ import { forOrigin, SavedStorage, type StorageState } from "./saved.ts";
 import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, type States } from "./states.ts";
 import type { Decider } from "./decision.ts";
 import { ModelDecider } from "./model-decider.ts";
-import { credentialName } from "./providers.ts";
+import { credentialName, missingCredential } from "./providers.ts";
 import { MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
@@ -98,7 +98,7 @@ BeforeAll(function () {
   record = (env.DECISIUM_RECORD || "new") as RecordMode;
   if (!RECORD_MODES.includes(record)) throw new Error(`DECISIUM_RECORD must be one of ${RECORD_MODES.join(", ")}`);
   if (!env[credentialName(settings.provider)] && (record !== "none" || opt("STEP") || opt("JUDGED")))
-    throw new Error(`${credentialName(settings.provider)} is not set.`);
+    throw new Error(missingCredential(settings.provider));
   run = new RunDir(settings.reportDir, env.DECISIUM_RUN_DIR || undefined);
   runId = env.DECISIUM_RUN_ID ||= newRunId();
   saved = new SavedStorage(run.path);

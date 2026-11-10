@@ -1,6 +1,6 @@
 // `decisium doctor`: the setup checks a CI job wants before the first run, one [OK]/[FAIL] line each.
 import { noul } from "./decision-provider.ts";
-import { createProvider, credentialName } from "./providers.ts";
+import { createProvider, credentialName, missingCredential } from "./providers.ts";
 import { settings } from "./options.ts";
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
@@ -32,7 +32,7 @@ export async function doctor(files: string[]): Promise<number> {
   line(existsSync(chromium.executablePath()), `Chromium at ${chromium.executablePath()} (else: decisium install)`);
   const config = settings();
   const key = credentialName(config.provider);
-  if (!process.env[key]) line(false, `${key} is not set`);
+  if (!process.env[key]) line(false, missingCredential(config.provider));
   else
     await attempt(`${key} accepted by ${config.provider} (${config.model})`, () =>
       createProvider().decide(

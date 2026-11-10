@@ -58,7 +58,7 @@ Node 22.18+ or 23.6+. A failed run writes `runs/<timestamp>/report.md`, ready fo
 
 OpenRouter is optional: `npm install @openrouter/sdk`, set `DECISIUM_MODEL_PROVIDER=openrouter` and
 `DECISIUM_MODEL_API_KEY`, then run normally (default model `~typesafe/jev-latest`). TypeSafe remains the default.
-The generic key takes precedence over the selected provider\'s native `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY`.
+The generic key takes precedence over the selected provider's native `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY`.
 Keys are environment-only (shell or `.env`), never CLI flags or project-config fields.
 See [provider configuration](docs/configuration.md#decision-providers) for the supported SDK version and provenance.
 

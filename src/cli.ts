@@ -13,7 +13,7 @@ import { doctor } from "./doctor.ts";
 import { install } from "./install.ts";
 import { lint } from "./lint.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
-import { credentialName } from "./providers.ts";
+import { credentialName, missingCredential } from "./providers.ts";
 import { readStep } from "./step.ts";
 import { SavedStorage } from "./saved.ts";
 import { consumerChain, discoverStates, isStateFile, loadStates, tagProblems, type StateDef } from "./states.ts";
@@ -341,7 +341,7 @@ async function main(): Promise<number> {
   // Each CLI run has a new ID; workers inherit the same ID.
   env.DECISIUM_RUN_ID = newRunId();
   if (!env[credentialName(settings.provider)] && (cmd === "step" || record !== "none" || env.DECISIUM_JUDGED === "1")) {
-    console.error(`${credentialName(settings.provider)} is not set.`);
+    console.error(missingCredential(settings.provider));
     return 2;
   }
   // Opt-in: features sharing one stateful app (campaign-manager) break each other's state when run side by side.

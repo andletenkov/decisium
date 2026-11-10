@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Cassette } from "../src/cassette.ts";
 import { choice, noul, validateResponse, ProviderError } from "../src/decision-provider.ts";
-import { TypeSafeProvider, OpenRouterProvider } from "../src/providers.ts";
+import { TypeSafeProvider, OpenRouterProvider, missingCredential } from "../src/providers.ts";
 import { settings, applyOptions } from "../src/options.ts";
 import { ModelDecider } from "../src/model-decider.ts";
 const request = {
@@ -193,6 +193,14 @@ test("TypeSafe preserves partial token usage rather than dropping measured count
       new Response(JSON.stringify({ ...response(), model: "model", usage: { input_tokens: 7, output_tokens: null } })),
   );
   assert.deepEqual((await provider.decide(request)).usage, { inputTokens: 7, outputTokens: null });
+});
+
+test("missing key message names the empty generic key instead of calling it unset", () => {
+  assert.equal(
+    missingCredential("typesafe", { DECISIUM_MODEL_API_KEY: "", TYPESAFE_API_KEY: "k" }),
+    "DECISIUM_MODEL_API_KEY is empty; remove it to use the provider's own key.",
+  );
+  assert.equal(missingCredential("openrouter", {}), "OPENROUTER_API_KEY is not set.");
 });
 
 test("provider configuration follows env > world options > defaults", () => {
