@@ -143,3 +143,29 @@ test("replay: an effect that lands a task after the click still counts as the ac
     await b.close();
   }
 });
+
+test("observe: a second read with nothing changed is reused; an action, a field value, focus or a client step forces a new one", async () => {
+  const b = await Browser.open(url);
+  b.replay = true;
+  try {
+    const first = await b.observe();
+    assert.equal((await b.observe()).elements, first.elements); // the same read
+    // A script sets a value: no DOM mutation, but the print changes.
+    await b.page.evaluate(() => {
+      (document.querySelector("input") as HTMLInputElement).value = "typed by a script";
+    });
+    const valued = await b.observe();
+    assert.notEqual(valued.elements, first.elements);
+    assert.match(valued.text, /typed by a script/);
+    await b.page.evaluate(() => (document.querySelector("button") as HTMLElement).focus());
+    const focused = await b.observe();
+    assert.notEqual(focused.elements, valued.elements);
+    b.forget(); // a client step ran
+    assert.notEqual((await b.observe()).elements, focused.elements);
+    const before = await b.observe();
+    await b.execute({ verb: "PRESS", value: "Shift" });
+    assert.notEqual((await b.observe()).elements, before.elements);
+  } finally {
+    await b.close();
+  }
+});

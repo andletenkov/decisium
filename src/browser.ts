@@ -214,6 +214,7 @@ export class Browser {
     context.on("requestfailed", done);
     context.on("page", (p) => {
       this.page = p;
+      this.touched = true;
       this.watchDownloads(p);
     });
     this.watchDownloads(page);
@@ -489,9 +490,12 @@ export class Browser {
   }
 
   private async observeNow(): Promise<Observation> {
-    const page = this.open ? undefined : await this.unblocked(this.read());
+    // The clipboard read goes out with the page read: each round trip to the browser is a wait.
+    const [page, read] = this.open
+      ? [undefined, undefined]
+      : await Promise.all([this.unblocked(this.read()), this.unblocked(this.readClipboard())]);
     if (page) this.under = page;
-    const clip = page ? await this.readClipboard() : undefined;
+    const clip = page ? read : undefined;
     const copied = clip && clip !== this.clipboardAtOpen ? this.mask(clip) : undefined;
     return (this.last = withDialog(
       withClipboard(
@@ -514,7 +518,54 @@ export class Browser {
     return now === undefined || now !== this.stamp;
   }
 
-  private async read(): Promise<Observation> {
+  private read(): Promise<Observation> {
+    return this.reuse().then((same) => (same && this.cached ? this.cached : this.readNow()));
+  }
+
+  private cached?: Observation; // the latest page read, reused while nothing can have changed it (reuse())
+  private print?: string; // the page's state when `cached` was read
+  /** Set by execute() and by client steps (forget()): the page may have changed in ways no DOM mutation shows. */
+  private touched = true;
+
+  /** Drops the latest read: a client step drove the page through `this.page`, not through execute(). */
+  forget() {
+    this.touched = true;
+  }
+
+  /**
+   * True when nothing can have changed the page since the latest read: no action of ours or of a client step, and no
+   * DOM mutation, field value, checked box, focus or URL change since (one round trip). Steps observe twice in a row
+   * at their boundary (the last Turn of one, the first of the next); the second read is skipped. Main frame only: a
+   * page with frames is always read.
+   * shortcut: values of fields inside shadow roots are not part of the print; a script that changes one between two
+   * Steps without touching the DOM is read only at the next change.
+   */
+  private async reuse(): Promise<boolean> {
+    const print = await this.page
+      .evaluate(() => {
+        const w = window as unknown as { __lastMutation?: number; __ids?: WeakMap<Element, number> };
+        let h = 2166136261; // FNV-1a, so field values (passwords too) never leave the page
+        const mix = (s: string) => {
+          for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+        };
+        for (const e of document.querySelectorAll("input, textarea, select")) {
+          const f = e as HTMLInputElement;
+          mix(f.type === "checkbox" || f.type === "radio" ? `${f.checked}` : f.value);
+          mix("\u0001");
+        }
+        const ids = (w.__ids ??= new WeakMap()); // an id per focused element, so focus moving shows in the print
+        const active = document.activeElement;
+        if (active && !ids.has(active)) ids.set(active, performance.now());
+        return `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`;
+      })
+      .catch(() => undefined);
+    const same = !this.touched && print !== undefined && print === this.print && this.page.frames().length === 1;
+    this.print = print;
+    this.touched = false;
+    return same;
+  }
+
+  private async readNow(): Promise<Observation> {
     // The DOM reads that do not depend on the snapshot's refs go out together (each round trip is a wait); the
     // facts come before the page snapshot, whose refs they give.
     const [stamp, found, collapsed, titles, title] = await Promise.all([
@@ -578,7 +629,12 @@ export class Browser {
     const pageTitle = this.mask(title);
     const tabs = this.context.pages();
     const where = tabs.length > 1 ? `${tabs.length} open, this is tab ${tabs.indexOf(this.page) + 1}` : undefined;
-    return withPage(parseSnapshot(marked, secret, editable, targets), this.mask(this.page.url()), pageTitle, where);
+    return (this.cached = withPage(
+      parseSnapshot(marked, secret, editable, targets),
+      this.mask(this.page.url()),
+      pageTitle,
+      where,
+    ));
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
@@ -727,6 +783,7 @@ export class Browser {
    */
   async execute(action: Action): Promise<void> {
     const { verb, value = "" } = action;
+    this.touched = true;
     if (verb === "ACCEPT" || verb === "DISMISS") {
       const d = this.open;
       if (!d) throw new Error("no browser dialog is open");
