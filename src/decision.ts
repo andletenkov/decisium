@@ -128,14 +128,20 @@ export function grouped(p: Pick, obs: Observation, action?: Pick): Pick {
   return { ...p, choice, probabilities };
 }
 
+/** What a check compares; whether it says "not" is NEGATED (a state names its own polarity: enabled, unchecked). */
 export const ASSERTION_KINDS = {
-  value: "Checks that some element shows a specific text or value.",
-  "not value":
-    'Checks that some element does not show a specific text or value (e.g. the status should not be "Draft").',
-  presence: "Checks that something is shown or exists on the page.",
-  absence: "Checks that something is not shown or does not exist on the page.",
+  value:
+    'Checks the text or value one element or file shows (e.g. the status should be "Draft"; the alert should say "Saved"; the downloaded file should contain "Ada").',
+  presence:
+    'Checks whether a text appears on the page or in an area of it (e.g. "Saved" should appear; "Spring Sale" should not appear in the list).',
   state: "Checks whether a control is disabled, enabled, checked, expanded, selected or pressed.",
   fuzzy: "A subjective or holistic check that none of the other kinds can express.",
+} as const;
+
+/** Whether a text or value check says it should NOT be shown: code applies it after comparing. */
+export const NEGATED = {
+  no: "No: `check` says a text or value should be shown.",
+  yes: 'Yes: `check` says a text or value should NOT be shown (e.g. "Spring Sale" should not appear; the status should not be "Draft").',
 } as const;
 
 /** State labels Jev can pick; code reads the matching snapshot flag. */
@@ -158,17 +164,12 @@ export const STATES = {
  */
 export interface Assessment {
   kind: Pick;
+  negated: Pick; // NEGATED: a text or value check says it should not be shown
   subject: Pick; // element ref the check is about, or "none"
-  area: Pick; // presence/absence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
-  state: Pick; // required control state, used by `state` checks
+  area: Pick; // presence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
+  state: Pick; // the control state the check names, used by `state` checks
   judged?: number; // P(step holds), asked only with --judged
 }
-
-/** Jev's reading of a text that holds a check's value with more words around it: `yes` it states it, or `no`. */
-export const AFFIRMS = {
-  yes: "Yes: `text` states `value` as it is.",
-  no: "No: `text` negates `value` (e.g. `Not Scheduled` for `Scheduled`), or `value` is only part of a different value.",
-} as const;
 
 export const AREA_PAGE = "page";
 export const AREA_MISSING = "missing";
@@ -220,13 +221,8 @@ export interface Decider {
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Drag: the readable element or area to drop `source` onto, or "none" (task 0045). */
   drop(step: string, obs: Observation, source: Element): Promise<Pick>;
-  /** Assertion steps: what kind of check, and which element it is about. Code decides pass/fail. */
+  /** Assertion steps, one request: what kind of check, negated or not, and which element or area. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
-  /**
-   * A value check's text that holds the quoted `value` with more words ("Not Scheduled" for "Scheduled"): does it state
-   * it? A question about that text alone (AFFIRMS), not about the check; asked only when equality cannot decide.
-   */
-  affirms(step: string, text: string, value: string): Promise<Pick>;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;
   /** The open browser dialog (`obs.dialog`): "accept", "dismiss", or for a prompt one of the Step's quoted values. */

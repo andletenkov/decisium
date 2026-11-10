@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-46-01-017Z",
+  "run": "runs/2026-11-10T18-55-38-077Z",
   "entries": {
     "Schedule a campaign: I enter \"Autumn Sale\" as the campaign name": {
       "turns": [
@@ -104,33 +104,46 @@
       ]
     },
     "Schedule a campaign: the campaign status should be \"Scheduled\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.97,
+          "confidence": 1,
           "probabilities": {
-            "value": 0.98,
+            "value": 1,
             "presence": 0,
-            "absence": 0,
-            "state": 0.02,
+            "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
-          "choice": "selected",
-          "confidence": 0.38,
+          "choice": "enabled",
+          "confidence": 0.43,
           "probabilities": {
             "disabled": 0.01,
-            "enabled": 0.42,
-            "checked": 0.09,
+            "enabled": 0.49,
+            "checked": 0.05,
             "unchecked": 0,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0.44,
+            "selected": 0.4,
             "unselected": 0.01,
-            "pressed": 0.01,
+            "pressed": 0.02,
             "unpressed": 0.01
           }
         },
@@ -144,8 +157,7 @@
             1
           ]
         ],
-        "area": [["page", 0.89]],
-        "affirms": [["Status: Scheduled", "Scheduled", [["yes", 0.91]]]]
+        "area": [["page", 0.9]]
       }
     },
     "Set the activation period: I set the activation period to 2 weeks": {
@@ -183,31 +195,44 @@
       ]
     },
     "Set the activation period: the activation period should be \"2 weeks\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.54,
+          "confidence": 0.44,
           "probabilities": {
-            "value": 0.63,
-            "presence": 0,
-            "absence": 0,
-            "state": 0.37,
+            "value": 0.58,
+            "presence": 0.01,
+            "state": 0.41,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 0.99,
+          "confidence": 0.97,
           "probabilities": {
             "disabled": 0,
             "enabled": 0,
             "checked": 0,
             "unchecked": 0,
-            "expanded": 0,
-            "collapsed": 0,
-            "selected": 0.99,
+            "expanded": 0.01,
+            "collapsed": 0.01,
+            "selected": 0.97,
             "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
@@ -223,34 +248,34 @@
             1
           ]
         ],
-        "area": [
-          ["page", 0.64],
-          ["missing", 0.15],
-          [
-            {
-              "role": "generic",
-              "name": "",
-              "container": "",
-              "nth": 1,
-              "of": 4
-            },
-            0.07
-          ]
-        ]
+        "area": [["page", 0.66], ["missing", 0.15]]
       }
     },
     "Status assertion ignores a decoy: the campaign status should be \"Scheduled\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.96,
+          "confidence": 1,
           "probabilities": {
-            "value": 0.97,
+            "value": 1,
             "presence": 0,
-            "absence": 0,
-            "state": 0.03,
+            "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.54,
+          "probabilities": {
+            "no": 0.77,
+            "yes": 0.23
           }
         },
         "state": {
@@ -259,9 +284,9 @@
           "confidence": 0.9,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.03,
+            "enabled": 0.02,
             "checked": 0.02,
-            "unchecked": 0,
+            "unchecked": 0.01,
             "expanded": 0,
             "collapsed": 0,
             "selected": 0.91,
@@ -280,7 +305,7 @@
             0.99
           ]
         ],
-        "area": [["page", 0.87]]
+        "area": [["page", 0.83]]
       }
     }
   }

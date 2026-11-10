@@ -52,14 +52,11 @@ type Answer = [Target, number, Settings["confidence"]?][];
 type Turn = { done: number; target: Answer; action?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check {
   kind: Pick;
+  /** Absent in entries recorded before issue #81: their kinds folded negation in (`absence`), so they are re-recorded. */
+  negated?: Pick;
   state: Pick;
   subject: Answer;
   area: Answer;
-  /**
-   * Jev's readings of texts that hold a value with more words (Decider.affirms): text, value, answer. Absent in entries
-   * recorded before issue #81, which never stored one: such a check that needs a reading is re-recorded, not passed.
-   */
-  affirms?: [text: string, value: string, answer: Answer][];
 }
 interface Entry {
   confidence?: Settings["confidence"];
@@ -574,8 +571,10 @@ export class Cassette {
         }
         const r = replay((e): Assessment => {
           if (!e.check) throw "no recorded check";
+          if (!e.check.negated) throw "the check was recorded before negation was its own answer (issue #81)";
           return {
             kind: recorded(e.check.kind),
+            negated: recorded(e.check.negated),
             state: recorded(e.check.state),
             subject: loadRecorded(e.check.subject, obs.readable),
             area: loadRecorded(e.check.area, obs.areas),
@@ -584,29 +583,11 @@ export class Cassette {
         const a = r ?? (await live.assess(step, obs, judged));
         now.check = {
           kind: a.kind,
+          negated: a.negated,
           state: a.state,
           subject: store(a.subject, obs.readable),
           area: store(a.area, obs.areas),
-          ...(now.check?.affirms ? { affirms: now.check.affirms } : {}),
         };
-        return a;
-      },
-      affirms: async (step, text, value) => {
-        const r = replay((e) => {
-          const read = e.check?.affirms?.find(([t, v]) => t === text && v === value);
-          // Not recorded for this text: replay-only waits for the page to change (a recorded text may still come, as a
-          // recorded element may), then reports it; a cassette from before readings were stored never has one.
-          if (!read)
-            throw new NotOnPage(
-              `Jev's reading of "${text}" for "${value}" is not recorded (record it with --record new)`,
-            );
-          return loadRecorded(read[2]);
-        });
-        const a = r ?? (await live.affirms(step, text, value));
-        if (now.check) {
-          const reads = (now.check.affirms ??= []).filter(([t, v]) => t !== text || v !== value);
-          now.check.affirms = [...reads, [text, value, store(a)]];
-        }
         return a;
       },
       intent: async (step, check) => {

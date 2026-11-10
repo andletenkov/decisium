@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-47-30-673Z",
+  "run": "runs/2026-11-10T18-54-47-921Z",
   "entries": {
     "Open an article through the search: I open the \"Ada Lovelace\" article through the search": {
       "turns": [
@@ -55,27 +55,40 @@
       ]
     },
     "Open an article through the search: the article heading should be \"Ada Lovelace\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 1,
+          "confidence": 0.97,
           "probabilities": {
-            "value": 1,
-            "presence": 0,
-            "absence": 0,
+            "value": 0.98,
+            "presence": 0.02,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.92,
+          "confidence": 0.93,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.03,
-            "checked": 0.93,
+            "checked": 0.94,
             "unchecked": 0.01,
             "expanded": 0.01,
             "collapsed": 0,
@@ -102,24 +115,37 @@
               "name": "",
               "container": ""
             },
-            0.73
+            0.74
           ],
-          ["page", 0.24]
+          ["page", 0.23]
         ]
       }
     },
     "Open an article through the search: the article should say \"born 10 December 1815\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 1,
+          "confidence": 0.73,
           "probabilities": {
-            "value": 1,
-            "presence": 0,
-            "absence": 0,
+            "value": 0.8,
+            "presence": 0.2,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
@@ -130,12 +156,12 @@
             "disabled": 0,
             "enabled": 0.06,
             "checked": 0.82,
-            "unchecked": 0.04,
-            "expanded": 0.03,
-            "collapsed": 0,
+            "unchecked": 0.03,
+            "expanded": 0.04,
+            "collapsed": 0.01,
             "selected": 0.03,
             "unselected": 0.01,
-            "pressed": 0.01,
+            "pressed": 0,
             "unpressed": 0
           }
         },
@@ -150,18 +176,15 @@
           ]
         ],
         "area": [
-          ["page", 0.63],
+          ["page", 0.71],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.37
+            0.29
           ]
-        ],
-        "affirms": [
-          ["Ada Lovelace (born 10 December 1815) was an English mathematician.", "born 10 December 1815", [["yes", 1]]]
         ]
       }
     },
@@ -218,28 +241,41 @@
       ]
     },
     "A check on the article title: the article title should be \"Ada Lovelace\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.97,
+          "confidence": 0.95,
           "probabilities": {
-            "value": 0.98,
-            "presence": 0.01,
-            "absence": 0,
+            "value": 0.96,
+            "presence": 0.03,
             "state": 0,
             "fuzzy": 0.01
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.88,
+          "probabilities": {
+            "no": 0.94,
+            "yes": 0.06
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.53,
+          "confidence": 0.43,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.02,
-            "checked": 0.58,
-            "unchecked": 0.36,
+            "enabled": 0.03,
+            "checked": 0.49,
+            "unchecked": 0.44,
             "expanded": 0,
             "collapsed": 0,
             "selected": 0.01,
@@ -255,11 +291,19 @@
               "name": "",
               "container": ""
             },
-            0.8
+            0.7
+          ],
+          [
+            {
+              "role": "heading",
+              "name": "Ada Lovelace",
+              "container": ""
+            },
+            0.29
           ]
         ],
         "area": [
-          ["page", 0.75],
+          ["page", 0.78],
           [
             {
               "role": "main",
@@ -320,33 +364,46 @@
       ]
     },
     "Searching does not open the article: the article heading should be \"Ada Lovelace\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.92,
+          "confidence": 0.95,
           "probabilities": {
-            "value": 0.94,
-            "presence": 0.01,
-            "absence": 0.01,
+            "value": 0.96,
+            "presence": 0.03,
             "state": 0,
-            "fuzzy": 0.04
+            "fuzzy": 0.01
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.86,
+          "probabilities": {
+            "no": 0.93,
+            "yes": 0.07
           }
         },
         "state": {
           "type": "choice",
           "choice": "selected",
-          "confidence": 0.33,
+          "confidence": 0.34,
           "probabilities": {
-            "disabled": 0,
-            "enabled": 0.09,
-            "checked": 0.36,
-            "unchecked": 0.12,
-            "expanded": 0.01,
-            "collapsed": 0,
-            "selected": 0.4,
-            "unselected": 0.02,
-            "pressed": 0,
+            "disabled": 0.01,
+            "enabled": 0.17,
+            "checked": 0.28,
+            "unchecked": 0.06,
+            "expanded": 0.02,
+            "collapsed": 0.01,
+            "selected": 0.41,
+            "unselected": 0.03,
+            "pressed": 0.01,
             "unpressed": 0
           }
         },
@@ -357,7 +414,7 @@
               "name": "Search",
               "container": ""
             },
-            0.74
+            0.64
           ],
           [
             {
@@ -365,18 +422,27 @@
               "name": "Ada Lovelace",
               "container": "region \"Results\""
             },
-            0.2
+            0.29
           ]
         ],
         "area": [
-          ["page", 0.43],
+          ["page", 0.41],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.39
+            0.3
+          ],
+          [
+            {
+              "role": "listitem",
+              "name": "",
+              "container": "region \"Results\"",
+              "near": "Ada Lovelace"
+            },
+            0.13
           ]
         ]
       }
@@ -430,29 +496,42 @@
       ]
     },
     "Results are checked by quoting what should be listed: \"Ada (programming language)\" should appear in the results": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.77,
+          "confidence": 0.96,
           "probabilities": {
-            "value": 0.17,
-            "presence": 0.82,
-            "absence": 0,
+            "value": 0.03,
+            "presence": 0.97,
             "state": 0,
-            "fuzzy": 0.01
+            "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.43,
+          "confidence": 0.42,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.49,
-            "checked": 0.17,
-            "unchecked": 0.01,
-            "expanded": 0.14,
+            "enabled": 0.48,
+            "checked": 0.23,
+            "unchecked": 0,
+            "expanded": 0.1,
             "collapsed": 0,
             "selected": 0.16,
             "unselected": 0.02,
@@ -477,53 +556,73 @@
               "name": "Results",
               "container": ""
             },
-            0.54
+            0.64
           ],
-          ["page", 0.26]
+          [
+            {
+              "role": "list",
+              "name": "",
+              "container": "region \"Results\""
+            },
+            0.17
+          ]
         ]
       }
     },
     "Results are checked by quoting what should be listed: \"Charles Babbage\" should not appear in the results": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
-          "choice": "absence",
+          "choice": "presence",
           "confidence": 1,
           "probabilities": {
             "value": 0,
-            "presence": 0,
-            "absence": 1,
+            "presence": 1,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 1,
+          "probabilities": {
+            "no": 0,
+            "yes": 1
           }
         },
         "state": {
           "type": "choice",
           "choice": "unselected",
-          "confidence": 0.48,
+          "confidence": 0.44,
           "probabilities": {
-            "disabled": 0.01,
-            "enabled": 0.04,
+            "disabled": 0.02,
+            "enabled": 0.05,
             "checked": 0.09,
             "unchecked": 0.26,
             "expanded": 0.01,
             "collapsed": 0.03,
             "selected": 0.01,
-            "unselected": 0.53,
-            "pressed": 0,
+            "unselected": 0.5,
+            "pressed": 0.01,
             "unpressed": 0.02
           }
         },
         "subject": [
-          ["none", 0.48],
           [
             {
               "role": "region",
               "name": "Results",
               "container": ""
             },
-            0.47
-          ]
+            0.58
+          ],
+          ["none", 0.37]
         ],
         "area": [
           [
@@ -532,17 +631,17 @@
               "name": "Results",
               "container": ""
             },
-            0.41
+            0.43
           ],
+          ["page", 0.3],
           [
             {
               "role": "list",
               "name": "",
               "container": "region \"Results\""
             },
-            0.32
-          ],
-          ["page", 0.26]
+            0.26
+          ]
         ]
       }
     },
@@ -595,34 +694,56 @@
       ]
     },
     "A check that quotes nothing: the results should be shown": {
-      "recall": [["none", 0.92]],
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
+      "recall": [
+        [
+          "none",
+          0.92,
+          {
+            "target": 0.5,
+            "answer": 0.8
+          }
+        ]
+      ],
       "check": {
         "kind": {
           "type": "choice",
           "choice": "presence",
-          "confidence": 0.99,
+          "confidence": 0.87,
           "probabilities": {
-            "value": 0,
-            "presence": 0.99,
-            "absence": 0,
-            "state": 0,
-            "fuzzy": 0.01
+            "value": 0.01,
+            "presence": 0.9,
+            "state": 0.01,
+            "fuzzy": 0.08
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "expanded",
-          "confidence": 0.77,
+          "confidence": 0.81,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.11,
-            "checked": 0.08,
+            "checked": 0.05,
             "unchecked": 0,
-            "expanded": 0.79,
+            "expanded": 0.83,
             "collapsed": 0.01,
             "selected": 0,
             "unselected": 0,
-            "pressed": 0.01,
+            "pressed": 0,
             "unpressed": 0
           }
         },
@@ -633,7 +754,7 @@
               "name": "Results",
               "container": ""
             },
-            0.9400000000000001
+            0.95
           ]
         ],
         "area": [
@@ -643,9 +764,9 @@
               "name": "Results",
               "container": ""
             },
-            0.78
+            0.77
           ],
-          ["page", 0.15]
+          ["page", 0.17]
         ]
       }
     },
@@ -702,6 +823,11 @@
       ]
     },
     "A value check with two values: the article title should be \"Ada\" or \"Ada Lovelace\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -709,25 +835,33 @@
           "confidence": 0.97,
           "probabilities": {
             "value": 0.98,
-            "presence": 0,
-            "absence": 0,
+            "presence": 0.01,
             "state": 0,
-            "fuzzy": 0.02
+            "fuzzy": 0.01
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.72,
+          "probabilities": {
+            "no": 0.86,
+            "yes": 0.14
           }
         },
         "state": {
           "type": "choice",
           "choice": "unchecked",
-          "confidence": 0.59,
+          "confidence": 0.48,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.02,
-            "checked": 0.31,
-            "unchecked": 0.63,
+            "checked": 0.43,
+            "unchecked": 0.53,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.02,
-            "unselected": 0.02,
+            "selected": 0.01,
+            "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
           }
@@ -739,26 +873,18 @@
               "name": "",
               "container": ""
             },
-            0.71
-          ],
-          [
-            {
-              "role": "heading",
-              "name": "Ada Lovelace",
-              "container": ""
-            },
-            0.28
+            0.8
           ]
         ],
         "area": [
-          ["page", 0.75],
+          ["page", 0.74],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.2
+            0.18
           ]
         ]
       }
@@ -816,35 +942,65 @@
       ]
     },
     "A subjective check: the article should be well written": {
-      "recall": [["Ada Lovelace", 0.66], ["none", 0.34]],
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
+      "recall": [
+        [
+          "Ada Lovelace",
+          0.66,
+          {
+            "target": 0.5,
+            "answer": 0.8
+          }
+        ],
+        [
+          "none",
+          0.34,
+          {
+            "target": 0.5,
+            "answer": 0.8
+          }
+        ]
+      ],
       "check": {
         "kind": {
           "type": "choice",
           "choice": "fuzzy",
           "confidence": 0.99,
           "probabilities": {
-            "value": 0,
-            "presence": 0.01,
-            "absence": 0,
+            "value": 0.01,
+            "presence": 0,
             "state": 0,
             "fuzzy": 0.99
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.57,
+          "confidence": 0.68,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.29,
-            "checked": 0.61,
+            "enabled": 0.19,
+            "checked": 0.71,
             "unchecked": 0.08,
             "expanded": 0.01,
             "collapsed": 0,
-            "selected": 0,
+            "selected": 0.01,
             "unselected": 0,
             "pressed": 0,
-            "unpressed": 0.01
+            "unpressed": 0
           }
         },
         "subject": [
@@ -854,20 +1010,10 @@
               "name": "",
               "container": ""
             },
-            0.88
+            0.89
           ]
         ],
-        "area": [
-          ["page", 0.79],
-          [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.21
-          ]
-        ]
+        "area": [["page", 0.82]]
       }
     },
     "Uncheck a labelled checkbox: I uncheck \"Newsletter\"": {
@@ -889,6 +1035,11 @@
       ]
     },
     "Uncheck a labelled checkbox: \"Newsletter\" should be unchecked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -897,9 +1048,84 @@
           "probabilities": {
             "value": 0,
             "presence": 0,
-            "absence": 0,
             "state": 1,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 0.08,
+          "probabilities": {
+            "no": 0.46,
+            "yes": 0.54
+          }
+        },
+        "state": {
+          "type": "choice",
+          "choice": "unchecked",
+          "confidence": 1,
+          "probabilities": {
+            "disabled": 0,
+            "enabled": 0,
+            "checked": 0,
+            "unchecked": 1,
+            "expanded": 0,
+            "collapsed": 0,
+            "selected": 0,
+            "unselected": 0,
+            "pressed": 0,
+            "unpressed": 0
+          }
+        },
+        "subject": [
+          [
+            {
+              "role": "checkbox",
+              "name": "Newsletter",
+              "container": ""
+            },
+            1
+          ]
+        ],
+        "area": [
+          ["page", 0.66],
+          [
+            {
+              "role": "main",
+              "name": "",
+              "container": ""
+            },
+            0.32
+          ]
+        ]
+      }
+    },
+    "Uncheck a labelled checkbox: \"Weekly digest\" should be unchecked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
+      "check": {
+        "kind": {
+          "type": "choice",
+          "choice": "state",
+          "confidence": 1,
+          "probabilities": {
+            "value": 0,
+            "presence": 0,
+            "state": 1,
+            "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 0.02,
+          "probabilities": {
+            "no": 0.49,
+            "yes": 0.51
           }
         },
         "state": {
@@ -923,60 +1149,6 @@
           [
             {
               "role": "checkbox",
-              "name": "Newsletter",
-              "container": ""
-            },
-            1
-          ]
-        ],
-        "area": [
-          ["page", 0.58],
-          [
-            {
-              "role": "main",
-              "name": "",
-              "container": ""
-            },
-            0.31
-          ]
-        ]
-      }
-    },
-    "Uncheck a labelled checkbox: \"Weekly digest\" should be unchecked": {
-      "check": {
-        "kind": {
-          "type": "choice",
-          "choice": "state",
-          "confidence": 1,
-          "probabilities": {
-            "value": 0,
-            "presence": 0,
-            "absence": 0,
-            "state": 1,
-            "fuzzy": 0
-          }
-        },
-        "state": {
-          "type": "choice",
-          "choice": "unchecked",
-          "confidence": 0.98,
-          "probabilities": {
-            "disabled": 0,
-            "enabled": 0,
-            "checked": 0.02,
-            "unchecked": 0.98,
-            "expanded": 0,
-            "collapsed": 0,
-            "selected": 0,
-            "unselected": 0,
-            "pressed": 0,
-            "unpressed": 0
-          }
-        },
-        "subject": [
-          [
-            {
-              "role": "checkbox",
               "name": "Weekly digest",
               "container": ""
             },
@@ -984,15 +1156,15 @@
           ]
         ],
         "area": [
+          ["page", 0.52],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.47
-          ],
-          ["page", 0.4]
+            0.42
+          ]
         ]
       }
     },
@@ -1015,28 +1187,41 @@
       ]
     },
     "Check a labelled checkbox: \"Weekly digest\" should be checked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "state",
-          "confidence": 0.9,
+          "confidence": 0.92,
           "probabilities": {
-            "value": 0.03,
-            "presence": 0.05,
-            "absence": 0,
-            "state": 0.92,
+            "value": 0.02,
+            "presence": 0.04,
+            "state": 0.94,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.94,
+          "probabilities": {
+            "no": 0.97,
+            "yes": 0.03
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.88,
+          "confidence": 0.92,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.01,
-            "checked": 0.89,
-            "unchecked": 0.1,
+            "checked": 0.93,
+            "unchecked": 0.06,
             "expanded": 0,
             "collapsed": 0,
             "selected": 0,
@@ -1056,14 +1241,14 @@
           ]
         ],
         "area": [
-          ["page", 0.55],
+          ["page", 0.57],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.39
+            0.36
           ]
         ]
       }

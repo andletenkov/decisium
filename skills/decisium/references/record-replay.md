@@ -22,10 +22,9 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
 2. Run CI with `--record none`: same outcome every run, zero model calls.
 3. When the UI really changes, CI fails as `UI_CHANGED`. Heal locally with `--record new` and commit the cassette.
 
-A cassette stores Jev's answers, never the page's evidence: a replayed check is evaluated on the page it runs on, by
-the same rules as a live one. A value check whose text holds the value among more words ("Status: Scheduled") also
-stores Jev's reading of that text. Cassettes recorded before readings were stored lack it: such a check fails as
-`UI_CHANGED` in `--record none` until `--record new` records the reading.
+A cassette stores Jev's answers, never the page's evidence: a replayed check is compared on the page it runs on, by
+the same rules as a live one. Checks recorded before negation was its own answer (issue #81) fail as `UI_CHANGED` in
+`--record none` until `--record new` records them again.
 
 To collapse cassette diffs on GitHub and exclude them from language statistics, add this to `.gitattributes`:
 

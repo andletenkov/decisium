@@ -193,9 +193,12 @@ contradicts absence, at once.
 | `the campaign status should not be "Scheduled"` | Passes on any other value; a missing status is `UNVERIFIABLE`. |
 
 The subject is picked by meaning: if the status says "Draft" while a filter elsewhere says "Scheduled",
-`the campaign status should be "Scheduled"` correctly fails. A value is read for meaning too: equal text passes, and
-a text holding the value among more words ("Status: Not Scheduled") is read by Jev on its own (does it state the
-value?), so "Not Scheduled" is not "Scheduled". An unsure reading is `AMBIGUOUS`.
+`the campaign status should be "Scheduled"` correctly fails. The subject must show the quoted text as whole words (case
+and spacing aside): "Status: Draft" shows "Draft", "Redraft" does not. Containment cannot tell a negated value: "Not
+Scheduled" shows "Scheduled", so quote the whole value where the app can show either.
+
+"Should not" is one answer Jev gives for a value or text check, applied after code compares: `should not be
+"Scheduled"`, `should not appear`. A state names its own: `should not be disabled` is `enabled`.
 
 **Avoid**: `the article title should be "Ada Lovelace"` ("title" is also the tab's title; say "heading"),
 `… should be "Ada" or "Ada Lovelace"` (exactly one value), `the article should be well written` (subjective; see
@@ -209,7 +212,7 @@ value?), so "Not Scheduled" is not "Scheduled". An unsure reading is `AMBIGUOUS`
 | `the article should say "born 10 December 1815"` | The text anywhere in the subject. |
 | `"Charles Babbage" should not appear in the results` | Absence. |
 
-Presence is literal: `"Scheduled" should appear` passes on "Not Scheduled". Quote a value check for meaning.
+Presence finds the text literally: `"Scheduled" should appear` passes on "Not Scheduled".
 
 **Avoid** `the results should be shown`: it quotes nothing to look for.
 

@@ -1,7 +1,6 @@
-// Assertion evaluation (issue #81): Jev resolves what a check means and which elements it refers to (decision.ts
-// Assessment); code collects the page's evidence, evaluates the check's condition, then applies its expected truth value.
-// Evidence either gives the condition a truth value or says why it cannot yet (PENDING) or at all (UNVERIFIABLE), and
-// an unknown truth value is never negated into a pass.
+// Assertion evaluation (issue #81): Jev resolves, in one request, what a check compares, whether it is negated, and
+// which element or area it is about (decision.ts Assessment); code compares, then applies the negation. A comparison
+// that cannot be made yet (PENDING) or at all (UNVERIFIABLE) has no truth value, and negating it never makes a pass.
 import {
   AREA_MISSING,
   AREA_PAGE,
@@ -148,25 +147,11 @@ function agreement(readings: Reading[], disagreement: string, marginal: string[]
 const areaDisagreement = (a: Assessment, obs: Observation) =>
   `Jev is unsure where the check says to look, and the candidates give different answers: ${named(a.area, obs)}`;
 
-/** A semantic reading the evaluation needs before it can decide: does `text` state `value`? (Decider.affirms) */
-export interface Need {
-  text: string;
-  value: string;
-}
-export const affirmKey = (text: string, value: string) => JSON.stringify([text, value]);
-
-/** One evaluation: Jev's readings of texts so far (by affirmKey), the ones still needed, and the diagnostics. */
-interface Context {
-  affirmed: ReadonlyMap<string, Pick>;
-  needs: Need[];
-  log: (line: string) => void;
-}
-
 /**
- * Where a check looks: an area, or undefined for the whole page. Why its content may not be final yet, or undefined:
- * a busy marker on it, inside it or around it (`aria-busy`, an indeterminate progress bar), or a request the page made
- * still in flight. Network quiet does not prove an area complete, but a request in flight shows it may not be. An app
- * that shows none of these while it loads needs a Step that waits for what the loaded area shows.
+ * Why a scope's content may not be final yet (undefined: the whole page), or undefined: a busy marker on it, inside it
+ * or around it (`aria-busy`, an indeterminate progress bar), or a request the page made still in flight. Network quiet
+ * does not prove a scope complete, but a request in flight shows it may not be. An app that shows none of these while
+ * it loads needs a Step that waits for what the loaded scope shows.
  */
 function incomplete(scope: Element | undefined, obs: Observation): string | undefined {
   return busy(scope, obs) ?? obs.loading;
@@ -179,9 +164,9 @@ function busy(el: Element | undefined, obs: Observation): string | undefined {
 const where = (scope: Element | undefined) => (scope ? scope.line : "the page");
 
 /**
- * Literal containment of the quoted texts in a scope. Presence (`expected` true) needs every one shown; absence is
- * disproved by any one: none may be shown, not "not all of them". A witness proves containment at once; no witness
- * disproves it only in a complete scope.
+ * Literal containment of the quoted texts in a scope. Shown (`expected` true) needs every one; not shown is disproved
+ * by any one: none may be shown, not "not all of them". A text shown proves containment at once; none shown disproves
+ * it only in a complete scope.
  */
 function contains(values: string[], scope: Element | undefined, obs: Observation, expected: boolean): Truth {
   const every = expected;
@@ -227,15 +212,22 @@ function inAreas(
   return agreement(readings.reverse(), areaDisagreement(a, obs), weakMass("area", a.area, areas, obs));
 }
 
-/** Pass/fail for one kind of check, decided by code from the elements Jev identified. */
-function evaluate(kind: string, a: Assessment, obs: Observation, values: string[], ctx: Context): Reading {
+/** Pass/fail for one kind of check, decided by code from the elements Jev identified; `negated`: it should not be so. */
+function evaluate(
+  kind: string,
+  negated: boolean,
+  a: Assessment,
+  obs: Observation,
+  values: string[],
+  log: (line: string) => void,
+): Reading {
   if (kind === "fuzzy") {
     if (a.judged === undefined)
       return {
         outcome: "UNVERIFIABLE",
         reason: "this is a subjective check that code cannot compare; rerun with --judged to let Jev judge it",
       };
-    ctx.log(`  Judged: p=${a.judged.toFixed(2)}`);
+    log(`  Judged: p=${a.judged.toFixed(2)}`);
     if (a.judged >= JUDGED_THRESHOLD) return { outcome: "JUDGED_PASSED", reason: `p=${a.judged.toFixed(2)}` };
     if (1 - a.judged >= JUDGED_THRESHOLD) return { outcome: "JUDGED_FAILED", reason: `p=${a.judged.toFixed(2)}` };
     return {
@@ -243,58 +235,63 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
       reason: `Jev is unsure whether the page satisfies the check (${Math.round(a.judged * 100)}% yes)`,
     };
   }
+  const expected = !negated;
 
-  if (kind === "presence" || kind === "absence") {
+  if (kind === "presence") {
     if (!values.length)
       return {
         outcome: "UNVERIFIABLE",
         reason: 'the check quotes no text to look for (e.g. "Winter Sale" should appear)',
       };
-    // One containment condition: presence expects every quoted text shown, absence expects none of them shown (not
-    // "not all of them"). Literal text: "Scheduled" appears in "Not Scheduled".
-    const expected = kind === "presence";
-    return inAreas(a, obs, ctx.log, "area", (scope) => meets(contains(values, scope, obs, expected), expected));
+    return inAreas(a, obs, log, "area", (scope) => meets(contains(values, scope, obs, expected), expected));
   }
 
-  // State and value checks read one element. Jev may be unsure which, e.g. a repository name shown in the breadcrumb
-  // and the title: as with kinds and areas, every plausible element is checked and they must agree.
   if (kind === "state") {
-    ctx.log(`  Subject: ${fmt(a.subject)}  State: ${fmt(a.state)}`);
+    // A state names its own polarity (enabled, unchecked): the required state is the condition.
+    log(`  Subject: ${fmt(a.subject)}  State: ${fmt(a.state)}`);
     if (!gate(a.state))
       return { outcome: "AMBIGUOUS", reason: `Jev is unsure which state the check means: ${named(a.state)}` };
-  } else {
-    if (values.length !== 1)
-      return {
-        outcome: "UNVERIFIABLE",
-        reason: 'a value check needs exactly one quoted expected value (e.g. the status should be "Draft")',
-      };
-    ctx.log(`  Subject: ${fmt(a.subject)}`);
+    return bySubject(a, obs, "control", (ref) => meets(stateOf(ref, a, obs), true), weakGate("state", a.state));
   }
-  // A value check expects the subject to show the value, or ("not value") not to: one condition, then the expectation.
+  if (values.length !== 1)
+    return {
+      outcome: "UNVERIFIABLE",
+      reason: 'a value check needs exactly one quoted expected value (e.g. the status should be "Draft")',
+    };
+  log(`  Subject: ${fmt(a.subject)}`);
+  return bySubject(a, obs, "element", (ref) => meets(valueOf(ref, obs, values[0], expected, log), expected));
+}
+
+/**
+ * State and value checks read one element. Jev may be unsure which, e.g. a repository name shown in the breadcrumb
+ * and the title: as with kinds and areas, every plausible element is checked (`read`) and they must agree.
+ */
+function bySubject(
+  a: Assessment,
+  obs: Observation,
+  what: string,
+  read: (ref: string) => Reading,
+  marginal: string[] = [],
+): Reading {
   // A reading that cannot apply (a link's text is its label, a link cannot be checked) carries no evidence.
-  const expected = kind !== "not value";
   const subjects = plausible(a.subject);
-  const all = subjects.map((ref) =>
-    kind === "state" ? stateOf(ref, a, obs) : meets(valueOf(ref, obs, values[0], expected, ctx), expected),
-  );
+  const all = subjects.map(read);
   const readings = all.filter((r) => !r.inapplicable);
   // No subject applies: unchanged from a single reading. A value check on a label stays a final UNVERIFIABLE, so a
   // plausible presence reading of the same check cannot pass on the label's text.
-  if (!readings.length) return kind !== "state" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0];
+  if (!readings.length) return what === "element" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0];
   // A subject that cannot be read but only wraps one that can (a button "Model" holding "mock-model") is the same
   // answer: its confidence counts for the reading.
-  const read = subjects.filter((_, i) => !all[i].inapplicable);
+  const readable = subjects.filter((_, i) => !all[i].inapplicable);
   const element = (ref: string) => obs.readable.find((e) => e.ref === ref);
   const wrapping = subjects.filter((ref, i) => {
     const el = element(ref);
-    return all[i].inapplicable && el && read.some((r) => element(r) && sameContent(el, element(r)!));
+    return all[i].inapplicable && el && readable.some((r) => element(r) && sameContent(el, element(r)!));
   });
-  const marginal = weakMass("subject", a.subject, [...read, ...wrapping], obs);
-  const what = kind === "state" ? "control" : "element";
   return agreement(
     readings,
     `Jev is unsure which ${what} the check is about, and they give different answers: ${named(a.subject, obs)}`,
-    kind === "state" ? [...marginal, ...weakGate("state", a.state)] : marginal,
+    [...weakMass("subject", a.subject, [...readable, ...wrapping], obs), ...marginal],
   );
 }
 
@@ -311,46 +308,19 @@ const column = (header: string[], name: string) => {
 };
 
 /**
- * Does `text` state `value`, as a subject's value? Equal: yes. Not contained as whole words: no. Contained with more
- * words: only language can tell ("Not Scheduled" does not state "Scheduled", issue #28), so Jev's reading of this text
- * decides (Decider.affirms), and an unsure reading stays unsure. Unread: `needs` asks for it.
- */
-type Match = boolean | { unsure: string } | "unread";
-function states(text: string, value: string, ctx: Context): Match {
-  if (norm(text) === norm(value)) return true;
-  if (!containsValue(text, value)) return false;
-  const key = affirmKey(text, value);
-  const r = ctx.affirmed.get(key);
-  if (!r) {
-    if (!ctx.needs.some((n) => affirmKey(n.text, n.value) === key)) ctx.needs.push({ text, value });
-    return "unread";
-  }
-  ctx.log(`  Reading: does "${text.trim()}" state "${value}"? ${fmt(r)}`);
-  if (gate(r)) return r.choice === "yes";
-  return { unsure: `Jev is unsure whether "${text.trim()}" states "${value}": ${named(r)}` };
-}
-/** A Match that is neither yes nor no, as a Truth with no truth value; undefined for yes or no. */
-const open = (m: Match): Truth | undefined =>
-  m === "unread"
-    ? { unknown: "UNVERIFIABLE", reason: "Jev has not read the text yet" } // the runner asks, then evaluates again
-    : typeof m === "object"
-      ? { unknown: "AMBIGUOUS", reason: m.unsure }
-      : undefined;
-
-/**
  * A check's table (header row, then expected rows) against the page rows in each plausible area: every expected row
  * must match a page row by column header (extra page rows allowed, order free); `exact`: the same rows in this order.
  */
-function matchRows(a: Assessment, obs: Observation, table: string[][], exact: boolean, ctx: Context): Reading {
-  return inAreas(a, obs, ctx.log, "table", (area) => rowsIn(area, obs, table, exact, ctx));
+function matchRows(a: Assessment, obs: Observation, table: string[][], exact: boolean, log: (line: string) => void) {
+  return inAreas(a, obs, log, "table", (area) => rowsIn(area, obs, table, exact));
 }
 
 /**
- * `area` undefined: the whole page. Cells are subject values (`| Status | Scheduled |` is not met by "Not Scheduled").
- * Each expected row matched proves the rows are listed; a missing row, or anything but these rows for `exact`, is
- * proven only by a complete table, except a page row no expected row matches, which already disproves `exact`.
+ * `area` undefined: the whole page. A cell matches when it shows the expected value. Each expected row matched proves the
+ * rows are listed; a missing row, or anything but these rows for `exact`, is proven only by a complete table, except a
+ * page row no expected row matches, which already disproves `exact`.
  */
-function rowsIn(area: Element | undefined, obs: Observation, table: string[][], exact: boolean, ctx: Context): Reading {
+function rowsIn(area: Element | undefined, obs: Observation, table: string[][], exact: boolean): Reading {
   const [names, ...expected] = table;
   const at = where(area);
   const loading = incomplete(area, obs);
@@ -369,50 +339,28 @@ function rowsIn(area: Element | undefined, obs: Observation, table: string[][], 
     return unproven(
       `the table in ${at} has no column "${noColumn}" (columns: ${[...new Set(data.flatMap(header))].join(", ")})`,
     );
-  /**
-   * A row against an expected one: every cell must state its value; any cell that does not decides first. `read`
-   * false: only equal cells match, so a row that plainly matches needs no reading of any other row.
-   */
-  const matches = (row: Element, want: string[], read = true): Match => {
-    const cells = names.map((n, i): Match => {
+  const matches = (row: Element, want: string[]) =>
+    names.every((n, i) => {
       const cell = row.cells![column(header(row), n)];
       if (cell === undefined) return false;
-      if (!want[i]) return !cellText(cell); // an empty expected cell is an empty cell
-      return read ? states(cellText(cell), want[i], ctx) : norm(cellText(cell)) === norm(want[i]);
+      return want[i] ? containsValue(cellText(cell), want[i]) : !cellText(cell); // an empty expected cell is an empty cell
     });
-    return cells.includes(false)
-      ? false
-      : (cells.find((c) => typeof c === "object") ?? (cells.includes("unread") ? "unread" : true));
-  };
   const show = (want: string[]) => names.map((n, i) => `${n}=${want[i]}`).join(", ");
   const shown = `its rows: ${data.map((r) => r.cells!.map(cellText).join(" | ")).join("; ")}`;
-  /** The first row match that is neither yes nor no, as a Reading. */
-  const unknown = (ms: Match[]): Reading | undefined => {
-    const t = ms.map(open).find((x) => x);
-    return t && meets(t, true);
-  };
   if (exact) {
     const failed = `expected exactly these rows in this order: ${expected.map(show).join("; ")}; ${at} has ${shown}`;
     // A page row that no expected row matches disproves "exactly these rows" whatever else loads.
-    const stray = data.map((r) => expected.map((want) => matches(r, want)));
-    if (stray.some((ms) => ms.every((m) => m === false))) return { outcome: "ASSERTION_FAILED", reason: failed };
-    const inOrder = expected.map((want, i) => (data[i] ? matches(data[i], want) : false));
-    const open = unknown(inOrder);
-    if (open) return open;
-    if (data.length === expected.length && inOrder.every((m) => m === true))
+    if (data.some((r) => !expected.some((want) => matches(r, want))))
+      return { outcome: "ASSERTION_FAILED", reason: failed };
+    if (data.length === expected.length && expected.every((want, i) => matches(data[i], want)))
       return loading ? { outcome: "PENDING", reason: `${at} shows these rows, but ${loading}` } : { outcome: "PASSED" };
     return unproven(failed);
   }
   const free = [...data];
   for (const want of expected) {
-    const plain = free.findIndex((r) => matches(r, want, false) === true);
-    const ms = plain >= 0 ? [] : free.map((r) => matches(r, want));
-    const i = plain >= 0 ? plain : ms.indexOf(true);
-    if (i >= 0) {
-      free.splice(i, 1); // each page row matches one expected row
-      continue;
-    }
-    return unknown(ms) ?? unproven(`expected row ${show(want)} is not in ${at}; ${shown}`);
+    const i = free.findIndex((r) => matches(r, want));
+    if (i < 0) return unproven(`expected row ${show(want)} is not in ${at}; ${shown}`);
+    free.splice(i, 1); // each page row matches one expected row
   }
   return { outcome: "PASSED" };
 }
@@ -431,36 +379,36 @@ function subjectOf(ref: string, obs: Observation, none: string): Element | Truth
   );
 }
 
-function stateOf(ref: string, a: Assessment, obs: Observation): Reading {
+/** Is the control in the state the check requires? */
+function stateOf(ref: string, a: Assessment, obs: Observation): Truth {
   const el = subjectOf(ref, obs, "no element on the page is the control the check is about");
-  if (!("ref" in el)) return meets(el, true);
+  if (!("ref" in el)) return el;
   let [flag, on] = STATE_FLAG[a.state.choice as keyof typeof STATES];
   if (flag === "selected" && el.role === "link") flag = "current"; // a navigation link is "selected" via aria-current
-  if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role)) {
-    return { outcome: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
-  }
+  if (STATE_ROLES[flag] && !STATE_ROLES[flag].includes(el.role))
+    return { unknown: "UNVERIFIABLE", reason: `a ${el.role} cannot be ${a.state.choice}`, inapplicable: true };
   // The app says the control is still being updated: its state is not final.
   const loading = busy(el, obs);
-  if (loading) return { outcome: "PENDING", reason: loading };
-  const has = el.state.split(/\s+/).includes(`[${flag}]`);
-  return meets({ holds: has, fails: `expected ${el.line} to be ${a.state.choice}, but it is not` }, on);
+  if (loading) return { unknown: "PENDING", reason: loading };
+  const has = el.state.split(/\s+/).includes(`[${flag}]`) === on;
+  return { holds: has, fails: `expected ${el.line} to be ${a.state.choice}, but it is not` };
 }
 
-/** Data, not prose (a URL, a downloaded or copied file): its text is matched literally, never read by Jev. */
-const DATA = new Set(["url", "download", "clipboard"]);
-
-/** Does the subject show `value`? `expected`: the check expects it to (a value check) or not to ("not value"). */
-function valueOf(ref: string, obs: Observation, value: string, expected: boolean, ctx: Context): Truth {
+/**
+ * Does the subject show the value: its text holds the quoted text as whole words (case and spacing aside)? Containment
+ * cannot tell "Not Scheduled" from "Scheduled for May": quote the whole value where that matters. `expected` false: the
+ * check says it should not show it.
+ */
+function valueOf(ref: string, obs: Observation, value: string, expected: boolean, log: (line: string) => void): Truth {
   const el = subjectOf(ref, obs, "no element on the page shows what the check describes");
   if (!("ref" in el)) return el;
   const actual = assertableText(el);
   if (actual === undefined)
     return { unknown: "UNVERIFIABLE", reason: `${el.line} has no text to compare (only a label)`, inapplicable: true };
-  ctx.log(`  Compare: "${value}" in "${actual}"`);
+  log(`  Compare: "${value}" in "${actual}"`);
   // The app says the element is still being updated: its value is not final.
   const loading = busy(el, obs);
   if (loading) return { unknown: "PENDING", reason: loading };
-  const wanted = expected ? `"${value}"` : `anything but "${value}"`;
   if (el.role === "download" && el.state === "[empty]")
     return { holds: false, fails: `the downloaded file is empty (0 bytes)` };
   // URL paths are case-sensitive and not words: plain substring.
@@ -471,74 +419,58 @@ function valueOf(ref: string, obs: Observation, value: string, expected: boolean
     };
   const shows = (holds: boolean, text: string): Truth => ({
     holds,
-    fails: `expected ${wanted}, but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${text}"`,
+    fails: `expected ${expected ? "" : "anything but "}"${value}", but ${el.role}${el.name && el.name !== actual ? ` "${el.name}"` : ""} shows "${text}"`,
   });
-  const read = (text: string) => (DATA.has(el.role) ? containsValue(text, value) : states(text, value, ctx));
-  const own = read(actual);
-  if (own === true) return shows(true, actual);
-  const unsure = open(own);
-  if (unsure) return unsure;
+  if (containsValue(actual, value)) return shows(true, actual);
   // The subject shows part of the quoted text (prose split across a link and bare text, "<b>2</b> items left"):
   // the rest can only be in the container holding it, so read that one, not anywhere on the page.
   const host = el.parent;
-  if (actual && host && !containsValue(actual, value) && containsValue(value, actual)) {
-    ctx.log(`  Compare: "${value}" in "${host.text.trim()}" (${host.line}, holding ${el.line})`);
-    const held = read(host.text);
-    if (held === true) return shows(true, host.text.trim());
-    const unsureHeld = open(held);
-    if (unsureHeld) return unsureHeld;
-    if (containsValue(host.text, value)) return shows(false, host.text.trim());
+  if (actual && host && containsValue(value, actual)) {
+    log(`  Compare: "${value}" in "${host.text.trim()}" (${host.line}, holding ${el.line})`);
+    if (containsValue(host.text, value)) return shows(true, host.text.trim());
   }
   return shows(false, actual);
 }
 
-/** A Check verdict: PENDING is not final (the runner retries it); `needs`: texts Jev must read before it can decide. */
-export type Verdict = Reading & { details: string[]; needs: Need[] };
+export type Verdict = Reading & { details: string[] };
 
-/**
- * Pure Check verdict; diagnostics are returned for the runner to log, never emitted here. `affirmed`: Jev's readings of
- * texts that hold a value with more words (Decider.affirms), by affirmKey; a verdict that needs more lists them in `needs`.
- */
-export function verdict(
-  a: Assessment,
-  obs: Observation,
-  expectation: Expectation,
-  affirmed: ReadonlyMap<string, Pick> = new Map(),
-): Verdict {
-  const details = [`  Kind: ${fmt(a.kind)}`];
-  const ctx: Context = { affirmed, needs: [], log: (line) => details.push(line) };
-  const result = check(a, obs, expectation, ctx);
+/** Pure Check verdict; diagnostics are returned for the runner to log, never emitted here. PENDING is not final. */
+export function verdict(a: Assessment, obs: Observation, expectation: Expectation): Verdict {
+  const details = [`  Kind: ${fmt(a.kind)}  Negated: ${fmt(a.negated)}`];
+  const result = check(a, obs, expectation, (line) => details.push(line));
   if (result.outcome === "PASSED" && expectation.recall) {
     result.marginal = [...weakGate("earlier value", expectation.recall), ...(result.marginal ?? [])];
   }
-  return { ...result, details, needs: ctx.needs };
+  return { ...result, details };
 }
 
 function check(
   a: Assessment,
   obs: Observation,
   { values, table, list = false, exact = false }: Expectation,
-  ctx: Context,
+  log: (line: string) => void,
 ): Reading {
   // Gate on the result, not the label: evaluate every plausible kind (most likely first, until they
   // cover the gate's confidence) and accept only if they all reach the same outcome.
   // A reading that does not apply to the element Jev picked (e.g. "selected" on a combobox) carries no evidence.
-  // A table's shape decides the kind, except that Jev's absence reading must not be lost ("should not show:").
-  const negative = (k: string) => k === "absence" || k === "not value";
-  const negated = plausible(a.kind).some(negative);
+  // A table's shape decides the kind; a one-column table is a list of texts to look for.
+  const kinds = !table ? plausible(a.kind) : list ? ["presence"] : ["rows"];
+  // Negation is one answer, applied after comparing a text or value; a state names its own, a subjective check is
+  // judged whole.
+  if (kinds.some((k) => k !== "fuzzy" && k !== "state") && !gate(a.negated))
+    return {
+      outcome: "AMBIGUOUS",
+      reason: `Jev is unsure whether the check says it should or should not be so: ${named(a.negated)}`,
+    };
+  const negated = a.negated.choice === "yes";
   if (table && !list && negated)
     return {
       outcome: "UNVERIFIABLE",
       reason: "a check that table rows are not shown is not supported; check each row's absence in its own Step",
     };
-  const kinds = !table
-    ? plausible(a.kind)
-    : list
-      ? [...new Set(plausible(a.kind).map((k) => (negative(k) ? "absence" : "presence")))]
-      : ["rows"];
   const all = kinds.map((kind) => ({
     kind,
-    ...(kind === "rows" ? matchRows(a, obs, table!, exact, ctx) : evaluate(kind, a, obs, values, ctx)),
+    ...(kind === "rows" ? matchRows(a, obs, table!, exact, log) : evaluate(kind, negated, a, obs, values, log)),
   }));
   const applicable = all.filter((r) => !r.inapplicable);
   if (!applicable.length) return { outcome: "UNVERIFIABLE", reason: all.map((r) => r.reason).join("; ") };
@@ -546,12 +478,15 @@ function check(
   return agreement(
     applicable,
     `Jev could not tell what kind of check this is, and the readings disagree: ${applicable.map((r) => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}`,
-    table
-      ? []
-      : weakMass(
-          "kind",
-          a.kind,
-          applicable.map((r) => r.kind),
-        ),
+    [
+      ...(table
+        ? []
+        : weakMass(
+            "kind",
+            a.kind,
+            applicable.map((r) => r.kind),
+          )),
+      ...(kinds.some((k) => k !== "fuzzy" && k !== "state") ? weakGate("negation", a.negated) : []),
+    ],
   );
 }

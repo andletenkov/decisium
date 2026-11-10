@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T12-05-51-477Z",
+  "run": "runs/2026-11-10T18-54-30-703Z",
   "entries": {
     "Clear a populated search field: I clear the Search field": {
       "turns": [
@@ -36,34 +36,47 @@
       ]
     },
     "Clear a populated search field: the search status should be \"Search cleared\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
-          "confidence": 0.97,
+          "confidence": 0.99,
           "probabilities": {
-            "value": 0.98,
+            "value": 0.99,
             "presence": 0.01,
-            "absence": 0,
-            "state": 0.01,
+            "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "unchecked",
-          "confidence": 0.26,
+          "confidence": 0.24,
           "probabilities": {
-            "disabled": 0.02,
-            "enabled": 0.22,
-            "checked": 0.04,
-            "unchecked": 0.33,
-            "expanded": 0.04,
-            "collapsed": 0.15,
+            "disabled": 0.01,
+            "enabled": 0.25,
+            "checked": 0.03,
+            "unchecked": 0.32,
+            "expanded": 0.02,
+            "collapsed": 0.17,
             "selected": 0.01,
-            "unselected": 0.07,
+            "unselected": 0.11,
             "pressed": 0.01,
-            "unpressed": 0.11
+            "unpressed": 0.07
           }
         },
         "subject": [
@@ -77,7 +90,7 @@
             1
           ]
         ],
-        "area": [["page", 0.79], ["missing", 0.1]]
+        "area": [["page", 0.91]]
       }
     },
     "Native date and time fields: I set the Start date to \"2026-10-20\"": {
@@ -115,6 +128,11 @@
       ]
     },
     "Native date and time fields: the Start date should be \"2026-10-20\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -123,23 +141,31 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.71,
+          "confidence": 0.79,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.74,
-            "checked": 0.09,
-            "unchecked": 0.08,
+            "enabled": 0.81,
+            "checked": 0.08,
+            "unchecked": 0.03,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.09,
+            "selected": 0.08,
             "unselected": 0,
             "pressed": 0,
             "unpressed": 0
@@ -155,7 +181,7 @@
             1
           ]
         ],
-        "area": [["page", 0.84]]
+        "area": [["page", 0.93]]
       }
     },
     "Native date and time fields: I set the Start time to \"14:30\"": {
@@ -193,6 +219,11 @@
       ]
     },
     "Native date and time fields: the Start time should be \"14:30\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -201,23 +232,31 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.81,
+          "confidence": 0.87,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.83,
-            "checked": 0.08,
-            "unchecked": 0.06,
+            "enabled": 0.88,
+            "checked": 0.05,
+            "unchecked": 0.03,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.03,
+            "selected": 0.04,
             "unselected": 0,
             "pressed": 0,
             "unpressed": 0
@@ -233,7 +272,7 @@
             1
           ]
         ],
-        "area": [["page", 0.73], ["missing", 0.09]]
+        "area": [["page", 0.72], ["missing", 0.14]]
       }
     },
     "Native date and time fields: I set the Appointment to \"2026-10-20T14:30\"": {
@@ -271,6 +310,11 @@
       ]
     },
     "Native date and time fields: the Appointment should be \"2026-10-20T14:30\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -279,23 +323,31 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.54,
+          "confidence": 0.69,
           "probabilities": {
             "disabled": 0,
-            "enabled": 0.59,
-            "checked": 0.11,
-            "unchecked": 0.18000000000000002,
+            "enabled": 0.72,
+            "checked": 0.13,
+            "unchecked": 0.07,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.12,
+            "selected": 0.08,
             "unselected": 0,
             "pressed": 0,
             "unpressed": 0
@@ -311,7 +363,7 @@
             1
           ]
         ],
-        "area": [["page", 0.8]]
+        "area": [["page", 0.85]]
       }
     },
     "Validate when leaving a field: I enter \"invalid\" in Email": {
@@ -349,6 +401,11 @@
       ]
     },
     "Validate when leaving a field: the email status should be \"Invalid email\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -357,26 +414,34 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.72,
+          "confidence": 0.81,
           "probabilities": {
-            "disabled": 0.08,
-            "enabled": 0.75,
+            "disabled": 0.02,
+            "enabled": 0.83,
             "checked": 0.08,
-            "unchecked": 0.03,
-            "expanded": 0.01,
+            "unchecked": 0.01,
+            "expanded": 0.03,
             "collapsed": 0.01,
             "selected": 0.01,
             "unselected": 0.01,
-            "pressed": 0.01,
-            "unpressed": 0.01
+            "pressed": 0,
+            "unpressed": 0
           }
         },
         "subject": [
@@ -387,10 +452,10 @@
               "container": "",
               "near": "Invalid email"
             },
-            0.93
+            0.98
           ]
         ],
-        "area": [["page", 0.88]]
+        "area": [["page", 0.93]]
       }
     }
   }

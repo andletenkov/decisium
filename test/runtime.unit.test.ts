@@ -70,7 +70,6 @@ test("traced Runtime brackets named-key steps and records cleanup without exposi
         turn: unexpected,
         value: unexpected,
         assess: unexpected,
-        affirms: unexpected,
         recall: unexpected,
         dialog: unexpected,
         drop: unexpected,

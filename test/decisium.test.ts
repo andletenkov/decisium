@@ -353,10 +353,6 @@ const oracle: Decider = {
   async assess() {
     throw new Error("not used");
   },
-  // Reads a text as a correct model would on these fixtures: a negated value is not stated.
-  async affirms(_s, text) {
-    return sure(/\bnot\b/i.test(text) ? "no" : "yes");
-  },
   async dialog() {
     throw new Error("not used");
   },
@@ -368,7 +364,7 @@ const oracle: Decider = {
   },
 };
 
-// Scripted assessment: answers what a correct model would.
+// Scripted assessment: answers what a correct model would. "absence": presence, negated.
 const assessing = (
   kind: string,
   pick: (obs: Observation) => Partial<Assessment> = () => ({}),
@@ -378,7 +374,8 @@ const assessing = (
   async assess(_step, obs, wantJudged) {
     const status = obs.readable.find((e) => e.role === "paragraph")?.ref ?? "none";
     return {
-      kind: sure(kind),
+      kind: sure(kind === "absence" ? "presence" : kind),
+      negated: sure(kind === "absence" ? "yes" : "no"),
       subject: sure(status),
       area: sure("page"),
       state: sure("disabled"),
@@ -505,7 +502,9 @@ test("runAssertion: presence, absence, state and judged checks", async () => {
     const split = (probabilities: Record<string, number>) =>
       assessing("value", () => ({ kind: { choice: "presence", probabilities } }));
     assert.equal(await run(`the status should show "Draft"`, split({ presence: 0.6, value: 0.4 })), "PASSED");
-    assert.equal(await run(`the status should show "Draft"`, split({ absence: 0.6, value: 0.4 })), "AMBIGUOUS");
+    // Unsure whether the check is negated: AMBIGUOUS.
+    const unsure = assessing("value", () => ({ negated: { choice: "no", probabilities: { no: 0.6, yes: 0.4 } } }));
+    assert.equal(await run(`the status should show "Draft"`, unsure), "AMBIGUOUS");
   } finally {
     await b.close();
   }
@@ -565,7 +564,8 @@ test("runAssertion: an absence on a screen still loading its list waits for the 
   const main: Decider = {
     ...oracle,
     assess: async (_s, obs) => ({
-      kind: sure("absence"),
+      kind: sure("presence"),
+      negated: sure("yes"),
       subject: sure("none"),
       area: sure(obs.areas.find((e) => e.role === "main")!.ref),
       state: sure("disabled"),
@@ -614,7 +614,8 @@ test("runAssertion: a load the last action started is waited for however long it
   const main: Decider = {
     ...oracle,
     assess: async (_s, obs) => ({
-      kind: sure("absence"),
+      kind: sure("presence"),
+      negated: sure("yes"),
       subject: sure("none"),
       area: sure(obs.areas.find((e) => e.role === "main")!.ref),
       state: sure("disabled"),
@@ -836,7 +837,13 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
     },
     async assess(_s, obs) {
       calls++;
-      return { kind: sure("value"), subject: sure(obs.readable[0].ref), area: sure("page"), state: sure("disabled") };
+      return {
+        kind: sure("value"),
+        negated: sure("no"),
+        subject: sure(obs.readable[0].ref),
+        area: sure("page"),
+        state: sure("disabled"),
+      };
     },
   };
   const go = async (cassette: InstanceType<typeof Cassette>, obs: Observation) => {
@@ -2606,7 +2613,13 @@ test("upload through a hidden input behind a button, never a missing file; downl
     const subject = (await download())!.ref;
     const assess = (): Decider => ({
       ...oracle,
-      assess: async () => ({ kind: sure("value"), subject: sure(subject), area: sure("page"), state: sure("checked") }),
+      assess: async () => ({
+        kind: sure("value"),
+        negated: sure("no"),
+        subject: sure(subject),
+        area: sure("page"),
+        state: sure("checked"),
+      }),
     });
     assert.equal(
       (await runAssertion(`the downloaded file should contain "a,b"`, b, assess(), () => {})).outcome,

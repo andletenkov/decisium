@@ -2,8 +2,8 @@ import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
 import {
   AREA_MISSING,
   AREA_PAGE,
-  AFFIRMS,
   ASSERTION_KINDS,
+  NEGATED,
   capabilities,
   describeAction,
   PAGE,
@@ -393,6 +393,10 @@ export class JevDecider implements Decider {
       state,
       questions: {
         kind: choice("What kind of check is `check`?", ASSERTION_KINDS),
+        negated: choice(
+          "Read only the words of `check`, not `ui`: do they say that a text or value should NOT be shown?",
+          NEGATED,
+        ),
         subject: choice(subjectQ, subjects),
         state: choice("Which control state does `check` require?", STATES),
         area: choice(areaQ, areas),
@@ -403,22 +407,11 @@ export class JevDecider implements Decider {
     const a = res.answers as typeof res.answers & { satisfied?: { noul: number } };
     return {
       kind: a.kind,
+      negated: a.negated,
       subject: a.subject,
       area: a.area,
       state: a.state,
       judged: judged ? a.satisfied?.noul : undefined,
     };
-  }
-
-  /**
-   * One request about a text alone, not the page or the check: does it state the value (issue #81)? The Step is not
-   * shown to Jev, so its answer cannot be a verdict on the check; it is a Decider argument for traces and cassettes.
-   */
-  async affirms(_step: string, text: string, value: string): Promise<Pick> {
-    const res = await this.#ask({
-      state: { text, value },
-      questions: { affirms: choice("Does `text` state `value`?", AFFIRMS) },
-    });
-    return res.answers.affirms;
   }
 }

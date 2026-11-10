@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-48-12-955Z",
+  "run": "runs/2026-11-10T18-55-14-855Z",
   "entries": {
     "Accept, turn off, choose, already on: I accept the terms": {
       "turns": [
@@ -76,6 +76,11 @@
       ]
     },
     "Accept, turn off, choose, already on: the terms checkbox should be checked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -84,9 +89,17 @@
           "probabilities": {
             "value": 0,
             "presence": 0,
-            "absence": 0,
             "state": 1,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.98,
+          "probabilities": {
+            "no": 0.99,
+            "yes": 0.01
           }
         },
         "state": {
@@ -117,19 +130,24 @@
           ]
         ],
         "area": [
-          ["page", 0.5599999999999999],
+          ["page", 0.63],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.41
+            0.34
           ]
         ]
       }
     },
     "Accept, turn off, choose, already on: the Dark mode switch should not be checked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -138,26 +156,34 @@
           "probabilities": {
             "value": 0,
             "presence": 0,
-            "absence": 0,
             "state": 1,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "yes",
+          "confidence": 0.46,
+          "probabilities": {
+            "no": 0.27,
+            "yes": 0.73
           }
         },
         "state": {
           "type": "choice",
           "choice": "unchecked",
-          "confidence": 0.93,
+          "confidence": 0.92,
           "probabilities": {
             "disabled": 0,
             "enabled": 0,
             "checked": 0.01,
-            "unchecked": 0.94,
+            "unchecked": 0.93,
             "expanded": 0,
             "collapsed": 0,
             "selected": 0,
             "unselected": 0,
             "pressed": 0,
-            "unpressed": 0.05
+            "unpressed": 0.06
           }
         },
         "subject": [
@@ -171,45 +197,58 @@
           ]
         ],
         "area": [
-          ["page", 0.68],
+          ["page", 0.57],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.31
+            0.42
           ]
         ]
       }
     },
     "Accept, turn off, choose, already on: the Express radio should be checked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "state",
-          "confidence": 0.95,
+          "confidence": 0.97,
           "probabilities": {
             "value": 0.01,
-            "presence": 0.02,
-            "absence": 0,
-            "state": 0.96,
-            "fuzzy": 0.01
+            "presence": 0.01,
+            "state": 0.98,
+            "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 0.94,
+          "probabilities": {
+            "no": 0.97,
+            "yes": 0.03
           }
         },
         "state": {
           "type": "choice",
           "choice": "checked",
-          "confidence": 0.86,
+          "confidence": 0.93,
           "probabilities": {
             "disabled": 0,
             "enabled": 0.01,
-            "checked": 0.87,
-            "unchecked": 0.1,
+            "checked": 0.94,
+            "unchecked": 0.05,
             "expanded": 0,
             "collapsed": 0,
-            "selected": 0.01,
-            "unselected": 0.01,
+            "selected": 0,
+            "unselected": 0,
             "pressed": 0,
             "unpressed": 0
           }
@@ -231,13 +270,18 @@
               "name": "Shipping",
               "container": ""
             },
-            0.71
+            0.7
           ],
-          ["page", 0.27]
+          ["page", 0.28]
         ]
       }
     },
     "Accept, turn off, choose, already on: the newsletter checkbox should be checked": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -246,9 +290,17 @@
           "probabilities": {
             "value": 0,
             "presence": 0,
-            "absence": 0,
             "state": 1,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
@@ -279,14 +331,14 @@
           ]
         ],
         "area": [
-          ["page", 0.54],
+          ["page", 0.7],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.45
+            0.29
           ]
         ]
       }

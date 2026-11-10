@@ -102,7 +102,13 @@ test("replay: waitForChange sees a change that lands well after the click, not t
 const sure = (choice: string) => ({ choice, probabilities: { [choice]: 1 } });
 /** Reads a presence check of the whole page, as Jev would for `"x" should appear`. */
 const presence = {
-  assess: async () => ({ kind: sure("presence"), subject: sure("none"), area: sure("page"), state: sure("disabled") }),
+  assess: async () => ({
+    kind: sure("presence"),
+    negated: sure("no"),
+    subject: sure("none"),
+    area: sure("page"),
+    state: sure("disabled"),
+  }),
 } as unknown as Decider;
 
 test("replay: a check retries until what the last action triggered lands, like expect()", async () => {

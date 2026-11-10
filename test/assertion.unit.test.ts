@@ -1,5 +1,5 @@
 // The assertion contract through its public interface, runAssertion (issue #81): one temporal policy, live and replay
-// alike, and no ordinary pass resting on a model's answer to "does the check pass?".
+// alike, one Jev request per look at the page, and no ordinary pass resting on a model's answer to "does it pass?".
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -51,7 +51,7 @@ const inFlight = (obs: Observation): Observation => ({
  * `always`: a model that takes that area for the list whatever is shown.
  */
 function model(before = "missing", always = false) {
-  const asked: { judged: boolean; texts: string[] } = { judged: false, texts: [] };
+  const asked = { judged: false };
   const d: Decider & { asked: typeof asked; assessed: number } = {
     turn: unused,
     value: unused,
@@ -65,15 +65,12 @@ function model(before = "missing", always = false) {
       asked.judged ||= judged;
       const table = obs.areas.find((e) => e.role === "table");
       return {
-        kind: sure("absence"),
+        kind: sure("presence"),
+        negated: sure("yes"),
         subject: sure("none"),
         area: sure(table && !always ? table.ref : before),
         state: sure("disabled"),
       };
-    },
-    async affirms(_step, text) {
-      asked.texts.push(text);
-      return sure(/\bnot\b/i.test(text) ? "no" : "yes");
     },
   };
   return d;
@@ -97,10 +94,10 @@ test("runAssertion: an absence that holds on a loading screen waits for the load
 
 test("runAssertion: evidence still missing at the deadline is UNVERIFIABLE, never a pass or a failure", async () => {
   // The app stays on the loading screen: nothing left that could change it.
-  for (const kind of ["absence", "presence"]) {
+  for (const negated of ["yes", "no"]) {
     const d = model();
     const assess = d.assess;
-    d.assess = async (...args) => ({ ...(await assess(...args)), kind: sure(kind) });
+    d.assess = async (...args) => ({ ...(await assess(...args)), negated: sure(negated) });
     assert.deepEqual(await run(screens(loading), d), {
       outcome: "UNVERIFIABLE",
       reason: "the area the check names is not on this screen",
@@ -123,21 +120,25 @@ test("runAssertion: a request that ends without changing the page is looked at a
   assert.equal(d.assessed, 1);
 });
 
-test("runAssertion: an ordinary check never asks Jev whether it passes; a value's text is read alone", async () => {
+test("runAssertion: one Jev request per look at the page, never a question whether the check passes", async () => {
   const d = model();
-  await run(screens(list("Autumn Sale")), d);
-  assert.equal(d.asked.judged, false);
-  const status = parseSnapshot("- paragraph [ref=e1]: Status: Not Scheduled");
+  const status = parseSnapshot("- paragraph [ref=e1]: Status: Draft");
   const value: Decider = {
     ...d,
-    assess: async () => ({ ...(await d.assess("", status, false)), kind: sure("value"), subject: sure("e1") }),
+    assess: async (...args) => ({
+      ...(await d.assess(...args)),
+      kind: sure("value"),
+      negated: sure("no"),
+      subject: sure("e1"),
+    }),
   };
   const r = await run(screens(status), value, `the status should be "Scheduled"`);
   assert.deepEqual(r, {
     outcome: "ASSERTION_FAILED",
-    reason: `expected "Scheduled", but paragraph shows "Status: Not Scheduled"`,
+    reason: `expected "Scheduled", but paragraph shows "Status: Draft"`,
   });
-  assert.deepEqual(d.asked.texts, ["Status: Not Scheduled"]);
+  assert.equal(d.assessed, 1);
+  assert.equal(d.asked.judged, false);
 });
 
 const tmp = () => `${mkdtempSync(`${tmpdir()}/assertion-unit-`)}/t.cassette.json`;
@@ -145,7 +146,6 @@ const noJev: Decider = {
   turn: unused,
   value: unused,
   assess: unused,
-  affirms: unused,
   recall: unused,
   dialog: unused,
   drop: unused,
@@ -174,40 +174,26 @@ test("runAssertion: replay applies the same evidence rules to the recorded resol
   }
 });
 
-test("cassette: a value's reading is recorded and replayed; a check recorded without it is re-recorded, not passed", async () => {
+test("cassette: a check recorded before negation was its own answer is re-recorded, not replayed", async () => {
   const path = tmp();
-  const status = parseSnapshot("- paragraph [ref=e1]: Status: Not Scheduled");
-  const step = `the status should be "Scheduled"`;
-  const d = model();
-  const value: Decider = {
-    ...d,
-    assess: async () => ({ kind: sure("value"), subject: sure("e1"), area: sure("page"), state: sure("disabled") }),
-  };
+  const ready = list("Autumn Sale");
   const rec = new Cassette(path, "m", "new");
-  const writer = rec.step("S: x", value);
-  const live = await run(screens(status), writer, step);
+  const writer = rec.step("S: x", model());
+  const live = await run(screens(ready), writer);
   assert.equal(writer.done(true), "recorded");
   rec.save();
   const file = JSON.parse(readFileSync(path, "utf8"));
-  assert.deepEqual(file.entries["S: x"].check.affirms, [["Status: Not Scheduled", "Scheduled", [["no", 1]]]]);
-  const replayer = new Cassette(path, "m", "none").step("S: x", noJev);
-  assert.deepEqual(await run(screens(status), replayer, step), live);
-  assert.equal(replayer.done(true), "replayed");
-  // Recorded before readings were stored: replay-only reports it instead of passing on containment.
-  delete file.entries["S: x"].check.affirms;
+  assert.deepEqual(file.entries["S: x"].check.negated, sure("yes"));
+  // As recorded before issue #81: the negation folded into the kind.
+  file.entries["S: x"].check.kind = sure("absence");
+  delete file.entries["S: x"].check.negated;
   writeFileSync(path, JSON.stringify(file));
   await assert.rejects(
-    run(screens(status), new Cassette(path, "m", "none").step("S: x", noJev), step),
-    (err) =>
-      err instanceof UiChanged &&
-      /reading of "Status: Not Scheduled" for "Scheduled" is not recorded \(record it with --record new\)$/.test(
-        err.reason,
-      ),
+    run(screens(ready), new Cassette(path, "m", "none").step("S: x", noJev)),
+    (err) => err instanceof UiChanged && /recorded before negation was its own answer/.test(err.reason),
   );
-  // Live, it is asked and written back.
-  const healer = new Cassette(path, "m", "new");
-  const healing = healer.step("S: x", value);
-  assert.deepEqual(await run(screens(status), healing, step), live);
+  const healing = new Cassette(path, "m", "new").step("S: x", model());
+  assert.deepEqual(await run(screens(ready), healing), live);
   assert.equal(healing.done(true), "healed");
 });
 
@@ -226,12 +212,9 @@ test("Jev: a check's request asks for its meaning and references, a verdict only
     const jev = new JevDecider();
     const obs = parseSnapshot("- paragraph [ref=e1]: Status: Not Scheduled");
     assert.equal((await jev.assess('the status should be "Scheduled"', obs, false)).judged, undefined);
-    assert.deepEqual(Object.keys(requests.at(-1)!.questions), ["kind", "subject", "state", "area"]);
+    assert.deepEqual(Object.keys(requests.at(-1)!.questions), ["kind", "negated", "subject", "state", "area"]);
     assert.equal((await jev.assess("the form looks complete", obs, true)).judged, 0.9);
     assert.ok("satisfied" in requests.at(-1)!.questions);
-    // A value's reading: the text and the value, neither the check nor the page.
-    await jev.affirms('the status should be "Scheduled"', "Status: Not Scheduled", "Scheduled");
-    assert.deepEqual(requests.at(-1)!.state, { text: "Status: Not Scheduled", value: "Scheduled" });
   } finally {
     if (key === undefined) delete process.env.TYPESAFE_API_KEY;
     else process.env.TYPESAFE_API_KEY = key;

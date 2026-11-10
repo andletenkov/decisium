@@ -18,7 +18,7 @@ import {
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
-import { affirmKey, verdict as checkVerdict, type Verdict } from "./check.ts";
+import { verdict as checkVerdict, type Verdict } from "./check.ts";
 import { changes } from "./change.ts";
 import { MASK, type Dialog, type Element, type Observation } from "./observation.ts";
 
@@ -183,7 +183,6 @@ export async function runAssertion(
   // ASSERTION_FAILED, evidence still missing UNVERIFIABLE, conflicting meanings AMBIGUOUS. Jev is asked again only
   // after a change.
   const deadline = Date.now() + settings().checkTimeout;
-  const affirmed = new Map<string, Pick>();
   let assessed: { text: string; a: Assessment } | undefined;
   let obs = await rt.observe();
   for (;;) {
@@ -207,15 +206,7 @@ export async function runAssertion(
   async function check(obs: Observation): Promise<Verdict> {
     // The same page as last time (a request ended, the page did not change): the same answer, Jev is not asked again.
     if (assessed?.text !== obs.text) assessed = { text: obs.text, a: await decider.assess(said, obs, judged) };
-    const { a } = assessed;
-    const expectation = { values, table, list, exact, recall };
-    let result = checkVerdict(a, obs, expectation, affirmed);
-    // Texts holding the value with more words: Jev reads each (never the check itself), then code decides.
-    while (result.needs.length) {
-      for (const { text, value } of result.needs)
-        affirmed.set(affirmKey(text, value), await decider.affirms(said, text, value));
-      result = checkVerdict(a, obs, expectation, affirmed);
-    }
+    const result = checkVerdict(assessed.a, obs, { values, table, list, exact, recall });
     for (const line of result.details) log(line);
     return result;
   }

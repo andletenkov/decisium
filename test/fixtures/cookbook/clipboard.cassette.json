@@ -1,6 +1,6 @@
 {
   "model": "jev-1.14.0",
-  "run": "runs/2026-10-25T11-46-21-556Z",
+  "run": "runs/2026-11-10T18-53-52-445Z",
   "entries": {
     "Copy an invite link and paste it: I copy the invite link": {
       "turns": [
@@ -26,17 +26,30 @@
       ]
     },
     "Copy an invite link and paste it: the copied text should be \"https://example.com/invite/7f3a\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
           "choice": "value",
+          "confidence": 0.99,
+          "probabilities": {
+            "value": 0.99,
+            "presence": 0,
+            "state": 0,
+            "fuzzy": 0.01
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
           "confidence": 1,
           "probabilities": {
-            "value": 1,
-            "presence": 0,
-            "absence": 0,
-            "state": 0,
-            "fuzzy": 0
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
@@ -44,16 +57,16 @@
           "choice": "enabled",
           "confidence": 0.57,
           "probabilities": {
-            "disabled": 0.17,
+            "disabled": 0.14,
             "enabled": 0.61,
-            "checked": 0.15,
-            "unchecked": 0,
-            "expanded": 0.01,
+            "checked": 0.18,
+            "unchecked": 0.01,
+            "expanded": 0,
             "collapsed": 0,
-            "selected": 0.01,
+            "selected": 0.02,
             "unselected": 0,
-            "pressed": 0.05,
-            "unpressed": 0
+            "pressed": 0.03,
+            "unpressed": 0.01
           }
         },
         "subject": [
@@ -66,7 +79,7 @@
             1
           ]
         ],
-        "area": [["page", 0.83]]
+        "area": [["page", 0.86]]
       }
     },
     "Copy an invite link and paste it: I paste into the message box": {
@@ -103,6 +116,11 @@
       ]
     },
     "Copy an invite link and paste it: the message box should show \"https://example.com/invite/7f3a\"": {
+      "confidence": {
+        "target": 0.5,
+        "answer": 0.8
+      },
+      "intent": {},
       "check": {
         "kind": {
           "type": "choice",
@@ -111,23 +129,31 @@
           "probabilities": {
             "value": 1,
             "presence": 0,
-            "absence": 0,
             "state": 0,
             "fuzzy": 0
+          }
+        },
+        "negated": {
+          "type": "choice",
+          "choice": "no",
+          "confidence": 1,
+          "probabilities": {
+            "no": 1,
+            "yes": 0
           }
         },
         "state": {
           "type": "choice",
           "choice": "enabled",
-          "confidence": 0.43,
+          "confidence": 0.68,
           "probabilities": {
-            "disabled": 0.01,
-            "enabled": 0.49,
-            "checked": 0.13,
+            "disabled": 0,
+            "enabled": 0.71,
+            "checked": 0.1,
             "unchecked": 0.01,
-            "expanded": 0.17,
+            "expanded": 0.04,
             "collapsed": 0.01,
-            "selected": 0.17,
+            "selected": 0.12,
             "unselected": 0.01,
             "pressed": 0,
             "unpressed": 0
@@ -140,20 +166,20 @@
               "name": "Message",
               "container": ""
             },
-            0.99
+            1
           ]
         ],
         "area": [
-          ["missing", 0.37],
+          ["missing", 0.4],
           [
             {
               "role": "main",
               "name": "",
               "container": ""
             },
-            0.35
+            0.37
           ],
-          ["page", 0.2]
+          ["page", 0.12]
         ]
       }
     }
