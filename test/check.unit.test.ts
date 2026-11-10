@@ -579,3 +579,17 @@ test("Check: a recall marginal only on a pass", () => {
     reason: "Jev chose an element that is no longer on the page (e1)",
   });
 });
+
+test("Check: a subject that only wraps the one read (a button around its text) is the same answer, not a split", () => {
+  const obs = parseSnapshot('- button "Model" [ref=e1] [cursor=pointer]:\n  - generic [ref=e2]: mock-model');
+  const split = assessment({ subject: pick({ e1: 0.5, e2: 0.45 }) });
+  const pass = verdict(split, obs, { values: ["mock-model"] });
+  assert.equal(pass.outcome, "PASSED");
+  assert.deepEqual(pass.marginal, []);
+  assert.equal(verdict(split, obs, { values: ["gpt-4"] }).outcome, "ASSERTION_FAILED");
+  // The button shows more than that text: a real split between two answers, still marginal.
+  const more = parseSnapshot(
+    '- button "Model" [ref=e1]:\n  - generic [ref=e2]: mock-model\n  - generic [ref=e3]: beta',
+  );
+  assert.notDeepEqual(verdict(split, more, { values: ["mock-model"] }).marginal, []);
+});

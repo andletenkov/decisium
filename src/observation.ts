@@ -252,6 +252,22 @@ const clip = (value: string) => (value.length > 60 ? value.slice(0, 60) + "…" 
  * have a name, so "the 'Schedule' button should be disabled" must not pass just because the name matches.
  * Links are the exception: their text is content (a breadcrumb or title showing a name), like a heading's.
  */
+/**
+ * `a` and `b` are one thing shown twice: one holds the other, and the holder shows nothing besides it but its own
+ * name (a button "Model" whose only content is "mock-model"). Jev may split its answer between them; it means either.
+ */
+export function sameContent(a: Element, b: Element): boolean {
+  const [outer, inner] = within(b, a) ? [a, b] : within(a, b) ? [b, a] : [];
+  if (!outer || !inner || outer === inner) return false;
+  const text = oneLine(outer.text);
+  return text === oneLine(inner.text) || text === oneLine(`${outer.name} ${inner.text}`);
+}
+/** `el` is `holder` or inside it. */
+export const within = (el: Element, holder: Element) => {
+  for (let p: Element | undefined = el; p; p = p.parent) if (p === holder) return true;
+  return false;
+};
+
 export function assertableText(el: Element): string | undefined {
   if (TYPEABLE.has(el.role) || el.role === "combobox") return el.value;
   if (ACTIONABLE.has(el.role) && el.role !== "link") return el.value || el.description || undefined; // a link's text is what it shows
