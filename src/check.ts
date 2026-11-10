@@ -132,8 +132,11 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
     // Jev names the area the check is scoped to; code looks for the quoted text inside it. As with kinds, every
     // plausible area is checked and they must agree. A text that is nowhere on the page is decided by code alone.
     // Presence needs every quoted text; absence fails on any one of them, so "any shown" is what it must look for.
+    // Jev's `satisfied` answers the check as worded: for absence a "no" means the text IS shown, so it is flipped
+    // before it can veto a match (refactor bench: a "no" read as "not shown" passed a delete that never happened).
+    const asShown = kind === "absence" && a.satisfied !== undefined ? { ...a, satisfied: 1 - a.satisfied } : a;
     const has = (text: string) =>
-      kind === "absence" ? values.some((v) => shows(text, v, a)) : values.every((v) => shows(text, v, a));
+      kind === "absence" ? values.some((v) => shows(text, v, asShown)) : values.every((v) => shows(text, v, asShown));
     const text = values.map((v) => `"${v}"`).join(kind === "absence" ? " or " : " and ");
     const reading = (found: boolean, where: string): Reading =>
       found === (kind === "presence")
