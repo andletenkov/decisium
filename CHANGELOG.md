@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.1](https://github.com/andletenkov/decisium/compare/v0.4.0...v0.4.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* a control and the text it only wraps are one answer, not a split ([#75](https://github.com/andletenkov/decisium/issues/75)) ([546928f](https://github.com/andletenkov/decisium/commit/546928f9e3d944e35c5ae56a01a3f1a16fd00226))
+* replay pre-0.4.0 cassettes whose near holds a date or time ([#78](https://github.com/andletenkov/decisium/issues/78)) ([928502c](https://github.com/andletenkov/decisium/commit/928502c8d4017796ef19da9bae7188c0bf601ae2))
+
+
+### Performance Improvements
+
+* fewer browser round trips on replay; run the replay bench in CI ([#76](https://github.com/andletenkov/decisium/issues/76)) ([a918fa5](https://github.com/andletenkov/decisium/commit/a918fa5a071e5f679bc58cb4c220eb4c72e9fe42))
+
 ## [0.4.0](https://github.com/andletenkov/decisium/compare/v0.3.1...v0.4.0) (2026-11-09)
 
 
