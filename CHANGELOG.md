@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/andletenkov/decisium/compare/v0.4.1...v0.5.0) (2026-11-10)
+
+
+### Features
+
+* decide assertions on explicit evidence and uncertainty ([#81](https://github.com/andletenkov/decisium/issues/81)) ([#86](https://github.com/andletenkov/decisium/issues/86)) ([9bbbe52](https://github.com/andletenkov/decisium/commit/9bbbe524a899a0f1b8a5826361562b887033cea7))
+* decision provider interface with TypeSafe and OpenRouter ([#84](https://github.com/andletenkov/decisium/issues/84)) ([bb7fd5e](https://github.com/andletenkov/decisium/commit/bb7fd5eb8976f8b9db151be44a13fbae7f77d410))
+
+
+### Bug Fixes
+
+* absence check no longer passes when Jev sees the text shown ([#80](https://github.com/andletenkov/decisium/issues/80)) ([4af2226](https://github.com/andletenkov/decisium/commit/4af2226ec341341302782e3e92678209e6e5d37c))
+
 ## [0.4.1](https://github.com/andletenkov/decisium/compare/v0.4.0...v0.4.1) (2026-11-10)
 
 
