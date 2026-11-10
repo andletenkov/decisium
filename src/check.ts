@@ -11,7 +11,7 @@ import {
   type Pick,
 } from "./decision.ts";
 import { confidence } from "./decision.ts";
-import { assertableText, sameContent, type Element, type Observation } from "./observation.ts";
+import { assertableText, sameContent, within, type Element, type Observation } from "./observation.ts";
 import type { StepOutcome } from "./runner.ts";
 
 export interface Expectation {
@@ -202,10 +202,6 @@ function evaluate(kind: string, a: Assessment, obs: Observation, values: string[
 
 const TABLES = new Set(["table", "grid", "treegrid"]);
 const cellText = (c: Element) => (c.name || c.text).trim();
-const within = (el: Element, area: Element) => {
-  for (let p: Element | undefined = el; p; p = p.parent) if (p === area) return true;
-  return false;
-};
 const tableOf = (row: Element) => {
   for (let p = row.parent; p; p = p.parent) if (TABLES.has(p.role)) return p;
 };

@@ -18,7 +18,7 @@ import {
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
-import { parseSnapshot, type Element, type Observation } from "./observation.ts";
+import { parseSnapshot, within, type Element, type Observation } from "./observation.ts";
 import { readStep, type ParsedStep } from "./step.ts";
 import { fill } from "./generate.ts";
 
@@ -242,10 +242,6 @@ const holder = (el: Element, hint: string) => {
   let p: Element | undefined = el;
   while (p && !p.text.toLowerCase().includes(h)) p = p.parent;
   return p;
-};
-const within = (el: Element, node: Element) => {
-  for (let a: Element | undefined = el; a; a = a.parent) if (a === node) return true;
-  return false;
 };
 /**
  * `hint` tells `el` apart from its same-named `peers`: it is in `el`'s own part of the page (its row, its card) and in

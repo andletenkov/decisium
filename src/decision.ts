@@ -1,7 +1,7 @@
 // The Decision module (task 0053): the seam to the decision model (Decider), the answers its questions can have, the
 // confidence gates, and the tracing every answer gets. Jev (jev.ts) and the tests' scripted fakes are its adapters; cassette.ts replays answers across it.
 import { settings, type Settings } from "./options.ts";
-import { isControl, sameContent, type Element, type Observation } from "./observation.ts";
+import type { Element, Observation } from "./observation.ts";
 
 export interface Pick {
   choice: string;
@@ -110,25 +110,16 @@ export const describeAction = (a: string) =>
  * Equivalent targets sum their confidence before the gate (task 0065, 0057): links with the same name and URL lead to
  * the same page (Wikipedia's two `Deutsch` links, 42% / 38%). The first keeps the sum. Buttons never: their handlers
  * may differ. With Enter as the action, the page and the focused field are one target too: the key goes to the field
- * (TodoMVC "I add a todo": enter 0.92, target field 0.48 / page 0.43). A clickable element that is all a control
- * shows besides its name (the text "mock-model" in a button "Model") is that control: clicking it clicks the control.
+ * (TodoMVC "I add a todo": enter 0.92, target field 0.48 / page 0.43).
  */
 export function grouped(p: Pick, obs: Observation, action?: Pick): Pick {
   const first = new Map<string, string>();
   const probabilities: Record<string, number> = {};
   const focused =
     action?.choice === "enter" ? obs.elements.find((e) => e.verb === "TYPE" && /\[active\]/.test(e.state)) : undefined;
-  const byRef = (ref: string) => obs.elements.find((x) => x.ref === ref);
   for (const [key, v] of Object.entries(p.probabilities)) {
-    const own = byRef(key);
-    const control =
-      own && !isControl(own)
-        ? Object.keys(p.probabilities)
-            .map(byRef)
-            .find((c) => c && isControl(c) && sameContent(c, own))
-        : undefined;
-    const k = control ? control.ref : key === PAGE && focused ? focused.ref : key;
-    const e = byRef(k);
+    const k = key === PAGE && focused ? focused.ref : key;
+    const e = obs.elements.find((x) => x.ref === k);
     const id = e?.role === "link" && e.url ? `${e.name}|${e.url}` : undefined;
     const into = id ? (first.get(id) ?? (first.set(id, k), k)) : k;
     probabilities[into] = (probabilities[into] ?? 0) + v;

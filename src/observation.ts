@@ -94,8 +94,6 @@ const ACTIONABLE = new Set([
   "treeitem",
   "slider",
 ]);
-/** A control in its own right (a role that acts), not an element that is only clickable (a styled `div`). */
-export const isControl = (el: Element) => ACTIONABLE.has(el.role);
 const CELLS = new Set(["cell", "gridcell", "columnheader", "rowheader"]);
 const TYPEABLE = new Set(["textbox", "searchbox", "spinbutton", "slider"]); // slider: fill sets a range input (task 0045)
 
@@ -264,8 +262,9 @@ export function sameContent(a: Element, b: Element): boolean {
   const text = oneLine(outer.text);
   return text === oneLine(inner.text) || text === oneLine(`${outer.name} ${inner.text}`);
 }
-const within = (el: Element, holder: Element) => {
-  for (let p = el.parent; p; p = p.parent) if (p === holder) return true;
+/** `el` is `holder` or inside it. */
+export const within = (el: Element, holder: Element) => {
+  for (let p: Element | undefined = el; p; p = p.parent) if (p === holder) return true;
   return false;
 };
 
