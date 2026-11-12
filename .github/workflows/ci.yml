@@ -12,6 +12,33 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  # Issue #90: in 0.5.0 a behaviour change re-recorded every fixture cassette, so the suite compared the new version
+  # with itself. A PR that changes src/ and a cassette in test/ needs the re-record-approved label; frozen release
+  # cassettes (test/fixtures/compat) never change.
+  cassette-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          PR: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        # The labels now, not at the push: a label added later counts when the job is re-run.
+        run: |
+          APPROVED=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/labels" --jq 'any(.[]; .name == "re-record-approved")')
+          changed=$(git diff --name-only "$BASE"...HEAD)
+          # A new release's directory may be added; an existing one is never modified, renamed or deleted.
+          if git diff --name-only --diff-filter=MDR "$BASE"...HEAD | grep -q '^test/fixtures/compat/'; then
+            echo "::error::test/fixtures/compat holds cassettes of released versions; they are never changed"; exit 1
+          fi
+          # Re-recording is changing an existing cassette; a new one (a new fixture, a new frozen release) is not.
+          rerecorded=$(git diff --name-only --diff-filter=MDR "$BASE"...HEAD | grep '^test/.*\.cassette\.json$' || true)
+          if echo "$changed" | grep -q '^src/' && [ -n "$rerecorded" ] && [ "$APPROVED" != true ]; then
+            echo "::error::this PR changes src/ and re-records test cassettes; add the re-record-approved label if that is intended"; exit 1
+          fi
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20

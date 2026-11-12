@@ -57,6 +57,8 @@ interface Check {
   state: Pick;
   subject: Answer;
   area: Answer;
+  /** Absent in entries recorded before issue #92: they replay with the area answer alone, as recorded. */
+  scoped?: Pick;
 }
 interface Entry {
   decisions?: import("./decision-provider.ts").DecisionMetadata[];
@@ -381,16 +383,19 @@ export class Cassette {
   path: string;
   model: string;
   mode: RecordMode;
+  /** Jev can be asked: a recording that no longer fits is resolved again, never a failed Step (issue #90). */
+  canAsk: boolean;
   #run?: string;
 
   /**
    * `run`: id of this run. Parallel workers each open the feature's cassette; a file last saved by this run holds
    * another worker's scenarios, so it is not stale for `all`.
    */
-  constructor(path: string, model: string, mode: RecordMode, run?: string) {
+  constructor(path: string, model: string, mode: RecordMode, run?: string, canAsk = mode !== "none") {
     this.path = path;
     this.model = model;
     this.mode = mode;
+    this.canAsk = canAsk;
     this.#run = run;
     const { file: old, thisRun } = this.#read();
     this.#file = { model, run, entries: this.#keep(old, thisRun) ?? {} };
@@ -414,16 +419,23 @@ export class Cassette {
 
   /**
    * The Decider for one Step: replays its recorded resolutions while each still matches exactly one element, else
-   * (from the first that does not) asks `live`. Call `done` when the Step ends.
+   * (from the first that does not) asks `live`. Call `done` when the Step ends. `fresh`: ask `live` from the start,
+   * a recorded Step that is replaced is still reported as healed.
    */
   step(
     key: string,
     live: Decider,
     log: (line: string) => void = () => {},
     generated: Record<string, string> = {},
-  ): Decider & { done(keep: boolean): "replayed" | "recorded" | "healed" | undefined; positional(): string[] } {
+    fresh = false,
+  ): Decider & {
+    done(keep: boolean, success?: boolean): "replayed" | "recorded" | "healed" | undefined;
+    positional(): string[];
+    /** Every answer so far came from the recording. */
+    replaying(): boolean;
+  } {
     const saved = this.mode === "all" ? undefined : this.#file.entries[key];
-    const old = saved && mapEntry(saved, (value) => fill(value, generated));
+    const old = saved && !fresh ? mapEntry(saved, (value) => fill(value, generated)) : undefined;
     const now: Entry = { confidence: settings().confidence };
     const decisionStart = live.decisions?.length ?? 0;
     const recorded = (pick: Pick): Pick => ({
@@ -436,15 +448,18 @@ export class Cassette {
     const positional = new Set<string>(); // acted-on targets only a position tells apart from their twins
     let offered: { elements: Element[]; hints: string[] } | undefined; // the latest Turn's page, for acted()
     let turn = 0;
-    const replayOnly = this.mode === "none";
+    const replayOnly = this.mode === "none" && !this.canAsk;
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
     const fail = (why: string, wait = false) => {
-      if (replayOnly && old && wait) throw new NotYet(new UiChanged(`the recorded resolution no longer holds: ${why}`));
+      const stale = `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`;
+      // Replay waits like a Playwright spec for the element of a loading page; Jev, if any, resolves it at the deadline.
+      if (this.mode === "none" && old && !broken && wait)
+        throw new NotYet(new UiChanged(stale), this.canAsk ? () => fail(why) : undefined);
       if (replayOnly)
         throw new UiChanged(
           old
-            ? `the recorded resolution no longer holds: ${why}`
-            : "this step has no recorded resolution: it is new or was reworded after the cassette was recorded, and replay-only mode does not call Jev",
+            ? stale
+            : "this step has no recorded resolution: it is new or was reworded after the cassette was recorded; re-record with --record new, or provide a model key so Jev resolves it",
         );
       if (old && !broken) log(`  (cassette: healing, ${why})`);
       broken ??= why;
@@ -580,6 +595,7 @@ export class Cassette {
             state: recorded(e.check.state),
             subject: loadRecorded(e.check.subject, obs.readable),
             area: loadRecorded(e.check.area, obs.areas),
+            ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
         });
         const a = r ?? (await live.assess(step, obs, judged));
@@ -589,6 +605,7 @@ export class Cassette {
           state: a.state,
           subject: store(a.subject, obs.readable),
           area: store(a.area, obs.areas),
+          ...(a.scoped ? { scoped: a.scoped } : {}),
         };
         return a;
       },
@@ -617,18 +634,22 @@ export class Cassette {
       },
       /** Elements this Step acted on that only their position among identical twins identifies. */
       positional: () => [...positional],
-      /** `keep`: the Step reached an outcome from its answers (not an error), so they are written back. */
-      done: (keep: boolean) => {
+      replaying: () => !!old && !broken,
+      /**
+       * `keep`: the Step's answers are worth replaying, so they are written back. `success`: the Step reached its goal;
+       * only then does a heal replace a recording.
+       */
+      done: (keep: boolean, success = keep) => {
         if (!broken && old) {
           this.replayed++;
           return "replayed";
         }
-        if (!keep || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
+        if (!keep || (saved && !success) || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
         const decisions = [...(old?.decisions ?? []), ...(live.decisions?.slice(decisionStart) ?? [])];
         if (decisions.length) now.decisions = decisions;
         this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));
         this.#dirty = true;
-        if (old) {
+        if (saved) {
           this.healed++;
           log(`  (cassette: healed, written back)`);
           return "healed";

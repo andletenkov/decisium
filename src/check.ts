@@ -194,6 +194,16 @@ function inAreas(
   what: string,
   inScope: (scope: Element | undefined) => Reading,
 ): Reading {
+  // Words that surely name no area (`"Saved" should appear`) read the whole page: where Jev would look on this
+  // screen does not matter then (issue #92). Any doubt, or a recording from before the question: the area answer.
+  if (a.scoped?.choice === "no" && gate(a.scoped)) {
+    log(`  Area: page (the check names none: ${fmt(a.scoped)})`);
+    return agreement(
+      [inScope(undefined)],
+      "" /* one reading never disagrees */,
+      weakMass("names no area", a.scoped, ["no"]),
+    );
+  }
   log(`  Area: ${fmt(a.area)}`);
   const areas = plausible(a.area);
   const readings: Reading[] = [];

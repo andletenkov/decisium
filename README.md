@@ -31,7 +31,9 @@ Feature: Checkout
 ```
 
 - **No selectors**, no page objects, no step definitions.
-- **Record and replay.** CI replays recorded Steps with zero model calls; a real UI change fails as `UI_CHANGED`.
+- **Record and replay.** CI replays recorded Steps with zero model calls. A recording is a cache: when the UI changes,
+  a Step is resolved again (with a key) instead of failing. Backend answers can be recorded and replayed too
+  ([network replay](https://andletenkov.github.io/decisium/advanced.html#network-replay)).
 - **Code decides pass or fail**, not the model.
 - **Built on cucumber-js and Playwright.** Your config, formatters and step definitions keep working.
 
@@ -45,7 +47,7 @@ npm install --save-dev decisium && npx decisium install
 echo 'TYPESAFE_API_KEY=...' >> .env             # live runs only
 
 npx decisium run checkout.feature                  # live: records checkout.cassette.json
-npx decisium run checkout.feature --record none    # replay in CI: no model calls, no key
+npx decisium run checkout.feature --record none    # replay in CI: no model calls while recordings fit
 ```
 
 Node 22.18+ or 23.6+. A failed run writes `runs/<timestamp>/report.md`, ready for you or a coding agent.

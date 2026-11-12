@@ -394,6 +394,30 @@ const run = (snap: string, a: Partial<Assessment>, values: string[] | object = [
   verdict(assessment(a), parseSnapshot(snap), Array.isArray(values) ? { values } : (values as { values: string[] }));
 const reading = (r: ReturnType<typeof verdict>) => ({ outcome: r.outcome, reason: r.reason });
 
+test("Check: a check whose words name no area reads the whole page, however Jev's area answer is spread (issue #92)", () => {
+  const snap = `- main [ref=m1]:\n  - group [ref=g1]:\n    - generic [ref=e1]: Item\n- generic [ref=e2]: Saved`;
+  const unscoped = pick({ no: 0.95, yes: 0.05 });
+  // The distributions from issue #90; the text is on the page, outside every other area.
+  for (const area of [
+    pick({ page: 0.59, missing: 0.11, m1: 0.3 }),
+    pick({ page: 0.41, m1: 0.22, g1: 0.14, missing: 0.23 }),
+    pick({ page: 0.38, e2: 0.25, g1: 0.11, missing: 0.26 }),
+    pick({ missing: 0.6, page: 0.4 }),
+  ]) {
+    const presence = (scoped?: Pick) => run(snap, { kind: pick({ presence: 1 }), area, scoped }, ["Saved"]);
+    assert.equal(presence(unscoped).outcome, "PASSED", JSON.stringify(area.probabilities));
+    assert.equal(
+      run(snap, { ...absence, area, scoped: unscoped }, ["Saved"]).outcome,
+      "ASSERTION_FAILED",
+      "an absence check reads the whole page too",
+    );
+  }
+  // Words that name an area, an unsure answer, or a recording from before the question: the area answer decides.
+  const area = pick({ page: 0.59, missing: 0.41 });
+  for (const scoped of [pick({ yes: 1 }), pick({ no: 0.6, yes: 0.4 }), undefined])
+    assert.notEqual(run(snap, { kind: pick({ presence: 1 }), area, scoped }, ["Saved"]).outcome, "PASSED");
+});
+
 test("Check reasons: fuzzy, presence and absence", () => {
   const fuzzy = (judged?: number) => run("", { kind: pick({ fuzzy: 1 }), judged });
   assert.deepEqual(reading(fuzzy()), {

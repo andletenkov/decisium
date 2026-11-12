@@ -38,7 +38,8 @@ the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
   <file>.cassette.json and replayed without Jev while exactly one element still matches it.
   new (default): replay, resolve new or no-longer-matching Steps live and write them back (reported as healed);
-  none: replay only, a missing or broken resolution fails as UI_CHANGED (CI); all: resolve everything live, rewrite.
+  none: replay, network included (CI); with a key a new or stale Step is resolved live, without one it fails as
+  UI_CHANGED; all: resolve everything live, rewrite.
 --parallel <n|auto>: worker processes. Features run side by side, a feature's scenarios one after another. Only for
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
 Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (and -p profiles); --format, --import and
@@ -351,7 +352,10 @@ async function main(): Promise<number> {
       files.length < 2
         ? 0
         : parallelSet === -1
-          ? Math.min(availableParallelism(), record === "none" ? Infinity : 4)
+          ? Math.min(
+              availableParallelism(),
+              record === "none" && !env[credentialName(settings.provider)] ? Infinity : 4,
+            ) // with a key, a stale replay calls Jev
           : parallelSet;
   const run = new RunDir(settings.reportDir); // shared by every worker
   Object.assign(env, { DECISIUM_STEP: cmd === "step" ? "1" : "", DECISIUM_RUN_DIR: run.path });

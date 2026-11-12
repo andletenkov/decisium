@@ -150,6 +150,7 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
     state: sure("disabled"),
     subject: sure("e4"),
     area: sure("e3"),
+    scoped: sure("yes"),
   };
   const { live, calls } = scripted({
     turn,
@@ -190,6 +191,7 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
       state: sure("disabled"),
       subject: [[{ role: "listitem", name: "One", container: `list "Items"` }, 1]],
       area: [[{ role: "list", name: "Items", container: "" }, 1]],
+      scoped: sure("yes"),
     },
     recall: [["Ada", 1]],
   });
@@ -210,6 +212,15 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
   const a = await r.assess("x", page, false);
   assert.equal(a.subject.choice, "e4");
   assert.equal(a.area.choice, "e3");
+  assert.equal(a.scoped?.choice, "yes");
+  // A check recorded before the question replays with the area answer alone (issue #92).
+  const older = new Cassette(
+    recorded({ check: { ...read(p).entries["S: x"].check, scoped: undefined } }),
+    "m",
+    "none",
+  ).step("S: x", scripted({}).live);
+  assert.equal((await older.assess("x", page, false)).scoped, undefined);
+  assert.deepEqual(a.scoped?.recordedConfidence, DEFAULTS.confidence);
   assert.equal(a.kind.choice, "value");
   assert.deepEqual(a.kind.recordedConfidence, DEFAULTS.confidence);
   assert.equal((await r.recall("x", { Ada: "earlier" })).choice, "Ada");
@@ -254,7 +265,7 @@ test("cassette: replay-only waits (NotYet) for a recorded element not on the pag
     assert.ok(e.final instanceof UiChanged);
     assert.equal(
       e.final.reason,
-      `the recorded resolution no longer holds: button "Gone" matches 0 elements now, needs exactly 1`,
+      `the recorded resolution no longer holds: button "Gone" matches 0 elements now, needs exactly 1; re-record with --record new, or provide a model key so Jev resolves it again`,
     );
     return true;
   });
@@ -294,7 +305,10 @@ test("cassette: replay-only waits (NotYet) for a recorded element not on the pag
     const d = new Cassette(recorded(entry), "m", "none").step("S: x", scripted({}).live);
     await assert.rejects(ask(d), (e: unknown) => {
       assert.ok(e instanceof UiChanged, why);
-      assert.equal(e.reason, `the recorded resolution no longer holds: ${why}`);
+      assert.equal(
+        e.reason,
+        `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`,
+      );
       return true;
     });
   }
@@ -313,7 +327,7 @@ test("cassette: value and drop misses are reported against the recorded turn", a
   ] as [unknown, (d: ReturnType<Cassette["step"]>) => Promise<unknown>, string][]) {
     const d = new Cassette(recorded(entry), "m", "none").step("S: x", scripted({}).live);
     await d.turn("x", page, []);
-    await assert.rejects(ask(d), (e: unknown) => e instanceof UiChanged && e.reason.endsWith(why));
+    await assert.rejects(ask(d), (e: unknown) => e instanceof UiChanged && e.reason.includes(`holds: ${why};`));
   }
   // "none" is always offered, as a value and as a recall
   const ok = new Cassette(

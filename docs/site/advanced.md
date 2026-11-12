@@ -74,8 +74,52 @@ Scenario: The assistant answers
   Then the answer should mention "balance"
 ```
 
-It follows `--record` like the cassette and is saved to `<feature>.network/<scenario>.har`; commit it. WebSockets are
-not recorded.
+The cassette records what Jev decided; network replay records what the backend answered. They are separate files and
+separate choices: without the tag every request goes to the real backend, in replay too.
+
+### What is recorded
+
+- Only requests whose URL matches the glob (Playwright's URL glob: `**/api/**`, `https://api.example.com/**`). Pages,
+  scripts, images and every other request go to the network as usual.
+- The tag goes on a Scenario, or on the Feature for all its Scenarios. One glob per tag.
+- One recording per Scenario: `<feature>.network/<scenario>.har`, response bodies in files beside it. Commit the
+  folder with the cassette. A Scenario Outline's rows share one name, so they share one recording (the last row's).
+- WebSockets and server-sent events are not recorded.
+
+### How `--record` treats it
+
+| `--record` | Matching requests |
+|---|---|
+| `new` (default) | Replayed if the Scenario has a recording, otherwise sent to the backend and recorded. |
+| `none` | Replayed. A Scenario with no recording fails to start. |
+| `all` | Sent to the backend and recorded again. |
+
+A cassette Step that heals (see [CI](ci.html)) still gets its backend answers from the recording: only Jev is asked
+again, never the backend.
+
+### How a request is matched on replay
+
+By method and URL, and by the order of calls: the third `GET /api/campaigns` gets the third recorded answer. The
+request body is ignored, so a POST with a timestamp or a generated id in it still matches. The recorded status, headers
+and body are served as they were.
+
+A matching request that the recording does not have (a new endpoint, one call more than recorded) is never sent to the
+real backend. It is aborted, and the Step that made it fails with:
+
+```text
+network not in recording: GET https://app.example.com/api/campaigns?page=2 (re-record with --record all)
+```
+
+Re-record the Scenario with `--record all` and commit the new `.har`.
+
+### When to use it
+
+- The backend is slow or costly per call (an LLM, a payment sandbox).
+- Its answers change between runs (live prices, a feed), so a recording keeps the checks stable.
+- CI has no backend: record locally against a running one, replay in CI with `--record none`.
+
+Do not use it to test the backend itself: a replayed Scenario never reaches it. To mock one answer in code instead, use
+a [client step](#client-steps) with Playwright's `context.route`.
 
 ## Running with cucumber-js
 

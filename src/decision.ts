@@ -144,6 +144,12 @@ export const NEGATED = {
   yes: 'Yes: `check` says a text or value should NOT be shown (e.g. "Spring Sale" should not appear; the status should not be "Draft").',
 } as const;
 
+/** Whether a check's words name where to look (issue #92); a check that names none reads the whole page. */
+export const SCOPED = {
+  no: 'No: `check` names no place to look (e.g. "Saved" should appear; "Welcome" should be shown anywhere on the page).',
+  yes: 'Yes: `check` names a place to look (e.g. "Ada" should appear in the results; "Saved" should be shown in the dialog).',
+} as const;
+
 /** State labels Jev can pick; code reads the matching snapshot flag. */
 export const STATES = {
   disabled: "disabled",
@@ -167,6 +173,8 @@ export interface Assessment {
   negated: Pick; // NEGATED: a text or value check says it should not be shown
   subject: Pick; // element ref the check is about, or "none"
   area: Pick; // presence: element ref of the area the check names, AREA_PAGE, or AREA_MISSING
+  /** Whether the check's words name an area (SCOPED); absent in a check recorded before the question (issue #92). */
+  scoped?: Pick;
   state: Pick; // the control state the check names, used by `state` checks
   judged?: number; // P(step holds), asked only with --judged
 }
@@ -241,9 +249,12 @@ export interface Decider {
  */
 export class NotYet extends Error {
   final: Error;
-  constructor(final: Error) {
+  /** Stop waiting: the next ask resolves live instead of throwing `final` (a stale replay that Jev can heal). */
+  giveUp?: () => void;
+  constructor(final: Error, giveUp?: () => void) {
     super(final.message);
     this.final = final;
+    this.giveUp = giveUp;
   }
 }
 

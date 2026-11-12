@@ -34,14 +34,16 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 writes code, selectors or values; a typed value always comes from the Step&#39;s quotes.</li>
 <li><strong>Act.</strong> Playwright performs the action, Decisium reads the new page, and the loop repeats until the Step&#39;s task is
 done. <code>I delete the campaign</code> may open a menu first, then click Delete.</li>
-<li><strong>Check.</strong> For a <code>Then</code> Step, Jev only says what the check means, in one request: its kind, its subject or area, and whether it says &quot;not&quot;. Code collects the
+<li><strong>Check.</strong> For a <code>Then</code> Step, Jev only says what the check means, in one request: its kind, its subject or area, whether it says &quot;not&quot;, and whether its words name an area at all (one that names none reads the whole page). Code collects the
 page&#39;s evidence and compares; Jev is never asked whether the check passes (except <code>--judged</code>). Evidence that is
 missing (the area is not on the screen, the list is still loading) is waited for, then reported as <code>UNVERIFIABLE</code>,
 never as a pass.</li>
 <li><strong>Refuse to guess.</strong> When the pick is unclear (two &quot;Save&quot; buttons), the Step fails as <code>AMBIGUOUS</code> instead of
 clicking one.</li>
 <li><strong>Record.</strong> What each Step resolved to (role, name, container) goes into <code>&lt;feature&gt;.cassette.json</code>. The next run
-replays it without Jev; if that element is gone, the Step fails as <code>UI_CHANGED</code>.</li>
+replays it without Jev. The cassette is a cache: if the recording no longer fits the page, or a replayed check does
+not pass, Jev is asked again and the cassette is updated. A heal is written only when the Step ends <code>DONE</code> or
+<code>PASSED</code>; an <code>AMBIGUOUS</code> answer is never recorded.</li>
 </ol>
 <p>Steps Decisium recognises on its own (<code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code>) skip the model.
 <code>decisium run -v</code> prints every page snapshot and answer.</p>

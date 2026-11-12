@@ -8,6 +8,7 @@ import { choice, noul, validateResponse, ProviderError } from "../src/decision-p
 import { TypeSafeProvider, OpenRouterProvider, missingCredential } from "../src/providers.ts";
 import { settings, applyOptions } from "../src/options.ts";
 import { ModelDecider } from "../src/model-decider.ts";
+import { parseSnapshot } from "../src/observation.ts";
 const request = {
   state: { step: "test", recent: ["clicked"] },
   questions: { pick: choice("Pick", { a: "A", b: "B" }), ok: noul("OK?") },
@@ -217,6 +218,30 @@ test("provider configuration follows env > world options > defaults", () => {
   assert.equal(env.DECISIUM_PROVIDER, undefined);
   assert.throws(() => settings({ DECISIUM_MODEL: " " }));
   assert.throws(() => settings({ DECISIUM_DECISION_TIMEOUT: "0" }));
+});
+
+test("a check's assessment asks, from its words alone, whether it names an area (issue #92)", async () => {
+  const asked: Record<string, { criteria?: Record<string, string>; prompt?: string }> = {};
+  const decider = new ModelDecider({
+    async decide(req) {
+      Object.assign(asked, req.questions);
+      return {
+        answers: Object.fromEntries(
+          Object.entries(req.questions).map(([key, q]) => {
+            const keys = Object.keys((q as { criteria: object }).criteria ?? {});
+            const choice = key === "scoped" ? "no" : keys[0];
+            return [key, { choice, probabilities: { [choice]: 1 } }];
+          }),
+        ),
+        usage: null,
+        provenance: { provider: "test", requestedModel: "custom" },
+      } as never;
+    },
+  });
+  const a = await decider.assess(`"Saved" should appear`, parseSnapshot(`- generic [ref=e1]: Saved`), false);
+  assert.equal(a.scoped?.choice, "no");
+  assert.deepEqual(Object.keys(asked.scoped.criteria ?? {}).sort(), ["no", "yes"]);
+  assert.match(JSON.stringify(asked.scoped), /Read only the words of `check`, not `ui`/);
 });
 
 test("shared model-decider accepts an injected provider without live setup", async () => {

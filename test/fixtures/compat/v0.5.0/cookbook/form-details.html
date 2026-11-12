@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Form details</title>
+<h1>Form details</h1>
+<label>Search <input type="search" value="old query" onblur="document.querySelector('#search-status').textContent=this.value ? 'Search has text' : 'Search cleared'"></label>
+<p id="search-status" role="status">Search has text</p>
+<label>Start date <input type="date"></label>
+<label>Start time <input type="time"></label>
+<label>Appointment <input type="datetime-local"></label>
+<label>Email <input type="email" onblur="document.querySelector('#email-status').textContent=this.validity.valid ? 'Email accepted' : 'Invalid email'"></label>
+<p id="email-status" role="status">Email unchecked</p>
+</html>

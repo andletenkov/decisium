@@ -13,6 +13,7 @@
       "*.json",
       "*.mjs",
       "!test/fixtures/**/*.html",
+      "!**/*.cassette.json",
       "!.release-please-manifest.json"
     ]
   },
