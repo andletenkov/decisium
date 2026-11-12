@@ -51,7 +51,7 @@ function jev(answer: (obs: Observation) => Partial<Assessment>) {
 }
 
 /** Runs the check and saves the cassette, as the end of a run does. */
-async function check(text: string, rt: Runtime, live: Decider, cassette: Cassette) {
+async function check(text: string, rt: Runtime, live: Decider, cassette: Cassette, runId?: string) {
   const r = await executeStep(text, {
     rt,
     live,
@@ -61,6 +61,7 @@ async function check(text: string, rt: Runtime, live: Decider, cassette: Cassett
     arg: {},
     earlier: {},
     log: () => {},
+    ...(runId ? { generated: { "{{decisium.runId}}": runId } } : {}),
   } satisfies StepContext);
   cassette.save();
   return r;
@@ -245,20 +246,94 @@ test("replay waits for a recorded element of a loading page before it asks Jev, 
 
 test("replay-only without a key cannot ask again: a stale recording fails and says how to fix it", async () => {
   const path = tmp();
-  await check(
-    `the error should say "already exists"`,
-    runtime(errorPage("abc")),
-    jev(holding("already exists")).live,
-    new Cassette(path, "m", "new"),
-  );
-  const live = jev(holding("already exists"));
+  await staleArea(path); // recorded in the help region, which this page no longer has
+  const live = jev(() => ({}));
   const r = await check(
-    `the error should say "already exists"`,
-    runtime(errorPage("zz-other")),
+    `"already exists" should appear`,
+    runtime(`- alert [ref=e1]:\n  - generic [ref=e2]: Item already exists`),
     live.live,
     new Cassette(path, "m", "none", undefined, false),
   );
   assert.notEqual(r.outcome, "PASSED");
   assert.match(r.reason!, /re-record with --record new, or provide a model key/);
   assert.deepEqual(live.calls, []);
+});
+
+test("the runId the app shows lowercased or slugified replays without a key on another run (issue #90, problem 3)", async () => {
+  const forms: ((id: string) => string)[] = [
+    (id) => id.toLowerCase(),
+    (id) =>
+      `name-${id}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/-$/, ""), // a slug of "Name <id>"
+    (id) => id.toLowerCase().replace(/[^a-z0-9]/g, ""),
+  ];
+  for (const show of forms)
+    for (let i = 0; i < 10; i++) {
+      const path = tmp();
+      const [a, b] = [randomBytes(12).toString("base64url"), randomBytes(12).toString("base64url")];
+      const first = await check(
+        `the error should say "already exists"`,
+        runtime(errorPage(show(a))),
+        jev(holding("already exists")).live,
+        new Cassette(path, "m", "new"),
+        a,
+      );
+      assert.equal(first.outcome, "PASSED");
+      const live = jev(holding("already exists"));
+      const again = await check(
+        `the error should say "already exists"`,
+        runtime(errorPage(show(b))),
+        live.live,
+        new Cassette(path, "m", "none", undefined, false),
+        b,
+      );
+      assert.equal(again.outcome, "PASSED", `${show(a)} -> ${show(b)}: ${again.reason}`);
+      assert.deepEqual(live.calls, []);
+    }
+});
+
+test("what a check reads is recorded by structure, never by its text: it replays on any run's text (issue #91)", async () => {
+  const path = tmp();
+  const r = await check(
+    `the error should say "already exists"`,
+    runtime(errorPage("x")),
+    jev(holding("already exists")).live,
+    new Cassette(path, "m", "new"),
+  );
+  assert.equal(r.outcome, "PASSED");
+  const subject = JSON.parse(readFileSync(path, "utf8")).entries["S: check"].check.subject;
+  // The first of the alert's two lines: no text of either is in the recording.
+  assert.deepEqual(subject, [
+    [{ role: "generic", name: "", container: "", scope: { role: "alert", name: "", container: "" }, nth: 0, of: 2 }, 1],
+  ]);
+  const live = jev(() => ({}));
+  const again = await check(
+    `the error should say "already exists"`,
+    runtime(errorPage("y")),
+    live.live,
+    new Cassette(path, "m", "none", undefined, false),
+  );
+  assert.equal(again.outcome, "PASSED", again.reason ?? "");
+  assert.deepEqual(live.calls, []);
+});
+
+test("a negated check on one line of an alert reads that line, not the alert (issue #91)", async () => {
+  const path = tmp();
+  const step = `the error should not say "Pick another"`;
+  const first = await check(
+    step,
+    runtime(errorPage("x")),
+    jev((obs) => ({ ...holding("already exists")(obs), negated: sure("yes") })).live,
+    new Cassette(path, "m", "new"),
+  );
+  assert.equal(first.outcome, "PASSED", first.reason ?? "");
+  const again = await check(
+    step,
+    runtime(errorPage("y")),
+    jev(() => ({})).live,
+    new Cassette(path, "m", "none", undefined, false),
+  );
+  assert.equal(again.outcome, "PASSED", again.reason ?? "");
 });

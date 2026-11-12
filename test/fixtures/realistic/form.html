@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>New project</title></head>
+<!-- Issue #91: a form whose error shows in an alert that wraps a generic, next to a hint generic. A check on the error
+     binds to the alert. Invented content. -->
+<body>
+<main>
+  <h1>New project</h1>
+  <form id="form" aria-label="New project">
+    <div><label>Project name <input name="name"></label></div>
+    <div><label>Owner <input name="owner"></label></div>
+    <div id="errors"></div>
+    <button>Create project</button>
+  </form>
+  <aside aria-label="Tips"><div><div>Names must be at least 3 characters long.</div></div></aside>
+</main>
+<script>
+document.getElementById("form").onsubmit = (e) => {
+  e.preventDefault();
+  const name = e.target.name.value.trim();
+  document.getElementById("errors").innerHTML = name.length < 3
+    ? `<div role="alert"><div><div>Project name is too short</div><div>Use at least 3 characters</div></div></div>`
+    : "";
+  if (name.length >= 3) document.querySelector("h1").textContent = `Project ${name}`;
+};
+</script>
+</body>
+</html>

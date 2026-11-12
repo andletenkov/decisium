@@ -381,8 +381,10 @@ function rowsIn(area: Element | undefined, obs: Observation, table: string[][], 
  */
 function subjectOf(ref: string, obs: Observation, none: string): Element | Truth {
   if (ref === "none") return { unknown: "PENDING", reason: none };
+  const area = obs.areas.find((e) => e.ref === ref); // an alert a recording binds to (issue #91): reads its full text
   return (
-    obs.readable.find((e) => e.ref === ref) ?? {
+    obs.readable.find((e) => e.ref === ref) ??
+    (area && { ...area, value: area.text.trim().replace(/\s+/g, " ") }) ?? {
       unknown: "ELEMENT_NOT_FOUND",
       reason: `Jev chose an element that is no longer on the page (${ref})`,
     }
