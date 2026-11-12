@@ -64,6 +64,16 @@ test("realistic fixture cassettes replay with no key: every Step passes, no Jev 
   );
 });
 
+test("a check on an error binds to the alert that wraps it, not to the inner text node (issue #91)", () => {
+  for (const name of ["form", "items"]) {
+    const { entries } = JSON.parse(readFileSync(`${DIR}/${name}.cassette.json`, "utf8"));
+    const errors = Object.entries(entries).filter(([k]) => /error should say/.test(k));
+    assert.ok(errors.length, name);
+    for (const [k, e] of errors as [string, { check: { subject: [{ role: string }, number][] } }][])
+      assert.equal(e.check.subject[0][0].role, "alert", k);
+  }
+});
+
 test("on a large app screen a check that names no area reads the whole page, however the area answer spreads (#90, problem 1)", async () => {
   const b = await Browser.open(page("shell.html"));
   try {

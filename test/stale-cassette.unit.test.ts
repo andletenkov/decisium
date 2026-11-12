@@ -255,7 +255,7 @@ test("replay-only without a key cannot ask again: a stale recording fails and sa
   const live = jev(holding("already exists"));
   const r = await check(
     `the error should say "already exists"`,
-    runtime(errorPage("zz-other")),
+    runtime(`- region "Help" [ref=e3]:\n  - generic [ref=e4]: Item already exists`), // no alert now
     live.live,
     new Cassette(path, "m", "none", undefined, false),
   );
@@ -297,4 +297,36 @@ test("the runId the app shows lowercased or slugified replays without a key on a
       assert.equal(again.outcome, "PASSED", `${show(a)} -> ${show(b)}: ${again.reason}`);
       assert.deepEqual(live.calls, []);
     }
+});
+
+test("a check on text inside an alert binds to the alert, not to its inner generic (issue #91)", async () => {
+  const path = tmp();
+  const r = await check(
+    `the error should say "already exists"`,
+    runtime(errorPage("x")),
+    jev(holding("already exists")).live,
+    new Cassette(path, "m", "new"),
+  );
+  assert.equal(r.outcome, "PASSED");
+  const subject = JSON.parse(readFileSync(path, "utf8")).entries["S: check"].check.subject;
+  assert.deepEqual(subject, [[{ role: "alert", name: "", container: "" }, 1]]);
+  // Through a wrapper too: the form's error sits in a generic inside the alert.
+  const wrapped = `- alert [ref=e1]:\n  - generic [ref=e2]:\n    - generic [ref=e3]: Name is too short\n    - generic [ref=e4]: Use 3 characters`;
+  const deep = tmp();
+  await check(
+    `the error should say "too short"`,
+    runtime(wrapped),
+    jev(holding("too short")).live,
+    new Cassette(deep, "m", "new"),
+  );
+  assert.equal(JSON.parse(readFileSync(deep, "utf8")).entries["S: check"].check.subject[0][0].role, "alert");
+  const live = jev(() => ({}));
+  const again = await check(
+    `the error should say "already exists"`,
+    runtime(errorPage("y")),
+    live.live,
+    new Cassette(path, "m", "none", undefined, false),
+  );
+  assert.equal(again.outcome, "PASSED", again.reason ?? "");
+  assert.deepEqual(live.calls, []);
 });

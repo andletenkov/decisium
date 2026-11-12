@@ -338,6 +338,29 @@ const store = (p: Pick, among: Element[] = [], minimum = 0, hints: string[] = []
     // A healed Step can mix replayed answers with live ones using different confidence.
     return p.recordedConfidence ? [target, p.probabilities[k], p.recordedConfidence] : [target, p.probabilities[k]];
   });
+/**
+ * A check on unnamed text inside an alert or status reads the alert (issue #91; #90, problem 3): the message is one
+ * thing, and the inner node's own text (an echoed name, a slug) is what changes between runs.
+ */
+/** What a check's subject may be: a readable element, or an alert a recording bound it to; each once. */
+const subjects = (obs: Observation) => [
+  ...obs.readable,
+  ...obs.areas.filter((a) => !obs.readable.some((e) => e.ref === a.ref)),
+];
+
+function inRegion(a: Assessment, obs: Observation): Assessment {
+  const lift = (ref: string) => {
+    let up = obs.readable.find((e) => e.ref === ref);
+    if (up?.role !== "generic") return ref;
+    while (up?.role === "generic" && !up.name) up = up.parent; // through a component's wrappers
+    return up && (up.role === "alert" || up.role === "status") ? up.ref : ref;
+  };
+  const probabilities: Record<string, number> = {};
+  for (const [k, v] of Object.entries(a.subject.probabilities))
+    probabilities[lift(k)] = (probabilities[lift(k)] ?? 0) + v;
+  return { ...a, subject: { ...a.subject, choice: lift(a.subject.choice), probabilities } };
+}
+
 /** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
 class NotOnPage {
   why: string;
@@ -601,17 +624,17 @@ export class Cassette {
             kind: recorded(e.check.kind),
             negated: recorded(e.check.negated),
             state: recorded(e.check.state),
-            subject: loadRecorded(e.check.subject, obs.readable),
+            subject: loadRecorded(e.check.subject, subjects(obs)),
             area: loadRecorded(e.check.area, obs.areas),
             ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
         });
-        const a = r ?? (await live.assess(step, obs, judged));
+        const a = r ?? inRegion(await live.assess(step, obs, judged), obs);
         now.check = {
           kind: a.kind,
           negated: a.negated,
           state: a.state,
-          subject: store(a.subject, obs.readable),
+          subject: store(a.subject, subjects(obs)),
           area: store(a.area, obs.areas),
           ...(a.scoped ? { scoped: a.scoped } : {}),
         };
