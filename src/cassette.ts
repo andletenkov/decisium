@@ -427,7 +427,7 @@ export class Cassette {
     generated: Record<string, string> = {},
     fresh = false,
   ): Decider & {
-    done(keep: boolean): "replayed" | "recorded" | "healed" | undefined;
+    done(keep: boolean, success?: boolean): "replayed" | "recorded" | "healed" | undefined;
     positional(): string[];
     /** Every answer so far came from the recording. */
     replaying(): boolean;
@@ -631,13 +631,16 @@ export class Cassette {
       /** Elements this Step acted on that only their position among identical twins identifies. */
       positional: () => [...positional],
       replaying: () => !!old && !broken,
-      /** `keep`: the Step reached an outcome from its answers (not an error), so they are written back. */
-      done: (keep: boolean) => {
+      /**
+       * `keep`: the Step's answers are worth replaying, so they are written back. `success`: the Step reached its goal;
+       * only then does a heal replace a recording.
+       */
+      done: (keep: boolean, success = keep) => {
         if (!broken && old) {
           this.replayed++;
           return "replayed";
         }
-        if (!keep || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
+        if (!keep || (saved && !success) || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
         const decisions = [...(old?.decisions ?? []), ...(live.decisions?.slice(decisionStart) ?? [])];
         if (decisions.length) now.decisions = decisions;
         this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));

@@ -352,7 +352,10 @@ async function main(): Promise<number> {
       files.length < 2
         ? 0
         : parallelSet === -1
-          ? Math.min(availableParallelism(), record === "none" ? Infinity : 4)
+          ? Math.min(
+              availableParallelism(),
+              record === "none" && !env[credentialName(settings.provider)] ? Infinity : 4,
+            ) // with a key, a stale replay calls Jev
           : parallelSet;
   const run = new RunDir(settings.reportDir); // shared by every worker
   Object.assign(env, { DECISIUM_STEP: cmd === "step" ? "1" : "", DECISIUM_RUN_DIR: run.path });

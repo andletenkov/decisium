@@ -25,8 +25,9 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
 
 A cassette is a cache, never a judge: a recording that no longer fits the page costs one Jev request, not a failed Step.
 A replayed check that does not pass is asked once more live before it fails; an action Step is not repeated, it heals
-only where its recorded element is gone. Only a Step that ends `DONE` or `PASSED` is written to the cassette, so a
-failed heal never lands in it.
+only where its recorded element is gone. A heal replaces a recording only when the Step ends `DONE` or `PASSED`, so a
+failed heal never lands in the cassette. A new Step that fails on the app (`ASSERTION_FAILED`) is recorded and replays
+as that failure; one Jev could not answer (`AMBIGUOUS`) is not recorded.
 
 A cassette stores Jev's answers, never the page's evidence: a replayed check is compared on the page it runs on, by
 the same rules as a live one. Checks recorded before negation was its own answer (issue #81) fail as `UI_CHANGED` in

@@ -159,6 +159,7 @@ export async function runAssertion(
   earlier: Record<string, string> = {},
   arg: StepArgument = {},
   intent?: Intent,
+  deadline = Date.now() + settings().checkTimeout,
 ): Promise<StepResult> {
   const { label: said, values, list, exact } = withIntent(readStep({ text: step, kind: "assertion", ...arg }), intent); // said: what Jev reads, with the table or doc string
   log(`\nAssert: ${said}`);
@@ -185,7 +186,6 @@ export async function runAssertion(
   // At the deadline, or once the page has nothing left that could change it: a known contradiction is
   // ASSERTION_FAILED, evidence still missing UNVERIFIABLE, conflicting meanings AMBIGUOUS. Jev is asked again only
   // after a change.
-  const deadline = Date.now() + settings().checkTimeout;
   let assessed: { text: string; a: Assessment } | undefined;
   // Looking again at an unchanged page (a request in flight) logs nothing new.
   let logged = { details: "", waiting: "" };

@@ -156,7 +156,47 @@ test("a check that still fails when asked again is a real failure and leaves the
   assert.equal(readFileSync(path, "utf8"), before);
 });
 
-test("a Step that does not reach DONE or PASSED never writes the cassette (issue #90, problem 2)", async () => {
+test("a check that fails while recording is kept and replays as the same failure without a key, not UI_CHANGED", async () => {
+  const path = tmp();
+  const rt = runtime(errorPage("x"));
+  const r = await check(`"Saved" should appear`, rt, jev(() => ({})).live, new Cassette(path, "m", "new"));
+  assert.equal(r.outcome, "ASSERTION_FAILED");
+  const live = jev(() => ({}));
+  const again = await check(`"Saved" should appear`, rt, live.live, new Cassette(path, "m", "none", undefined, false));
+  assert.equal(again.outcome, "ASSERTION_FAILED");
+  assert.equal(again.cassette, "replayed");
+  assert.deepEqual(live.calls, []);
+});
+
+test("a replayed check that fails waits for the page once: asking Jev again does not restart the wait", async () => {
+  const path = tmp();
+  await staleArea(path);
+  const timeout = 300;
+  process.env.DECISIUM_CHECK_TIMEOUT = String(timeout);
+  try {
+    const obs = parseSnapshot(errorPage("x"));
+    // The page keeps changing until the deadline, so a check that does not pass waits for all of it.
+    const rt: Runtime = {
+      actionStep: (run) => run(),
+      observe: async () => obs,
+      execute: async () => {},
+      waitForChange: async (_since, ms = 0) => (await new Promise((ok) => setTimeout(ok, Math.min(ms, 50))), true),
+    };
+    const start = Date.now();
+    const r = await check(
+      `"already exists" should appear`,
+      rt,
+      jev(() => ({ area: sure("e3") })).live,
+      new Cassette(path, "m", "none", undefined, true),
+    );
+    assert.equal(r.outcome, "ASSERTION_FAILED");
+    assert.ok(Date.now() - start < timeout * 1.6, `waited ${Date.now() - start} ms`);
+  } finally {
+    delete process.env.DECISIUM_CHECK_TIMEOUT;
+  }
+});
+
+test("answers Jev could not give are never written, and a heal that does not reach DONE or PASSED keeps the recording (issue #90, problem 2)", async () => {
   const rt = runtime(errorPage("x"));
   const spread: Pick = { choice: "page", probabilities: { page: 0.5, e3: 0.5 } }; // the areas disagree: AMBIGUOUS
   for (const mode of ["new", "all"] as const) {

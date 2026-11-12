@@ -2,12 +2,15 @@
 import { UiChanged, type Cassette } from "./cassette.ts";
 import type { Decider } from "./decision.ts";
 import { modelUsage } from "./model-decider.ts";
+import { settings } from "./options.ts";
 import type { DecisionMetadata } from "./decision-provider.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { readStep, type StepArgument, type StepKind } from "./step.ts";
 
 /** The outcomes of a Step that reached its goal: the only answers a cassette keeps. */
 const SUCCESS = new Set(["DONE", "PASSED"]);
+/** Outcomes whose answers would only fail the same way when replayed: never written, not even for a new Step. */
+const USELESS = new Set(["AMBIGUOUS", "UI_CHANGED", "PAGE_TOO_LARGE"]);
 
 export interface StepContext {
   rt: Runtime;
@@ -63,16 +66,18 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   for (const [i, row] of rows.entries()) {
     const rowKey = perRow ? `${key} (row ${i + 1})` : key;
     let entry = cassette?.step(rowKey, live, log, ctx.generated);
-    r = await attempt(row, entry);
+    const deadline = Date.now() + settings().checkTimeout;
+    r = await attempt(row, entry, deadline);
     // A replayed check that does not pass may rest on a recording that no longer fits the page: Jev is asked once
     // more before it fails (issue #90). A check only reads the page, so running it again repeats nothing.
     if (kind === "assertion" && !SUCCESS.has(r.outcome) && cassette?.canAsk && entry?.replaying()) {
       log("  (cassette: the replayed check did not pass, asking Jev again)");
       entry = cassette.step(rowKey, live, log, ctx.generated, true);
-      r = await attempt(row, entry);
+      r = await attempt(row, entry, deadline); // the time the replay already waited counts: a failure waits once
     }
-    // Only a Step that reached its goal is worth replaying: any other answer would fail the same way next run.
-    served.push(entry?.done(SUCCESS.has(r.outcome)));
+    // A new Step keeps any answer Jev was sure of (a real ASSERTION_FAILED replays as one); a heal replaces the
+    // recording only with one that reached the Step's goal (issue #90).
+    served.push(entry?.done(!USELESS.has(r.outcome), SUCCESS.has(r.outcome)));
     positional.push(...(entry?.positional() ?? []));
     if (r.outcome === "AMBIGUOUS" && r.reason?.startsWith("Jev is unsure what to do next:")) {
       const resolutions = cassette?.resolutions(rowKey, { text: row, kind, ...arg }) ?? [];
@@ -82,7 +87,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     if (r.outcome !== "DONE") break;
   }
 
-  async function attempt(row: string, entry: Decider | undefined): Promise<StepResult> {
+  async function attempt(row: string, entry: Decider | undefined, deadline: number): Promise<StepResult> {
     const decider = trace(entry ?? live);
     try {
       // How Jev reads the wording (issue #31); DECISIUM_NO_INTENT=1 keeps the wording rules alone (A/B runs).
@@ -90,7 +95,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
       if (intent && Object.keys(intent).length) log(`  Intent: ${JSON.stringify(intent)}`);
       if (intent?.value && kind !== "assertion") unquoted.push([intent.value, row]);
       return kind === "assertion"
-        ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg, intent)
+        ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg, intent, deadline)
         : await runStep(row, rt, decider, log, kind === "attempt", docString, intent);
     } catch (err) {
       if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {

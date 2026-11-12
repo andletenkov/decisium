@@ -42,7 +42,8 @@ never as a pass.</li>
 clicking one.</li>
 <li><strong>Record.</strong> What each Step resolved to (role, name, container) goes into <code>&lt;feature&gt;.cassette.json</code>. The next run
 replays it without Jev. The cassette is a cache: if the recording no longer fits the page, or a replayed check does
-not pass, Jev is asked again and the cassette is updated. Only a Step that ends <code>DONE</code> or <code>PASSED</code> is recorded.</li>
+not pass, Jev is asked again and the cassette is updated. A heal is written only when the Step ends <code>DONE</code> or
+<code>PASSED</code>; an <code>AMBIGUOUS</code> answer is never recorded.</li>
 </ol>
 <p>Steps Decisium recognises on its own (<code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code>) skip the model.
 <code>decisium run -v</code> prints every page snapshot and answer.</p>
