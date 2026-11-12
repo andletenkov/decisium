@@ -14,7 +14,7 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 | `BLOCKED` | The task cannot be done on this page. | Check the start URL and earlier Steps; menus may need "hover". |
 | `ACTION_FAILED` | The action did not take effect. | Check the value's format (ISO for dates). |
 | `STEP_TIMEOUT` | Too many actions for one Step. | Split the Step, or raise `maxTurns`. |
-| `UI_CHANGED` | A replayed Step no longer matches the page, or its cassette predates a reading the check now needs. | Re-record with `--record new` if intended. |
+| `UI_CHANGED` | A replayed Step no longer matches the page and no model key was given to resolve it again. | Provide the key, or re-record with `--record new`. |
 | `PAGE_TOO_LARGE` | The page is over the model's limit. | Test a narrower page or state. |
 | marginal pass | Passed, but Jev was barely sure. | Make the Step more specific. `--strict` fails it. |
 | check fails on a slow page | The state came after the check gave up. | Raise `checkTimeout`. |

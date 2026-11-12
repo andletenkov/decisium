@@ -26,8 +26,9 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <div class="layout">
 <nav class="sidebar"><div class="nav-group"><span class="nav-title">Start</span><a href="index.html">Introduction</a><a href="getting-started.html">Getting started</a><a href="examples.html">Example</a><a href="how-it-works.html">How it works</a></div><div class="nav-group"><span class="nav-title">Use</span><a href="steps.html">Writing Steps</a><a href="configuration.html">CLI and configuration</a><a href="ci.html" aria-current="page">CI</a><a href="troubleshooting.html">Troubleshooting</a><a href="advanced.html">Advanced</a></div></nav>
 <main class="doc"><h1 id="ci">CI</h1>
-<p>Record locally, commit the cassettes, replay in CI with <code>--record none</code>: no API key, no model calls, the same result
-every run.</p>
+<p>Record locally, commit the cassettes, replay in CI with <code>--record none</code>: no model calls while the recordings fit, the
+same result every run. Without an API key that is all it does; with one, a Step whose recording no longer fits heals
+live instead of failing.</p>
 <pre><code class="language-yaml"># .github/workflows/e2e.yml
 name: e2e
 on: [push, pull_request]
@@ -60,9 +61,11 @@ jobs:
           USERNAME: ${{ secrets[format(&#39;USERNAME_{0}&#39;, matrix.env)] }}   # &quot;$USERNAME&quot; in a Step
 </code></pre>
 <p>Cassettes record which element a Step meant, not the environment, so one cassette serves environments whose pages match.
-If an environment&#39;s UI differs, replay fails as <code>UI_CHANGED</code>.</p>
+If an environment&#39;s UI differs, those Steps heal live (with a key) or fail as <code>UI_CHANGED</code> (without one).</p>
 <h2 id="when-the-ui-changes">When the UI changes</h2>
-<p>CI fails as <code>UI_CHANGED</code>. If the change is intended, re-record locally and commit the cassette:</p>
+<p>With a key in CI, the changed Steps heal and the summary counts them (<code>1 healed</code>): upload the cassette or re-record
+locally and commit it, so the next run replays for free. Without a key, CI fails as <code>UI_CHANGED</code>; re-record locally and
+commit the cassette:</p>
 <pre><code class="language-sh">decisium run features/campaign.feature --record new
 </code></pre>
 <p>Optional, to collapse cassette diffs on GitHub: add <code>*.cassette.json linguist-generated=true</code> to <code>.gitattributes</code>.</p>

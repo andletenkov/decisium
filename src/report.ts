@@ -20,7 +20,7 @@ export const HINTS: Record<string, string> = {
   STEP_TIMEOUT:
     "The step needed more actions than `maxTurns` allows (default 8). Split it into smaller steps, or raise maxTurns for a long flow.",
   UI_CHANGED:
-    "The run replays recorded resolutions (cassette) and this step has none that still matches the page. If the change is intended, rerun with --record new to re-resolve just the changed steps (calls Jev, reported as healed), or --record all to re-record everything.",
+    "The run replays recorded resolutions (cassette), this step has none that still matches the page, and no model key was given to resolve it again. Provide the key (the step heals live and is reported as healed), or rerun with --record new to re-resolve just the changed steps, or --record all to re-record everything.",
   JUDGED_FAILED: "Jev judged that the page does not satisfy the check.",
   PAGE_TOO_LARGE:
     "The page is too large for Jev to read. Start the scenario on a smaller page, or report it so the size budget can be revisited.",

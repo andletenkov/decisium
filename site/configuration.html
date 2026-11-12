@@ -74,7 +74,7 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 </tr>
 <tr>
 <td><code>--record new|none|all</code></td>
-<td><code>new</code> (default): replay, record what is missing. <code>none</code>: replay only (CI). <code>all</code>: re-record everything.</td>
+<td><code>new</code> (default): replay, record what is missing. <code>none</code>: replay, network included (CI); a new or stale Step is resolved live with a key, and fails as <code>UI_CHANGED</code> without one. <code>all</code>: re-record everything.</td>
 </tr>
 <tr>
 <td><code>--parallel &lt;n|auto&gt;</code></td>

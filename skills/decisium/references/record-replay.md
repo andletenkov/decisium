@@ -7,7 +7,7 @@ page still matches it.
 | `--record` | Behaviour |
 |---|---|
 | `new` (default) | Replay; resolve new or no-longer-matching Steps live and write them back (reported as *healed*). |
-| `none` | Replay only. A missing or broken resolution fails as `UI_CHANGED`. Use in CI. |
+| `none` | Replay, network included. Use in CI. With a model key, a new Step or a recording that no longer fits is resolved live and written back (*healed*); with no key it fails as `UI_CHANGED`. |
 | `all` | Resolve everything live and rewrite the cassette. |
 
 The run summary says what happened:
@@ -19,8 +19,14 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 healed
 ## Workflow
 
 1. Record once with `--record new` (or `all`), check the outcomes, commit the cassettes.
-2. Run CI with `--record none`: same outcome every run, zero model calls.
-3. When the UI really changes, CI fails as `UI_CHANGED`. Heal locally with `--record new` and commit the cassette.
+2. Run CI with `--record none`: same outcome every run, zero model calls while the recordings fit.
+3. When the UI changes: with a key in CI, the stale Steps heal live and the run reports them as healed; commit the
+   updated cassette. With no key, CI fails as `UI_CHANGED`; heal locally with `--record new` and commit the cassette.
+
+A cassette is a cache, never a judge: a recording that no longer fits the page costs one Jev request, not a failed Step.
+A replayed check that does not pass is asked once more live before it fails; an action Step is not repeated, it heals
+only where its recorded element is gone. Only a Step that ends `DONE` or `PASSED` is written to the cassette, so a
+failed heal never lands in it.
 
 A cassette stores Jev's answers, never the page's evidence: a replayed check is compared on the page it runs on, by
 the same rules as a live one. Checks recorded before negation was its own answer (issue #81) fail as `UI_CHANGED` in

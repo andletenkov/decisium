@@ -1,7 +1,8 @@
 # CI
 
-Record locally, commit the cassettes, replay in CI with `--record none`: no API key, no model calls, the same result
-every run.
+Record locally, commit the cassettes, replay in CI with `--record none`: no model calls while the recordings fit, the
+same result every run. Without an API key that is all it does; with one, a Step whose recording no longer fits heals
+live instead of failing.
 
 ```yaml
 # .github/workflows/e2e.yml
@@ -42,11 +43,13 @@ jobs:
 ```
 
 Cassettes record which element a Step meant, not the environment, so one cassette serves environments whose pages match.
-If an environment's UI differs, replay fails as `UI_CHANGED`.
+If an environment's UI differs, those Steps heal live (with a key) or fail as `UI_CHANGED` (without one).
 
 ## When the UI changes
 
-CI fails as `UI_CHANGED`. If the change is intended, re-record locally and commit the cassette:
+With a key in CI, the changed Steps heal and the summary counts them (`1 healed`): upload the cassette or re-record
+locally and commit it, so the next run replays for free. Without a key, CI fails as `UI_CHANGED`; re-record locally and
+commit the cassette:
 
 ```sh
 decisium run features/campaign.feature --record new

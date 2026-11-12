@@ -41,7 +41,8 @@ never as a pass.</li>
 <li><strong>Refuse to guess.</strong> When the pick is unclear (two &quot;Save&quot; buttons), the Step fails as <code>AMBIGUOUS</code> instead of
 clicking one.</li>
 <li><strong>Record.</strong> What each Step resolved to (role, name, container) goes into <code>&lt;feature&gt;.cassette.json</code>. The next run
-replays it without Jev; if that element is gone, the Step fails as <code>UI_CHANGED</code>.</li>
+replays it without Jev. The cassette is a cache: if the recording no longer fits the page, or a replayed check does
+not pass, Jev is asked again and the cassette is updated. Only a Step that ends <code>DONE</code> or <code>PASSED</code> is recorded.</li>
 </ol>
 <p>Steps Decisium recognises on its own (<code>I press Escape</code>, <code>I go back</code>, <code>I go to &quot;/settings&quot;</code>) skip the model.
 <code>decisium run -v</code> prints every page snapshot and answer.</p>

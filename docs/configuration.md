@@ -18,7 +18,7 @@ Exit codes: `0` passed, `1` a scenario failed, `2` configuration or infrastructu
 | Flag | |
 |---|---|
 | `--url <url\|file>` | Start URL; overrides `@url:`. |
-| `--record new\|none\|all` | `new` (default): replay, record what is missing. `none`: replay only (CI). `all`: re-record everything. |
+| `--record new\|none\|all` | `new` (default): replay, record what is missing. `none`: replay, network included (CI); a new or stale Step is resolved live with a key, and fails as `UI_CHANGED` without one. `all`: re-record everything. |
 | `--parallel <n\|auto>` | Run features in parallel workers. |
 | `--headed` | Show the browser. |
 | `--strict` | Fail checks that passed with low confidence. |

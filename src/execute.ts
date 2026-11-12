@@ -6,6 +6,9 @@ import type { DecisionMetadata } from "./decision-provider.ts";
 import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { readStep, type StepArgument, type StepKind } from "./step.ts";
 
+/** The outcomes of a Step that reached its goal: the only answers a cassette keeps. */
+const SUCCESS = new Set(["DONE", "PASSED"]);
+
 export interface StepContext {
   rt: Runtime;
   live: Decider;
@@ -58,39 +61,51 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   const positional: string[] = [];
   const unquoted: [string, string][] = []; // values Jev read without quotes: scenario memory too
   for (const [i, row] of rows.entries()) {
-    const entry = cassette?.step(perRow ? `${key} (row ${i + 1})` : key, live, log, ctx.generated);
+    const rowKey = perRow ? `${key} (row ${i + 1})` : key;
+    let entry = cassette?.step(rowKey, live, log, ctx.generated);
+    r = await attempt(row, entry);
+    // A replayed check that does not pass may rest on a recording that no longer fits the page: Jev is asked once
+    // more before it fails (issue #90). A check only reads the page, so running it again repeats nothing.
+    if (kind === "assertion" && !SUCCESS.has(r.outcome) && cassette?.canAsk && entry?.replaying()) {
+      log("  (cassette: the replayed check did not pass, asking Jev again)");
+      entry = cassette.step(rowKey, live, log, ctx.generated, true);
+      r = await attempt(row, entry);
+    }
+    // Only a Step that reached its goal is worth replaying: any other answer would fail the same way next run.
+    served.push(entry?.done(SUCCESS.has(r.outcome)));
+    positional.push(...(entry?.positional() ?? []));
+    if (r.outcome === "AMBIGUOUS" && r.reason?.startsWith("Jev is unsure what to do next:")) {
+      const resolutions = cassette?.resolutions(rowKey, { text: row, kind, ...arg }) ?? [];
+      if (resolutions.length) r.reason += `\nResolutions (confirm the final action target):\n${resolutions.join("\n")}`;
+    }
+    if (r.outcome !== "DONE" && perRow) r = { ...r, reason: `row ${i + 1} (${row})${r.reason ? `: ${r.reason}` : ""}` };
+    if (r.outcome !== "DONE") break;
+  }
+
+  async function attempt(row: string, entry: Decider | undefined): Promise<StepResult> {
     const decider = trace(entry ?? live);
     try {
       // How Jev reads the wording (issue #31); DECISIUM_NO_INTENT=1 keeps the wording rules alone (A/B runs).
       const intent = process.env.DECISIUM_NO_INTENT === "1" ? {} : await decider.intent?.(row, kind === "assertion");
       if (intent && Object.keys(intent).length) log(`  Intent: ${JSON.stringify(intent)}`);
       if (intent?.value && kind !== "assertion") unquoted.push([intent.value, row]);
-      r =
-        kind === "assertion"
-          ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg, intent)
-          : await runStep(row, rt, decider, log, kind === "attempt", docString, intent);
+      return kind === "assertion"
+        ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg, intent)
+        : await runStep(row, rt, decider, log, kind === "attempt", docString, intent);
     } catch (err) {
       if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
         // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).
         log(`  => PAGE_TOO_LARGE`);
-        r = {
+        return {
           outcome: "PAGE_TOO_LARGE",
           reason: "the page is too large for one Jev request, even reduced to the sections that matter",
         };
       } else if (err instanceof UiChanged) {
         log(`  => UI_CHANGED`);
-        r = { outcome: "UI_CHANGED", reason: err.reason };
-      } else throw err;
+        return { outcome: "UI_CHANGED", reason: err.reason };
+      }
+      throw err;
     }
-    served.push(entry?.done(!["UI_CHANGED", "PAGE_TOO_LARGE"].includes(r.outcome)));
-    positional.push(...(entry?.positional() ?? []));
-    if (r.outcome === "AMBIGUOUS" && r.reason?.startsWith("Jev is unsure what to do next:")) {
-      const resolutions =
-        cassette?.resolutions(perRow ? `${key} (row ${i + 1})` : key, { text: row, kind, ...arg }) ?? [];
-      if (resolutions.length) r.reason += `\nResolutions (confirm the final action target):\n${resolutions.join("\n")}`;
-    }
-    if (r.outcome !== "DONE" && perRow) r = { ...r, reason: `row ${i + 1} (${row})${r.reason ? `: ${r.reason}` : ""}` };
-    if (r.outcome !== "DONE") break;
   }
   if (r.marginal && ctx.strict)
     r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };

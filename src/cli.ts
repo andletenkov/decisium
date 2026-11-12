@@ -38,7 +38,8 @@ the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
   <file>.cassette.json and replayed without Jev while exactly one element still matches it.
   new (default): replay, resolve new or no-longer-matching Steps live and write them back (reported as healed);
-  none: replay only, a missing or broken resolution fails as UI_CHANGED (CI); all: resolve everything live, rewrite.
+  none: replay, network included (CI); with a key a new or stale Step is resolved live, without one it fails as
+  UI_CHANGED; all: resolve everything live, rewrite.
 --parallel <n|auto>: worker processes. Features run side by side, a feature's scenarios one after another. Only for
   features that do not share app state. auto: min(CPUs, 4) when calling Jev, every CPU with --record none. Default 0.
 Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (and -p profiles); --format, --import and

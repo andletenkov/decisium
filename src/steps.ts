@@ -133,7 +133,13 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
       // a corrupt cassette is a setup error, not a failed scenario
       const cassette = opt("STEP")
         ? undefined
-        : new Cassette(pickle.uri.replace(/\.feature$/, "") + ".cassette.json", settings().model, record, run.path);
+        : new Cassette(
+            pickle.uri.replace(/\.feature$/, "") + ".cassette.json",
+            settings().model,
+            record,
+            run.path,
+            !!env[credentialName(settings().provider)], // a stale recording is resolved again, even with --record none
+          );
       deciders.set(pickle.uri, { cassette, live: new ModelDecider() });
     }
   } catch (err) {
