@@ -337,3 +337,33 @@ test("a negated check on one line of an alert reads that line, not the alert (is
   );
   assert.equal(again.outcome, "PASSED", again.reason ?? "");
 });
+
+/** A knowledge base list that keeps growing between runs (issue #91, knowledge:78): `n` rows, one checkbox each. */
+const kbList = (n: number) =>
+  [
+    `- region "Knowledge" [ref=r1]:`,
+    `  - group "Knowledge bases" [ref=g1]:`,
+    ...Array.from({ length: n }, (_, i) => [
+      `    - generic [ref=w${i}]:`,
+      `      - checkbox "KB ${i}" [${i === 0 ? "checked" : "unchecked"}] [ref=c${i}]`,
+    ]).flat(),
+  ].join("\n");
+
+test("a recording holds only the answers its verdict read: a state check replays however the list around it grows", async () => {
+  const path = tmp();
+  const state = (obs: Observation) => ({
+    kind: sure("state"),
+    state: sure("checked"),
+    subject: sure(obs.readable.find((e) => e.name === "KB 0")!.ref),
+    // Where the check is: not read by a state check, and here partly a row only its position tells apart.
+    area: { choice: "r1", probabilities: { r1: 0.73, w7: 0.1, page: 0.17 } },
+  });
+  const step = `the "KB 0" checkbox should be checked`;
+  const first = await check(step, runtime(kbList(20)), jev(state).live, new Cassette(path, "m", "new"));
+  assert.equal(first.outcome, "PASSED", first.reason ?? "");
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).entries["S: check"].check.area, undefined);
+  const live = jev(state);
+  const again = await check(step, runtime(kbList(25)), live.live, new Cassette(path, "m", "none", undefined, false));
+  assert.equal(again.outcome, "PASSED", again.reason ?? "");
+  assert.deepEqual(live.calls, []);
+});

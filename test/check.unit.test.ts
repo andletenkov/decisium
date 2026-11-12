@@ -412,9 +412,14 @@ test("Check: a check whose words name no area reads the whole page, however Jev'
       "an absence check reads the whole page too",
     );
   }
-  // Words that name an area, an unsure answer, or a recording from before the question: the area answer decides.
+  // Both answers are one distribution: "no area" puts its mass on the page, "names an area" spreads it as the area
+  // answer does (issue #91, agents:109: no 69%, and the area answer page 44%, missing 9%).
+  const named = pick({ page: 0.44, m1: 0.23, g1: 0.1, missing: 0.09, e1: 0.14 });
+  const unsure = pick({ no: 0.69, yes: 0.31 });
+  assert.equal(run(snap, { ...absence, area: named, scoped: unsure }, ["Gone"]).outcome, "PASSED");
+  // Words that surely name an area, a mixture still split, or a recording from before the question: no page reading.
   const area = pick({ page: 0.59, missing: 0.41 });
-  for (const scoped of [pick({ yes: 1 }), pick({ no: 0.6, yes: 0.4 }), undefined])
+  for (const scoped of [pick({ yes: 1 }), pick({ no: 0.3, yes: 0.7 }), undefined])
     assert.notEqual(run(snap, { kind: pick({ presence: 1 }), area, scoped }, ["Saved"]).outcome, "PASSED");
 });
 
