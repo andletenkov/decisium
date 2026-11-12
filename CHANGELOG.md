@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1](https://github.com/andletenkov/decisium/compare/v0.5.0...v0.5.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* catch resolution regressions; record checks by structure, not text ([#95](https://github.com/andletenkov/decisium/issues/95)) ([9c60e99](https://github.com/andletenkov/decisium/commit/9c60e9990d49d7c3aac057349501827d08400da8))
+* record only the answers a check's verdict read; one area distribution ([#96](https://github.com/andletenkov/decisium/issues/96)) ([219b2a4](https://github.com/andletenkov/decisium/commit/219b2a496c864c554158d0c888e1522446f45a2b))
+* treat the cassette as a cache, never a judge ([#93](https://github.com/andletenkov/decisium/issues/93)) ([163b90e](https://github.com/andletenkov/decisium/commit/163b90eff5a8531d261206c48adfb705e50e76f2))
+
 ## [0.5.0](https://github.com/andletenkov/decisium/compare/v0.4.1...v0.5.0) (2026-11-10)
 
 
