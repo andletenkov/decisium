@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Items</title></head>
+<!-- Issue #91 (#90, problem 3): items are created from a name; the "server" derives a slug from it, lowercased and
+     joined with hyphens, and a duplicate echoes that slug in its error. Invented content. -->
+<body>
+<main>
+  <h1>Items</h1>
+  <form id="form" aria-label="New item">
+    <label>Item name <input name="name"></label>
+    <button>Create</button>
+  </form>
+  <div id="result"></div>
+  <h2>All items</h2>
+  <ul id="items"><li>Sample item</li></ul>
+</main>
+<script>
+const slugs = new Set(["sample-item"]);
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+document.getElementById("form").onsubmit = (e) => {
+  e.preventDefault();
+  const name = e.target.name.value.trim();
+  const id = slug(name);
+  const result = document.getElementById("result");
+  result.innerHTML = "";
+  setTimeout(() => { // the server's answer
+    if (slugs.has(id)) {
+      result.innerHTML = `<div role="alert"><div>Item '${id}' already exists</div><div>Pick another name</div></div>`;
+      return;
+    }
+    slugs.add(id);
+    const li = document.createElement("li");
+    li.textContent = name;
+    document.getElementById("items").append(li);
+    e.target.reset();
+  }, 150);
+};
+</script>
+</body>
+</html>

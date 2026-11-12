@@ -20,7 +20,7 @@ import {
 } from "./decision.ts";
 import { parseSnapshot, within, type Element, type Observation } from "./observation.ts";
 import { readStep, type ParsedStep } from "./step.ts";
-import { fill } from "./generate.ts";
+import { fill, runIdPattern } from "./generate.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -225,7 +225,13 @@ const VOLATILE: [RegExp, string][] = [
   // A uuid only: a long number ("Invoice 2024001") is often stable test data that tells rows apart.
   [/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi, "‹id›"],
 ];
-export const stableText = (t: string) => VOLATILE.reduce((out, [re, mask]) => out.replace(re, mask), t);
+/** This run's ID in each form the app may show it (set per Step): volatile too, whatever case or slug it is in. */
+let runId: RegExp | undefined;
+export const stableText = (t: string) =>
+  VOLATILE.reduce(
+    (out, [re, mask]) => out.replace(re, mask),
+    runId ? t.replace(runId, "‹run›") : t, // first: an ID may hold "12h"
+  );
 
 /** `el`'s and its ancestors' texts, closest first; `masked`: with run-dependent values replaced (see VOLATILE). */
 const texts = (el: Element, masked = true) => {
@@ -434,6 +440,8 @@ export class Cassette {
     /** Every answer so far came from the recording. */
     replaying(): boolean;
   } {
+    const id = generated["{{decisium.runId}}"];
+    runId = id ? runIdPattern(id) : undefined;
     const saved = this.mode === "all" ? undefined : this.#file.entries[key];
     const old = saved && !fresh ? mapEntry(saved, (value) => fill(value, generated)) : undefined;
     const now: Entry = { confidence: settings().confidence };

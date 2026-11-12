@@ -51,7 +51,7 @@ function jev(answer: (obs: Observation) => Partial<Assessment>) {
 }
 
 /** Runs the check and saves the cassette, as the end of a run does. */
-async function check(text: string, rt: Runtime, live: Decider, cassette: Cassette) {
+async function check(text: string, rt: Runtime, live: Decider, cassette: Cassette, runId?: string) {
   const r = await executeStep(text, {
     rt,
     live,
@@ -61,6 +61,7 @@ async function check(text: string, rt: Runtime, live: Decider, cassette: Cassett
     arg: {},
     earlier: {},
     log: () => {},
+    ...(runId ? { generated: { "{{decisium.runId}}": runId } } : {}),
   } satisfies StepContext);
   cassette.save();
   return r;
@@ -261,4 +262,39 @@ test("replay-only without a key cannot ask again: a stale recording fails and sa
   assert.notEqual(r.outcome, "PASSED");
   assert.match(r.reason!, /re-record with --record new, or provide a model key/);
   assert.deepEqual(live.calls, []);
+});
+
+test("the runId the app shows lowercased or slugified replays without a key on another run (issue #90, problem 3)", async () => {
+  const forms: ((id: string) => string)[] = [
+    (id) => id.toLowerCase(),
+    (id) =>
+      `name-${id}`
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/-$/, ""), // a slug of "Name <id>"
+    (id) => id.toLowerCase().replace(/[^a-z0-9]/g, ""),
+  ];
+  for (const show of forms)
+    for (let i = 0; i < 10; i++) {
+      const path = tmp();
+      const [a, b] = [randomBytes(12).toString("base64url"), randomBytes(12).toString("base64url")];
+      const first = await check(
+        `the error should say "already exists"`,
+        runtime(errorPage(show(a))),
+        jev(holding("already exists")).live,
+        new Cassette(path, "m", "new"),
+        a,
+      );
+      assert.equal(first.outcome, "PASSED");
+      const live = jev(holding("already exists"));
+      const again = await check(
+        `the error should say "already exists"`,
+        runtime(errorPage(show(b))),
+        live.live,
+        new Cassette(path, "m", "none", undefined, false),
+        b,
+      );
+      assert.equal(again.outcome, "PASSED", `${show(a)} -> ${show(b)}: ${again.reason}`);
+      assert.deepEqual(live.calls, []);
+    }
 });

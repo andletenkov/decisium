@@ -9,10 +9,10 @@ import { promisify } from "node:util";
 
 for (const release of readdirSync("test/fixtures/compat")) {
   test(`cassettes recorded by ${release} replay with the same outcomes and no Jev call`, async () => {
-    const dir = `test/fixtures/compat/${release}/cookbook`;
-    const features = readdirSync(dir)
+    const root = `test/fixtures/compat/${release}`;
+    const features = readdirSync(root, { recursive: true, encoding: "utf8" })
       .filter((f) => f.endsWith(".feature"))
-      .map((f) => `${dir}/${f}`);
+      .map((f) => `${root}/${f}`);
     const out = await promisify(execFile)(
       "node",
       ["src/cli.ts", "run", ...features, "--record", "none", "--no-agent-report", "--parallel", "auto"],

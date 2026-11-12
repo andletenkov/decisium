@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Assistant settings</title></head>
+<!-- Issue #91 (#90, problem 2): two comboboxes; the model one is filled only after a provider is chosen, while the
+     fallback one is always filled. ?late: the model options never come, so a heal of "pick the model" cannot finish.
+     Invented content. -->
+<body>
+<main>
+  <h1>Assistant settings</h1>
+  <form aria-label="Assistant">
+    <label>Provider <select id="provider"><option value="">Choose…</option><option>Northwind AI</option><option>Juniper Cloud</option></select></label>
+    <label>Model <select id="model" disabled><option value="">none</option></select></label>
+    <label>Fallback model <select id="fallback"><option>none</option><option>Option A</option><option>Option B</option></select></label>
+  </form>
+  <section aria-label="Summary"><p id="summary">No model chosen</p></section>
+</main>
+<script>
+const late = location.search.includes("late");
+const model = document.getElementById("model");
+document.getElementById("provider").onchange = () => {
+  if (late) return;
+  setTimeout(() => {
+    model.innerHTML = `<option value="">Choose…</option><option>Option A</option><option>Option B</option>`;
+    model.disabled = false;
+  }, 200);
+};
+model.onchange = () => (document.getElementById("summary").textContent = `Model: ${model.value}`);
+</script>
+</body>
+</html>
