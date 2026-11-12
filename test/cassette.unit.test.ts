@@ -213,6 +213,13 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
   assert.equal(a.subject.choice, "e4");
   assert.equal(a.area.choice, "e3");
   assert.equal(a.scoped?.choice, "yes");
+  // A check recorded before the question replays with the area answer alone (issue #92).
+  const older = new Cassette(
+    recorded({ check: { ...read(p).entries["S: x"].check, scoped: undefined } }),
+    "m",
+    "none",
+  ).step("S: x", scripted({}).live);
+  assert.equal((await older.assess("x", page, false)).scoped, undefined);
   assert.deepEqual(a.scoped?.recordedConfidence, DEFAULTS.confidence);
   assert.equal(a.kind.choice, "value");
   assert.deepEqual(a.kind.recordedConfidence, DEFAULTS.confidence);

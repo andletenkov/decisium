@@ -198,7 +198,11 @@ function inAreas(
   // screen does not matter then (issue #92). Any doubt, or a recording from before the question: the area answer.
   if (a.scoped?.choice === "no" && gate(a.scoped)) {
     log(`  Area: page (the check names none: ${fmt(a.scoped)})`);
-    return agreement([inScope(undefined)], "", weakMass("names no area", a.scoped, ["no"]));
+    return agreement(
+      [inScope(undefined)],
+      "" /* one reading never disagrees */,
+      weakMass("names no area", a.scoped, ["no"]),
+    );
   }
   log(`  Area: ${fmt(a.area)}`);
   const areas = plausible(a.area);

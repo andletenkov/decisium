@@ -406,7 +406,6 @@ test("Check: a check whose words name no area reads the whole page, however Jev'
   ]) {
     const presence = (scoped?: Pick) => run(snap, { kind: pick({ presence: 1 }), area, scoped }, ["Saved"]);
     assert.equal(presence(unscoped).outcome, "PASSED", JSON.stringify(area.probabilities));
-    assert.equal(presence({ ...unscoped }).outcome, "PASSED");
     assert.equal(
       run(snap, { ...absence, area, scoped: unscoped }, ["Saved"]).outcome,
       "ASSERTION_FAILED",
