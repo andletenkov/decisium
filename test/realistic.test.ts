@@ -64,13 +64,20 @@ test("realistic fixture cassettes replay with no key: every Step passes, no Jev 
   );
 });
 
-test("a check on an error binds to the alert that wraps it, not to the inner text node (issue #91)", () => {
-  for (const name of ["form", "items"]) {
+test("what a check reads is recorded by structure, never by its text (issue #91)", () => {
+  for (const name of ["form", "items", "models", "shell"]) {
     const { entries } = JSON.parse(readFileSync(`${DIR}/${name}.cassette.json`, "utf8"));
-    const errors = Object.entries(entries).filter(([k]) => /error should say/.test(k));
-    assert.ok(errors.length, name);
-    for (const [k, e] of errors as [string, { check: { subject: [{ role: string }, number][] } }][])
-      assert.equal(e.check.subject[0][0].role, "alert", k);
+    for (const [key, e] of Object.entries(entries) as [string, { check?: { subject: unknown; area: unknown } }][])
+      if (e.check) {
+        const recorded = JSON.stringify([e.check.subject, e.check.area]);
+        assert.doesNotMatch(recorded, /"(near|anchor)"/, key);
+      }
+    // The errors sit in an alert: their position there finds them, whatever text the app echoes.
+    for (const [key, e] of Object.entries(entries) as [
+      string,
+      { check?: { subject: [{ scope?: { role: string } }][] } },
+    ][])
+      if (/error should say/.test(key)) assert.equal(e.check!.subject[0][0].scope?.role, "alert", key);
   }
 });
 

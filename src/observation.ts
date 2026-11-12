@@ -276,6 +276,12 @@ export function sameContent(a: Element, b: Element): boolean {
   return text === oneLine(inner.text) || text === oneLine(`${outer.name} ${inner.text}`);
 }
 /** `el` is `holder` or inside it. */
+/** Nearest ancestor with a name, e.g. `list "Issues"`; "" at the top. */
+export const containerOf = (el: Element) => {
+  for (let p = el.parent; p; p = p.parent) if (p.name) return `${p.role} "${p.name}"`;
+  return "";
+};
+
 export const within = (el: Element, holder: Element) => {
   for (let p: Element | undefined = el; p; p = p.parent) if (p === holder) return true;
   return false;

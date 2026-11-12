@@ -18,9 +18,9 @@ import {
   type Pick,
   type TurnAnswer,
 } from "./decision.ts";
-import { parseSnapshot, within, type Element, type Observation } from "./observation.ts";
+import { containerOf, parseSnapshot, within, type Element, type Observation } from "./observation.ts";
 import { readStep, type ParsedStep } from "./step.ts";
-import { fill, runIdPattern } from "./generate.ts";
+import { fill } from "./generate.ts";
 
 /** none: replay only, a missing or broken resolution fails. new: replay, resolve missing/broken Steps live. all: always live. */
 export type RecordMode = "none" | "new" | "all";
@@ -40,6 +40,8 @@ export interface Resolution {
   container: string;
   anchor?: string;
   near?: string;
+  /** A check's twin (locate): its position is counted inside this, the nearest ancestor its fields alone find. */
+  scope?: Resolution;
   nth?: number;
   of?: number;
 }
@@ -183,6 +185,7 @@ export function pin(path: string, key: string, selection: number, step: ParsedSt
   return chosen[0];
 }
 
+type Fields = { role: string; name: string; container: string };
 /** Replay-only mode and a Step whose recorded resolution is missing or no longer holds. */
 export class UiChanged extends Error {
   reason: string; // for people
@@ -192,13 +195,7 @@ export class UiChanged extends Error {
   }
 }
 
-/** Nearest ancestor with a name, e.g. `list "Issues"`; "" at the top. */
-const containerOf = (el: Element) => {
-  for (let p = el.parent; p; p = p.parent) if (p.name) return `${p.role} "${p.name}"`;
-  return "";
-};
-const same = (el: Element, r: Omit<Resolution, "nth" | "of">) =>
-  el.role === r.role && el.name === r.name && containerOf(el) === r.container;
+const same = (el: Element, r: Fields) => el.role === r.role && el.name === r.name && containerOf(el) === r.container;
 
 const NEAR_MAX = 200; // a longer text is kept as its start and a hash, so the cassette stays readable
 
@@ -225,13 +222,7 @@ const VOLATILE: [RegExp, string][] = [
   // A uuid only: a long number ("Invoice 2024001") is often stable test data that tells rows apart.
   [/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi, "‹id›"],
 ];
-/** This run's ID in each form the app may show it (set per Step): volatile too, whatever case or slug it is in. */
-let runId: RegExp | undefined;
-export const stableText = (t: string) =>
-  VOLATILE.reduce(
-    (out, [re, mask]) => out.replace(re, mask),
-    runId ? t.replace(runId, "‹run›") : t, // first: an ID may hold "12h"
-  );
+export const stableText = (t: string) => VOLATILE.reduce((out, [re, mask]) => out.replace(re, mask), t);
 
 /** `el`'s and its ancestors' texts, closest first; `masked`: with run-dependent values replaced (see VOLATILE). */
 const texts = (el: Element, masked = true) => {
@@ -280,9 +271,38 @@ export function resolve(el: Element, among: Element[], hints: string[] = []): Re
   return { ...r, nth: all.indexOf(el), of: all.length };
 }
 
+/** `among` and every ancestor of theirs: where a twin's scope is looked for. */
+const lineage = (among: Element[]) => {
+  const all = new Set<Element>();
+  for (const e of among) for (let p: Element | undefined = e; p; p = p.parent) all.add(p);
+  return [...all];
+};
+const fields = (el: Element) => ({ role: el.role, name: el.name, container: containerOf(el) });
+
+/**
+ * What a check reads (its subject and area), by structure alone: role, name and container, and for twins their
+ * position inside the nearest ancestor those fields find. Never by text: the text is what the check compares, and it
+ * changes with the data and with every run (a date, a generated name, a slug of one). A different count of twins there
+ * is a change the recording cannot answer: the check is resolved again.
+ */
+export function locate(el: Element, among: Element[]): Resolution {
+  const r = fields(el);
+  if (!among.some((e) => e !== el && same(e, r))) return r;
+  const all = lineage(among);
+  let up = el.parent;
+  while (up && all.some((e) => e !== up && same(e, fields(up!)))) up = up.parent;
+  const twins = among.filter((e) => same(e, r) && (!up || within(e, up)));
+  return { ...r, ...(up ? { scope: fields(up) } : {}), nth: twins.indexOf(el), of: twins.length };
+}
+
 /** The element a Resolution names on this Observation, or why none does: exactly one must match all of it. */
 export function find(r: Resolution, among: Element[]): Element | string {
-  const named = among.filter((e) => same(e, r));
+  let named = among.filter((e) => same(e, r));
+  if (r.scope) {
+    const scopes = lineage(among).filter((e) => same(e, r.scope!));
+    if (scopes.length !== 1) return `${describe(r.scope)} matches ${scopes.length} elements now, needs exactly 1`;
+    named = named.filter((e) => within(e, scopes[0]));
+  }
   const anchored = named.filter(
     (e) =>
       r.anchor === undefined ||
@@ -318,13 +338,19 @@ const fail = (r: Resolution, found: number) =>
     ? "; its near is a hashed long text, which changes with any date or time in it: re-record with --record new"
     : "");
 
-export const describe = (t: Target) =>
+export const describe = (t: Target): string =>
   typeof t === "string"
     ? t
-    : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.anchor ? ` for "${t.anchor}"` : ""}${t.near ? ` near "${t.near}"` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
+    : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.anchor ? ` for "${t.anchor}"` : ""}${t.near ? ` near "${t.near}"` : ""}${t.scope ? ` in ${describe(t.scope)}` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
 
 /** A live answer for the cassette: refs (looked up in `among`) become Resolutions. */
-const store = (p: Pick, among: Element[] = [], minimum = 0, hints: string[] = []): Answer =>
+const store = (
+  p: Pick,
+  among: Element[] = [],
+  minimum = 0,
+  hints: string[] = [],
+  at: (el: Element, among: Element[]) => Resolution = (el, among) => resolve(el, among, hints),
+): Answer =>
   [
     ...new Set([
       ...plausible(p, Math.max(DEFAULTS.confidence.answer, confidence(p).answer)),
@@ -334,33 +360,10 @@ const store = (p: Pick, among: Element[] = [], minimum = 0, hints: string[] = []
     ]),
   ].map((k) => {
     const el = among.find((e) => e.ref === k);
-    const target = el ? resolve(el, among, hints) : (goneResolution<Resolution>(k) ?? k);
+    const target = el ? at(el, among) : (goneResolution<Resolution>(k) ?? k);
     // A healed Step can mix replayed answers with live ones using different confidence.
     return p.recordedConfidence ? [target, p.probabilities[k], p.recordedConfidence] : [target, p.probabilities[k]];
   });
-/**
- * A check on unnamed text inside an alert or status reads the alert (issue #91; #90, problem 3): the message is one
- * thing, and the inner node's own text (an echoed name, a slug) is what changes between runs.
- */
-/** What a check's subject may be: a readable element, or an alert a recording bound it to; each once. */
-const subjects = (obs: Observation) => [
-  ...obs.readable,
-  ...obs.areas.filter((a) => !obs.readable.some((e) => e.ref === a.ref)),
-];
-
-function inRegion(a: Assessment, obs: Observation): Assessment {
-  const lift = (ref: string) => {
-    let up = obs.readable.find((e) => e.ref === ref);
-    if (up?.role !== "generic") return ref;
-    while (up?.role === "generic" && !up.name) up = up.parent; // through a component's wrappers
-    return up && (up.role === "alert" || up.role === "status") ? up.ref : ref;
-  };
-  const probabilities: Record<string, number> = {};
-  for (const [k, v] of Object.entries(a.subject.probabilities))
-    probabilities[lift(k)] = (probabilities[lift(k)] ?? 0) + v;
-  return { ...a, subject: { ...a.subject, choice: lift(a.subject.choice), probabilities } };
-}
-
 /** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
 class NotOnPage {
   why: string;
@@ -463,8 +466,6 @@ export class Cassette {
     /** Every answer so far came from the recording. */
     replaying(): boolean;
   } {
-    const id = generated["{{decisium.runId}}"];
-    runId = id ? runIdPattern(id) : undefined;
     const saved = this.mode === "all" ? undefined : this.#file.entries[key];
     const old = saved && !fresh ? mapEntry(saved, (value) => fill(value, generated)) : undefined;
     const now: Entry = { confidence: settings().confidence };
@@ -624,18 +625,18 @@ export class Cassette {
             kind: recorded(e.check.kind),
             negated: recorded(e.check.negated),
             state: recorded(e.check.state),
-            subject: loadRecorded(e.check.subject, subjects(obs)),
+            subject: loadRecorded(e.check.subject, obs.readable),
             area: loadRecorded(e.check.area, obs.areas),
             ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
         });
-        const a = r ?? inRegion(await live.assess(step, obs, judged), obs);
+        const a = r ?? (await live.assess(step, obs, judged));
         now.check = {
           kind: a.kind,
           negated: a.negated,
           state: a.state,
-          subject: store(a.subject, subjects(obs)),
-          area: store(a.area, obs.areas),
+          subject: store(a.subject, obs.readable, 0, [], locate),
+          area: store(a.area, obs.areas, 0, [], locate),
           ...(a.scoped ? { scoped: a.scoped } : {}),
         };
         return a;
