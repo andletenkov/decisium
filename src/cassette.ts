@@ -57,8 +57,9 @@ interface Check {
   /** Absent in entries recorded before issue #81: their kinds folded negation in (`absence`), so they are re-recorded. */
   negated?: Pick;
   state: Pick;
-  subject: Answer;
-  area: Answer;
+  /** Only the answers the verdict read (issue #91); absent: not read, so not needed to replay. */
+  subject?: Answer;
+  area?: Answer;
   /** Absent in entries recorded before issue #92: they replay with the area answer alone, as recorded. */
   scoped?: Pick;
 }
@@ -364,6 +365,8 @@ const store = (
     // A healed Step can mix replayed answers with live ones using different confidence.
     return p.recordedConfidence ? [target, p.probabilities[k], p.recordedConfidence] : [target, p.probabilities[k]];
   });
+const UNREAD: Pick = { choice: "none", probabilities: { none: 1 } };
+
 /** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
 class NotOnPage {
   why: string;
@@ -480,6 +483,7 @@ export class Cassette {
     const positional = new Set<string>(); // acted-on targets only a position tells apart from their twins
     let offered: { elements: Element[]; hints: string[] } | undefined; // the latest Turn's page, for acted()
     let turn = 0;
+    const read = new Set<"subject" | "area">(); // answers a check's verdict read: the only ones written
     const replayOnly = this.mode === "none" && !this.canAsk;
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
     const fail = (why: string, wait = false) => {
@@ -625,8 +629,10 @@ export class Cassette {
             kind: recorded(e.check.kind),
             negated: recorded(e.check.negated),
             state: recorded(e.check.state),
-            subject: loadRecorded(e.check.subject, obs.readable),
-            area: loadRecorded(e.check.area, obs.areas),
+            // An answer the verdict did not read is not recorded; it is never read on replay either (same kind,
+            // negation and Step), so any value stands in for it.
+            subject: e.check.subject ? loadRecorded(e.check.subject, obs.readable) : UNREAD,
+            area: e.check.area ? loadRecorded(e.check.area, obs.areas) : UNREAD,
             ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
         });
@@ -659,6 +665,9 @@ export class Cassette {
         now.recall = store(a);
         return a;
       },
+      read: (answers) => {
+        for (const a of answers) read.add(a);
+      },
       acted: (ref: string) => {
         const el = offered?.elements.find((e) => e.ref === ref);
         const r = el && resolve(el, offered!.elements, offered!.hints);
@@ -677,6 +686,8 @@ export class Cassette {
           return "replayed";
         }
         if (!keep || (saved && !success) || broken === "judged" || replayOnly) return; // replayOnly: a Step that asked Jev nothing ("I press Escape")
+        if (now.check)
+          for (const answer of ["subject", "area"] as const) if (!read.has(answer)) delete now.check[answer];
         const decisions = [...(old?.decisions ?? []), ...(live.decisions?.slice(decisionStart) ?? [])];
         if (decisions.length) now.decisions = decisions;
         this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));

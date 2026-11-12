@@ -217,7 +217,9 @@ export async function runAssertion(
   async function check(obs: Observation): Promise<Verdict> {
     // The same page as last time (a request ended, the page did not change): the same answer, Jev is not asked again.
     if (assessed?.text !== obs.text) assessed = { text: obs.text, a: await decider.assess(said, obs, judged) };
-    return checkVerdict(assessed.a, obs, { values, table, list, exact, recall });
+    const v = checkVerdict(assessed.a, obs, { values, table, list, exact, recall });
+    decider.read?.(v.reads ?? []);
+    return v;
   }
 }
 

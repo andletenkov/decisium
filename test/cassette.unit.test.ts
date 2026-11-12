@@ -167,6 +167,7 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
   assert.deepEqual(await d.drop("x", page, page.elements[0]), sure("e4"));
   assert.deepEqual(await d.dialog("x", page, ["accept", "dismiss"]), sure("accept"));
   assert.deepEqual(await d.assess("x", page, false), assessment);
+  d.read?.(["subject", "area"]); // as the verdict reports it
   assert.deepEqual(await d.recall("x", { Ada: "earlier" }), sure("Ada"));
   assert.equal(d.done(true), "recorded");
   assert.equal(rec.recorded, 1);
@@ -940,6 +941,7 @@ test("cassette: an action target is anchored by the Step's quoted value, a check
     }).live,
   );
   await check.assess(`the "Spring Sale" status should be "Draft"`, obs, false);
+  check.read?.(["subject"]);
   check.done(true);
   const twins = campaigns("same", "same");
   const t = c.step("S: z", scripted({ turn: { done: 0, target: sure("e4"), action: sure("click") } }).live);

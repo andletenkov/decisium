@@ -100,7 +100,9 @@ const weakGate = (what: string, pick: Pick): string[] =>
  * yet, a list still loading), so the runner retries it and reports UNVERIFIABLE at its deadline.
  */
 export type Outcome = StepOutcome | "PENDING";
-type Reading = { outcome: Outcome; reason?: string; inapplicable?: true; marginal?: string[] };
+/** The answers a verdict read (issue #91): a recording keeps only these, so replay depends on nothing else. */
+export type Read = "subject" | "area";
+type Reading = { outcome: Outcome; reason?: string; inapplicable?: true; marginal?: string[]; reads?: Read[] };
 
 /**
  * What one reading's evidence establishes about its condition: a truth value, with the reason a check expecting the
@@ -184,6 +186,22 @@ function contains(values: string[], scope: Element | undefined, obs: Observation
 }
 
 /**
+ * Where the check looks, as one distribution (issue #91): whether its words name an area (`scoped`) and which area
+ * Jev reads them as are two answers about one thing. "No area" is the whole page; "an area" spreads as the area answer
+ * does. A recording from before the question has the area answer alone.
+ */
+function whereToLook(a: Assessment): Pick {
+  if (!a.scoped) return a.area;
+  const none = a.scoped.probabilities.no ?? 0;
+  const some = 1 - none;
+  const probabilities: Record<string, number> = {};
+  for (const [k, p] of Object.entries(a.area.probabilities)) probabilities[k] = p * some;
+  probabilities[AREA_PAGE] = (probabilities[AREA_PAGE] ?? 0) + none;
+  const choice = Object.entries(probabilities).sort((x, y) => y[1] - x[1])[0][0];
+  return { ...a.area, choice, probabilities };
+}
+
+/**
  * Each plausible area the check names, evaluated by `inScope` (undefined: the page). As with kinds, every plausible
  * area is evaluated and they must agree. An area not on this screen holds no evidence yet: PENDING, never a truth value.
  */
@@ -194,18 +212,9 @@ function inAreas(
   what: string,
   inScope: (scope: Element | undefined) => Reading,
 ): Reading {
-  // Words that surely name no area (`"Saved" should appear`) read the whole page: where Jev would look on this
-  // screen does not matter then (issue #92). Any doubt, or a recording from before the question: the area answer.
-  if (a.scoped?.choice === "no" && gate(a.scoped)) {
-    log(`  Area: page (the check names none: ${fmt(a.scoped)})`);
-    return agreement(
-      [inScope(undefined)],
-      "" /* one reading never disagrees */,
-      weakMass("names no area", a.scoped, ["no"]),
-    );
-  }
-  log(`  Area: ${fmt(a.area)}`);
-  const areas = plausible(a.area);
+  const area = whereToLook(a);
+  log(`  Area: ${fmt(area)}`);
+  const areas = plausible(area);
   const readings: Reading[] = [];
   for (const ref of areas) {
     if (ref === AREA_PAGE) readings.push(inScope(undefined));
@@ -214,12 +223,19 @@ function inAreas(
     else {
       const el = obs.areas.find((e) => e.ref === ref);
       if (!el)
-        return { outcome: "ELEMENT_NOT_FOUND", reason: `Jev chose an area that is no longer on the page (${ref})` };
+        return {
+          outcome: "ELEMENT_NOT_FOUND",
+          reason: `Jev chose an area that is no longer on the page (${ref})`,
+          reads: ["area"],
+        };
       readings.push(inScope(el));
     }
   }
   // Reversed: when the areas agree, the reason names the last one, as reports always have.
-  return agreement(readings.reverse(), areaDisagreement(a, obs), weakMass("area", a.area, areas, obs));
+  return {
+    ...agreement(readings.reverse(), areaDisagreement(a, obs), weakMass("area", area, areas, obs)),
+    reads: ["area"],
+  };
 }
 
 /** Pass/fail for one kind of check, decided by code from the elements Jev identified; `negated`: it should not be so. */
@@ -289,7 +305,11 @@ function bySubject(
   const readings = all.filter((r) => !r.inapplicable);
   // No subject applies: unchanged from a single reading. A value check on a label stays a final UNVERIFIABLE, so a
   // plausible presence reading of the same check cannot pass on the label's text.
-  if (!readings.length) return what === "element" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0];
+  if (!readings.length)
+    return {
+      ...(what === "element" ? { outcome: all[0].outcome, reason: all[0].reason } : all[0]),
+      reads: ["subject"],
+    };
   // A subject that cannot be read but only wraps one that can (a button "Model" holding "mock-model") is the same
   // answer: its confidence counts for the reading.
   const readable = subjects.filter((_, i) => !all[i].inapplicable);
@@ -298,11 +318,14 @@ function bySubject(
     const el = element(ref);
     return all[i].inapplicable && el && readable.some((r) => element(r) && sameContent(el, element(r)!));
   });
-  return agreement(
-    readings,
-    `Jev is unsure which ${what} the check is about, and they give different answers: ${named(a.subject, obs)}`,
-    [...weakMass("subject", a.subject, [...readable, ...wrapping], obs), ...marginal],
-  );
+  return {
+    ...agreement(
+      readings,
+      `Jev is unsure which ${what} the check is about, and they give different answers: ${named(a.subject, obs)}`,
+      [...weakMass("subject", a.subject, [...readable, ...wrapping], obs), ...marginal],
+    ),
+    reads: ["subject"],
+  };
 }
 
 const TABLES = new Set(["table", "grid", "treegrid"]);
@@ -485,9 +508,10 @@ function check(
     ...(kind === "rows" ? matchRows(a, obs, table!, exact, log) : evaluate(kind, negated, a, obs, values, log)),
   }));
   const applicable = all.filter((r) => !r.inapplicable);
-  if (!applicable.length) return { outcome: "UNVERIFIABLE", reason: all.map((r) => r.reason).join("; ") };
+  const reads = [...new Set(all.flatMap((r) => r.reads ?? []))];
+  if (!applicable.length) return { outcome: "UNVERIFIABLE", reason: all.map((r) => r.reason).join("; "), reads };
   // Every plausible kind counts: one that cannot decide (PENDING, AMBIGUOUS) is not outvoted by one that passed.
-  return agreement(
+  const result = agreement(
     applicable,
     `Jev could not tell what kind of check this is, and the readings disagree: ${applicable.map((r) => `as a ${r.kind} check it is ${r.outcome}${r.reason ? ` (${r.reason})` : ""}`).join("; ")}`,
     [
@@ -501,4 +525,5 @@ function check(
       ...(kinds.some((k) => k !== "fuzzy" && k !== "state") ? weakGate("negation", a.negated) : []),
     ],
   );
+  return { ...result, reads };
 }

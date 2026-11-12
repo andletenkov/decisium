@@ -241,6 +241,8 @@ export interface Decider {
   intent?(step: string, check: boolean): Promise<Intent>;
   /** Told by the runner, not a question: the action on this Turn's target `ref` was performed. */
   acted?(ref: string): void;
+  /** Told by the runner, not a question: the check's verdict read these answers (check.ts Read). */
+  read?(answers: ("subject" | "area")[]): void;
 }
 
 /**
