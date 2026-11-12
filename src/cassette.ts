@@ -57,6 +57,8 @@ interface Check {
   state: Pick;
   subject: Answer;
   area: Answer;
+  /** Absent in entries recorded before issue #92: they replay with the area answer alone, as recorded. */
+  scoped?: Pick;
 }
 interface Entry {
   decisions?: import("./decision-provider.ts").DecisionMetadata[];
@@ -593,6 +595,7 @@ export class Cassette {
             state: recorded(e.check.state),
             subject: loadRecorded(e.check.subject, obs.readable),
             area: loadRecorded(e.check.area, obs.areas),
+            ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
         });
         const a = r ?? (await live.assess(step, obs, judged));
@@ -602,6 +605,7 @@ export class Cassette {
           state: a.state,
           subject: store(a.subject, obs.readable),
           area: store(a.area, obs.areas),
+          ...(a.scoped ? { scoped: a.scoped } : {}),
         };
         return a;
       },

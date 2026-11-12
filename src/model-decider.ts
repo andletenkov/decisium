@@ -13,6 +13,7 @@ import {
   AREA_PAGE,
   ASSERTION_KINDS,
   NEGATED,
+  SCOPED,
   capabilities,
   describeAction,
   PAGE,
@@ -409,6 +410,8 @@ export class ModelDecider implements Decider {
           "Read only the words of `check`, not `ui`: do they say that a text or value should NOT be shown?",
           NEGATED,
         ),
+        // The words alone, like negation: an area answer spread over the screen must not scope a check that names none.
+        scoped: choice("Read only the words of `check`, not `ui`: do they name a part of the page to look in?", SCOPED),
         subject: choice(subjectQ, subjects),
         state: choice("Which control state does `check` require?", STATES),
         area: choice(areaQ, areas),
@@ -422,6 +425,7 @@ export class ModelDecider implements Decider {
       negated: a.negated,
       subject: a.subject,
       area: a.area,
+      scoped: a.scoped,
       state: a.state,
       judged: judged ? a.satisfied?.noul : undefined,
     };

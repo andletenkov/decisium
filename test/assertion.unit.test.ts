@@ -238,7 +238,14 @@ test("Jev: a check's request asks for its meaning and references, a verdict only
     const jev = new JevDecider();
     const obs = parseSnapshot("- paragraph [ref=e1]: Status: Not Scheduled");
     assert.equal((await jev.assess('the status should be "Scheduled"', obs, false)).judged, undefined);
-    assert.deepEqual(Object.keys(requests.at(-1)!.questions), ["kind", "negated", "subject", "state", "area"]);
+    assert.deepEqual(Object.keys(requests.at(-1)!.questions), [
+      "kind",
+      "negated",
+      "scoped",
+      "subject",
+      "state",
+      "area",
+    ]);
     assert.equal((await jev.assess("the form looks complete", obs, true)).judged, 0.9);
     assert.ok("satisfied" in requests.at(-1)!.questions);
   } finally {

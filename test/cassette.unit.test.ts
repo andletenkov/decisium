@@ -150,6 +150,7 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
     state: sure("disabled"),
     subject: sure("e4"),
     area: sure("e3"),
+    scoped: sure("yes"),
   };
   const { live, calls } = scripted({
     turn,
@@ -190,6 +191,7 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
       state: sure("disabled"),
       subject: [[{ role: "listitem", name: "One", container: `list "Items"` }, 1]],
       area: [[{ role: "list", name: "Items", container: "" }, 1]],
+      scoped: sure("yes"),
     },
     recall: [["Ada", 1]],
   });
@@ -210,6 +212,8 @@ test("cassette: a recorded Step stores every answer as Resolutions and replays t
   const a = await r.assess("x", page, false);
   assert.equal(a.subject.choice, "e4");
   assert.equal(a.area.choice, "e3");
+  assert.equal(a.scoped?.choice, "yes");
+  assert.deepEqual(a.scoped?.recordedConfidence, DEFAULTS.confidence);
   assert.equal(a.kind.choice, "value");
   assert.deepEqual(a.kind.recordedConfidence, DEFAULTS.confidence);
   assert.equal((await r.recall("x", { Ada: "earlier" })).choice, "Ada");

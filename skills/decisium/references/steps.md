@@ -220,6 +220,7 @@ Presence finds the text literally: `"Scheduled" should appear` passes on "Not Sc
 
 `"Winter Sale" should appear in the calendar`, `"Spring Sale" should not appear in the campaign list`. Only text inside
 the named area counts; the same name in a toast elsewhere does not. The area must be on the screen: open it first.
+A check whose words name no area reads the whole page, whatever is on the screen; no need to add "anywhere on the page".
 An area not on the screen gives no evidence either way, so both checks end `UNVERIFIABLE` there. Name the area as the
 page shows it (`the notes list`, not `the notes`): if Jev thinks the area may be missing, the check cannot pass.
 
