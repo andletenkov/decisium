@@ -241,9 +241,12 @@ export interface Decider {
  */
 export class NotYet extends Error {
   final: Error;
-  constructor(final: Error) {
+  /** Stop waiting: the next ask resolves live instead of throwing `final` (a stale replay that Jev can heal). */
+  giveUp?: () => void;
+  constructor(final: Error, giveUp?: () => void) {
     super(final.message);
     this.final = final;
+    this.giveUp = giveUp;
   }
 }
 

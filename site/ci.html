@@ -46,6 +46,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with: { name: decisium-runs, path: runs/ }
 </code></pre>
+<p>CI with no backend: tag the Scenarios <code>@replay-network:&lt;glob&gt;</code> and commit their recordings, so <code>--record none</code> serves
+the backend&#39;s answers too (Network replay).</p>
 <p><code>runs/</code> holds the screenshots, Playwright trace and <code>report.md</code> of every failed scenario.</p>
 <h2 id="one-set-of-features-several-environments">One set of features, several environments</h2>
 <p><code>--url</code> (or <code>DECISIUM_URL</code>) overrides <code>@url:</code>, so features written without <code>@url:</code> run against any environment:</p>

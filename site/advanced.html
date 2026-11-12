@@ -77,8 +77,57 @@ Scenario: The assistant answers
   When I ask the assistant &quot;What is my balance?&quot;
   Then the answer should mention &quot;balance&quot;
 </code></pre>
-<p>It follows <code>--record</code> like the cassette and is saved to <code>&lt;feature&gt;.network/&lt;scenario&gt;.har</code>; commit it. WebSockets are
-not recorded.</p>
+<p>The cassette records what Jev decided; network replay records what the backend answered. They are separate files and
+separate choices: without the tag every request goes to the real backend, in replay too.</p>
+<h3 id="what-is-recorded">What is recorded</h3>
+<ul>
+<li>Only requests whose URL matches the glob (Playwright&#39;s URL glob: <code>**/api/**</code>, <code>https://api.example.com/**</code>). Pages,
+scripts, images and every other request go to the network as usual.</li>
+<li>The tag goes on a Scenario, or on the Feature for all its Scenarios. One glob per tag.</li>
+<li>One recording per Scenario: <code>&lt;feature&gt;.network/&lt;scenario&gt;.har</code>, response bodies in files beside it. Commit the
+folder with the cassette. A Scenario Outline&#39;s rows share one name, so they share one recording (the last row&#39;s).</li>
+<li>WebSockets and server-sent events are not recorded.</li>
+</ul>
+<h3 id="how---record-treats-it">How <code>--record</code> treats it</h3>
+<table>
+<thead>
+<tr>
+<th><code>--record</code></th>
+<th>Matching requests</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>new</code> (default)</td>
+<td>Replayed if the Scenario has a recording, otherwise sent to the backend and recorded.</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>Replayed. A Scenario with no recording fails to start.</td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td>Sent to the backend and recorded again.</td>
+</tr>
+</tbody></table>
+<p>A cassette Step that heals (see CI) still gets its backend answers from the recording: only Jev is asked
+again, never the backend.</p>
+<h3 id="how-a-request-is-matched-on-replay">How a request is matched on replay</h3>
+<p>By method and URL, and by the order of calls: the third <code>GET /api/campaigns</code> gets the third recorded answer. The
+request body is ignored, so a POST with a timestamp or a generated id in it still matches. The recorded status, headers
+and body are served as they were.</p>
+<p>A matching request that the recording does not have (a new endpoint, one call more than recorded) is never sent to the
+real backend. It is aborted, and the Step that made it fails with:</p>
+<pre><code class="language-text">network not in recording: GET https://app.example.com/api/campaigns?page=2 (re-record with --record all)
+</code></pre>
+<p>Re-record the Scenario with <code>--record all</code> and commit the new <code>.har</code>.</p>
+<h3 id="when-to-use-it">When to use it</h3>
+<ul>
+<li>The backend is slow or costly per call (an LLM, a payment sandbox).</li>
+<li>Its answers change between runs (live prices, a feed), so a recording keeps the checks stable.</li>
+<li>CI has no backend: record locally against a running one, replay in CI with <code>--record none</code>.</li>
+</ul>
+<p>Do not use it to test the backend itself: a replayed Scenario never reaches it. To mock one answer in code instead, use
+a <a href="#client-steps">client step</a> with Playwright&#39;s <code>context.route</code>.</p>
 <h2 id="running-with-cucumber-js">Running with cucumber-js</h2>
 <p><code>decisium run</code> already runs inside cucumber-js. To run Decisium Steps from plain <code>npx cucumber-js</code> (per-project
 install only):</p>
@@ -96,7 +145,7 @@ features and repairs failing Steps.</p>
 </code></pre>
 <p>It also ships in the package: <code>$(npm root -g)/decisium/skills/decisium/SKILL.md</code>.</p>
 <div class="pager"><a class="prev" href="troubleshooting.html"><span>Previous</span>Troubleshooting</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#browser-context">Browser context</a><a class="l2" href="#client-steps">Client steps</a><a class="l2" href="#states">States</a><a class="l2" href="#network-replay">Network replay</a><a class="l2" href="#running-with-cucumber-js">Running with cucumber-js</a><a class="l2" href="#agent-skill">Agent skill</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#browser-context">Browser context</a><a class="l2" href="#client-steps">Client steps</a><a class="l2" href="#states">States</a><a class="l2" href="#network-replay">Network replay</a><a class="l3" href="#what-is-recorded">What is recorded</a><a class="l3" href="#how---record-treats-it">How --record treats it</a><a class="l3" href="#how-a-request-is-matched-on-replay">How a request is matched on replay</a><a class="l3" href="#when-to-use-it">When to use it</a><a class="l2" href="#running-with-cucumber-js">Running with cucumber-js</a><a class="l2" href="#agent-skill">Agent skill</a></aside>
 </div>
 </body>
 </html>

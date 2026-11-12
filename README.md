@@ -32,7 +32,8 @@ Feature: Checkout
 
 - **No selectors**, no page objects, no step definitions.
 - **Record and replay.** CI replays recorded Steps with zero model calls. A recording is a cache: when the UI changes,
-  a Step is resolved again (with a key) instead of failing.
+  a Step is resolved again (with a key) instead of failing. Backend answers can be recorded and replayed too
+  ([network replay](https://andletenkov.github.io/decisium/advanced.html#network-replay)).
 - **Code decides pass or fail**, not the model.
 - **Built on cucumber-js and Playwright.** Your config, formatters and step definitions keep working.
 

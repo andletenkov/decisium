@@ -156,6 +156,9 @@ console.log(`\nReplay overhead over Playwright: ${(overhead / 1000).toFixed(2)} 
 console.log(
   `Replay / Playwright (scenario time): ${ratio.toFixed(2)}x, threshold ${THRESHOLD}x: ${ratio <= THRESHOLD ? "OK" : "OVER"}`,
 );
+// A replay that asks Jev measures Jev, not replay: a page still loading must be waited for, not healed (issue #90).
+const calls = replay.reduce((n, s) => n + (s.jevCalls ?? 0), 0);
+console.log(`Jev calls during replay: ${calls}, expected 0: ${calls === 0 ? "OK" : "FAIL"}`);
 if (args.includes("--json"))
-  writeFileSync(opt("--json", "replay-bench.json"), JSON.stringify({ ratio, THRESHOLD, results }, null, 2));
-process.exit(ratio <= THRESHOLD ? 0 : 1);
+  writeFileSync(opt("--json", "replay-bench.json"), JSON.stringify({ ratio, THRESHOLD, calls, results }, null, 2));
+process.exit(ratio <= THRESHOLD && calls === 0 ? 0 : 1);

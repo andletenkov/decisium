@@ -179,6 +179,30 @@ test("a Step that does not reach DONE or PASSED never writes the cassette (issue
   assert.equal(readFileSync(path, "utf8"), before);
 });
 
+test("replay waits for a recorded element of a loading page before it asks Jev, like a Playwright spec", async () => {
+  const { NotYet } = await import("../src/decision.ts");
+  const path = tmp();
+  const page = parseSnapshot(`- button "Save" [ref=e1]`);
+  const calls: string[] = [];
+  const live = {
+    turn: async () => (calls.push("turn"), { done: 0, target: sure("e1"), action: sure("click") }),
+  } as unknown as Decider;
+  const rec = new Cassette(path, "m", "new");
+  const w = rec.step("S: x", live);
+  await w.turn("save", page, []);
+  w.done(true);
+  rec.save();
+  const loading = parseSnapshot(`- progressbar [ref=e1]`);
+  const d = new Cassette(path, "m", "none", undefined, true).step("S: x", live);
+  const err = await d.turn("save", loading, []).catch((e: unknown) => e);
+  assert.ok(err instanceof NotYet, "not on the page yet: wait, no Jev call");
+  assert.deepEqual(calls, ["turn"]);
+  err.giveUp!(); // the deadline passed
+  assert.equal((await d.turn("save", loading, [])).target.choice, "e1");
+  assert.deepEqual(calls, ["turn", "turn"]);
+  assert.equal(d.done(true), "healed");
+});
+
 test("replay-only without a key cannot ask again: a stale recording fails and says how to fix it", async () => {
   const path = tmp();
   await check(

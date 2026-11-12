@@ -450,7 +450,9 @@ export class Cassette {
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
     const fail = (why: string, wait = false) => {
       const stale = `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`;
-      if (replayOnly && old && wait) throw new NotYet(new UiChanged(stale));
+      // Replay waits like a Playwright spec for the element of a loading page; Jev, if any, resolves it at the deadline.
+      if (this.mode === "none" && old && !broken && wait)
+        throw new NotYet(new UiChanged(stale), this.canAsk ? () => fail(why) : undefined);
       if (replayOnly)
         throw new UiChanged(
           old

@@ -23,6 +23,9 @@ jobs:
         with: { name: decisium-runs, path: runs/ }
 ```
 
+CI with no backend: tag the Scenarios `@replay-network:<glob>` and commit their recordings, so `--record none` serves
+the backend's answers too ([Network replay](advanced.html#network-replay)).
+
 `runs/` holds the screenshots, Playwright trace and `report.md` of every failed scenario.
 
 ## One set of features, several environments

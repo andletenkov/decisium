@@ -68,8 +68,11 @@ async function settled<T>(
     } catch (err) {
       if (!(err instanceof NotYet)) throw err;
       const left = deadline - Date.now();
-      if (left <= 0 || !(await rt.waitForChange(obs.text, left))) throw err.final;
-      obs = await rt.observe();
+      if (left > 0 && (await rt.waitForChange(obs.text, left))) obs = await rt.observe();
+      else if (err.giveUp) {
+        err.giveUp();
+        return [obs, await ask(obs)];
+      } else throw err.final;
     }
   }
 }
