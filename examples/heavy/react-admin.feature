@@ -13,7 +13,8 @@ Feature: react-admin demo, an admin panel with a menu, data grids, filters and b
 
   Scenario: Filter customers by a search
     When I open "Customers" from the menu
-    And I search the customers for "zzzz-no-such-customer" and submit the search
+    # The list filters as you type: typing is the whole action.
+    And I search the customers for "zzzz-no-such-customer"
     Then "No Customers found" should appear
 
   Scenario: Open a product category

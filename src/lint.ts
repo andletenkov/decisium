@@ -32,7 +32,7 @@ export function warnings(
   if (step.kind !== "assertion") {
     if (/\bsearch(es)? (for|the)\b/i.test(t) && !/\b(open|opens|submit|submits)\b/i.test(t)) {
       out.push(
-        `"search for" runs a search but does not open a result, and Jev may count typing alone as done; say "I open the "X" ... through the search", or add "and submit the search" (${SEE}#actions)`,
+        `"search for" runs a search but does not open a result, and a Step is done once every action it names has run and visibly changed the page: if this page shows results only on submit, add "and submit the search"; if they show as you type, typing is enough; to open a result, say "I open the "X" ... through the search" (${SEE}#rules)`,
       );
     }
     if (/^(I\s+)?(un)?(check|tick)\b/i.test(t) && /\b(and|then)\b|,/i.test(t))

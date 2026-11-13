@@ -9,7 +9,8 @@ Feature: DemoQA, widget-heavy pages with ads, a side menu and a paginated table
 
   @url:https://demoqa.com/webtables
   Scenario: Search the web table
-    When I search the table for "Cantrell" and submit the search
+    # The table filters as you type: typing is the whole action.
+    When I search the table for "Cantrell"
     Then "alden@example.com" should appear in the table
     And "cierra@example.com" should not appear in the table
 
