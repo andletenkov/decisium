@@ -13,8 +13,7 @@ Feature: Hacker News, a page of 30 stories with ~10 small links each
     When I open the comments of the first story
     Then the URL should contain "item?id="
 
-  Scenario: Login with wrong credentials is rejected
-    When I open "login"
-    # A made-up account on purpose: the check is the rejection.
-    And I try to log in as "decisium-nobody" with password "wrong-password"
-    Then "Bad login." should appear
+  Scenario: Open the profile of a story's author
+    When I open the profile of the first story's author
+    Then the URL should contain "user?id="
+    And "karma:" should appear
