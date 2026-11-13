@@ -269,6 +269,11 @@ function evaluate(
         outcome: "UNVERIFIABLE",
         reason: 'the check quotes no text to look for (e.g. "Winter Sale" should appear)',
       };
+    // Presence reads the page; a check about the URL, a dialog, a download or the clipboard is not about the page, so
+    // this reading carries no evidence and the value reading decides ("the URL should contain" read both ways).
+    const subject = gate(a.subject) ? obs.readable.find((e) => e.ref === a.subject.choice) : undefined;
+    if (subject?.offPage)
+      return { outcome: "UNVERIFIABLE", reason: `${subject.line} is not on the page`, inapplicable: true };
     return inAreas(a, obs, log, "area", (scope) => meets(contains(values, scope, obs, expected), expected));
   }
 

@@ -58,6 +58,8 @@ export interface Element {
   parent?: Element; // nearest ref'd ancestor
   cells?: Element[]; // a table row's cells in order, empty ones included
   url?: string; // a link's target: equivalent links are grouped (task 0065)
+  /** Not on the page: the URL, title, tabs, a browser dialog, a download, the clipboard. Not in `pageText` or an area. */
+  offPage?: true;
 }
 
 export interface Observation {
@@ -316,6 +318,7 @@ export function withPage(obs: Observation, url: string, title: string, tabs?: st
       options: [],
       text: value,
       line: `${role} value="${clip(value)}"`,
+      offPage: true,
     }),
   );
   // The page as a target (task 0065): its line is what Jev compares "scroll up the Chat" with the Chat panel against.
@@ -343,6 +346,7 @@ export function withDialog(obs: Observation, dialog?: Dialog): Observation {
     options: [],
     text: message,
     line: `${type} "browser dialog" value="${clip(message)}" [${state}]`,
+    offPage: true,
   };
   const top = cap(`- ${type} "browser dialog" [${state}]: ${message}`);
   return { ...obs, dialog, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
@@ -375,6 +379,7 @@ export function withDownload(obs: Observation, download?: Download): Observation
     options: [],
     text: value,
     line: `download "downloaded file" value="${clip(value.replace(/\s+/g, " "))}" ${state}`,
+    offPage: true,
   };
   const top = cap(`- download "downloaded file" ${state}: ${value.replace(/\s+/g, " ")}`);
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };
@@ -394,6 +399,7 @@ export function withClipboard(obs: Observation, text?: string): Observation {
     options: [],
     text,
     line: `clipboard "copied text" value="${clip(text.replace(/\s+/g, " "))}"`,
+    offPage: true,
   };
   const top = cap(`- clipboard "copied text": ${text.replace(/\s+/g, " ")}`);
   return { ...obs, text: obs.text ? `${top}\n${obs.text}` : top, readable: [el, ...obs.readable] };

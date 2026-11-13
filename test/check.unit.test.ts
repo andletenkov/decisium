@@ -35,6 +35,18 @@ test("Check: plausible kinds must agree, and agreeing kinds carry the pass toget
   );
 });
 
+test("Check: a check about something not on the page (the URL) is not read as text on the page", () => {
+  // Hacker News "the URL should contain "/newest"": value 0.48 / presence 0.5, the URL picked at 100%.
+  const obs = withPage(parseSnapshot("- link [ref=e1]: new"), "https://news.ycombinator.com/newest", "Hacker News");
+  const kind = pick({ value: 0.48, presence: 0.5, fuzzy: 0.02 });
+  const url = (v: string) => verdict(assessment({ kind, subject: pick({ url: 1 }) }), obs, { values: [v] });
+  assert.equal(url("/newest").outcome, "PASSED");
+  assert.equal(url("/front").outcome, "ASSERTION_FAILED");
+  // Unsure the check is about the URL: presence still counts, and the readings must agree.
+  const unsure = verdict(assessment({ kind, subject: pick({ url: 0.6, e1: 0.4 }) }), obs, { values: ["/newest"] });
+  assert.equal(unsure.outcome, "AMBIGUOUS");
+});
+
 test("Check: a value and a presence check both find the quoted text as whole words (issue #81)", () => {
   const expected = { values: ["Scheduled"] };
   const para = (text: string) => parseSnapshot(`- paragraph [ref=e1]: ${text}`);
