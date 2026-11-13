@@ -12,8 +12,8 @@ works, in any language Jev reads (`# language: de`). `decisium lint` flags the w
 5. **Secrets as `"$NAME"`**, read from the environment or `.env`.
 6. **No CSS or XPath.** When no wording works, write a [client step](advanced.md#client-steps).
 7. **Name the actions the user performs on this page, and only those.** An action Step is done once every action it
-   names has run and visibly changed the page. Name one the page does not have and the Step never finishes; leave out
-   one it needs and the Step ends early.
+   names has run; whether they worked is for the checks after it. Name one the page does not have and the Step never
+   finishes; leave out one it needs and the Step ends early.
 
 ## Actions
 
