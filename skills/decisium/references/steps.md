@@ -57,7 +57,8 @@ one the quote lacks), the Step fails as `AMBIGUOUS` and nothing is clicked. A co
 |---|---|
 | `I enter "Winter Sale" as the campaign name` | Value quoted, field named. |
 | `I set the activation date to "2026-12-01"` | Dates in the format the field takes. |
-| `I search for "Ada" and submit the search` | "and submit" makes typing alone not enough. |
+| `I search for "Ada"` | A search that shows results as you type: typing is the whole action. |
+| `I search for "Ada" and submit the search` | A search that shows results only on submit: name the submit too. A Step is done once every action it names has run, so name only actions this page has. |
 | `I clear the Search field` | Types an empty value. |
 
 After typing, Decisium leaves the field (so on-leave validation runs) and checks that the field holds the value; if it

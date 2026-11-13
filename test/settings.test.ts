@@ -164,8 +164,12 @@ test("settings: CLI precedence and raw parallel reports carry effective settings
   const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("DECISIUM_")));
   try {
     writeFileSync(join(dir, "page.html"), "<button>Save</button>");
+    // Fails on its check, whatever Jev answers: the page never shows "Saved".
     for (const n of [1, 2])
-      writeFileSync(join(dir, `${n}.feature`), `Feature: ${n}\nScenario: ${n}\nWhen I click Save\n`);
+      writeFileSync(
+        join(dir, `${n}.feature`),
+        `Feature: ${n}\nScenario: ${n}\nWhen I click Save\nThen "Saved" should appear\n`,
+      );
     writeFileSync(
       join(dir, "cucumber.mjs"),
       `export default ${JSON.stringify({

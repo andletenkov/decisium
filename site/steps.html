@@ -36,6 +36,9 @@ works, in any language Jev reads (<code># language: de</code>). <code>decisium l
 <li><strong>Say &quot;open&quot; to open.</strong> <code>I search for &quot;Ada&quot;</code> runs a search; it does not open a result.</li>
 <li><strong>Secrets as <code>&quot;$NAME&quot;</code></strong>, read from the environment or <code>.env</code>.</li>
 <li><strong>No CSS or XPath.</strong> When no wording works, write a <a href="advanced.html#client-steps">client step</a>.</li>
+<li><strong>Name the actions the user performs on this page, and only those.</strong> An action Step is done once every action it
+names has run; whether they worked is for the checks after it. Name one the page does not have and the Step never
+finishes; leave out one it needs and the Step ends early.</li>
 </ol>
 <h2 id="actions">Actions</h2>
 <table>
@@ -70,8 +73,8 @@ works, in any language Jev reads (<code># language: de</code>). <code>decisium l
 <td><code>I schedule the campaign</code> · <code>I delete the campaign</code></td>
 </tr>
 <tr>
-<td>Submit a search</td>
-<td><code>I search for &quot;Ada&quot; and submit the search</code></td>
+<td>Search</td>
+<td><code>I search for &quot;Ada&quot;</code> (results as you type) · <code>I search for &quot;Ada&quot; and submit the search</code> (results on submit)</td>
 </tr>
 <tr>
 <td>Try what the app refuses</td>

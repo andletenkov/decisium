@@ -11,6 +11,9 @@ works, in any language Jev reads (`# language: de`). `decisium lint` flags the w
 4. **Say "open" to open.** `I search for "Ada"` runs a search; it does not open a result.
 5. **Secrets as `"$NAME"`**, read from the environment or `.env`.
 6. **No CSS or XPath.** When no wording works, write a [client step](advanced.md#client-steps).
+7. **Name the actions the user performs on this page, and only those.** An action Step is done once every action it
+   names has run; whether they worked is for the checks after it. Name one the page does not have and the Step never
+   finishes; leave out one it needs and the Step ends early.
 
 ## Actions
 
@@ -22,7 +25,7 @@ works, in any language Jev reads (`# language: de`). `decisium lint` flags the w
 | Clear a field | `I clear the Search field` |
 | Select | `I set the activation period to 2 weeks` |
 | Do a task | `I schedule the campaign` · `I delete the campaign` |
-| Submit a search | `I search for "Ada" and submit the search` |
+| Search | `I search for "Ada"` (results as you type) · `I search for "Ada" and submit the search` (results on submit) |
 | Try what the app refuses | `I try to schedule the campaign` |
 | Toggle | `I accept the terms` · `I turn off dark mode` · `I uncheck "Newsletter"` |
 | Press a key | `I press Escape` · `I open the command palette by pressing Ctrl+K` |

@@ -46,6 +46,17 @@ const TAG = / \(test failed\)(?=:|$)/;
 const HINT = /\n\nWhat to do: [\s\S]*$/;
 
 /**
+ * Drops the stack frames: reporters such as Qase's read keywords in the stack, and the message alone is the report.
+ * The stack is empty, not the message: Cucumber parses a frameless non-empty stack as a Firefox one, with a regex that
+ * backtracks for minutes on a long line of quoted names (a STEP_TIMEOUT on Wikipedia hung the run). Empty, it skips
+ * the parse and shows the message.
+ */
+export function frameless(err: Error): Error {
+  err.stack = "";
+  return err;
+}
+
+/**
  * The error message a failing Step throws: starts with the outcome, ends with what to do (Qase shows only this message).
  * `failed` outcomes carry "test failed".
  */

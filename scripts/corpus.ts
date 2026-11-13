@@ -1,11 +1,12 @@
 // Runs every feature in examples/ against the live sites (live Jev, --record all) and writes one report:
 // scenarios passed, step outcomes, and every failure with its reason. Rerun after a fix to measure it.
 // Usage: node scripts/corpus.ts [filter]   (filter: substring of the feature file name)
+// Another folder: CORPUS_DIR=examples/heavy node scripts/corpus.ts
 import { spawn } from "node:child_process";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const DIR = "examples";
+const DIR = process.env.CORPUS_DIR ?? "examples"; // e.g. CORPUS_DIR=examples/heavy
 const PARALLEL = 3; // live sites and the Jev API: keep the load modest
 const files = readdirSync(DIR)
   .filter((f) => f.endsWith(".feature") && f.includes(process.argv[2] ?? ""))

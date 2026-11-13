@@ -10,7 +10,7 @@ Feature: GitHub, a real site (public pages, no login)
   Scenario: Browse issues and search them
     When I open the Issues tab
     Then the "Issues" tab should be selected
-    When I search the issues for "screenshot"
+    When I search the issues for "screenshot" and submit the search
     Then "screenshot" should appear in the issue list
 
   Scenario: Read a file from the repository

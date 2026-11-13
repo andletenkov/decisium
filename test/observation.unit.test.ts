@@ -302,6 +302,7 @@ const pseudo = (ref: string, role: string, name: string, value: string, state: s
   options: [],
   text: value,
   line,
+  offPage: true,
 });
 
 test("withPage: url, title and tabs (only when given) read on top, a page target line, not in pageText", () => {
