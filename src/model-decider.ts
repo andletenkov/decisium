@@ -228,7 +228,13 @@ export class ModelDecider implements Decider {
           ? noul(
               "Given `actions_taken_for_step`, has the user performed every action `step` asks for, regardless of whether the app accepted it?",
             )
-          : noul("Given `actions_taken_for_step`, does `ui` show that `step` has been fully accomplished?"),
+          : // What is left of the Step and whether its actions took effect, not how the page looks: a stale error beside
+            // filled fields kept "shows accomplished" at 0.44 (SauceDemo checkout). On 334 labelled corpus Turns at the
+            // 0.8 bar: 109/134 done Turns recognised instead of 79, false done 2/199 instead of 1. "Visible effect" keeps
+            // a click that changed nothing from counting as done (settings test: a Save button that does nothing).
+            noul(
+              "Given `actions_taken_for_step`, has every action `step` asks for been performed and had a visible effect, so that nothing of `step` is left to do?",
+            ),
         target: choice(question, targets),
         // Same request as target: one call per Turn (task 0065: as accurate as asking after the target, half the time).
         action: choice(
