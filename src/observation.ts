@@ -80,7 +80,7 @@ export interface Dialog {
   state: "open" | "accepted" | "dismissed";
 }
 
-const ACTIONABLE = new Set([
+export const ACTIONABLE = new Set([
   "button",
   "link",
   "textbox",

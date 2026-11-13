@@ -97,6 +97,29 @@ test("Browser: editable comboboxes (search with suggestions) are typed into; but
   }
 });
 
+test("Browser: a control named by its content keeps the name the ai snapshot drops (react-admin menu)", async () => {
+  const b = await Browser.open(
+    `data:text/html,<nav role=menu><a role=menuitem tabindex=0 href="/c"><svg aria-hidden=true></svg><p>Customers</p></a>` +
+      `<a role=menuitem tabindex=0 href="/o"><p>Orders</p></a></nav><table><tr><td><b>Ada</b> Lovelace</td></tr></table>` +
+      `<button onclick="this.textContent='OK clicked'">OK</button>`,
+  );
+  try {
+    const obs = await b.observe();
+    assert.deepEqual(
+      obs.elements.filter((e) => e.role === "menuitem").map((e) => e.name),
+      ["Customers", "Orders"],
+    );
+    assert.match(obs.text, /menuitem "Customers"/);
+    assert.match(obs.text, /- row \[ref=/); // not a control: its text stays in its children
+    // The refs still resolve after the per-ref name reads (an element snapshot made them stale once).
+    const ok = obs.elements.find((e) => e.name === "OK")!;
+    await b.execute({ verb: "CLICK", ref: ok.ref });
+    assert.equal((await b.observe()).text.includes('button "OK clicked"'), true);
+  } finally {
+    await b.close();
+  }
+});
+
 test("element descriptions shorten long values; checks still compare the full value", () => {
   const long = `name playwright-internal ${"version 1 ".repeat(500)}`.trim();
   const [el] = parseSnapshot(`- textbox "file content" [ref=e1]: ${long}`).readable;

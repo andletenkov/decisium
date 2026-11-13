@@ -13,6 +13,7 @@ import {
 } from "playwright";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
 import {
+  ACTIONABLE,
   parseSnapshot,
   renderSnapshot,
   withDialog,
@@ -613,7 +614,7 @@ export class Browser {
     this.print = print;
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
-    const snapshot = renderSnapshot((await this.page.ariaSnapshotJSON({ mode: "ai" })) as AriaNode[]);
+    const snapshot = renderSnapshot(await this.named());
     const combobox = new Set([...snapshot.matchAll(/- combobox\b[^\n]*\[ref=(\w+)\]/g)].map((m) => m[1]));
     const secret = refs("secret");
     const editable = new Set([...refs("editable")].filter((ref) => combobox.has(ref)));
@@ -644,6 +645,44 @@ export class Browser {
       pageTitle,
       where,
     ));
+  }
+
+  /**
+   * The page snapshot, with the accessible names the "ai" mode dropped given back to controls. Playwright's
+   * `removeRedundantNames` removes a name computed from content whenever that content shows among the children, so a
+   * react-admin menu item came out as a nameless `menuitem` over a `paragraph: Customers`: Jev could pick it, but no
+   * Step could name it. Exact names, read per ref in "default" mode (which keeps them, but has no refs). Controls
+   * only: rows and cells would repeat their whole text, which is why Playwright drops it. An element snapshot makes
+   * the refs of the page snapshot stop resolving, so the page is snapshotted again after the reads: it reuses the refs.
+   */
+  private async named(): Promise<AriaNode[]> {
+    const snap = async () => (await this.page.ariaSnapshotJSON({ mode: "ai" })) as AriaNode[];
+    const nameless = (nodes: AriaNode[]): Exclude<AriaNode, string>[] =>
+      nodes.flatMap((n) =>
+        typeof n === "string"
+          ? []
+          : [
+              ...(n.ref && !n.name && n.children?.length && ACTIONABLE.has(n.role) ? [n] : []),
+              ...nameless(n.children ?? []),
+            ],
+      );
+    const page = await snap();
+    const first = nameless(page);
+    if (!first.length) return page;
+    const names = new Map<string, string>();
+    await Promise.all(
+      first.map(async ({ ref }) => {
+        const line = await this.page
+          .locator(`aria-ref=${ref}`)
+          .ariaSnapshot({ mode: "default", depth: 0, timeout: 1000 })
+          .catch(() => ""); // gone mid-read: stays nameless this time
+        const name = /^- \S+ "((?:[^"\\]|\\.)*)"/.exec(line)?.[1];
+        if (name) names.set(ref!, name.replace(/\\(.)/g, "$1"));
+      }),
+    );
+    const nodes = await snap();
+    for (const n of nameless(nodes)) n.name = names.get(n.ref!) ?? n.name;
+    return nodes;
   }
 
   /** Collapsed controls (`aria-expanded=false` + `aria-controls`, closed `<details>`) by name -> hidden entries they hold. */
