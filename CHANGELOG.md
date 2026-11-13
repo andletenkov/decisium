@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.2](https://github.com/andletenkov/decisium/compare/v0.5.1...v0.5.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* install Chromium before mutation tests ([#99](https://github.com/andletenkov/decisium/issues/99)) ([927aed9](https://github.com/andletenkov/decisium/commit/927aed9abf6e6ffab4cab31d3acf387871d4b523))
+* Jev observation and done-judgement fixes from a dense-site corpus ([#97](https://github.com/andletenkov/decisium/issues/97)) ([6319b93](https://github.com/andletenkov/decisium/commit/6319b93f657030577e0ce184fad5a3f5fc84653a))
+
 ## [0.5.1](https://github.com/andletenkov/decisium/compare/v0.5.0...v0.5.1) (2026-11-12)
 
 
