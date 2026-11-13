@@ -1213,7 +1213,7 @@ function determineTestStatus(error: Error, _original: "failed"): "failed" | "inv
 }
 
 test("failed vs invalid: every outcome message starts with its outcome and Qase's status rule classifies it as decided", async () => {
-  const { HINTS, outcomeMessage, parseOutcome } = await import("../src/report.ts");
+  const { frameless, HINTS, outcomeMessage, parseOutcome } = await import("../src/report.ts");
   // Reasons as the runner writes them, including words the reporter treats as assertion or infrastructure hints.
   const reasons = [
     "",
@@ -1237,14 +1237,29 @@ test("failed vs invalid: every outcome message starts with its outcome and Qase'
     for (const reason of reasons) {
       const msg = outcomeMessage({ outcome, reason });
       assert.ok(msg.startsWith(outcome), msg);
-      const err = new Error(msg);
-      err.stack = msg; // what the step throws: no frames for the reporter to read keywords from
+      const err = frameless(new Error(msg)); // what the step throws: no frames for the reporter to read keywords from
       assert.equal(determineTestStatus(err, "failed"), status, `${outcome}: ${reason}`);
       assert.deepEqual(parseOutcome(msg), { outcome, reason }); // the console shows the reason as written
       if (HINTS[outcome]) assert.ok(msg.replaceAll("\u2060", "").endsWith(`\nWhat to do: ${HINTS[outcome]}`), msg); // Qase readers get the hint too
     }
   }
   assert.equal(parseOutcome("Cannot open http://x: refused"), undefined);
+});
+
+test("frameless: Cucumber formats a long outcome message at once and keeps all of it", async () => {
+  const { frameless, outcomeMessage } = await import("../src/report.ts");
+  // Cucumber's internal formatter (not exported), the one that hung on a frameless stack (Wikipedia STEP_TIMEOUT)
+  const internal = new URL("../node_modules/@cucumber/cucumber/lib/runtime/format_error.js", import.meta.url);
+  const { formatError } = await import(internal.href);
+  const toggles = Array.from(
+    { length: 60 },
+    (_, i) => `button "Toggle ${i}" [collapsed; hidden entries: "a"] -> [expanded]`,
+  );
+  const msg = outcomeMessage({ outcome: "STEP_TIMEOUT", reason: `not done after 8 actions (${toggles.join(", ")})` });
+  const started = Date.now();
+  const { message } = formatError(frameless(new Error(msg)), true);
+  assert.ok(Date.now() - started < 1000, `took ${Date.now() - started} ms`);
+  assert.ok(message.includes(msg), message.slice(0, 200));
 });
 
 test("narrow: more candidates than Jev accepts are cut down in rounds, keeping the right one and the fixed answers", async () => {

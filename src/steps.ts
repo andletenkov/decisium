@@ -29,7 +29,7 @@ import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, 
 import type { Decider } from "./decision.ts";
 import { ModelDecider } from "./model-decider.ts";
 import { credentialName, missingCredential } from "./providers.ts";
-import { MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL } from "./report.ts";
+import { frameless, MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
@@ -283,9 +283,7 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
 function networkMissed(browser?: Browser) {
   const missed = browser?.networkMisses.splice(0);
   if (missed?.length) {
-    const err = new Error(`network not in recording: ${missed.join(", ")} (re-record with --record all)`);
-    err.stack = err.message;
-    throw err;
+    throw frameless(new Error(`network not in recording: ${missed.join(", ")} (re-record with --record all)`));
   }
 }
 AfterStep(function (this: Scenario) {
@@ -368,9 +366,7 @@ async function perform(w: Scenario, text: string, quiet = false) {
     if (w.browser?.replay) await run.shoot(w.browser);
     const shot = run.lastScreenshot;
     if (shot && existsSync(shot)) w.attach(readFileSync(shot), { mediaType: "image/png", fileName: shot });
-    const err = new Error(outcomeMessage(r));
-    err.stack = err.message; // no stack frames: reporters such as Qase's read keywords in them
-    throw err;
+    throw frameless(new Error(outcomeMessage(r)));
   }
 }
 const CATCH_ALL = /^(.*)$/;
@@ -423,8 +419,7 @@ AfterAll(() => {
 function setupError(err: Error): Error {
   process.exitCode = 2;
   if (run) writeFileSync(join(run.path, SETUP_MARKER), err.message); // read by `decisium run`, as workers exit alone
-  err.stack = err.message;
-  return err;
+  return frameless(err);
 }
 
 /** Infrastructure error (app not running, bad API key, network): one clear line, `--debug` for the stack. Exit code 2. */
@@ -436,6 +431,5 @@ function infra(err: unknown): Error {
   const out = new Error(
     `${e.message.split("\n")[0]}${e.status === 401 ? ` (check ${credentialName(settings().provider)} in .env)` : ""}\nRerun with --debug for details.`,
   );
-  out.stack = out.message;
-  return out;
+  return frameless(out);
 }
