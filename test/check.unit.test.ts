@@ -45,6 +45,10 @@ test("Check: a check about something not on the page (the URL) is not read as te
   // Unsure the check is about the URL: presence still counts, and the readings must agree.
   const unsure = verdict(assessment({ kind, subject: pick({ url: 0.6, e1: 0.4 }) }), obs, { values: ["/newest"] });
   assert.equal(unsure.outcome, "AMBIGUOUS");
+  // Read only as text on the page, with the tab title picked as subject: presence still decides.
+  const page = withPage(parseSnapshot('- heading "Charles Babbage" [ref=e1]'), "https://x.test/b", "Charles Babbage");
+  const shown = assessment({ kind: pick({ presence: 0.96, value: 0.04 }), subject: pick({ title: 0.85, e1: 0.15 }) });
+  assert.equal(verdict(shown, page, { values: ["Charles Babbage"] }).outcome, "PASSED");
 });
 
 test("Check: a value and a presence check both find the quoted text as whole words (issue #81)", () => {
