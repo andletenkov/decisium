@@ -43,7 +43,7 @@ const result = await new TypeSafeProvider('jev-1.14.0', 'key', async () => new R
 assert.equal(result.answers.ok.noul, 1);
 hook.deregister();
 JS
-npm install --silent @openrouter/sdk@1.5.75
+npm install --silent "@openrouter/sdk@$(node -p "require('$root/package.json').peerDependencies['@openrouter/sdk']")"
 node --input-type=module <<'JS'
 import assert from 'node:assert/strict';
 import { OpenRouterProvider } from './node_modules/decisium/dist/providers.js';
