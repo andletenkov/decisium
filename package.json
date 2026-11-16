@@ -71,7 +71,7 @@
     "tsx": "^4.23.15"
   },
   "peerDependencies": {
-    "@openrouter/sdk": "1.5.75"
+    "@openrouter/sdk": "1.5.100"
   },
   "peerDependenciesMeta": {
     "@openrouter/sdk": {
@@ -79,8 +79,8 @@
     }
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.5",
-    "@openrouter/sdk": "1.5.75",
+    "@biomejs/biome": "2.6.7",
+    "@openrouter/sdk": "1.5.100",
     "@stryker-mutator/core": "^10.1.1",
     "@types/node": "^26.6.5",
     "marked": "^18.1.1",
