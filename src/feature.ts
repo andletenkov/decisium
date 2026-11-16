@@ -1,7 +1,13 @@
 // Gherkin `.feature` files -> runnable Scenarios. The official parser expands Background steps and Scenario
 // Outline rows ("pickles"), so the runner only sees flat Step lists.
 import { AstBuilder, compile, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
-import { IdGenerator, type GherkinDocument, type PickleStepArgument, type PickleStepType } from "@cucumber/messages";
+import {
+  IdGenerator,
+  type GherkinDocument,
+  type Pickle,
+  type PickleStepArgument,
+  type PickleStepType,
+} from "@cucumber/messages";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { devices, type BrowserContextOptions } from "playwright";
@@ -73,7 +79,7 @@ export const fromPickle = (step: {
 
 /** Parses a `.feature` source. Throws on Gherkin syntax errors. */
 /** Parses Gherkin into its document and pickles. Throws on syntax errors and on a scenario with no steps. */
-export function parseGherkin(source: string, uri: string) {
+export function parseGherkin(source: string, uri: string): { doc: GherkinDocument; pickles: readonly Pickle[] } {
   const newId = IdGenerator.uuid();
   const doc = new Parser(new AstBuilder(newId), new GherkinClassicTokenMatcher()).parse(source);
   const pickles = compile(doc, uri, newId);
