@@ -10,7 +10,7 @@ import { readStep, type StepArgument, type StepKind } from "./step.ts";
 /** The outcomes of a Step that reached its goal: the only answers a cassette keeps. */
 const SUCCESS = new Set(["DONE", "PASSED"]);
 /** Outcomes whose answers would only fail the same way when replayed: never written, not even for a new Step. */
-const USELESS = new Set(["AMBIGUOUS", "UI_CHANGED", "PAGE_TOO_LARGE"]);
+const USELESS = new Set(["AMBIGUOUS", "UI_CHANGED", "PAGE_TOO_LARGE", "APP_ERROR"]);
 
 export interface StepContext {
   rt: Runtime;

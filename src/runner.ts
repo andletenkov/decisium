@@ -35,7 +35,8 @@ export type StepOutcome =
   | "JUDGED_PASSED"
   | "JUDGED_FAILED" // opt-in fuzzy Assertion steps
   | "UI_CHANGED"
-  | "PAGE_TOO_LARGE"; // either kind: a replay-only Resolution broke, the page is over Jev's request limit
+  | "PAGE_TOO_LARGE" // either kind: a replay-only Resolution broke, the page is over Jev's request limit
+  | "APP_ERROR"; // Action steps: the page shows an error alert where the Step's controls should be
 
 export interface Runtime {
   observe(): Promise<Observation>;
@@ -254,6 +255,16 @@ const finish =
     return { outcome, reason, ...(marginal ? { marginal } : {}) };
   };
 
+/** Outcomes where the Step could not find its way on the page: an error alert there is the likelier cause. */
+const BLOCKING = new Set<StepOutcome>(["AMBIGUOUS", "BLOCKED", "ELEMENT_NOT_FOUND", "STEP_TIMEOUT"]);
+
+/** The text of the ARIA alerts the page shows, if any. */
+function shownError(obs: Observation | undefined): string | undefined {
+  const alerts = [...(obs?.readable ?? []), ...(obs?.areas ?? [])].filter((e) => e.role === "alert");
+  const text = [...new Set(alerts.map((e) => (e.text || e.name || e.value).trim()).filter(Boolean))].join("; ");
+  return text || undefined;
+}
+
 /**
  * Action or Attempt step. An Attempt is done once its actions are performed, even if the app rejects them.
  * `docString`: one more value to type, read by Jev with the Step.
@@ -303,7 +314,15 @@ async function act(
   attempt ||= !!read.attempt;
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
-  const end = finish(log);
+  const done = finish(log);
+  // A Step that could not go on while the page shows an error alert reports that error, not Jev's doubt about a
+  // page without the controls it needs (a record that failed to load is not an ambiguous Step).
+  const end = (outcome: StepOutcome, reason?: string, weak?: string[]): StepResult => {
+    const error = BLOCKING.has(outcome) ? shownError(obs) : undefined;
+    return error
+      ? done("APP_ERROR", `the page shows an error: "${error}"${reason ? ` (${outcome}: ${reason})` : ""}`)
+      : done(outcome, reason, weak);
+  };
   // Only "press X" or "go back" / "go to /x": nothing to choose, so code does it and the following checks verify the
   // effect (tasks 0039, 0041).
   const only: Action | undefined = read.pressOnly ? { verb: "PRESS", value: read.pressOnly } : read.navigation;
@@ -322,7 +341,8 @@ async function act(
   let navigated = false; // the last action opened another URL
   let submitted = false; // the last action put every value this Step typed onto the page
   const typed: string[] = []; // values this Step typed, secrets excluded
-  let obs = await rt.observe();
+  let obs: Observation | undefined;
+  obs = await rt.observe();
 
   const { maxTurns } = settings();
   for (let turn = 1; turn <= maxTurns; turn++) {

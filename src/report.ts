@@ -3,7 +3,7 @@
 import type { StepKind } from "./step.ts";
 
 /** Outcomes that mean the app is wrong (Qase `failed`); every other non-passing outcome is `invalid` (the test could not decide). */
-const FAILED = ["ASSERTION_FAILED", "JUDGED_FAILED", "BLOCKED", "ACTION_FAILED"];
+const FAILED = ["ASSERTION_FAILED", "JUDGED_FAILED", "BLOCKED", "ACTION_FAILED", "APP_ERROR"];
 
 /** What to do about each failure outcome, shown under the reason. */
 export const HINTS: Record<string, string> = {
@@ -22,6 +22,8 @@ export const HINTS: Record<string, string> = {
   UI_CHANGED:
     "The run replays recorded resolutions (cassette), this step has none that still matches the page, and no model key was given to resolve it again. Provide the key (the step heals live and is reported as healed), or rerun with --record new to re-resolve just the changed steps, or --record all to re-record everything.",
   JUDGED_FAILED: "Jev judged that the page does not satisfy the check.",
+  APP_ERROR:
+    "The page showed an error where the step needed its controls (e.g. a record that failed to load). Check the app or its backend; if the error is intermittent, rerun. To test an expected error, use an Attempt step and check the message.",
   PAGE_TOO_LARGE:
     "The page is too large for Jev to read. Start the scenario on a smaller page, or report it so the size budget can be revisited.",
 };

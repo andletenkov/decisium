@@ -3012,3 +3012,44 @@ test("lint: a mistyped Decisium tag is a warning on its scenario", async () => {
   writeFileSync(path, 'Feature: t\n\n  @url:http://x @viewprot:390x844\n  Scenario: s\n    When I click "Go"\n');
   assert.match(lint(path, {}), /⚠ @viewprot:390x844: unknown tag, did you mean @viewport:\?[\s\S]*1 warning\./);
 });
+
+test("runStep: an error alert where the Step's controls should be is APP_ERROR, not AMBIGUOUS", async () => {
+  const page = (alert: boolean) =>
+    parseSnapshot(
+      [
+        '- heading "Record" [level=1] [ref=e1]',
+        alert ? "- alert [ref=e2]: Could not load this record" : "",
+        '- link "Back" [ref=e3]',
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  let alert = true;
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => page(alert),
+    execute: async () => {},
+    waitForChange: async () => false,
+  };
+  const unsure: Decider = {
+    ...oracle,
+    turn: async () => ({ done: 0, target: { choice: "e3", probabilities: { e3: 0.4, none: 0.45, e1: 0.15 } } }),
+  };
+  const r = await runStep("I edit the record", rt, unsure, () => {});
+  assert.equal(r.outcome, "APP_ERROR");
+  assert.match(r.reason!, /"Could not load this record"/);
+  alert = false; // the same doubt on a page without an error stays AMBIGUOUS
+  assert.equal((await runStep("I edit the record", rt, unsure, () => {})).outcome, "AMBIGUOUS");
+  alert = true; // an Attempt or a Step that reaches its goal is not affected
+  assert.equal(
+    (
+      await runStep(
+        "I edit the record",
+        rt,
+        { ...oracle, turn: async () => ({ done: 0.95, target: sure("none") }) },
+        () => {},
+      )
+    ).outcome,
+    "DONE",
+  );
+});

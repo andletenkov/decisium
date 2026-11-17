@@ -63,6 +63,11 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 <td>Check the start URL and earlier Steps; menus may need &quot;hover&quot;.</td>
 </tr>
 <tr>
+<td><code>APP_ERROR</code></td>
+<td>The page shows an error alert where the Step needed its controls (e.g. a record failed to load). The reason quotes it.</td>
+<td>Fix the app or its backend; rerun if intermittent. To test an expected error, use an Attempt and check the message.</td>
+</tr>
+<tr>
 <td><code>ACTION_FAILED</code></td>
 <td>The action did not take effect.</td>
 <td>Check the value&#39;s format (ISO for dates).</td>
