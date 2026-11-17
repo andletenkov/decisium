@@ -59,9 +59,9 @@ export interface Action {
 const LEAVE = "Leave site? Changes you made may not be saved.";
 
 /** Request types that can change what the page shows: only these hold up settle(). */
+const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
 /** Resource types whose failure leaves the page incomplete. */
 const FAILS = new Set(["document", "xhr", "fetch"]);
-const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
 /** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full `actionTimeout`. */
 const REPLAY_REQUEST_MS = 1500;
 const QUIET_MS = 100; // no requests in flight and no DOM mutations for this long = settled
@@ -184,6 +184,8 @@ export class Browser {
   readonly consoleErrors: string[] = [];
   /** Requests of the Steps' tab that failed since its page started loading (Runtime.failedRequests). */
   private failed: FailedRequest[] = [];
+  /** `@replay-network` requests the replay refused: reported as misses, not as the page's failures. */
+  private refused = new WeakSet<Request>();
   /** Secret placeholders (`$NAME` -> value): typed for the token, masked back to it in every Observation (task 0030). */
   private secrets: Record<string, string> = {};
   /** A secret was typed: the Playwright trace stores typed text unmasked, so close() keeps none. */
@@ -240,13 +242,18 @@ export class Browser {
     context.on("request", (r) => {
       if (r.isNavigationRequest() && frame(r) === this.page.mainFrame()) this.failed = []; // a new page
     });
+    const fail = (f: FailedRequest) => {
+      this.failed.push(f);
+      if (this.failed.length > 200) this.failed.shift(); // a page polling a failing endpoint for hours
+    };
     context.on("response", (res) => {
       if (res.status() >= 400 && ours(res.request()))
-        this.failed.push({ request: `${res.request().method()} ${res.url()}`, status: res.status() });
+        fail({ request: `${res.request().method()} ${res.url()}`, status: res.status() });
     });
     context.on("requestfailed", (r) => {
       const error = r.failure()?.errorText ?? "failed";
-      if (error !== "net::ERR_ABORTED" && ours(r)) this.failed.push({ request: `${r.method()} ${r.url()}`, error });
+      if (error !== "net::ERR_ABORTED" && ours(r) && !this.refused.has(r))
+        fail({ request: `${r.method()} ${r.url()}`, error });
     });
     context.on("page", (p) => {
       this.page = p;
@@ -300,11 +307,11 @@ export class Browser {
     return Promise.race([p, this.opened]);
   }
 
-  /** Owns per-Action-step cleanup, including thrown errors. `execute` keeps cleanup actions in the runtime's trace. */
   failedRequests(): FailedRequest[] {
     return [...this.failed];
   }
 
+  /** Owns per-Action-step cleanup, including thrown errors. `execute` keeps cleanup actions in the runtime's trace. */
   async actionStep<T>(run: () => Promise<T>, log = console.log, execute = (a: Action) => this.execute(a)): Promise<T> {
     if (!this.open) this.dialog = undefined;
     try {
@@ -450,7 +457,11 @@ export class Browser {
     b.clipboardAtOpen = await b.readClipboard();
     try {
       if (network?.mode === "record") await recordNetwork(b.context, network);
-      if (network?.mode === "replay") await replayNetwork(b.context, network, (r) => b.networkMisses.push(r));
+      if (network?.mode === "replay")
+        await replayNetwork(b.context, network, (r, req) => {
+          b.networkMisses.push(r);
+          b.refused.add(req);
+        });
     } catch (err) {
       await browser.close();
       throw err;

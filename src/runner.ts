@@ -299,6 +299,10 @@ async function blockingFailure(step: string, obs: Observation, rt: Runtime, deci
 }
 const MAX_FAILED = 20; // the latest: a long-lived page piles up failed polls
 
+/** The page's failed requests as reported with a Step: each once, the latest MAX_FAILED. */
+export const failedLines = (rt: Runtime) =>
+  [...new Set((rt.failedRequests?.() ?? []).map(describeFailure))].slice(-MAX_FAILED);
+
 /**
  * Action or Attempt step. An Attempt is done once its actions are performed, even if the app rejects them.
  * `docString`: one more value to type, read by Jev with the Step.

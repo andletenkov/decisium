@@ -1,11 +1,10 @@
-// Experiment: can a failing Step tell an app error from a page that just lacks its control, on real sites?
+// Labelled real-site cases for scripts/bench-failure.ts: does a failed request explain why a Step is blocked?
 // Cases: "api-down" (only the site's data API answers 500), "normal" (a Step the page cannot do), "user-error"
-// (the app rejects the user's input) and "toast" (a success message on screen). Expected: api-down -> APP_ERROR,
-// every other case -> no classification (the Step's own outcome stands).
-// With --save, each page's snapshot and failed requests become labelled cases for scripts/bench-failure.ts
-// (scripts/failure-cases.json): on an api-down page, its data request is what the data Step needs, and none of the
-// failures is what the "normal" Step (one the page never offers) needs; on every other page, none is.
-// Usage: node --env-file=.env scripts/error-sites.ts [filter] [--repeat 3] [--save]   (JSON lines on stdout)
+// (the app rejects the user's input) and "toast" (a success message on screen). Each page with failed requests Jev
+// would be asked about becomes a labelled case for scripts/bench-failure.ts (scripts/failure-cases.json): on an
+// api-down page its data request is what the data Step needs, and none is what the "normal" Step (one the page never
+// offers) needs; on every other page, none is.
+// Usage: node scripts/error-sites.ts   (live sites, no model key needed)
 import type { Page } from "playwright";
 import { Browser } from "../src/browser.ts";
 import { writeFileSync } from "node:fs";
@@ -186,11 +185,6 @@ const CASES: Case[] = [
   },
 ];
 
-const filter = process.argv[2]?.startsWith("--") ? "" : (process.argv[2] ?? "");
-const r = process.argv.indexOf("--repeat");
-const REPEAT = r > 0 ? Number(process.argv[r + 1]) : 3;
-
-const SAVE = process.argv.includes("--save");
 const saved: {
   site: string;
   kind: string;
@@ -201,50 +195,31 @@ const saved: {
   needed: string[];
 }[] = [];
 
-for (const c of CASES.filter((x) => `${x.site} ${x.kind}`.includes(filter))) {
-  for (let run = 1; run <= REPEAT; run++) {
-    const b = await Browser.open("about:blank");
-    try {
-      const page = b.context.pages()[0];
-      if (c.api)
-        await b.context.route(c.api, (route) =>
-          route.fulfill({ status: 500, body: '{"error":"Internal Server Error"}', contentType: "application/json" }),
-        );
-      await b.execute({ verb: "GOTO", value: c.url });
-      if (c.setup) {
-        await page.waitForLoadState("domcontentloaded");
-        await c.setup(page);
-      }
-      await page.waitForTimeout(c.setup ? 8000 : 4000);
-      const failed = b.failedRequests();
-      const lines = [...new Set(failed.filter(failureOutcome).map(describeFailure))];
-      const expected = c.kind === "api-down" ? "APP_ERROR" : "none";
-      const got =
-        failed.map(failureOutcome).find((o) => o === "APP_ERROR") ?? failed.map(failureOutcome).find(Boolean) ?? "none";
-      if (SAVE && run === 1 && lines.length) {
-        const obs = await b.observe();
-        const page = { site: c.site, url: c.url, snapshot: obs.text, failed: lines };
-        const needed = c.api ? lines.filter((l) => c.api!.test(l)) : [];
-        saved.push({ ...page, kind: c.kind, step: c.step, needed });
-        const other = CASES.find((x) => x.site === c.site && x.kind === "normal");
-        if (c.api && other) saved.push({ ...page, kind: "api-down-unrelated", step: other.step, needed: [] });
-      }
-      console.log(
-        JSON.stringify({
-          site: c.site,
-          kind: c.kind,
-          run,
-          expected,
-          got,
-          right: got === expected,
-          failed: failed.map(describeFailure),
-        }),
+for (const c of CASES) {
+  const b = await Browser.open("about:blank");
+  try {
+    const page = b.context.pages()[0];
+    if (c.api)
+      await b.context.route(c.api, (route) =>
+        route.fulfill({ status: 500, body: '{"error":"Internal Server Error"}', contentType: "application/json" }),
       );
-    } catch (err) {
-      console.log(JSON.stringify({ site: c.site, kind: c.kind, run, error: String(err).split("\n")[0].slice(0, 160) }));
-    } finally {
-      await b.close();
+    await b.execute({ verb: "GOTO", value: c.url });
+    if (c.setup) {
+      await page.waitForLoadState("domcontentloaded");
+      await c.setup(page);
     }
+    await page.waitForTimeout(c.setup ? 8000 : 4000); // a login redirect loads the dashboard late
+    const lines = [...new Set(b.failedRequests().filter(failureOutcome).map(describeFailure))];
+    console.log(`${c.kind} ${c.site}: ${lines.length} failed request(s) Jev would be asked about`);
+    if (!lines.length) continue; // nothing to ask: the Step keeps its own outcome
+    const shown = { site: c.site, url: c.url, snapshot: (await b.observe()).text, failed: lines };
+    saved.push({ ...shown, kind: c.kind, step: c.step, needed: c.api ? lines.filter((l) => c.api!.test(l)) : [] });
+    const other = CASES.find((x) => x.site === c.site && x.kind === "normal");
+    if (c.api && other) saved.push({ ...shown, kind: "api-down-unrelated", step: other.step, needed: [] });
+  } catch (err) {
+    console.log(`${c.kind} ${c.site}: ${String(err).split("\n")[0].slice(0, 160)}`);
+  } finally {
+    await b.close();
   }
 }
-if (SAVE) writeFileSync("scripts/failure-cases.json", `${JSON.stringify(saved, null, 1)}\n`);
+writeFileSync("scripts/failure-cases.json", `${JSON.stringify(saved, null, 1)}\n`);

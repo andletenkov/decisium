@@ -4,7 +4,7 @@ import type { Decider } from "./decision.ts";
 import { modelUsage } from "./model-decider.ts";
 import { settings } from "./options.ts";
 import type { DecisionMetadata } from "./decision-provider.ts";
-import { describeFailure, runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
+import { failedLines, runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { readStep, type StepArgument, type StepKind } from "./step.ts";
 
 /** The outcomes of a Step that reached its goal: the only answers a cassette keeps. */
@@ -119,7 +119,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   if (r.marginal && ctx.strict)
     r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
   // Reported with every Step; a failed Step's reason lists them, so the failure shows what the page lacked and why.
-  const failedRequests = rt.failedRequests?.().map(describeFailure) ?? [];
+  const failedRequests = failedLines(rt);
   if (failedRequests.length && !SUCCESS.has(r.outcome) && !FROM_REQUESTS.has(r.outcome))
     r = {
       ...r,

@@ -2808,6 +2808,8 @@ test("@replay-network: served by method + URL + occurrence, body ignored; a requ
       );
     assert.deepEqual([await call(`{"ts":1}`), await call(`{"ts":2}`), await call("")], ["first", "second", "failed"]);
     assert.deepEqual(b.networkMisses, ["POST http://127.0.0.1:9/api (call 3)"]);
+    // Refused by the replay, not failed by the site: the miss is reported as such, never as the page's failure.
+    assert.deepEqual(b.failedRequests(), []);
   } finally {
     await b.close();
   }
@@ -3095,7 +3097,12 @@ test("executeStep: failed requests are reported with the Step, and listed in a f
     observe: async () => page,
     execute: async () => {},
     waitForChange: async () => false,
-    failedRequests: () => [{ request: "GET https://x/api/me", status: 401 }],
+    // A page polling a failing endpoint: each failure once, the latest 20.
+    failedRequests: () => [
+      ...Array.from({ length: 300 }, () => ({ request: "GET https://x/api/poll", status: 500 })),
+      ...Array.from({ length: 25 }, (_, i) => ({ request: `GET https://x/api/n${i}`, status: 404 })),
+      { request: "GET https://x/api/me", status: 401 },
+    ],
   };
   const base = { rt, live: oracle, log: () => {}, earlier: {}, arg: {} };
   // A check that fails on the page keeps its outcome (an expected error stays testable), the request beside it.
@@ -3106,8 +3113,12 @@ test("executeStep: failed requests are reported with the Step, and listed in a f
     live: assessing("value"),
   });
   assert.equal(failed.outcome, "ASSERTION_FAILED");
-  assert.match(failed.reason!, /\nFailed requests since the page loaded: GET https:\/\/x\/api\/me -> 401$/);
-  assert.deepEqual(failed.failedRequests, ["GET https://x/api/me -> 401"]);
+  const latest = [
+    ...Array.from({ length: 19 }, (_, i) => `GET https://x/api/n${i + 6} -> 404`),
+    "GET https://x/api/me -> 401",
+  ];
+  assert.ok(failed.reason!.endsWith(`\nFailed requests since the page loaded: ${latest.join(", ")}`));
+  assert.deepEqual(failed.failedRequests, latest);
   const done = await executeStep("I save", {
     ...base,
     key: "S: save",
@@ -3116,5 +3127,5 @@ test("executeStep: failed requests are reported with the Step, and listed in a f
   });
   assert.equal(done.outcome, "DONE");
   assert.equal(done.reason, undefined);
-  assert.deepEqual(done.failedRequests, ["GET https://x/api/me -> 401"]);
+  assert.deepEqual(done.failedRequests, latest);
 });

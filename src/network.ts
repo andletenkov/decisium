@@ -5,7 +5,7 @@
 // sent live.
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { BrowserContext } from "playwright";
+import type { BrowserContext, Request } from "playwright";
 
 export interface NetworkReplay {
   glob: string;
@@ -27,11 +27,11 @@ export async function recordNetwork(context: BrowserContext, { glob, har }: Netw
   await context.routeFromHAR(har, { url: glob, update: true, updateContent: "attach", updateMode: "minimal" });
 }
 
-/** `missed` gets "METHOD url" for each matching request the HAR does not have. */
+/** `missed` gets "METHOD url" and the request for each matching request the HAR does not have (it is aborted). */
 export async function replayNetwork(
   context: BrowserContext,
   { glob, har }: NetworkReplay,
-  missed: (request: string) => void,
+  missed: (request: string, refused: Request) => void,
 ): Promise<void> {
   if (!existsSync(har))
     throw new Error(`No network recording ${har} for @replay-network:${glob}; record it with --record all.`);
@@ -44,7 +44,7 @@ export async function replayNetwork(
     served.set(key, n + 1);
     const entry = entries.filter((e) => `${e.request.method} ${e.request.url}` === key)[n];
     if (!entry) {
-      missed(n ? `${key} (call ${n + 1})` : key);
+      missed(n ? `${key} (call ${n + 1})` : key, req);
       return route.abort();
     }
     const { status, headers, content } = entry.response;
