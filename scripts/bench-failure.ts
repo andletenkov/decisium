@@ -5,9 +5,9 @@
 // Reports accuracy (confidently wrong is the costly kind: it relabels a failure) and the cost per call.
 // Usage: node --env-file=.env scripts/bench-failure.ts [--repeat 3] [--concurrency 4]
 import { readFileSync } from "node:fs";
-import { gate } from "../src/decision.ts";
 import { JevDecider, jevUsage } from "../src/jev.ts";
 import { parseSnapshot, withPage } from "../src/observation.ts";
+import { blockedBy, type FailedRequest } from "../src/runner.ts";
 
 const arg = (name: string, d: number) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -42,7 +42,13 @@ await Promise.all(
         t0 = performance.now();
       const pick = await jev.failure(c.step, obs, c.failed);
       const ms = performance.now() - t0;
-      const chosen = pick.choice !== "none" && gate(pick) ? c.failed[Number(pick.choice.slice(1))] : undefined;
+      // As the runner reads it: blocked by the failures at all, and which request names it first.
+      const failed: FailedRequest[] = c.failed.map((line) => {
+        const [request, result] = line.split(" -> ");
+        return /^\d+$/.test(result) ? { request, status: Number(result) } : { request, error: result };
+      });
+      const blocked = blockedBy(pick, failed);
+      const chosen = blocked && c.failed[failed.indexOf(blocked.requests[0])];
       const verdict: Verdict = chosen
         ? c.needed.includes(chosen)
           ? "right"

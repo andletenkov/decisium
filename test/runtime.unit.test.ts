@@ -112,3 +112,25 @@ test("describeFailure: credentials in the query are masked, long URLs capped", a
   assert.match(long, /^GET https:\/\/x\/a+… -> net::ERR_FAILED$/);
   assert.equal(long.length, 200 + " -> net::ERR_FAILED".length);
 });
+
+test("blockedBy: failed requests that split Jev's confidence still block the Step; the strongest outcome names it", async () => {
+  const { blockedBy } = await import("../src/runner.ts");
+  const r = (path: string, status?: number) =>
+    status === undefined
+      ? { request: `GET https://agent/${path}`, error: "net::ERR_FAILED" }
+      : { request: `GET https://agent/${path}`, status };
+  const pick = (probabilities: Record<string, number>) => ({ choice: "r0", probabilities });
+  // As seen behind a gateway that answers 429 without CORS headers: three agent GETs, none of them above 51%.
+  const three = [r("agents"), r("agents/42"), r("agents/42/runs")];
+  const split = blockedBy(pick({ r0: 0.51, r1: 0.25, r2: 0.18, none: 0.06 }), three);
+  assert.equal(split?.outcome, "NETWORK_ERROR");
+  assert.deepEqual(split?.requests, three);
+  // Mixed kinds: the outcome holding most of the confidence wins, its requests likeliest first.
+  const mixed = [r("a", 429), r("b"), r("c", 429)];
+  const m = blockedBy(pick({ r0: 0.3, r1: 0.25, r2: 0.35, none: 0.1 }), mixed);
+  assert.equal(m?.outcome, "RATE_LIMITED");
+  assert.deepEqual(m?.requests, [mixed[2], mixed[0]]);
+  // Not the Step's requests, or not sure enough that they are: the Step keeps its outcome.
+  assert.equal(blockedBy(pick({ r0: 0.3, none: 0.7 }), [r("beacon")]), undefined);
+  assert.equal(blockedBy(pick({ r0: 0.4, r1: 0.35, none: 0.25 }), [r("a", 500), r("b", 500)]), undefined);
+});
