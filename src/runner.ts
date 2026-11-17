@@ -286,16 +286,44 @@ export function failureOutcome(f: FailedRequest): StepOutcome | undefined {
 }
 
 /**
- * The failed request that explains why a blocked Step's page lacks what it needs: Jev picks it among the page's
- * failures (a tracking beacon to a dead host fails too), only when there is one to pick.
+ * Jev's answer about a blocked Step's failed requests, read as two decisions. Were the Step's requests among the
+ * failures? All requests together against none: several failed requests the Step needs split Jev's confidence among
+ * them, and that must not hide the failure. Which kind? The outcome whose requests hold the most of that confidence;
+ * its requests, likeliest first, name it.
  */
+export function blockedBy(
+  pick: Pick,
+  failed: FailedRequest[],
+): { outcome: StepOutcome; requests: FailedRequest[] } | undefined {
+  const p = (i: number) => pick.probabilities[`r${i}`] ?? 0;
+  const none = pick.probabilities.none ?? 0;
+  // `r<i>` is a position in the list Jev was shown: other failures are skipped in place, never filtered out.
+  const any = failed.reduce((sum, f, i) => sum + (failureOutcome(f) ? p(i) : 0), 0);
+  // gate() checks the top answer's confidence, not which answer is on top: a sure "none" passes it too.
+  if (any <= none || !gate({ choice: "failed", probabilities: { failed: any, none } })) return undefined;
+  const mass = new Map<StepOutcome, number>();
+  failed.forEach((f, i) => {
+    const o = failureOutcome(f);
+    if (o) mass.set(o, (mass.get(o) ?? 0) + p(i));
+  });
+  const outcome = [...mass].sort((a, b) => b[1] - a[1])[0][0];
+  const requests = failed
+    .map((f, i) => ({ f, p: p(i) }))
+    .filter(({ f, p }) => p > 0 && failureOutcome(f) === outcome)
+    .sort((a, b) => b.p - a.p)
+    .map(({ f }) => f);
+  return { outcome, requests };
+}
+
+/** Why a blocked Step's page lacks what it needs, if its failed requests say so (a tracker on a dead host fails too). */
 async function blockingFailure(step: string, obs: Observation, rt: Runtime, decider: Decider, log: typeof console.log) {
-  const failed = [...new Map((rt.failedRequests?.() ?? []).filter(failureOutcome).map((f) => [describeFailure(f), f]))];
+  const failed = [
+    ...new Map((rt.failedRequests?.() ?? []).filter(failureOutcome).map((f) => [describeFailure(f), f])).values(),
+  ].slice(-MAX_FAILED);
   if (!failed.length || !decider.failure) return undefined;
-  const pick = await decider.failure(step, obs, failed.map(([line]) => line).slice(-MAX_FAILED));
+  const pick = await decider.failure(step, obs, failed.map(describeFailure));
   log(`  Failed request: ${fmt(pick)}`);
-  if (pick.choice === "none" || !gate(pick)) return undefined;
-  return failed.slice(-MAX_FAILED)[Number(pick.choice.slice(1))]?.[1];
+  return blockedBy(pick, failed);
 }
 const MAX_FAILED = 20; // the latest: a long-lived page piles up failed polls
 
@@ -376,9 +404,8 @@ async function act(
   // controls it needs (a record that failed to load is not an ambiguous Step).
   const end = async (outcome: StepOutcome, reason?: string, weak?: string[]): Promise<StepResult> => {
     const f = BLOCKING.has(outcome) ? await blockingFailure(said, obs, rt, decider, log) : undefined;
-    return f
-      ? done(failureOutcome(f)!, `${describeFailure(f)}${reason ? ` (${outcome}: ${reason})` : ""}`)
-      : done(outcome, reason, weak);
+    const why = f?.requests.slice(0, 3).map(describeFailure).join(", ");
+    return f ? done(f.outcome, `${why}${reason ? ` (${outcome}: ${reason})` : ""}`) : done(outcome, reason, weak);
   };
 
   const { maxTurns } = settings();
