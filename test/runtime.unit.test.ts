@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { RunDir } from "../src/trace.ts";
 import { runStep } from "../src/runner.ts";
+import type { Decider } from "../src/decision.ts";
 
 test("Runtime Action step dismisses dialogs on errors, retains the message, and forgets it at the next Action step", async () => {
   const b = await Browser.open(
@@ -111,4 +112,40 @@ test("describeFailure: credentials in the query are masked, long URLs capped", a
   const long = describeFailure({ request: `GET https://x/${"a".repeat(300)}`, error: "net::ERR_FAILED" });
   assert.match(long, /^GET https:\/\/x\/a+… -> net::ERR_FAILED$/);
   assert.equal(long.length, 200 + " -> net::ERR_FAILED".length);
+});
+
+test("RunDir runtime: the page's failed requests reach the classifier (a blocked Step ends NETWORK_ERROR)", async () => {
+  // The run's Runtime wraps the Browser; a method it does not forward is invisible to the runner.
+  const { createServer } = await import("node:net");
+  const closed = createServer();
+  await new Promise<void>((r) => closed.listen(0, "127.0.0.1", r));
+  const api = `http://127.0.0.1:${(closed.address() as { port: number }).port}/api/record`;
+  await new Promise((r) => closed.close(r)); // nothing listens there now: the connection is refused
+  const b = await Browser.open(
+    `data:text/html,<h1>Record</h1><p id=m>Loading</p><script>fetch("${api}").catch(()=>m.textContent="Could not load this record")</script>`,
+  );
+  const dir = new RunDir(mkdtempSync(join(tmpdir(), "failed-requests-")));
+  dir.scenario("failed requests");
+  const offered: string[][] = [];
+  try {
+    await b.waitForChange("", 1500);
+    const rt = dir.runtime(b);
+    const r = await runStep(
+      "I edit the record",
+      rt,
+      {
+        turn: async () => ({ done: 0, target: { choice: "none", probabilities: { none: 0.5, page: 0.45 } } }),
+        failure: async (_s: string, _o: unknown, failed: string[]) => {
+          offered.push(failed);
+          return { choice: "r0", probabilities: { r0: 1 } };
+        },
+      } as unknown as Decider,
+      () => {},
+    );
+    assert.deepEqual(offered, [[`GET ${api} -> net::ERR_CONNECTION_REFUSED`]]);
+    assert.equal(r.outcome, "NETWORK_ERROR");
+    assert.ok(r.reason!.startsWith(`GET ${api} -> net::ERR_CONNECTION_REFUSED (AMBIGUOUS: `), r.reason ?? "");
+  } finally {
+    await b.close();
+  }
 });
