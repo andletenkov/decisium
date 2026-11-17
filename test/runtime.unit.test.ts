@@ -133,5 +133,9 @@ test("blockedBy: failed requests that split Jev's confidence still block the Ste
   // Not the Step's requests, or not sure enough that they are: the Step keeps its outcome.
   assert.equal(blockedBy(pick({ r0: 0.3, none: 0.7 }), [r("beacon")]), undefined);
   assert.equal(blockedBy(pick({ r0: 0.01, none: 0.99 }), [r("beacon")]), undefined); // sure it is none
+  // A failure that cannot leave a page incomplete (a 404) counts for nothing, and the positions keep their meaning.
+  assert.equal(blockedBy(pick({ r0: 0.95, none: 0.05 }), [r("missing", 404)]), undefined);
+  const after404 = blockedBy(pick({ r0: 0.5, r1: 0.45, none: 0.05 }), [r("missing", 404), r("runs", 503)]);
+  assert.equal(after404, undefined); // only 0.45 is a blocking request's
   assert.equal(blockedBy(pick({ r0: 0.4, r1: 0.35, none: 0.25 }), [r("a", 500), r("b", 500)]), undefined);
 });

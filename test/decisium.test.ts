@@ -3075,7 +3075,9 @@ test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_
     ] as const) {
       const b = await Browser.open(`${app}?mode=${mode}`);
       // Through the run's runtime, as `decisium run` drives a Step: it must forward the failed requests.
-      const rt = new RunDir(mkdtempSync(`${tmpdir()}/runs-`)).runtime(b);
+      const run = new RunDir(mkdtempSync(`${tmpdir()}/runs-`));
+      run.scenario(`failed requests ${mode}`); // the folder its screenshots go to
+      const rt = run.runtime(b);
       try {
         await b.waitForChange("", 1500);
         const r = await runStep("I edit the record", rt, unsure, () => {});
