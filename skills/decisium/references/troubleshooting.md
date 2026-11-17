@@ -36,15 +36,19 @@ expression or profile filtered them out, or `file.feature:<line>` points at no s
 | absence `UNVERIFIABLE`: "a request is in flight" | The last action started a request that never ends (a long poll, a live feed), so the page never proves the text is gone. | Check what replaces the text (`"X" should appear`), or check the absence before the action that opens the feed. |
 | `BLOCKED` | The task cannot be done on this page. | Check the start URL and the Steps before it; a hover menu needs "hover". |
 | `ELEMENT_NOT_FOUND` | Nothing matches what the Step names. | Use the page's own label. |
-| `APP_ERROR` | The Step was blocked while the page's server requests failed (5xx); the reason lists them. | Fix the backend; rerun if intermittent. To test an expected error, check for its message. |
-| `RATE_LIMITED` | The Step was blocked while the server answered 429. | Run fewer scenarios in parallel, or raise the test environment's limit. |
-| `NETWORK_ERROR` | The Step was blocked while the page's requests got no response. | Check the app and its API are reachable from the test machine. |
+| `APP_ERROR` | The Step was blocked, and Jev tied it to a request that answered 5xx; the reason names the request and the outcome it replaces. | Fix the backend; rerun if intermittent. To test an expected error, check for its message. |
+| `RATE_LIMITED` | The Step was blocked, and Jev tied it to a request that answered 429. | Run fewer scenarios in parallel, or raise the test environment's limit. |
+| `NETWORK_ERROR` | The Step was blocked, and Jev tied it to a request that got no response. | Check the app and its API are reachable from the test machine. |
 | `ACTION_FAILED` | The action ran but did not take effect (e.g. a field rejected the value). | Check the value's format; for dates use ISO. |
 | `STEP_TIMEOUT` | The Step did not finish in its allowed actions. | Split it into smaller tasks, or raise `maxTurns` for a long flow. |
 | `UI_CHANGED` | A replayed Step no longer matches the page. | If the change is intended, re-record with `--record new`. |
 | `PAGE_TOO_LARGE` | The page is over the model's size limit. | Test a narrower page or state. |
 | marginal pass | Passed, but the model was barely sure. | Make the Step more specific; do not lower `confidence.answer`. |
 | check fails on a slow page | The expected state came after the check gave up. | Raise `checkTimeout` (and `actionTimeout` if actions finish too early). |
+
+A failed Step's reason ends with the page's failed requests (`Failed requests since the page loaded: GET … -> 500`):
+read them before rewording a Step. Other 4xx never change an outcome, and checks keep theirs, so an expected error
+page is tested with a check for its message.
 
 Run `decisium lint` on the feature: it flags many of these wordings before you run.
 

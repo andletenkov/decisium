@@ -64,17 +64,17 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 </tr>
 <tr>
 <td><code>APP_ERROR</code></td>
-<td>The Step was blocked while the page&#39;s server requests failed (5xx); the reason lists them.</td>
+<td>The Step was blocked, and a server error (5xx) on a request it needed explains why. See <a href="#failed-requests">failed requests</a>.</td>
 <td>Fix the backend; rerun if intermittent. To test an expected error, check for its message.</td>
 </tr>
 <tr>
 <td><code>RATE_LIMITED</code></td>
-<td>The Step was blocked while the server answered 429 Too Many Requests.</td>
+<td>The Step was blocked, and a request it needed got 429 Too Many Requests. See <a href="#failed-requests">failed requests</a>.</td>
 <td>Run fewer scenarios in parallel, or raise the test environment&#39;s limit.</td>
 </tr>
 <tr>
 <td><code>NETWORK_ERROR</code></td>
-<td>The Step was blocked while the page&#39;s requests got no response.</td>
+<td>The Step was blocked, and a request it needed got no response. See <a href="#failed-requests">failed requests</a>.</td>
 <td>Check the app and its API are reachable from the test machine.</td>
 </tr>
 <tr>
@@ -113,6 +113,24 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 <td>Check what the page shows instead (<code>&quot;X&quot; should appear</code> for the state that replaces it), or put the absence check before the action that opens the feed.</td>
 </tr>
 </tbody></table>
+<h2 id="failed-requests">Failed requests</h2>
+<p>Decisium records the requests of the page that fail: its document and its fetch/XHR calls that answer 400 or more, or
+get no response. A cancelled request is not a failure, and a new page starts with none.</p>
+<ul>
+<li>Every Step reports them (<code>failedRequests</code> in <code>trace.jsonl</code>), and a failed Step&#39;s reason ends with
+<code>Failed requests since the page loaded: GET https://api.example.com/records/42 -&gt; 500</code>. Each request is listed
+once, the latest 20; query values named like a key, token, secret, signature, auth or password show as <code>***</code>.</li>
+<li>When an Action step is blocked (it would end <code>AMBIGUOUS</code>, <code>BLOCKED</code>, <code>ELEMENT_NOT_FOUND</code> or <code>STEP_TIMEOUT</code>) and some
+of those requests answered 5xx, 429 or nothing, Jev is asked which of them, if any, was for what the Step needs. A
+tracker on a dead host fails on many sites and is not the Step&#39;s. The request Jev picks sets the outcome: 5xx
+<code>APP_ERROR</code>, 429 <code>RATE_LIMITED</code>, no response <code>NETWORK_ERROR</code>, and the reason names it with the outcome it replaces:
+<code>GET https://api.example.com/records/42 -&gt; 500 (AMBIGUOUS: Jev is unsure what to do next: …)</code>. If Jev picks none,
+or is unsure, the Step keeps its own outcome.</li>
+<li>Other 4xx (a 401 for a signed-out visitor, a 404 the app expects) are listed but never change an outcome.</li>
+<li>Checks keep their outcome: a Scenario that expects an error page checks for its message, and passes.</li>
+<li>The question costs one Jev call, only for a blocked Step whose page has such failures. It is never recorded, so a run
+with <code>--record none</code> and no model key keeps the Step&#39;s own outcome.</li>
+</ul>
 <h2 id="a-step-passes-sometimes">A Step passes sometimes</h2>
 <p>Live runs ask Jev each time; replays do not. Record once and run CI with <code>--record none</code>. If a live Step still
 wavers, reword it: <code>I leave by the &quot;Search page&quot; link</code>, not <code>I leave for the search page</code>.</p>
@@ -120,7 +138,7 @@ wavers, reword it: <code>I leave by the &quot;Search page&quot; link</code>, not
 <p>Your <code>cucumber.mjs</code> imports Decisium&#39;s steps and <code>decisium run</code> adds them again. Drop the import, or run
 <code>npx cucumber-js</code> instead.</p>
 <div class="pager"><a class="prev" href="ci.html"><span>Previous</span>CI</a><a class="next" href="advanced.html"><span>Next</span>Advanced</a></div></main>
-<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#outcomes">Outcomes</a><a class="l2" href="#a-step-passes-sometimes">A Step passes sometimes</a><a class="l2" href="#step-definitions-are-loaded-twice">&amp;quot;Step definitions are loaded twice&amp;quot;</a></aside>
+<aside class="toc"><span class="nav-title">On this page</span><a class="l2" href="#outcomes">Outcomes</a><a class="l2" href="#failed-requests">Failed requests</a><a class="l2" href="#a-step-passes-sometimes">A Step passes sometimes</a><a class="l2" href="#step-definitions-are-loaded-twice">&amp;quot;Step definitions are loaded twice&amp;quot;</a></aside>
 </div>
 </body>
 </html>

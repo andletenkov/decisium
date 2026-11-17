@@ -119,7 +119,8 @@ and body are served as they were.</p>
 real backend. It is aborted, and the Step that made it fails with:</p>
 <pre><code class="language-text">network not in recording: GET https://app.example.com/api/campaigns?page=2 (re-record with --record all)
 </code></pre>
-<p>Re-record the Scenario with <code>--record all</code> and commit the new <code>.har</code>.</p>
+<p>Re-record the Scenario with <code>--record all</code> and commit the new <code>.har</code>. A request the replay aborted is reported as missing
+from the recording, never as one of the page&#39;s <a href="troubleshooting.html#failed-requests">failed requests</a>.</p>
 <h3 id="when-to-use-it">When to use it</h3>
 <ul>
 <li>The backend is slow or costly per call (an LLM, a payment sandbox).</li>
