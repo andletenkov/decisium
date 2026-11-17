@@ -647,6 +647,8 @@ export class Cassette {
         };
         return a;
       },
+      // Only a failing Step asks, and a failing Step is never written: always live, never when replay-only.
+      ...(live.error && !replayOnly ? { error: (step: string, obs: Observation) => live.error!(step, obs) } : {}),
       intent: async (step, check) => {
         // Replayed as recorded; an entry from before intents existed was recorded with the rules alone, so it replays
         // that way without breaking the Step.

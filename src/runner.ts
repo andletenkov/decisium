@@ -36,7 +36,7 @@ export type StepOutcome =
   | "JUDGED_FAILED" // opt-in fuzzy Assertion steps
   | "UI_CHANGED"
   | "PAGE_TOO_LARGE" // either kind: a replay-only Resolution broke, the page is over Jev's request limit
-  | "APP_ERROR"; // Action steps: the page shows an error alert where the Step's controls should be
+  | "APP_ERROR"; // Action steps: the page shows an app error where the Step's controls should be
 
 export interface Runtime {
   observe(): Promise<Observation>;
@@ -258,11 +258,17 @@ const finish =
 /** Outcomes where the Step could not find its way on the page: an error alert there is the likelier cause. */
 const BLOCKING = new Set<StepOutcome>(["AMBIGUOUS", "BLOCKED", "ELEMENT_NOT_FOUND", "STEP_TIMEOUT"]);
 
-/** The text of the ARIA alerts the page shows, if any. */
-function shownError(obs: Observation | undefined): string | undefined {
-  const alerts = [...(obs?.readable ?? []), ...(obs?.areas ?? [])].filter((e) => e.role === "alert");
-  const text = [...new Set(alerts.map((e) => (e.text || e.name || e.value).trim()).filter(Boolean))].join("; ");
-  return text || undefined;
+/**
+ * The app error the page shows that keeps the Step from being done, if Jev is sure of one: Jev picks the element, code
+ * quotes its text. Not the alert role nor the wording: a failed load is often a plain paragraph beside an empty alert.
+ */
+async function shownError(step: string, obs: Observation, decider: Decider, log: typeof console.log) {
+  if (!decider.error) return undefined;
+  const pick = await decider.error(step, obs);
+  log(`  Error: ${fmt(pick)}`);
+  if (pick.choice === "none" || !gate(pick)) return undefined;
+  const el = [...obs.readable, ...obs.areas].find((e) => e.ref === pick.choice);
+  return (el?.text || el?.name || el?.value)?.trim() || undefined;
 }
 
 /**
@@ -315,10 +321,10 @@ async function act(
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const done = finish(log);
-  // A Step that could not go on while the page shows an error alert reports that error, not Jev's doubt about a
-  // page without the controls it needs (a record that failed to load is not an ambiguous Step).
-  const end = (outcome: StepOutcome, reason?: string, weak?: string[]): StepResult => {
-    const error = BLOCKING.has(outcome) ? shownError(obs) : undefined;
+  // A Step that could not go on while the page shows an app error reports that error, not Jev's doubt about a page
+  // without the controls it needs (a record that failed to load is not an ambiguous Step).
+  const end = async (outcome: StepOutcome, reason?: string, weak?: string[]): Promise<StepResult> => {
+    const error = BLOCKING.has(outcome) && obs ? await shownError(said, obs, decider, log) : undefined;
     return error
       ? done("APP_ERROR", `the page shows an error: "${error}"${reason ? ` (${outcome}: ${reason})` : ""}`)
       : done(outcome, reason, weak);

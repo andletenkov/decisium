@@ -3013,43 +3013,37 @@ test("lint: a mistyped Decisium tag is a warning on its scenario", async () => {
   assert.match(lint(path, {}), /⚠ @viewprot:390x844: unknown tag, did you mean @viewport:\?[\s\S]*1 warning\./);
 });
 
-test("runStep: an error alert where the Step's controls should be is APP_ERROR, not AMBIGUOUS", async () => {
-  const page = (alert: boolean) =>
-    parseSnapshot(
-      [
-        '- heading "Record" [level=1] [ref=e1]',
-        alert ? "- alert [ref=e2]: Could not load this record" : "",
-        '- link "Back" [ref=e3]',
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-  let alert = true;
+test("runStep: an app error the page shows where the Step's controls should be is APP_ERROR, not AMBIGUOUS", async () => {
+  // As captured: the error is a plain paragraph, next to an empty alert.
+  const page = parseSnapshot(
+    [
+      '- heading "Record" [level=1] [ref=e1]',
+      "- paragraph [ref=e2]: Could not load this record",
+      "- alert [ref=e4]",
+      '- link "Back" [ref=e3]',
+    ].join("\n"),
+  );
   const rt: Runtime = {
     actionStep: (run) => run(),
-    observe: async () => page(alert),
+    observe: async () => page,
     execute: async () => {},
     waitForChange: async () => false,
   };
-  const unsure: Decider = {
+  const asked: string[] = [];
+  const unsure = (error: string): Decider => ({
     ...oracle,
     turn: async () => ({ done: 0, target: { choice: "e3", probabilities: { e3: 0.4, none: 0.45, e1: 0.15 } } }),
-  };
-  const r = await runStep("I edit the record", rt, unsure, () => {});
+    error: async (step) => (asked.push(step), sure(error)),
+  });
+  const r = await runStep("I edit the record", rt, unsure("e2"), () => {});
   assert.equal(r.outcome, "APP_ERROR");
-  assert.match(r.reason!, /"Could not load this record"/);
-  alert = false; // the same doubt on a page without an error stays AMBIGUOUS
-  assert.equal((await runStep("I edit the record", rt, unsure, () => {})).outcome, "AMBIGUOUS");
-  alert = true; // an Attempt or a Step that reaches its goal is not affected
-  assert.equal(
-    (
-      await runStep(
-        "I edit the record",
-        rt,
-        { ...oracle, turn: async () => ({ done: 0.95, target: sure("none") }) },
-        () => {},
-      )
-    ).outcome,
-    "DONE",
-  );
+  assert.match(r.reason!, /"Could not load this record" \(AMBIGUOUS: /);
+  assert.deepEqual(asked, ["I edit the record"]);
+  // Jev sees no app error: the Step's own doubt stands.
+  assert.equal((await runStep("I edit the record", rt, unsure("none"), () => {})).outcome, "AMBIGUOUS");
+  // A Step that reaches its goal never asks.
+  const done: Decider = { ...unsure("e2"), turn: async () => ({ done: 0.95, target: sure("none") }) };
+  asked.length = 0;
+  assert.equal((await runStep("I edit the record", rt, done, () => {})).outcome, "DONE");
+  assert.deepEqual(asked, []);
 });
