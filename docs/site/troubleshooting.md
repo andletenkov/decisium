@@ -33,8 +33,10 @@ get no response. A cancelled request is not a failure, and a new page starts wit
   once, the latest 20; query values named like a key, token, secret, signature, auth or password show as `***`.
 - When an Action step is blocked (it would end `AMBIGUOUS`, `BLOCKED`, `ELEMENT_NOT_FOUND` or `STEP_TIMEOUT`) and some
   of those requests answered 5xx, 429 or nothing, Jev is asked which of them, if any, was for what the Step needs. A
-  tracker on a dead host fails on many sites and is not the Step's. The request Jev picks sets the outcome: 5xx
-  `APP_ERROR`, 429 `RATE_LIMITED`, no response `NETWORK_ERROR`, and the reason names it with the outcome it replaces:
+  tracker on a dead host fails on many sites and is not the Step's. Jev's confidence in all the requests together,
+  against none, decides whether they blocked the Step, so several failed requests the Step needs do not split it
+  below the bar. The kind holding most of it sets the outcome: 5xx `APP_ERROR`, 429 `RATE_LIMITED`, no response
+  `NETWORK_ERROR`, and the reason names its requests, likeliest first, with the outcome it replaces:
   `GET https://api.example.com/records/42 -> 500 (AMBIGUOUS: Jev is unsure what to do next: …)`. If Jev picks none,
   or is unsure, the Step keeps its own outcome.
 - Other 4xx (a 401 for a signed-out visitor, a 404 the app expects) are listed but never change an outcome.
