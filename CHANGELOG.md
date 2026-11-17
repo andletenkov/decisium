@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.3](https://github.com/andletenkov/decisium/compare/v0.5.2...v0.5.3) (2026-11-17)
+
+
+### Bug Fixes
+
+* forward failed requests in real runs; decide on all failed requests ([#108](https://github.com/andletenkov/decisium/issues/108)) ([abe8cdc](https://github.com/andletenkov/decisium/commit/abe8cdc46d62fb193e02f6201c05df46c313ecd3))
+* report a Step blocked by failed requests as APP_ERROR, not AMBIGUOUS ([#106](https://github.com/andletenkov/decisium/issues/106)) ([18d6e87](https://github.com/andletenkov/decisium/commit/18d6e879de4d44be7c3789295193a970240e089a))
+
 ## [0.5.2](https://github.com/andletenkov/decisium/compare/v0.5.1...v0.5.2) (2026-11-13)
 
 
