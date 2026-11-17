@@ -298,7 +298,8 @@ export function blockedBy(
   const p = (i: number) => pick.probabilities[`r${i}`] ?? 0;
   const none = pick.probabilities.none ?? 0;
   const any = failed.reduce((sum, _, i) => sum + p(i), 0);
-  if (!gate({ choice: "failed", probabilities: { failed: any, none } })) return undefined;
+  // gate() checks the top answer's confidence, not which answer is on top: a sure "none" passes it too.
+  if (any <= none || !gate({ choice: "failed", probabilities: { failed: any, none } })) return undefined;
   const mass = new Map<StepOutcome, number>();
   failed.forEach((f, i) => {
     const o = failureOutcome(f)!;

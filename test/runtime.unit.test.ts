@@ -132,5 +132,6 @@ test("blockedBy: failed requests that split Jev's confidence still block the Ste
   assert.deepEqual(m?.requests, [mixed[2], mixed[0]]);
   // Not the Step's requests, or not sure enough that they are: the Step keeps its outcome.
   assert.equal(blockedBy(pick({ r0: 0.3, none: 0.7 }), [r("beacon")]), undefined);
+  assert.equal(blockedBy(pick({ r0: 0.01, none: 0.99 }), [r("beacon")]), undefined); // sure it is none
   assert.equal(blockedBy(pick({ r0: 0.4, r1: 0.35, none: 0.25 }), [r("a", 500), r("b", 500)]), undefined);
 });
