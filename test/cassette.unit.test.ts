@@ -957,3 +957,18 @@ test("cassette: an action target is anchored by the Step's quoted value, a check
   // The expected value of a check must not decide which element it reads: a wrong status has to fail the check.
   assert.equal(entries["S: y"].check.subject[0][0].anchor, undefined);
 });
+
+test("cassette: the failed-request question goes live and is never stored; replay-only offers none", async () => {
+  const p = tmp();
+  const { live, calls } = scripted({ failure: sure("r0") });
+  const cassette = new Cassette(p, "m", "new");
+  const rec = cassette.step("S: x", live);
+  assert.deepEqual(await rec.failure?.("x", page, ["GET https://x/api -> 500"]), sure("r0"));
+  assert.deepEqual(calls, ["failure"]);
+  rec.done(true, true);
+  cassette.save();
+  assert.doesNotMatch(readFileSync(p, "utf8"), /failure|api -> 500/);
+  // Without a model key there is nobody to ask: the Step keeps its own outcome.
+  const replayOnly = new Cassette(p, "m", "none", undefined, false).step("S: x", live);
+  assert.equal(replayOnly.failure, undefined);
+});

@@ -110,7 +110,8 @@ real backend. It is aborted, and the Step that made it fails with:
 network not in recording: GET https://app.example.com/api/campaigns?page=2 (re-record with --record all)
 ```
 
-Re-record the Scenario with `--record all` and commit the new `.har`.
+Re-record the Scenario with `--record all` and commit the new `.har`. A request the replay aborted is reported as missing
+from the recording, never as one of the page's [failed requests](troubleshooting.md#failed-requests).
 
 ### When to use it
 

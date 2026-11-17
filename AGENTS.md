@@ -22,4 +22,16 @@ Before you commit, answer these in the PR description:
    change.
 4. Which input would still break it? If one is easy to name, it is still a patch: go back to 2.
 
+## Every new model question is benchmarked
+
+A change that adds a question to Jev (a new `Decider` method, a new field in a request, or an existing question asked
+in more places) ships with a benchmark under `scripts/` that reports, against labelled cases:
+
+- accuracy: how often the answer is right, and how often it is confidently wrong;
+- cost: added latency (p50, p90) and tokens per call, and how often a run asks it, compared with the median live Step
+  of recent runs (`runs/*/trace.jsonl`).
+
+Put the numbers in the PR description. Ask only where the answer is needed (e.g. on failure, not on every Turn), and
+prefer what the page states explicitly (an ARIA role or state) over a question when it settles the answer.
+
 Re-recording cassettes is never a reason to choose a patch over the proper fix.

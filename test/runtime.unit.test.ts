@@ -101,3 +101,14 @@ test("traced Runtime brackets named-key steps and records cleanup without exposi
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("describeFailure: credentials in the query are masked, long URLs capped", async () => {
+  const { describeFailure } = await import("../src/runner.ts");
+  assert.equal(
+    describeFailure({ request: "GET https://x/q?a=1&x-algolia-api-key=abc&access_token=t", status: 500 }),
+    "GET https://x/q?a=1&x-algolia-api-key=***&access_token=*** -> 500",
+  );
+  const long = describeFailure({ request: `GET https://x/${"a".repeat(300)}`, error: "net::ERR_FAILED" });
+  assert.match(long, /^GET https:\/\/x\/a+… -> net::ERR_FAILED$/);
+  assert.equal(long.length, 200 + " -> net::ERR_FAILED".length);
+});

@@ -260,6 +260,16 @@ export class ModelDecider implements Decider {
     return (await this.#ask({ state, questions: { target: choice(question, targets) } })).answers.target;
   }
 
+  async failure(step: string, obs: Observation, failed: string[]): Promise<Pick> {
+    const state = { step, ui: await this.#ui(obs, "step", step), failed_requests: failed };
+    const question =
+      "`step` cannot be done on this page (`ui`). Which of `failed_requests` was for what `step` needs, so its failure explains why the page lacks it?";
+    const criteria: Record<string, string> = Object.fromEntries(failed.map((f, i) => [`r${i}`, f]));
+    criteria.none =
+      "None: every failed request is unrelated to `step` (e.g. analytics, tracking, an availability probe).";
+    return (await this.#ask({ state, questions: { request: choice(question, criteria) } })).answers.request;
+  }
+
   async recall(step: string, earlier: Record<string, string>): Promise<Pick> {
     const values = Object.keys(earlier);
     const criteria: Record<string, string> = Object.fromEntries(

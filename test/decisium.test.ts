@@ -2808,6 +2808,8 @@ test("@replay-network: served by method + URL + occurrence, body ignored; a requ
       );
     assert.deepEqual([await call(`{"ts":1}`), await call(`{"ts":2}`), await call("")], ["first", "second", "failed"]);
     assert.deepEqual(b.networkMisses, ["POST http://127.0.0.1:9/api (call 3)"]);
+    // Refused by the replay, not failed by the site: the miss is reported as such, never as the page's failure.
+    assert.deepEqual(b.failedRequests(), []);
   } finally {
     await b.close();
   }
@@ -3011,4 +3013,119 @@ test("lint: a mistyped Decisium tag is a warning on its scenario", async () => {
   const path = `${mkdtempSync(`${tmpdir()}/lint-`)}/t.feature`;
   writeFileSync(path, 'Feature: t\n\n  @url:http://x @viewprot:390x844\n  Scenario: s\n    When I click "Go"\n');
   assert.match(lint(path, {}), /⚠ @viewprot:390x844: unknown tag, did you mean @viewport:\?[\s\S]*1 warning\./);
+});
+
+test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_LIMITED (429) or NETWORK_ERROR", async () => {
+  // As in the issue: the page says it could not load the record, and Jev, finding no Edit button, is unsure.
+  const { createServer } = await import("node:http");
+  const server = createServer((req, res) => {
+    const url = new URL(req.url!, "http://x");
+    if (url.pathname === "/") {
+      const mode = url.searchParams.get("mode");
+      const data =
+        mode === "net" ? "http://127.0.0.1:1/api/record" : `/api/record?status=${mode === "beacon" ? 200 : mode}`;
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      // Noise that is not a failure of this page: a 401 probe for a signed-out visitor, a cancelled request.
+      return res.end(`<h1>Record</h1><p id="msg">Loading…</p><a href="/">Back</a><script>
+        fetch("/api/me");
+        fetch("http://127.0.0.1:1/beacon").catch(() => {}); // a tracker on a dead host: fails on every page
+        const c = new AbortController(); fetch("/api/slow", { signal: c.signal }).catch(() => {}); c.abort();
+        fetch(${JSON.stringify(data)}).then((r) => { if (!r.ok) throw 0; }).catch(() => { msg.textContent = "Could not load this record"; });
+      </script>`);
+    }
+    if (url.pathname === "/api/me") return res.writeHead(401).end();
+    if (url.pathname === "/api/slow") return setTimeout(() => res.end("{}"), 2000);
+    res.writeHead(Number(url.searchParams.get("status")) || 200, { "content-type": "application/json" }).end("{}");
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const app = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const asked: string[][] = [];
+  const unsure: Decider = {
+    ...oracle,
+    turn: async (_s, obs) => ({
+      done: 0,
+      target: { choice: obs.elements[0].ref, probabilities: { [obs.elements[0].ref]: 0.4, none: 0.45 } },
+    }),
+    // Jev's part, scripted: the record's request is what "edit the record" needs; the beacon is not.
+    failure: async (_s, _o, failed) => {
+      asked.push(failed);
+      const i = failed.findIndex((f) => f.includes("/api/record"));
+      return sure(i < 0 ? "none" : `r${i}`);
+    },
+  };
+  try {
+    for (const [mode, outcome, shown] of [
+      ["500", "APP_ERROR", /GET http:\/\/127\.0\.0\.1:\d+\/api\/record\?status=500 -> 500 \(AMBIGUOUS: Jev is unsure/],
+      ["503", "APP_ERROR", /-> 503/],
+      ["429", "RATE_LIMITED", /-> 429/],
+      ["net", "NETWORK_ERROR", /GET http:\/\/127\.0\.0\.1:1\/api\/record -> net::ERR_/],
+      ["404", "AMBIGUOUS", /^Jev is unsure/], // a client error says nothing about the page: Jev's doubt stands
+      ["beacon", "AMBIGUOUS", /^Jev is unsure/], // the only failure is unrelated to the Step
+    ] as const) {
+      const b = await Browser.open(`${app}?mode=${mode}`);
+      try {
+        await b.waitForChange("", 1500);
+        const r = await runStep("I edit the record", b, unsure, () => {});
+        assert.equal(r.outcome, outcome, mode);
+        assert.match(r.reason!, shown, mode);
+        assert.doesNotMatch(r.reason!, /api\/me|api\/slow|beacon/, mode);
+        // Jev is offered only failures that can leave a page incomplete, never the 401 or the cancelled request.
+        assert.ok(
+          asked.at(-1)?.some((f) => /\/beacon -> net::ERR_/.test(f)),
+          mode,
+        );
+        assert.ok(!asked.at(-1)?.some((f) => /api\/me|api\/slow/.test(f)), mode);
+        if (mode === "500") {
+          // A new page starts clean: the failures were the old page's.
+          await b.execute({ verb: "GOTO", value: `${app}?mode=200` });
+          assert.equal((await runStep("I edit the record", b, unsure, () => {})).outcome, "AMBIGUOUS");
+        }
+      } finally {
+        await b.close();
+      }
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test("executeStep: failed requests are reported with the Step, and listed in a failure's reason", async () => {
+  const { executeStep } = await import("../src/execute.ts");
+  const page = parseSnapshot(`- button "Save" [ref=e1]\n- paragraph [ref=e2]: Hello Ada`);
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => page,
+    execute: async () => {},
+    waitForChange: async () => false,
+    // A page polling a failing endpoint: each failure once, the latest 20.
+    failedRequests: () => [
+      ...Array.from({ length: 300 }, () => ({ request: "GET https://x/api/poll", status: 500 })),
+      ...Array.from({ length: 25 }, (_, i) => ({ request: `GET https://x/api/n${i}`, status: 404 })),
+      { request: "GET https://x/api/me", status: 401 },
+    ],
+  };
+  const base = { rt, live: oracle, log: () => {}, earlier: {}, arg: {} };
+  // A check that fails on the page keeps its outcome (an expected error stays testable), the request beside it.
+  const failed = await executeStep('the greeting should be "Hello Grace"', {
+    ...base,
+    key: "S: check",
+    kind: "assertion",
+    live: assessing("value"),
+  });
+  assert.equal(failed.outcome, "ASSERTION_FAILED");
+  const latest = [
+    ...Array.from({ length: 19 }, (_, i) => `GET https://x/api/n${i + 6} -> 404`),
+    "GET https://x/api/me -> 401",
+  ];
+  assert.ok(failed.reason!.endsWith(`\nFailed requests since the page loaded: ${latest.join(", ")}`));
+  assert.deepEqual(failed.failedRequests, latest);
+  const done = await executeStep("I save", {
+    ...base,
+    key: "S: save",
+    kind: "action",
+    live: { ...oracle, turn: async () => ({ done: 0.95, target: sure("none") }) },
+  });
+  assert.equal(done.outcome, "DONE");
+  assert.equal(done.reason, undefined);
+  assert.deepEqual(done.failedRequests, latest);
 });
