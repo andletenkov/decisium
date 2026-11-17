@@ -3018,17 +3018,24 @@ test("lint: a mistyped Decisium tag is a warning on its scenario", async () => {
 test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_LIMITED (429) or NETWORK_ERROR", async () => {
   // As in the issue: the page says it could not load the record, and Jev, finding no Edit button, is unsure.
   const { createServer } = await import("node:http");
+  const { mkdtempSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { RunDir } = await import("../src/trace.ts");
+  // A port nothing listens on: the connection is refused (port 1 is refused by Chrome itself, as unsafe).
+  const closed = createServer();
+  await new Promise<void>((r) => closed.listen(0, "127.0.0.1", r));
+  const dead = `http://127.0.0.1:${(closed.address() as { port: number }).port}`;
+  await new Promise((r) => closed.close(r));
   const server = createServer((req, res) => {
     const url = new URL(req.url!, "http://x");
     if (url.pathname === "/") {
       const mode = url.searchParams.get("mode");
-      const data =
-        mode === "net" ? "http://127.0.0.1:1/api/record" : `/api/record?status=${mode === "beacon" ? 200 : mode}`;
+      const data = mode === "net" ? `${dead}/api/record` : `/api/record?status=${mode === "beacon" ? 200 : mode}`;
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       // Noise that is not a failure of this page: a 401 probe for a signed-out visitor, a cancelled request.
       return res.end(`<h1>Record</h1><p id="msg">Loading…</p><a href="/">Back</a><script>
         fetch("/api/me");
-        fetch("http://127.0.0.1:1/beacon").catch(() => {}); // a tracker on a dead host: fails on every page
+        fetch("${dead}/beacon").catch(() => {}); // a tracker on a dead host: fails on every page
         const c = new AbortController(); fetch("/api/slow", { signal: c.signal }).catch(() => {}); c.abort();
         fetch(${JSON.stringify(data)}).then((r) => { if (!r.ok) throw 0; }).catch(() => { msg.textContent = "Could not load this record"; });
       </script>`);
@@ -3058,27 +3065,33 @@ test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_
       ["500", "APP_ERROR", /GET http:\/\/127\.0\.0\.1:\d+\/api\/record\?status=500 -> 500 \(AMBIGUOUS: Jev is unsure/],
       ["503", "APP_ERROR", /-> 503/],
       ["429", "RATE_LIMITED", /-> 429/],
-      ["net", "NETWORK_ERROR", /GET http:\/\/127\.0\.0\.1:1\/api\/record -> net::ERR_/],
+      [
+        "net",
+        "NETWORK_ERROR",
+        /GET http:\/\/127\.0\.0\.1:\d+\/api\/record -> net::ERR_CONNECTION_REFUSED \(AMBIGUOUS: /,
+      ],
       ["404", "AMBIGUOUS", /^Jev is unsure/], // a client error says nothing about the page: Jev's doubt stands
       ["beacon", "AMBIGUOUS", /^Jev is unsure/], // the only failure is unrelated to the Step
     ] as const) {
       const b = await Browser.open(`${app}?mode=${mode}`);
+      // Through the run's runtime, as `decisium run` drives a Step: it must forward the failed requests.
+      const rt = new RunDir(mkdtempSync(`${tmpdir()}/runs-`)).runtime(b);
       try {
         await b.waitForChange("", 1500);
-        const r = await runStep("I edit the record", b, unsure, () => {});
+        const r = await runStep("I edit the record", rt, unsure, () => {});
         assert.equal(r.outcome, outcome, mode);
         assert.match(r.reason!, shown, mode);
         assert.doesNotMatch(r.reason!, /api\/me|api\/slow|beacon/, mode);
         // Jev is offered only failures that can leave a page incomplete, never the 401 or the cancelled request.
         assert.ok(
-          asked.at(-1)?.some((f) => /\/beacon -> net::ERR_/.test(f)),
+          asked.at(-1)?.some((f) => /\/beacon -> net::ERR_CONNECTION_REFUSED/.test(f)),
           mode,
         );
         assert.ok(!asked.at(-1)?.some((f) => /api\/me|api\/slow/.test(f)), mode);
         if (mode === "500") {
           // A new page starts clean: the failures were the old page's.
-          await b.execute({ verb: "GOTO", value: `${app}?mode=200` });
-          assert.equal((await runStep("I edit the record", b, unsure, () => {})).outcome, "AMBIGUOUS");
+          await rt.execute({ verb: "GOTO", value: `${app}?mode=200` });
+          assert.equal((await runStep("I edit the record", rt, unsure, () => {})).outcome, "AMBIGUOUS");
         }
       } finally {
         await b.close();
