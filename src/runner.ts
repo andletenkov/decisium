@@ -259,16 +259,22 @@ const finish =
 const BLOCKING = new Set<StepOutcome>(["AMBIGUOUS", "BLOCKED", "ELEMENT_NOT_FOUND", "STEP_TIMEOUT"]);
 
 /**
- * The app error the page shows that keeps the Step from being done, if Jev is sure of one: Jev picks the element, code
- * quotes its text. Not the alert role nor the wording: a failed load is often a plain paragraph beside an empty alert.
+ * The app error the page shows that keeps the Step from being done. An ARIA alert with text says so itself, without a
+ * Jev call; otherwise Jev picks the element if it is sure of one (a failed load is often a plain paragraph beside an
+ * empty alert), and code quotes its text.
  */
 async function shownError(step: string, obs: Observation, decider: Decider, log: typeof console.log) {
+  const text = (e: Element) => (e.text || e.name || e.value).trim();
+  const alerts = [...new Set([...obs.readable, ...obs.areas].filter((e) => e.role === "alert").map(text))].filter(
+    Boolean,
+  );
+  if (alerts.length) return alerts.join("; ");
   if (!decider.error) return undefined;
   const pick = await decider.error(step, obs);
   log(`  Error: ${fmt(pick)}`);
   if (pick.choice === "none" || !gate(pick)) return undefined;
   const el = [...obs.readable, ...obs.areas].find((e) => e.ref === pick.choice);
-  return (el?.text || el?.name || el?.value)?.trim() || undefined;
+  return (el && text(el)) || undefined;
 }
 
 /**

@@ -3046,4 +3046,10 @@ test("runStep: an app error the page shows where the Step's controls should be i
   asked.length = 0;
   assert.equal((await runStep("I edit the record", rt, done, () => {})).outcome, "DONE");
   assert.deepEqual(asked, []);
+  // An alert with text states the error itself: no question.
+  const alerted = parseSnapshot('- alert [ref=e5]: Server error\n- link "Back" [ref=e3]');
+  const r2 = await runStep("I edit the record", { ...rt, observe: async () => alerted }, unsure("none"), () => {});
+  assert.equal(r2.outcome, "APP_ERROR");
+  assert.match(r2.reason!, /"Server error"/);
+  assert.deepEqual(asked, []);
 });
