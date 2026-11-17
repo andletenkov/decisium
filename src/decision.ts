@@ -231,8 +231,6 @@ export interface Decider {
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /** Drag: the readable element or area to drop `source` onto, or "none" (task 0045). */
   drop(step: string, obs: Observation, source: Element): Promise<Pick>;
-  /** A failing Action step: the readable element or area showing the app error that keeps `step` from being done, or "none". */
-  error?(step: string, obs: Observation): Promise<Pick>;
   /** Assertion steps, one request: what kind of check, negated or not, and which element or area. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */

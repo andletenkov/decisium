@@ -64,8 +64,18 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 </tr>
 <tr>
 <td><code>APP_ERROR</code></td>
-<td>The Step could not go on, and Jev found an app error on the page (e.g. a record failed to load). The reason quotes it.</td>
-<td>Fix the app or its backend; rerun if intermittent. To test an expected error, check for its message.</td>
+<td>The Step was blocked while the page&#39;s server requests failed (5xx); the reason lists them.</td>
+<td>Fix the backend; rerun if intermittent. To test an expected error, check for its message.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMITED</code></td>
+<td>The Step was blocked while the server answered 429 Too Many Requests.</td>
+<td>Run fewer scenarios in parallel, or raise the test environment&#39;s limit.</td>
+</tr>
+<tr>
+<td><code>NETWORK_ERROR</code></td>
+<td>The Step was blocked while the page&#39;s requests got no response.</td>
+<td>Check the app and its API are reachable from the test machine.</td>
 </tr>
 <tr>
 <td><code>ACTION_FAILED</code></td>

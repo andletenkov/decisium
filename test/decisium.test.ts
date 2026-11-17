@@ -3013,43 +3013,92 @@ test("lint: a mistyped Decisium tag is a warning on its scenario", async () => {
   assert.match(lint(path, {}), /⚠ @viewprot:390x844: unknown tag, did you mean @viewport:\?[\s\S]*1 warning\./);
 });
 
-test("runStep: an app error the page shows where the Step's controls should be is APP_ERROR, not AMBIGUOUS", async () => {
-  // As captured: the error is a plain paragraph, next to an empty alert.
-  const page = parseSnapshot(
-    [
-      '- heading "Record" [level=1] [ref=e1]',
-      "- paragraph [ref=e2]: Could not load this record",
-      "- alert [ref=e4]",
-      '- link "Back" [ref=e3]',
-    ].join("\n"),
-  );
+test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_LIMITED (429) or NETWORK_ERROR", async () => {
+  // As in the issue: the page says it could not load the record, and Jev, finding no Edit button, is unsure.
+  const { createServer } = await import("node:http");
+  const server = createServer((req, res) => {
+    const url = new URL(req.url!, "http://x");
+    if (url.pathname === "/") {
+      const mode = url.searchParams.get("mode");
+      const data = mode === "net" ? "http://127.0.0.1:1/api/record" : `/api/record?status=${mode}`;
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      // Noise that is not a failure of this page: a 401 probe for a signed-out visitor, a cancelled request.
+      return res.end(`<h1>Record</h1><p id="msg">Loading…</p><a href="/">Back</a><script>
+        fetch("/api/me");
+        const c = new AbortController(); fetch("/api/slow", { signal: c.signal }).catch(() => {}); c.abort();
+        fetch(${JSON.stringify(data)}).then((r) => { if (!r.ok) throw 0; }).catch(() => { msg.textContent = "Could not load this record"; });
+      </script>`);
+    }
+    if (url.pathname === "/api/me") return res.writeHead(401).end();
+    if (url.pathname === "/api/slow") return setTimeout(() => res.end("{}"), 2000);
+    res.writeHead(Number(url.searchParams.get("status")) || 200, { "content-type": "application/json" }).end("{}");
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const app = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const unsure: Decider = {
+    ...oracle,
+    turn: async (_s, obs) => ({
+      done: 0,
+      target: { choice: obs.elements[0].ref, probabilities: { [obs.elements[0].ref]: 0.4, none: 0.45 } },
+    }),
+  };
+  try {
+    for (const [mode, outcome, shown] of [
+      ["500", "APP_ERROR", /GET http:\/\/127\.0\.0\.1:\d+\/api\/record\?status=500 -> 500 \(AMBIGUOUS: Jev is unsure/],
+      ["503", "APP_ERROR", /-> 503/],
+      ["429", "RATE_LIMITED", /-> 429/],
+      ["net", "NETWORK_ERROR", /GET http:\/\/127\.0\.0\.1:1\/api\/record -> net::ERR_/],
+      ["404", "AMBIGUOUS", /^Jev is unsure/], // a client error says nothing about the page: Jev's doubt stands
+    ] as const) {
+      const b = await Browser.open(`${app}?mode=${mode}`);
+      try {
+        await b.waitForChange("", 1500);
+        const r = await runStep("I edit the record", b, unsure, () => {});
+        assert.equal(r.outcome, outcome, mode);
+        assert.match(r.reason!, shown, mode);
+        assert.doesNotMatch(r.reason!, /api\/me|api\/slow/, mode);
+        if (mode === "500") {
+          // A new page starts clean: the failures were the old page's.
+          await b.execute({ verb: "GOTO", value: `${app}?mode=200` });
+          assert.equal((await runStep("I edit the record", b, unsure, () => {})).outcome, "AMBIGUOUS");
+        }
+      } finally {
+        await b.close();
+      }
+    }
+  } finally {
+    server.close();
+  }
+});
+
+test("executeStep: failed requests are reported with the Step, and listed in a failure's reason", async () => {
+  const { executeStep } = await import("../src/execute.ts");
+  const page = parseSnapshot(`- button "Save" [ref=e1]\n- paragraph [ref=e2]: Hello Ada`);
   const rt: Runtime = {
     actionStep: (run) => run(),
     observe: async () => page,
     execute: async () => {},
     waitForChange: async () => false,
+    failedRequests: () => [{ request: "GET https://x/api/me", status: 401 }],
   };
-  const asked: string[] = [];
-  const unsure = (error: string): Decider => ({
-    ...oracle,
-    turn: async () => ({ done: 0, target: { choice: "e3", probabilities: { e3: 0.4, none: 0.45, e1: 0.15 } } }),
-    error: async (step) => (asked.push(step), sure(error)),
+  const base = { rt, live: oracle, log: () => {}, earlier: {}, arg: {} };
+  // A check that fails on the page keeps its outcome (an expected error stays testable), the request beside it.
+  const failed = await executeStep('the greeting should be "Hello Grace"', {
+    ...base,
+    key: "S: check",
+    kind: "assertion",
+    live: assessing("value"),
   });
-  const r = await runStep("I edit the record", rt, unsure("e2"), () => {});
-  assert.equal(r.outcome, "APP_ERROR");
-  assert.match(r.reason!, /"Could not load this record" \(AMBIGUOUS: /);
-  assert.deepEqual(asked, ["I edit the record"]);
-  // Jev sees no app error: the Step's own doubt stands.
-  assert.equal((await runStep("I edit the record", rt, unsure("none"), () => {})).outcome, "AMBIGUOUS");
-  // A Step that reaches its goal never asks.
-  const done: Decider = { ...unsure("e2"), turn: async () => ({ done: 0.95, target: sure("none") }) };
-  asked.length = 0;
-  assert.equal((await runStep("I edit the record", rt, done, () => {})).outcome, "DONE");
-  assert.deepEqual(asked, []);
-  // An alert with text states the error itself: no question.
-  const alerted = parseSnapshot('- alert [ref=e5]: Server error\n- link "Back" [ref=e3]');
-  const r2 = await runStep("I edit the record", { ...rt, observe: async () => alerted }, unsure("none"), () => {});
-  assert.equal(r2.outcome, "APP_ERROR");
-  assert.match(r2.reason!, /"Server error"/);
-  assert.deepEqual(asked, []);
+  assert.equal(failed.outcome, "ASSERTION_FAILED");
+  assert.match(failed.reason!, /\nFailed requests since the page loaded: GET https:\/\/x\/api\/me -> 401$/);
+  assert.deepEqual(failed.failedRequests, ["GET https://x/api/me -> 401"]);
+  const done = await executeStep("I save", {
+    ...base,
+    key: "S: save",
+    kind: "action",
+    live: { ...oracle, turn: async () => ({ done: 0.95, target: sure("none") }) },
+  });
+  assert.equal(done.outcome, "DONE");
+  assert.equal(done.reason, undefined);
+  assert.deepEqual(done.failedRequests, ["GET https://x/api/me -> 401"]);
 });

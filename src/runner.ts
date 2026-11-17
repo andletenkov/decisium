@@ -36,7 +36,9 @@ export type StepOutcome =
   | "JUDGED_FAILED" // opt-in fuzzy Assertion steps
   | "UI_CHANGED"
   | "PAGE_TOO_LARGE" // either kind: a replay-only Resolution broke, the page is over Jev's request limit
-  | "APP_ERROR"; // Action steps: the page shows an app error where the Step's controls should be
+  | "APP_ERROR" // Action steps blocked while the page's requests failed: a server error (5xx),
+  | "RATE_LIMITED" // too many requests (429),
+  | "NETWORK_ERROR"; // or no response at all
 
 export interface Runtime {
   observe(): Promise<Observation>;
@@ -45,9 +47,20 @@ export interface Runtime {
   waitForChange(since: string, timeoutMs?: number): Promise<boolean>;
   /** Runs one Action step with runtime-owned setup and cleanup, even if it throws. */
   actionStep<T>(run: () => Promise<T>, log: typeof console.log): Promise<T>;
+  /** Requests that failed since the current page started loading (HTTP >= 400 or no response), oldest first. */
+  failedRequests?(): FailedRequest[];
   /** True when the page changed since the latest Observation (task 0066); absent: assume it did not. */
   stale?(): Promise<boolean>;
 }
+
+export interface FailedRequest {
+  /** e.g. `GET https://api.x/articles` */
+  request: string;
+  status?: number;
+  /** No response: the network error, e.g. `net::ERR_CONNECTION_REFUSED`. */
+  error?: string;
+}
+export const describeFailure = (f: FailedRequest) => `${f.request} -> ${f.status ?? f.error}`;
 
 export interface StepResult {
   outcome: StepOutcome;
@@ -255,26 +268,23 @@ const finish =
     return { outcome, reason, ...(marginal ? { marginal } : {}) };
   };
 
-/** Outcomes where the Step could not find its way on the page: an error alert there is the likelier cause. */
+/** Outcomes where the Step could not find its way on the page: a failed request of that page is the likelier cause. */
 const BLOCKING = new Set<StepOutcome>(["AMBIGUOUS", "BLOCKED", "ELEMENT_NOT_FOUND", "STEP_TIMEOUT"]);
 
 /**
- * The app error the page shows that keeps the Step from being done. An ARIA alert with text says so itself, without a
- * Jev call; otherwise Jev picks the element if it is sure of one (a failed load is often a plain paragraph beside an
- * empty alert), and code quotes its text.
+ * Why the page an Action step was blocked on is incomplete, from its failed requests: a server error, a rate limit, or
+ * no response. Other 4xx (a 401 probe for a signed-out visitor, a 404 the app expects) say nothing about the page.
  */
-async function shownError(step: string, obs: Observation, decider: Decider, log: typeof console.log) {
-  const text = (e: Element) => (e.text || e.name || e.value).trim();
-  const alerts = [...new Set([...obs.readable, ...obs.areas].filter((e) => e.role === "alert").map(text))].filter(
-    Boolean,
+export function requestFailure(failed: FailedRequest[]): { outcome: StepOutcome; failed: FailedRequest[] } | undefined {
+  const of = (outcome: StepOutcome, test: (f: FailedRequest) => boolean) => {
+    const hit = failed.filter(test);
+    return hit.length ? { outcome, failed: hit } : undefined;
+  };
+  return (
+    of("APP_ERROR", (f) => (f.status ?? 0) >= 500) ??
+    of("RATE_LIMITED", (f) => f.status === 429) ??
+    of("NETWORK_ERROR", (f) => f.status === undefined)
   );
-  if (alerts.length) return alerts.join("; ");
-  if (!decider.error) return undefined;
-  const pick = await decider.error(step, obs);
-  log(`  Error: ${fmt(pick)}`);
-  if (pick.choice === "none" || !gate(pick)) return undefined;
-  const el = [...obs.readable, ...obs.areas].find((e) => e.ref === pick.choice);
-  return (el && text(el)) || undefined;
 }
 
 /**
@@ -327,12 +337,12 @@ async function act(
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const done = finish(log);
-  // A Step that could not go on while the page shows an app error reports that error, not Jev's doubt about a page
-  // without the controls it needs (a record that failed to load is not an ambiguous Step).
-  const end = async (outcome: StepOutcome, reason?: string, weak?: string[]): Promise<StepResult> => {
-    const error = BLOCKING.has(outcome) && obs ? await shownError(said, obs, decider, log) : undefined;
-    return error
-      ? done("APP_ERROR", `the page shows an error: "${error}"${reason ? ` (${outcome}: ${reason})` : ""}`)
+  // A Step blocked on a page whose requests failed reports the failure, not Jev's doubt about a page without the
+  // controls it needs (a record that failed to load is not an ambiguous Step).
+  const end = (outcome: StepOutcome, reason?: string, weak?: string[]): StepResult => {
+    const why = BLOCKING.has(outcome) ? requestFailure(rt.failedRequests?.() ?? []) : undefined;
+    return why
+      ? done(why.outcome, `${why.failed.map(describeFailure).join(", ")}${reason ? ` (${outcome}: ${reason})` : ""}`)
       : done(outcome, reason, weak);
   };
   // Only "press X" or "go back" / "go to /x": nothing to choose, so code does it and the following checks verify the
@@ -353,8 +363,7 @@ async function act(
   let navigated = false; // the last action opened another URL
   let submitted = false; // the last action put every value this Step typed onto the page
   const typed: string[] = []; // values this Step typed, secrets excluded
-  let obs: Observation | undefined;
-  obs = await rt.observe();
+  let obs = await rt.observe();
 
   const { maxTurns } = settings();
   for (let turn = 1; turn <= maxTurns; turn++) {

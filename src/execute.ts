@@ -4,13 +4,15 @@ import type { Decider } from "./decision.ts";
 import { modelUsage } from "./model-decider.ts";
 import { settings } from "./options.ts";
 import type { DecisionMetadata } from "./decision-provider.ts";
-import { runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
+import { describeFailure, runAssertion, runStep, type Runtime, type StepResult } from "./runner.ts";
 import { readStep, type StepArgument, type StepKind } from "./step.ts";
 
 /** The outcomes of a Step that reached its goal: the only answers a cassette keeps. */
 const SUCCESS = new Set(["DONE", "PASSED"]);
 /** Outcomes whose answers would only fail the same way when replayed: never written, not even for a new Step. */
-const USELESS = new Set(["AMBIGUOUS", "UI_CHANGED", "PAGE_TOO_LARGE", "APP_ERROR"]);
+const USELESS = new Set(["AMBIGUOUS", "UI_CHANGED", "PAGE_TOO_LARGE", "APP_ERROR", "RATE_LIMITED", "NETWORK_ERROR"]);
+/** Outcomes whose reason already lists the failed requests. */
+const FROM_REQUESTS = new Set(["APP_ERROR", "RATE_LIMITED", "NETWORK_ERROR"]);
 
 export interface StepContext {
   rt: Runtime;
@@ -36,6 +38,8 @@ export interface StepReport extends StepResult {
   cassette?: "replayed" | "recorded" | "healed";
   /** Elements the Step acted on that only a position among identical twins identifies: the Step should name which. */
   positional?: string[];
+  /** Requests that failed since the page the Step ended on started loading (`GET url -> 500`). */
+  failedRequests?: string[];
   seconds: number;
   jevCalls: number;
   decisions?: DecisionMetadata[];
@@ -114,6 +118,13 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   }
   if (r.marginal && ctx.strict)
     r = { outcome: "AMBIGUOUS", reason: `passed, but Jev was barely confident (--strict): ${r.marginal}` };
+  // Reported with every Step; a failed Step's reason lists them, so the failure shows what the page lacked and why.
+  const failedRequests = rt.failedRequests?.().map(describeFailure) ?? [];
+  if (failedRequests.length && !SUCCESS.has(r.outcome) && !FROM_REQUESTS.has(r.outcome))
+    r = {
+      ...r,
+      reason: `${r.reason ?? ""}\nFailed requests since the page loaded: ${failedRequests.join(", ")}`.trim(),
+    };
   for (const row of rows) for (const v of readStep({ text: row, kind }).quoted) earlier[v] = row;
   for (const [v, row] of unquoted) earlier[v] ??= row;
   // Cost and time per Step: live Jev calls and tokens (cassette replays cost 0), wall-clock seconds.
@@ -121,6 +132,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
     ...r,
     cassette: served.find((c) => c !== "replayed") ?? served[0],
     ...(positional.length ? { positional } : {}),
+    ...(failedRequests.length ? { failedRequests } : {}),
     seconds: (Date.now() - start) / 1000,
     jevCalls: modelUsage.calls - before.calls,
     inputTokens: modelUsage.inputTokens - before.inputTokens,

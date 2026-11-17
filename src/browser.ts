@@ -12,6 +12,7 @@ import {
   type Request,
 } from "playwright";
 import { recordNetwork, replayNetwork, type NetworkReplay } from "./network.ts";
+import type { FailedRequest } from "./runner.ts";
 import {
   ACTIONABLE,
   parseSnapshot,
@@ -58,6 +59,8 @@ export interface Action {
 const LEAVE = "Leave site? Changes you made may not be saved.";
 
 /** Request types that can change what the page shows: only these hold up settle(). */
+/** Resource types whose failure leaves the page incomplete. */
+const FAILS = new Set(["document", "xhr", "fetch"]);
 const RENDERS = new Set(["document", "script", "stylesheet", "xhr", "fetch"]);
 /** Cassette replay: a request pending longer than this stops holding settle() (page load, waitForChange). A hung telemetry POST otherwise costs the full `actionTimeout`. */
 const REPLAY_REQUEST_MS = 1500;
@@ -179,6 +182,8 @@ export class Browser {
   private opened!: Promise<undefined>;
   private signal!: () => void;
   readonly consoleErrors: string[] = [];
+  /** Requests of the Steps' tab that failed since its page started loading (Runtime.failedRequests). */
+  private failed: FailedRequest[] = [];
   /** Secret placeholders (`$NAME` -> value): typed for the token, masked back to it in every Observation (task 0030). */
   private secrets: Record<string, string> = {};
   /** A secret was typed: the Playwright trace stores typed text unmasked, so close() keeps none. */
@@ -221,8 +226,31 @@ export class Browser {
     });
     context.on("requestfinished", done);
     context.on("requestfailed", done);
+    // Failed requests the page's content depends on: its document and its data. An aborted request was cancelled
+    // (a navigation, a superseded search), not failed.
+    // A navigation request in a tab still opening has no frame yet (Playwright throws): not the Steps' tab.
+    const frame = (r: Request) => {
+      try {
+        return r.frame();
+      } catch {
+        return undefined;
+      }
+    };
+    const ours = (r: Request) => FAILS.has(r.resourceType()) && frame(r)?.page() === this.page;
+    context.on("request", (r) => {
+      if (r.isNavigationRequest() && frame(r) === this.page.mainFrame()) this.failed = []; // a new page
+    });
+    context.on("response", (res) => {
+      if (res.status() >= 400 && ours(res.request()))
+        this.failed.push({ request: `${res.request().method()} ${res.url()}`, status: res.status() });
+    });
+    context.on("requestfailed", (r) => {
+      const error = r.failure()?.errorText ?? "failed";
+      if (error !== "net::ERR_ABORTED" && ours(r)) this.failed.push({ request: `${r.method()} ${r.url()}`, error });
+    });
     context.on("page", (p) => {
       this.page = p;
+      this.failed = [];
       this.touched = true;
       this.watchDownloads(p);
     });
@@ -273,6 +301,10 @@ export class Browser {
   }
 
   /** Owns per-Action-step cleanup, including thrown errors. `execute` keeps cleanup actions in the runtime's trace. */
+  failedRequests(): FailedRequest[] {
+    return [...this.failed];
+  }
+
   async actionStep<T>(run: () => Promise<T>, log = console.log, execute = (a: Action) => this.execute(a)): Promise<T> {
     if (!this.open) this.dialog = undefined;
     try {

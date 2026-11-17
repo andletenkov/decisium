@@ -12,7 +12,9 @@ the page text, a rerun command, ready for a coding agent), a screenshot, a Playw
 | `UNVERIFIABLE` | The check quotes nothing to compare, or its evidence never arrived: the area it names is not on the screen, or was still loading. | Quote the expected value; name an area that is on the screen; check what the loaded page shows first. |
 | `ELEMENT_NOT_FOUND` | Nothing matches the Step. | Use the page's own label. |
 | `BLOCKED` | The task cannot be done on this page. | Check the start URL and earlier Steps; menus may need "hover". |
-| `APP_ERROR` | The Step could not go on, and Jev found an app error on the page (e.g. a record failed to load). The reason quotes it. | Fix the app or its backend; rerun if intermittent. To test an expected error, check for its message. |
+| `APP_ERROR` | The Step was blocked while the page's server requests failed (5xx); the reason lists them. | Fix the backend; rerun if intermittent. To test an expected error, check for its message. |
+| `RATE_LIMITED` | The Step was blocked while the server answered 429 Too Many Requests. | Run fewer scenarios in parallel, or raise the test environment's limit. |
+| `NETWORK_ERROR` | The Step was blocked while the page's requests got no response. | Check the app and its API are reachable from the test machine. |
 | `ACTION_FAILED` | The action did not take effect. | Check the value's format (ISO for dates). |
 | `STEP_TIMEOUT` | Too many actions for one Step. | Split the Step, or raise `maxTurns`. |
 | `UI_CHANGED` | A replayed Step no longer matches the page and no model key was given to resolve it again. | Provide the key, or re-record with `--record new`. |

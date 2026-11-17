@@ -260,18 +260,6 @@ export class ModelDecider implements Decider {
     return (await this.#ask({ state, questions: { target: choice(question, targets) } })).answers.target;
   }
 
-  async error(step: string, obs: Observation): Promise<Pick> {
-    const state = { step, ui: await this.#ui(obs, "step", step) };
-    const question =
-      "`step` cannot be done on this page. Which element in `ui` shows an error from the app (e.g. the content failed to load, a server or permission error) that keeps `step` from being done?";
-    const targets = await narrow(
-      refs([...new Set([...obs.readable, ...obs.areas])]),
-      { none: "No element in `ui` shows such an error: the page simply lacks what `step` needs." },
-      this.#choose(state, question),
-    );
-    return (await this.#ask({ state, questions: { target: choice(question, targets) } })).answers.target;
-  }
-
   async recall(step: string, earlier: Record<string, string>): Promise<Pick> {
     const values = Object.keys(earlier);
     const criteria: Record<string, string> = Object.fromEntries(
