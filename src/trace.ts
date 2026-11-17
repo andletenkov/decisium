@@ -102,7 +102,8 @@ export class RunDir {
 
   /** Every Observation is a Turn: log the Observation text and screenshot it. Cassette replay (`b.replay`): only failing Steps are shot, by the caller; a green run would delete the PNGs. */
   runtime(b: Browser): Runtime {
-    const rt: Runtime = {
+    // Required: a method the wrapper does not forward is invisible to the runner, and an optional one compiles without.
+    const rt: Required<Runtime> = {
       observe: async () => {
         const obs = await b.observe();
         const screenshot = b.replay ? undefined : await this.shoot(b);

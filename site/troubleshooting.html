@@ -127,6 +127,9 @@ tracker on a dead host fails on many sites and is not the Step&#39;s. The reques
 <code>GET https://api.example.com/records/42 -&gt; 500 (AMBIGUOUS: Jev is unsure what to do next: …)</code>. If Jev picks none,
 or is unsure, the Step keeps its own outcome.</li>
 <li>Other 4xx (a 401 for a signed-out visitor, a 404 the app expects) are listed but never change an outcome.</li>
+<li>A response from another origin without CORS headers cannot be read by the page, so the browser reports no response:
+a gateway&#39;s 429 without them shows as <code>NETWORK_ERROR</code>, not <code>RATE_LIMITED</code>. Add the CORS headers to the gateway&#39;s
+error answers too.</li>
 <li>Checks keep their outcome: a Scenario that expects an error page checks for its message, and passes.</li>
 <li>The question costs one Jev call, only for a blocked Step whose page has such failures. It is never recorded, so a run
 with <code>--record none</code> and no model key keeps the Step&#39;s own outcome.</li>

@@ -38,6 +38,9 @@ get no response. A cancelled request is not a failure, and a new page starts wit
   `GET https://api.example.com/records/42 -> 500 (AMBIGUOUS: Jev is unsure what to do next: …)`. If Jev picks none,
   or is unsure, the Step keeps its own outcome.
 - Other 4xx (a 401 for a signed-out visitor, a 404 the app expects) are listed but never change an outcome.
+- A response from another origin without CORS headers cannot be read by the page, so the browser reports no response:
+  a gateway's 429 without them shows as `NETWORK_ERROR`, not `RATE_LIMITED`. Add the CORS headers to the gateway's
+  error answers too.
 - Checks keep their outcome: a Scenario that expects an error page checks for its message, and passes.
 - The question costs one Jev call, only for a blocked Step whose page has such failures. It is never recorded, so a run
   with `--record none` and no model key keeps the Step's own outcome.
