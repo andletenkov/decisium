@@ -2,10 +2,14 @@
 // Cases: "api-down" (only the site's data API answers 500), "normal" (a Step the page cannot do), "user-error"
 // (the app rejects the user's input) and "toast" (a success message on screen). Expected: api-down -> APP_ERROR,
 // every other case -> no classification (the Step's own outcome stands).
-// Usage: node --env-file=.env scripts/error-sites.ts [filter] [--repeat 3]   (JSON lines on stdout)
+// With --save, each page's snapshot and failed requests become labelled cases for scripts/bench-failure.ts
+// (scripts/failure-cases.json): on an api-down page, its data request is what the data Step needs, and none of the
+// failures is what the "normal" Step (one the page never offers) needs; on every other page, none is.
+// Usage: node --env-file=.env scripts/error-sites.ts [filter] [--repeat 3] [--save]   (JSON lines on stdout)
 import type { Page } from "playwright";
 import { Browser } from "../src/browser.ts";
-import { describeFailure, requestFailure } from "../src/runner.ts";
+import { writeFileSync } from "node:fs";
+import { describeFailure, failureOutcome } from "../src/runner.ts";
 
 type Kind = "api-down" | "normal" | "user-error" | "toast";
 interface Case {
@@ -108,7 +112,7 @@ const CASES: Case[] = [
     url: "https://hn.algolia.com/?q=playwright",
     step: "I open the admin settings",
   },
-  { site: "demoqa-books", kind: "normal", url: "https://demoqa.com/books", step: "I export the books as PDF" },
+  { site: "demoqa-books", kind: "normal", url: "https://demoqa.com/books", step: "I switch the site to dark mode" },
   { site: "realworld", kind: "normal", url: "https://demo.realworld.show/", step: "I open the billing page" },
   {
     site: "github-issues",
@@ -116,9 +120,14 @@ const CASES: Case[] = [
     url: "https://github.com/microsoft/playwright/issues",
     step: "I delete the repository",
   },
-  { site: "demoblaze", kind: "normal", url: "https://www.demoblaze.com/", step: "I filter products by price" },
+  {
+    site: "demoblaze",
+    kind: "normal",
+    url: "https://www.demoblaze.com/",
+    step: "I change the site language to German",
+  },
   { site: "toolshop", kind: "normal", url: "https://practicesoftwaretesting.com/", step: "I open my order history" },
-  { site: "bstackdemo", kind: "normal", url: "https://bstackdemo.com/", step: "I compare two phones" },
+  { site: "bstackdemo", kind: "normal", url: "https://bstackdemo.com/", step: "I switch the site to dark mode" },
   {
     site: "orangehrm",
     kind: "normal",
@@ -181,6 +190,17 @@ const filter = process.argv[2]?.startsWith("--") ? "" : (process.argv[2] ?? "");
 const r = process.argv.indexOf("--repeat");
 const REPEAT = r > 0 ? Number(process.argv[r + 1]) : 3;
 
+const SAVE = process.argv.includes("--save");
+const saved: {
+  site: string;
+  kind: string;
+  step: string;
+  url: string;
+  snapshot: string;
+  failed: string[];
+  needed: string[];
+}[] = [];
+
 for (const c of CASES.filter((x) => `${x.site} ${x.kind}`.includes(filter))) {
   for (let run = 1; run <= REPEAT; run++) {
     const b = await Browser.open("about:blank");
@@ -197,9 +217,18 @@ for (const c of CASES.filter((x) => `${x.site} ${x.kind}`.includes(filter))) {
       }
       await page.waitForTimeout(c.setup ? 8000 : 4000);
       const failed = b.failedRequests();
-      const why = requestFailure(failed);
+      const lines = [...new Set(failed.filter(failureOutcome).map(describeFailure))];
       const expected = c.kind === "api-down" ? "APP_ERROR" : "none";
-      const got = why?.outcome ?? "none";
+      const got =
+        failed.map(failureOutcome).find((o) => o === "APP_ERROR") ?? failed.map(failureOutcome).find(Boolean) ?? "none";
+      if (SAVE && run === 1 && lines.length) {
+        const obs = await b.observe();
+        const page = { site: c.site, url: c.url, snapshot: obs.text, failed: lines };
+        const needed = c.api ? lines.filter((l) => c.api!.test(l)) : [];
+        saved.push({ ...page, kind: c.kind, step: c.step, needed });
+        const other = CASES.find((x) => x.site === c.site && x.kind === "normal");
+        if (c.api && other) saved.push({ ...page, kind: "api-down-unrelated", step: other.step, needed: [] });
+      }
       console.log(
         JSON.stringify({
           site: c.site,
@@ -218,3 +247,4 @@ for (const c of CASES.filter((x) => `${x.site} ${x.kind}`.includes(filter))) {
     }
   }
 }
+if (SAVE) writeFileSync("scripts/failure-cases.json", `${JSON.stringify(saved, null, 1)}\n`);

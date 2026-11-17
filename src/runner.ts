@@ -60,7 +60,11 @@ export interface FailedRequest {
   /** No response: the network error, e.g. `net::ERR_CONNECTION_REFUSED`. */
   error?: string;
 }
-export const describeFailure = (f: FailedRequest) => `${f.request} -> ${f.status ?? f.error}`;
+/** `GET url -> 500`; credentials in the query masked (reports and Jev see it), the URL capped. */
+export const describeFailure = (f: FailedRequest) => {
+  const masked = f.request.replace(/([?&][^=&]*(?:key|token|secret|sig|auth|password)[^=&]*=)[^&]*/gi, "$1***");
+  return `${masked.length > 200 ? `${masked.slice(0, 199)}…` : masked} -> ${f.status ?? f.error}`;
+};
 
 export interface StepResult {
   outcome: StepOutcome;
@@ -272,20 +276,28 @@ const finish =
 const BLOCKING = new Set<StepOutcome>(["AMBIGUOUS", "BLOCKED", "ELEMENT_NOT_FOUND", "STEP_TIMEOUT"]);
 
 /**
- * Why the page an Action step was blocked on is incomplete, from its failed requests: a server error, a rate limit, or
- * no response. Other 4xx (a 401 probe for a signed-out visitor, a 404 the app expects) say nothing about the page.
+ * What a failed request means for a page that lacks what a Step needs: a server error, a rate limit, or no response.
+ * Other 4xx (a 401 probe for a signed-out visitor, a 404 the app expects) do not leave the page incomplete.
  */
-export function requestFailure(failed: FailedRequest[]): { outcome: StepOutcome; failed: FailedRequest[] } | undefined {
-  const of = (outcome: StepOutcome, test: (f: FailedRequest) => boolean) => {
-    const hit = failed.filter(test);
-    return hit.length ? { outcome, failed: hit } : undefined;
-  };
-  return (
-    of("APP_ERROR", (f) => (f.status ?? 0) >= 500) ??
-    of("RATE_LIMITED", (f) => f.status === 429) ??
-    of("NETWORK_ERROR", (f) => f.status === undefined)
-  );
+export function failureOutcome(f: FailedRequest): StepOutcome | undefined {
+  if (f.status === undefined) return "NETWORK_ERROR";
+  if (f.status === 429) return "RATE_LIMITED";
+  return f.status >= 500 ? "APP_ERROR" : undefined;
 }
+
+/**
+ * The failed request that explains why a blocked Step's page lacks what it needs: Jev picks it among the page's
+ * failures (a tracking beacon to a dead host fails too), only when there is one to pick.
+ */
+async function blockingFailure(step: string, obs: Observation, rt: Runtime, decider: Decider, log: typeof console.log) {
+  const failed = [...new Map((rt.failedRequests?.() ?? []).filter(failureOutcome).map((f) => [describeFailure(f), f]))];
+  if (!failed.length || !decider.failure) return undefined;
+  const pick = await decider.failure(step, obs, failed.map(([line]) => line).slice(-MAX_FAILED));
+  log(`  Failed request: ${fmt(pick)}`);
+  if (pick.choice === "none" || !gate(pick)) return undefined;
+  return failed.slice(-MAX_FAILED)[Number(pick.choice.slice(1))]?.[1];
+}
+const MAX_FAILED = 20; // the latest: a long-lived page piles up failed polls
 
 /**
  * Action or Attempt step. An Attempt is done once its actions are performed, even if the app rejects them.
@@ -337,14 +349,6 @@ async function act(
   const said = read.label;
   log(`\n${attempt ? "Attempt" : "Step"}: ${said}`);
   const done = finish(log);
-  // A Step blocked on a page whose requests failed reports the failure, not Jev's doubt about a page without the
-  // controls it needs (a record that failed to load is not an ambiguous Step).
-  const end = (outcome: StepOutcome, reason?: string, weak?: string[]): StepResult => {
-    const why = BLOCKING.has(outcome) ? requestFailure(rt.failedRequests?.() ?? []) : undefined;
-    return why
-      ? done(why.outcome, `${why.failed.map(describeFailure).join(", ")}${reason ? ` (${outcome}: ${reason})` : ""}`)
-      : done(outcome, reason, weak);
-  };
   // Only "press X" or "go back" / "go to /x": nothing to choose, so code does it and the following checks verify the
   // effect (tasks 0039, 0041).
   const only: Action | undefined = read.pressOnly ? { verb: "PRESS", value: read.pressOnly } : read.navigation;
@@ -354,9 +358,9 @@ async function act(
     try {
       await rt.execute(only);
     } catch (err) {
-      return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
+      return done("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
     }
-    return end("DONE");
+    return done("DONE");
   }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
@@ -364,6 +368,14 @@ async function act(
   let submitted = false; // the last action put every value this Step typed onto the page
   const typed: string[] = []; // values this Step typed, secrets excluded
   let obs = await rt.observe();
+  // A Step blocked on a page whose requests failed reports the failure, not Jev's doubt about a page without the
+  // controls it needs (a record that failed to load is not an ambiguous Step).
+  const end = async (outcome: StepOutcome, reason?: string, weak?: string[]): Promise<StepResult> => {
+    const f = BLOCKING.has(outcome) ? await blockingFailure(said, obs, rt, decider, log) : undefined;
+    return f
+      ? done(failureOutcome(f)!, `${describeFailure(f)}${reason ? ` (${outcome}: ${reason})` : ""}`)
+      : done(outcome, reason, weak);
+  };
 
   const { maxTurns } = settings();
   for (let turn = 1; turn <= maxTurns; turn++) {

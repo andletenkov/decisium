@@ -3020,11 +3020,13 @@ test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_
     const url = new URL(req.url!, "http://x");
     if (url.pathname === "/") {
       const mode = url.searchParams.get("mode");
-      const data = mode === "net" ? "http://127.0.0.1:1/api/record" : `/api/record?status=${mode}`;
+      const data =
+        mode === "net" ? "http://127.0.0.1:1/api/record" : `/api/record?status=${mode === "beacon" ? 200 : mode}`;
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       // Noise that is not a failure of this page: a 401 probe for a signed-out visitor, a cancelled request.
       return res.end(`<h1>Record</h1><p id="msg">Loading…</p><a href="/">Back</a><script>
         fetch("/api/me");
+        fetch("http://127.0.0.1:1/beacon").catch(() => {}); // a tracker on a dead host: fails on every page
         const c = new AbortController(); fetch("/api/slow", { signal: c.signal }).catch(() => {}); c.abort();
         fetch(${JSON.stringify(data)}).then((r) => { if (!r.ok) throw 0; }).catch(() => { msg.textContent = "Could not load this record"; });
       </script>`);
@@ -3035,12 +3037,19 @@ test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const app = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const asked: string[][] = [];
   const unsure: Decider = {
     ...oracle,
     turn: async (_s, obs) => ({
       done: 0,
       target: { choice: obs.elements[0].ref, probabilities: { [obs.elements[0].ref]: 0.4, none: 0.45 } },
     }),
+    // Jev's part, scripted: the record's request is what "edit the record" needs; the beacon is not.
+    failure: async (_s, _o, failed) => {
+      asked.push(failed);
+      const i = failed.findIndex((f) => f.includes("/api/record"));
+      return sure(i < 0 ? "none" : `r${i}`);
+    },
   };
   try {
     for (const [mode, outcome, shown] of [
@@ -3049,6 +3058,7 @@ test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_
       ["429", "RATE_LIMITED", /-> 429/],
       ["net", "NETWORK_ERROR", /GET http:\/\/127\.0\.0\.1:1\/api\/record -> net::ERR_/],
       ["404", "AMBIGUOUS", /^Jev is unsure/], // a client error says nothing about the page: Jev's doubt stands
+      ["beacon", "AMBIGUOUS", /^Jev is unsure/], // the only failure is unrelated to the Step
     ] as const) {
       const b = await Browser.open(`${app}?mode=${mode}`);
       try {
@@ -3056,7 +3066,13 @@ test("runStep: blocked on a page whose requests failed is APP_ERROR (5xx), RATE_
         const r = await runStep("I edit the record", b, unsure, () => {});
         assert.equal(r.outcome, outcome, mode);
         assert.match(r.reason!, shown, mode);
-        assert.doesNotMatch(r.reason!, /api\/me|api\/slow/, mode);
+        assert.doesNotMatch(r.reason!, /api\/me|api\/slow|beacon/, mode);
+        // Jev is offered only failures that can leave a page incomplete, never the 401 or the cancelled request.
+        assert.ok(
+          asked.at(-1)?.some((f) => /\/beacon -> net::ERR_/.test(f)),
+          mode,
+        );
+        assert.ok(!asked.at(-1)?.some((f) => /api\/me|api\/slow/.test(f)), mode);
         if (mode === "500") {
           // A new page starts clean: the failures were the old page's.
           await b.execute({ verb: "GOTO", value: `${app}?mode=200` });
