@@ -166,7 +166,8 @@ test("settings: interactionTimeout bounds a click's navigation wait and the uplo
     else res.setHeader("content-type", "text/html").end('<a href="/slow">Sign in</a><button>Attach</button>');
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
-  const file = join(mkdtempSync(join(tmpdir(), "decisium-upload-")), "a.txt");
+  const dir = mkdtempSync(join(tmpdir(), "decisium-upload-"));
+  const file = join(dir, "a.txt");
   writeFileSync(file, "a");
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
   const click = async (name: string, verb: "CLICK" | "UPLOAD" = "CLICK") => {
@@ -197,6 +198,7 @@ test("settings: interactionTimeout bounds a click's navigation wait and the uplo
     });
   } finally {
     server.close();
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 

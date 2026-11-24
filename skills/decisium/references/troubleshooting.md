@@ -45,6 +45,7 @@ expression or profile filtered them out, or `file.feature:<line>` points at no s
 | `PAGE_TOO_LARGE` | The page is over the model's size limit. | Test a narrower page or state. |
 | marginal pass | Passed, but the model was barely sure. | Make the Step more specific; do not lower `confidence.answer`. |
 | check fails on a slow page | The expected state came after the check gave up. | Raise `checkTimeout` (and `actionTimeout` if actions finish too early). |
+| click fails with `Timeout …ms exceeded` on a slow navigation (e.g. login redirect) | The click waits for the navigation it starts, and gave up first. | Raise `interactionTimeout` (`--interaction-timeout`). |
 
 A failed Step's reason ends with the page's failed requests (`Failed requests since the page loaded: GET … -> 500`):
 read them before rewording a Step. Other 4xx never change an outcome, and checks keep theirs, so an expected error
