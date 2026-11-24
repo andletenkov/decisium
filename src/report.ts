@@ -87,7 +87,7 @@ export interface StateStep {
   step: string;
 }
 
-const STATE_HEADER = /^in state ("(?:[^"\\]|\\.)*") at (.+), (action|attempt|assertion) ("(?:[^"\\]|\\.)*")\n/;
+const STATE_HEADER = /^in state ("(?:[^"\\]|\\.)*") at (.+), (\w+) ("(?:[^"\\]|\\.)*")\n/;
 
 /**
  * The error a failing state Step throws: a one-line header naming the state Step, then the Step's own message unchanged.

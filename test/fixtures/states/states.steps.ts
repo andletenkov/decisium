@@ -39,3 +39,6 @@ When("I press checkout", () => {
     new Error(outcomeMessage({ outcome: "ACTION_FAILED", reason: 'CLICK button "Checkout" failed\nsecond line' })),
   );
 });
+When("I throw a string", () => {
+  throw "plain string";
+});

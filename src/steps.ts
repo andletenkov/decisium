@@ -272,9 +272,9 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
       networkMissed(w.browser);
     } catch (err) {
       if (quiet) return false;
-      const e = err as Error;
+      const e = err instanceof Error ? err : new Error(String(err)); // a client step may throw a string
       e.message = stateFailureMessage({ state: def.name, at: w.at, kind, step: readStep(s).label }, e.message);
-      throw frameless(e); // the stack would repeat the message without its header
+      throw opt("DEBUG") ? e : frameless(e); // the stack would repeat the message without its header
     }
   }
   run.event("state", { state: def.name, steps: steps.length, ms: Date.now() - started }); // the cost of each state

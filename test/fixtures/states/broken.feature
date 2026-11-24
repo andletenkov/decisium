@@ -10,3 +10,7 @@ Feature: A failing state
 
   Scenario: A plain failing scenario
     When I press checkout
+
+  @state:stringly
+  Scenario: Consumer of a state whose step throws a string
+    Then the session is there
