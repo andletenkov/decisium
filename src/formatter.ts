@@ -36,6 +36,7 @@ function rerun(target: string[], tuning?: Settings): string {
         CONFIDENCE_ANSWER: tuning.confidence.answer,
         CHECK_TIMEOUT: tuning.checkTimeout,
         ACTION_TIMEOUT: tuning.actionTimeout,
+        INTERACTION_TIMEOUT: tuning.interactionTimeout,
         MAX_TURNS: tuning.maxTurns,
       }
     : undefined;
@@ -50,6 +51,7 @@ function rerun(target: string[], tuning?: Settings): string {
         ["CONFIDENCE_ANSWER", "confidence-answer"],
         ["CHECK_TIMEOUT", "check-timeout"],
         ["ACTION_TIMEOUT", "action-timeout"],
+        ["INTERACTION_TIMEOUT", "interaction-timeout"],
         ["MAX_TURNS", "max-turns"],
       ] as const
     ).map(([name, flag]) => {

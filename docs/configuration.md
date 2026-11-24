@@ -28,7 +28,7 @@ Exit codes: `0` passed, `1` a scenario failed, `2` configuration or infrastructu
 | `-p <profile>` | A cucumber profile. |
 | `--no-agent-report` | Do not write `report.md`. |
 | `-v`, `--debug` | Print every page snapshot and answer; show stack traces. |
-| `--report-dir`, `--check-timeout`, `--action-timeout`, `--max-turns`, `--confidence-target`, `--confidence-answer` | The options below, one flag each. |
+| `--report-dir`, `--check-timeout`, `--action-timeout`, `--interaction-timeout`, `--max-turns`, `--confidence-target`, `--confidence-answer` | The options below, one flag each. |
 
 ## Decision providers
 
@@ -104,6 +104,7 @@ export default {
 | `reportDir` | `"runs"` | To match your CI artifact path. |
 | `checkTimeout` | `5000` | Slow page: ms a check waits for the expected state. |
 | `actionTimeout` | `5000` | Slow app: ms to wait for the page to settle after an action. |
+| `interactionTimeout` | `5000` | Slow click: ms a click, double/right click, drag, paste, type, select, upload (with its file chooser) or the hover before a scroll may take, including the navigation a click starts (a slow login redirect). A hovered Step has its own 2000 ms; `GOTO`, back, forward and reload use Playwright's navigation default (30 s). |
 | `maxTurns` | `8` | Long flows in one Step (1–20). Or split the Step. |
 | `confidence.target` | `0.5` | How sure Jev must be of the element. Reword the Step first. |
 | `confidence.answer` | `0.8` | How sure Jev must be of other answers. Below `0.6` warns. |
@@ -129,6 +130,7 @@ Every option has an environment variable, so a CI job or a shell can change it w
 | `DECISIUM_REPORT_DIR` | `--report-dir` | `reportDir` | Where run folders go. |
 | `DECISIUM_CHECK_TIMEOUT` | `--check-timeout` | `checkTimeout` | ms. |
 | `DECISIUM_ACTION_TIMEOUT` | `--action-timeout` | `actionTimeout` | ms. |
+| `DECISIUM_INTERACTION_TIMEOUT` | `--interaction-timeout` | `interactionTimeout` | ms. |
 | `DECISIUM_MAX_TURNS` | `--max-turns` | `maxTurns` | 1-20. |
 | `DECISIUM_CONFIDENCE_TARGET` | `--confidence-target` | `confidence.target` | 0 to 1. |
 | `DECISIUM_CONFIDENCE_ANSWER` | `--confidence-answer` | `confidence.answer` | 0 to 1. |

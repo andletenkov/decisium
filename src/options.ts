@@ -20,6 +20,7 @@ const ENV = {
   reportDir: "REPORT_DIR",
   checkTimeout: "CHECK_TIMEOUT",
   actionTimeout: "ACTION_TIMEOUT",
+  interactionTimeout: "INTERACTION_TIMEOUT",
   maxTurns: "MAX_TURNS",
   states: "STATES", // glob of state definition files (issue 11), default **/*.state.feature
   "confidence.target": "CONFIDENCE_TARGET",
@@ -37,6 +38,7 @@ export const DEFAULTS = {
   confidence: { target: 0.5, answer: 0.8 },
   checkTimeout: 5000,
   actionTimeout: 5000,
+  interactionTimeout: 5000,
   maxTurns: 8,
 };
 export type Settings = typeof DEFAULTS;
@@ -69,6 +71,7 @@ export function settings(env: Record<string, string | undefined> = process.env):
     },
     checkTimeout: num("checkTimeout", DEFAULTS.checkTimeout, ms, "a positive whole number of ms"),
     actionTimeout: num("actionTimeout", DEFAULTS.actionTimeout, ms, "a positive whole number of ms"),
+    interactionTimeout: num("interactionTimeout", DEFAULTS.interactionTimeout, ms, "a positive whole number of ms"),
     maxTurns: num(
       "maxTurns",
       DEFAULTS.maxTurns,

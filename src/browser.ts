@@ -869,7 +869,7 @@ export class Browser {
   }
 
   private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
-    const opts = { timeout: 5000 };
+    const opts = { timeout: settings().interactionTimeout }; // includes the navigation a click starts
     if ((verb === "SCROLL" || verb === "SCROLL_UP") && ref) await this.page.locator(`aria-ref=${ref}`).hover(opts); // the wheel scrolls what is under the mouse
     if (verb === "SCROLL" || verb === "SCROLL_UP") await this.page.mouse.wheel(0, verb === "SCROLL" ? 600 : -600);
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
