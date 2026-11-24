@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.4](https://github.com/andletenkov/decisium/compare/v0.5.3...v0.5.4) (2026-11-24)
+
+
+### Bug Fixes
+
+* count skipped scenarios apart from failed in summary ([#117](https://github.com/andletenkov/decisium/issues/117)) ([1a8d69a](https://github.com/andletenkov/decisium/commit/1a8d69a133afe17c91e87b0bbe702ad82acf7dd2))
+* make browser interaction timeout configurable ([#114](https://github.com/andletenkov/decisium/issues/114)) ([d1dd56d](https://github.com/andletenkov/decisium/commit/d1dd56ded8212258ad66048fd4cc171f44383902))
+* report state Step failures as test failures ([#115](https://github.com/andletenkov/decisium/issues/115)) ([fe3c10a](https://github.com/andletenkov/decisium/commit/fe3c10afbd5a7318ddf5774ee8ab35e381980385))
+
 ## [0.5.3](https://github.com/andletenkov/decisium/compare/v0.5.2...v0.5.3) (2026-11-17)
 
 
