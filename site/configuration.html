@@ -113,7 +113,7 @@ document.addEventListener("click", e => { const a = e.target.closest("a[href]");
 <td>Print every page snapshot and answer; show stack traces.</td>
 </tr>
 <tr>
-<td><code>--report-dir</code>, <code>--check-timeout</code>, <code>--action-timeout</code>, <code>--max-turns</code>, <code>--confidence-target</code>, <code>--confidence-answer</code></td>
+<td><code>--report-dir</code>, <code>--check-timeout</code>, <code>--action-timeout</code>, <code>--interaction-timeout</code>, <code>--max-turns</code>, <code>--confidence-target</code>, <code>--confidence-answer</code></td>
 <td>The options below, one flag each.</td>
 </tr>
 </tbody></table>
@@ -216,6 +216,11 @@ export default {
 <td>Slow app: ms to wait for the page to settle after an action.</td>
 </tr>
 <tr>
+<td><code>interactionTimeout</code></td>
+<td><code>5000</code></td>
+<td>Slow click: ms a click, double/right click, drag, paste, type, select, upload (with its file chooser) or the hover before a scroll may take, including the navigation a click starts (a slow login redirect). A hovered Step has its own 2000 ms; <code>GOTO</code>, back, forward and reload use Playwright&#39;s navigation default (30 s).</td>
+</tr>
+<tr>
 <td><code>maxTurns</code></td>
 <td><code>8</code></td>
 <td>Long flows in one Step (1–20). Or split the Step.</td>
@@ -313,6 +318,12 @@ file &gt; default.</p>
 <td><code>DECISIUM_ACTION_TIMEOUT</code></td>
 <td><code>--action-timeout</code></td>
 <td><code>actionTimeout</code></td>
+<td>ms.</td>
+</tr>
+<tr>
+<td><code>DECISIUM_INTERACTION_TIMEOUT</code></td>
+<td><code>--interaction-timeout</code></td>
+<td><code>interactionTimeout</code></td>
 <td>ms.</td>
 </tr>
 <tr>

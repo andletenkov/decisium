@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { test } from "node:test";
 import { Cassette } from "../src/cassette.ts";
 import { verdict } from "../src/check.ts";
 import { Browser } from "../src/browser.ts";
 import { spawnSync } from "node:child_process";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { confidence, gate, type Decider, type Pick } from "../src/decision.ts";
@@ -157,6 +159,49 @@ test("settings: actionTimeout bounds a busy page", async () => {
   });
 });
 
+test("settings: interactionTimeout bounds a click's navigation wait and the upload chooser", async () => {
+  // The link's target answers after 1.5s: Playwright's click waits for that navigation to commit.
+  const server = createServer((req, res) => {
+    if (req.url === "/slow") setTimeout(() => res.setHeader("content-type", "text/html").end("<p>Signed in</p>"), 1500);
+    else res.setHeader("content-type", "text/html").end('<a href="/slow">Sign in</a><button>Attach</button>');
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const dir = mkdtempSync(join(tmpdir(), "decisium-upload-"));
+  const file = join(dir, "a.txt");
+  writeFileSync(file, "a");
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+  const click = async (name: string, verb: "CLICK" | "UPLOAD" = "CLICK") => {
+    const b = await Browser.open(url, false, false, {}, dirname(file));
+    try {
+      const ref = (await b.observe()).elements.find((e) => e.name === name)!.ref;
+      const start = Date.now();
+      const error = await b.execute({ verb, ref, value: basename(file) }).then(
+        () => undefined,
+        (e: Error) => e.message,
+      );
+      return { error, ms: Date.now() - start };
+    } finally {
+      await b.close();
+    }
+  };
+  try {
+    assert.equal(settings({}).interactionTimeout, 5000);
+    await withEnv({ INTERACTION_TIMEOUT: "300", ACTION_TIMEOUT: "9000" }, async () => {
+      assert.match((await click("Sign in")).error ?? "", /Timeout 300ms/);
+    });
+    await withEnv({ INTERACTION_TIMEOUT: "4000", ACTION_TIMEOUT: "300" }, async () => {
+      assert.equal((await click("Sign in")).error, undefined);
+    });
+    await withEnv({ INTERACTION_TIMEOUT: "300" }, async () => {
+      const { ms } = await click("Attach", "UPLOAD"); // no file input: the chooser never opens
+      assert.ok(ms < 2000, `chooser wait must use interactionTimeout, took ${ms}ms`);
+    });
+  } finally {
+    server.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("settings: CLI precedence and raw parallel reports carry effective settings", () => {
   const dir = mkdtempSync(join(tmpdir(), "decisium-config-"));
   const src = fileURLToPath(new URL("../src/", import.meta.url));
@@ -218,7 +263,15 @@ test("settings: CLI precedence and raw parallel reports carry effective settings
   }
 });
 
-const KEYS = ["REPORT_DIR", "CONFIDENCE_TARGET", "CONFIDENCE_ANSWER", "CHECK_TIMEOUT", "ACTION_TIMEOUT", "MAX_TURNS"];
+const KEYS = [
+  "REPORT_DIR",
+  "CONFIDENCE_TARGET",
+  "CONFIDENCE_ANSWER",
+  "CHECK_TIMEOUT",
+  "ACTION_TIMEOUT",
+  "INTERACTION_TIMEOUT",
+  "MAX_TURNS",
+];
 /** Runs `fn` with these DECISIUM_* env values (the runner reads process.env), then restores it. */
 async function withEnv<T>(vars: Record<string, string>, fn: () => Promise<T>): Promise<T> {
   const saved = KEYS.map((k) => [k, process.env[`DECISIUM_${k}`]] as const);
@@ -265,6 +318,7 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
     confidence: { target: 0.6, answer: 0.85 },
     checkTimeout: 10000,
     actionTimeout: 7000,
+    interactionTimeout: 5000,
     maxTurns: 3, // env (a flag) wins
   });
   assert.deepEqual(settings({}), {
@@ -275,6 +329,7 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
     confidence: { target: 0.5, answer: 0.8 },
     checkTimeout: 5000,
     actionTimeout: 5000,
+    interactionTimeout: 5000,
     maxTurns: 8,
   });
   const bad: [unknown, RegExp][] = [
@@ -284,6 +339,7 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
     [{ confidence: 0.5 }, /confidence must be an object/],
     [{ checkTimeout: 1.5 }, /checkTimeout must be a positive whole number/],
     [{ actionTimeout: "5000" }, /actionTimeout must be a number/],
+    [{ interactionTimeout: 0 }, /interactionTimeout must be a positive whole number/],
     [{ maxTurns: 21 }, /maxTurns must be a whole number 1-20/],
     [{ maxTurns: 0 }, /maxTurns must be a whole number 1-20/],
     [{ reportDir: "" }, /reportDir must be a non-empty string/],
@@ -293,6 +349,11 @@ test("settings: worldParameters fill env, env wins, values are validated", () =>
     assert.throws(() => applyOptions(undefined, { [`DECISIUM_${key}`]: "" }));
     assert.throws(() => applyOptions(undefined, { [`DECISIUM_${key}`]: " " }));
   }
+  assert.equal(applyOptions({ interactionTimeout: 9000 }, {}).interactionTimeout, 9000);
+  assert.equal(
+    applyOptions({ interactionTimeout: 9000 }, { DECISIUM_INTERACTION_TIMEOUT: "2000" }).interactionTimeout,
+    2000,
+  );
   assert.throws(() => applyOptions({ maxTurns: 12 }, { DECISIUM_MAX_TURNS: "" }));
   assert.throws(() => applyOptions({ maxTurns: 21 }, { DECISIUM_MAX_TURNS: "2" }));
   assert.throws(() => applyOptions({ "confidence.answer": 0.6 }, {}));

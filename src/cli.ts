@@ -32,7 +32,7 @@ const COMMANDS: Record<string, { synopsis: string; notes: string }> = {
   },
   run: {
     synopsis:
-      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--report-dir <dir>]\n                [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]\n                [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
+      "decisium run <file.feature[:line]>... [--url <url|file>] [--headed] [--judged] [--strict] [--record <mode>]\n                [--parallel <n|auto>] [--report-dir <dir>]\n                [--confidence-target <p>] [--confidence-answer <p>] [--check-timeout <ms>] [--action-timeout <ms>]\n                [--interaction-timeout <ms>] [--max-turns <n>] [--format <name[:path]>] [--import <file>] [-p <profile>] [--no-agent-report] [-v] [--debug]",
     notes: `The start URL comes from --url or an @url:<url> tag (scenario tags override feature tags). file.feature:line runs only
 the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
@@ -49,7 +49,7 @@ Configuration is cucumber-js's: run loads your cucumber.{js,mjs,cjs,json,yaml} (
 --import: your own cucumber step definitions or hooks. A line one of them matches runs it, not Jev; the World gives them
   this.page (the current tab) and this.context (Playwright). See andletenkov.github.io/decisium/advanced.html#client-steps.
 Options in the configuration: worldParameters: { decisium: { url, record, headed, judged, strict, verbose, debug,
-  agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, maxTurns } }; flags and DECISIUM_*
+  agentReport, reportDir, confidence: { target, answer }, checkTimeout, actionTimeout, interactionTimeout, maxTurns } }; flags and DECISIUM_*
   env (DECISIUM_URL, DECISIUM_RECORD, DECISIUM_STRICT=1, DECISIUM_MAX_TURNS, ...) override them.
 --provider <typesafe|openrouter>: decision provider (default typesafe).
 --model <id>: provider-specific model ID (defaults: jev-1.14.0 / typesafe/jev-1.14).
@@ -59,6 +59,7 @@ Options in the configuration: worldParameters: { decisium: { url, record, headed
 --confidence-answer <p>: how sure Jev must be of every other answer (default 0.8; lower lets a wrong reading pass).
 --check-timeout <ms>: how long a check waits for the expected state (default 5000).
 --action-timeout <ms>: how long after an action to wait for the page to settle (default 5000).
+--interaction-timeout <ms>: how long a click, drag, type, select or upload may take, including a navigation it starts (default 5000).
 --max-turns <n>: actions a Step may take before STEP_TIMEOUT (1-20, default 8).
 -v prints every Observation and Jev answer (always saved to <report-dir>/<timestamp>/log.txt); --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.
@@ -147,6 +148,7 @@ async function main(): Promise<number> {
       "confidence-answer": { type: "string" },
       "check-timeout": { type: "string" },
       "action-timeout": { type: "string" },
+      "interaction-timeout": { type: "string" },
       "max-turns": { type: "string" },
       "with-deps": { type: "boolean" },
       "dry-run": { type: "boolean" },
@@ -236,6 +238,7 @@ async function main(): Promise<number> {
     CONFIDENCE_ANSWER: values["confidence-answer"],
     CHECK_TIMEOUT: values["check-timeout"],
     ACTION_TIMEOUT: values["action-timeout"],
+    INTERACTION_TIMEOUT: values["interaction-timeout"],
     MAX_TURNS: values["max-turns"],
   }))
     if (value !== undefined) env[`DECISIUM_${name}`] = value;

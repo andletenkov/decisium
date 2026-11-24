@@ -53,7 +53,7 @@ const env = process.env;
 const opt = (name: string) => env[`DECISIUM_${name}`] === "1";
 let record: RecordMode; // set in BeforeAll, once worldParameters are known
 
-// Jev steps take seconds per Turn; the runner has its own caps (maxTurns, checkTimeout, actionTimeout).
+// Jev steps take seconds per Turn; the runner has its own caps (maxTurns, checkTimeout, actionTimeout, interactionTimeout).
 setDefaultTimeout(10 * 60_000);
 
 // Parallel workers (`--parallel`) are separate processes: the CLI creates the run directory (DECISIUM_RUN_DIR) and an
