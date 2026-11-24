@@ -1267,6 +1267,11 @@ test("failed vs invalid: every outcome message starts with its outcome and Qase'
     }
   }
   assert.equal(parseOutcome("Cannot open http://x: refused"), undefined);
+  const { parseStateFailure, stateFailureMessage } = await import("../src/report.ts");
+  const where = { state: 'a "b"', at: "x.state.feature:3", kind: "action" as const, step: 'I fill\n"""\nhi\n"""' };
+  const msg = outcomeMessage({ outcome: "ACTION_FAILED", reason: "one\ntwo" });
+  assert.deepEqual(parseStateFailure(stateFailureMessage(where, msg)), { ...where, message: msg });
+  assert.equal(parseStateFailure(msg), undefined);
 });
 
 test("frameless: Cucumber formats a long outcome message at once and keeps all of it", async () => {

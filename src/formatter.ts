@@ -6,7 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fromPickle, urlFromTags } from "./feature.ts";
-import { readStep } from "./step.ts";
+import { readStep, type StepKind } from "./step.ts";
 import {
   agentReport,
   failureReport,
@@ -17,6 +17,7 @@ import {
   POSITIONAL_HINT,
   NO_TRACE,
   parseOutcome,
+  parseStateFailure,
   stepEvents,
   type AgentFailure,
   type TraceEvent,
@@ -79,6 +80,7 @@ export default class DecisiumFormatter extends Formatter {
     ];
     const hookIds = new Map<string, string>(); // testRunHookStarted id -> hook definition id
     const hookFailures: string[] = []; // a failed BeforeAll/AfterAll (e.g. no TYPESAFE_API_KEY): cucumber runs no scenario
+    const self = this;
     options.eventBroadcaster.on("envelope", (e: Envelope) => {
       if (e.testCaseStarted) {
         const { pickle } = this.eventDataCollector.getTestCaseAttempt(e.testCaseStarted.id);
@@ -91,10 +93,16 @@ export default class DecisiumFormatter extends Formatter {
           (s) => s.id === testCase.testSteps.find((t) => t.id === testStepId)?.pickleStepId,
         );
         const failed = result.status === Status.FAILED;
+        const attachments = stepAttachments[testStepId] ?? [];
         if (!step) {
-          // hook: only infrastructure errors (browser could not open, ...)
-          if (failed) this.log(`  Error: ${result.message ?? "hook failed"}\n`);
-          return;
+          // hook: a state Step that failed, or an infrastructure error (browser could not open, ...)
+          if (!failed) return;
+          const s = parseStateFailure(result.message ?? "");
+          const r = s && parseOutcome(s.message);
+          if (!s || !r) return this.log(`  Error: ${result.message ?? "hook failed"}`.replace(/\n/g, "\n  ") + "\n");
+          this.log(`  ✗ ${KIND[s.kind]} (state ${s.state}): ${s.step}\n`);
+          logOutcome(r);
+          return failures.push(failure(s.at, s.kind, s.step, r, attachments, ["run", scenarioWhere()]));
         }
         if (result.status === Status.UNDEFINED) {
           // no Decisium step definitions loaded (a wrong "import" path)
@@ -105,7 +113,6 @@ export default class DecisiumFormatter extends Formatter {
         const parsed = fromPickle(step);
         const { kind } = parsed;
         const label = readStep(parsed).label; // with its table or doc string
-        const attachments = stepAttachments[testStepId] ?? [];
         const judged = attachments.some((a) => a.body.startsWith("JUDGED_PASSED"));
         this.log(`  ${failed ? "✗" : "✓"} ${KIND[kind]}: ${label}${judged ? "  (judged by Jev)" : ""}\n`);
         for (const n of notices) {
@@ -116,47 +123,69 @@ export default class DecisiumFormatter extends Formatter {
         }
         if (!failed) return;
         const r = parseOutcome(result.message ?? "");
-        this.log(
-          `      ${r ? `${r.outcome}${r.reason ? `: ${r.reason}` : ""}` : `Error: ${result.message}`}`.replace(
-            /\n/g,
-            "\n      ",
-          ) + "\n",
-        );
-        if (!r) return;
+        if (!r) return this.log(`      Error: ${result.message}`.replace(/\n/g, "\n      ") + "\n");
+        logOutcome(r);
         const line =
           formatterHelpers.GherkinDocumentParser.getGherkinStepMap(gherkinDocument)[step.astNodeIds[0]]?.location.line;
-        const screenshot = attachments.findLast((a) => a.mediaType === "image/png")?.fileName;
         const cmdLine = env.DECISIUM_STEP === "1";
-        const where = cmdLine ? "command line" : `${pickle.uri}:${line}`;
-        // The scenario's own line; for an Outline, its Examples row (the last AST node).
-        const scenarioLine =
-          formatterHelpers.GherkinDocumentParser.getGherkinScenarioLocationMap(gherkinDocument)[
-            pickle.astNodeIds.at(-1)!
-          ]?.line;
-        failures.push(() => {
-          const trace = screenshot && join(dirname(screenshot), "playwright-trace.zip");
-          const ui = screenshot && join(dirname(screenshot), "ui.txt");
-          const noTrace = screenshot && join(dirname(screenshot), NO_TRACE);
-          return {
-            where,
-            scenario: pickle.name,
+        failures.push(
+          failure(
+            cmdLine ? "command line" : `${pickle.uri}:${line}`,
             kind,
-            step: label,
-            ...r,
-            screenshot,
-            trace:
-              trace && existsSync(trace)
-                ? trace
-                : noTrace && existsSync(noTrace)
-                  ? `not kept: ${readFileSync(noTrace, "utf8").trim()}`
+            label,
+            r,
+            attachments,
+            cmdLine ? ["step", step.text] : ["run", scenarioWhere()],
+          ),
+        );
+
+        function logOutcome(r: { outcome: string; reason: string }) {
+          self.log(`      ${r.outcome}${r.reason ? `: ${r.reason}` : ""}`.replace(/\n/g, "\n      ") + "\n");
+        }
+        // The scenario's own line; for an Outline, its Examples row (the last AST node).
+        function scenarioWhere() {
+          const at =
+            formatterHelpers.GherkinDocumentParser.getGherkinScenarioLocationMap(gherkinDocument)[
+              pickle.astNodeIds.at(-1)!
+            ];
+          return `${pickle.uri}:${at?.line}`;
+        }
+        function failure(
+          where: string,
+          kind: StepKind,
+          label: string,
+          r: { outcome: string; reason: string },
+          attachments: { mediaType: string; fileName?: string }[],
+          args: string[],
+        ) {
+          const screenshot = attachments.findLast((a) => a.mediaType === "image/png")?.fileName;
+          return (): Omit<AgentFailure, "events"> => {
+            const trace = screenshot && join(dirname(screenshot), "playwright-trace.zip");
+            const ui = screenshot && join(dirname(screenshot), "ui.txt");
+            const noTrace = screenshot && join(dirname(screenshot), NO_TRACE);
+            return {
+              where,
+              scenario: pickle.name,
+              kind,
+              step: label,
+              ...r,
+              screenshot,
+              trace:
+                trace && existsSync(trace)
+                  ? trace
+                  : noTrace && existsSync(noTrace)
+                    ? `not kept: ${readFileSync(noTrace, "utf8").trim()}`
+                    : undefined,
+              ui: ui && existsSync(ui) ? ui : undefined,
+              rerun: rerun(
+                args,
+                screenshot
+                  ? runEvents(dirname(dirname(screenshot))).find((e) => e.type === "run")?.settings
                   : undefined,
-            ui: ui && existsSync(ui) ? ui : undefined,
-            rerun: rerun(
-              cmdLine ? ["step", step.text] : ["run", `${pickle.uri}:${scenarioLine}`],
-              screenshot ? runEvents(dirname(dirname(screenshot))).find((e) => e.type === "run")?.settings : undefined,
-            ),
+              ),
+            };
           };
-        });
+        }
       } else if (e.testCaseFinished && !e.testCaseFinished.willBeRetried) {
         const { pickle, worstTestStepResult } = this.eventDataCollector.getTestCaseAttempt(
           e.testCaseFinished.testCaseStartedId,

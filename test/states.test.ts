@@ -18,18 +18,7 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
   const run = (...files: string[]) =>
     promisify(execFile)(
       "node",
-      [
-        "src/cli.ts",
-        "run",
-        ...files,
-        "--url",
-        url,
-        "--import",
-        `${F}/states.steps.ts`,
-        "--record",
-        "none",
-        "--no-agent-report",
-      ],
+      ["src/cli.ts", "run", ...files, "--url", url, "--import", `${F}/states.steps.ts`, "--record", "none"],
       { env: { ...process.env, TYPESAFE_API_KEY: "", STATES_LOG: log } },
     ).then(
       (o) => ({ ...o, code: 0 }),
@@ -50,12 +39,27 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
     assert.equal(existsSync(new SavedStorage(dir).dir), false); // run-scoped: removed at the end
     assert.match(readFileSync(join(dir, "log.txt"), "utf8"), /state logged-in: loaded saved storage/);
 
-    // A failing state is a setup error (exit 2) for its consumer; the other scenarios still run and pass.
+    // A failing state Step fails its consumer like any Step (exit 1); the other scenarios still run and pass.
     writeFileSync(log, "");
     const broken = await run(`${F}/broken.feature`, `${F}/states.feature`);
-    assert.equal(broken.code, 2);
-    assert.match(broken.stdout, /in state "broken" at test\/fixtures\/states\/shop.state.feature:15: not logged in/);
-    assert.match(broken.stdout, /3\/4 scenarios passed/);
+    assert.equal(broken.code, 1, broken.stdout + broken.stderr);
+    assert.match(
+      broken.stdout,
+      /Error: in state "broken" at test\/fixtures\/states\/shop.state.feature:15, assertion "I am logged in"\n {2}not logged in/,
+    );
+    assert.match(broken.stdout, /3\/6 scenarios passed/);
+    // A state Step's outcome (nested state, multiline reason) is in the Failures block and report.md, at its own line.
+    const failures = broken.stdout.slice(broken.stdout.indexOf("\nFailures\n"));
+    const at = "test/fixtures/states/shop.state.feature:19";
+    for (const text of [
+      failures,
+      readFileSync(join(/Run directory: (\S+)/.exec(broken.stdout)![1], "report.md"), "utf8"),
+    ]) {
+      assert.match(text, /Consumer of a nested failing state/);
+      assert.ok(text.includes(at), text);
+      assert.match(text, /CLICK button "Checkout" failed\s+(?:\S+ )?second line/);
+      assert.match(text, /A plain failing scenario/);
+    }
 
     // The saved session is revoked: the next consumer's check after loading fails, so it logs in again and passes.
     writeFileSync(log, "");

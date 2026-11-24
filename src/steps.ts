@@ -29,7 +29,7 @@ import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, 
 import type { Decider } from "./decision.ts";
 import { ModelDecider } from "./model-decider.ts";
 import { credentialName, missingCredential } from "./providers.ts";
-import { frameless, MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL } from "./report.ts";
+import { frameless, MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL, stateFailureMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
@@ -234,7 +234,7 @@ Before({ timeout: 30 * 60_000 }, async function (this: Scenario, { pickle, gherk
 
 /**
  * Runs a state's Steps before the scenario's, keyed `state:<name>: <label>` in the consumer's cassette. A failing Step
- * is a setup error (exit 2), labelled with the state and its line. `quiet`: return false on failure instead.
+ * fails the scenario like any Step, its message headed with the state and its line. `quiet`: return false on failure instead.
  */
 async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], quiet = false): Promise<boolean> {
   const labels = def.steps.map((s) => readStep(s).label);
@@ -272,7 +272,9 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
       networkMissed(w.browser);
     } catch (err) {
       if (quiet) return false;
-      throw setupError(new Error(`in state "${def.name}" at ${w.at}: ${(err as Error).message.split("\n")[0]}`));
+      const e = err as Error;
+      e.message = stateFailureMessage({ state: def.name, at: w.at, kind, step: readStep(s).label }, e.message);
+      throw frameless(e); // the stack would repeat the message without its header
     }
   }
   run.event("state", { state: def.name, steps: steps.length, ms: Date.now() - started }); // the cost of each state

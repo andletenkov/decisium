@@ -13,3 +13,7 @@ Feature: Shop states
   @state-def:broken
   Scenario: A state whose check fails
     Then I am logged in
+
+  @state-def:checkout @state:logged-in
+  Scenario: A checkout whose button fails, nested on a login
+    When I press checkout
