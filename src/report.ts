@@ -79,6 +79,37 @@ export function parseOutcome(message: string): { outcome: string; reason: string
   return { outcome: m[1], reason: (m[2] ?? "").replaceAll(JOINER, "") };
 }
 
+/** Where a failing state Step is: the state, its file:line, the Step's kind and label. */
+export interface StateStep {
+  state: string;
+  at: string;
+  kind: StepKind;
+  step: string;
+}
+
+const STATE_HEADER = /^in state ("(?:[^"\\]|\\.)*") at (.+), (\w+) ("(?:[^"\\]|\\.)*")\n/;
+
+/**
+ * The error a failing state Step throws: a one-line header naming the state Step, then the Step's own message unchanged.
+ * Plain text, so it survives Cucumber's worker serialization; parseStateFailure is its inverse.
+ */
+export function stateFailureMessage(s: StateStep, message: string): string {
+  return `in state ${JSON.stringify(s.state)} at ${s.at}, ${s.kind} ${JSON.stringify(s.step)}\n${message}`;
+}
+
+export function parseStateFailure(message: string): (StateStep & { message: string }) | undefined {
+  const m = STATE_HEADER.exec(message);
+  if (!m) return undefined;
+  const [header, state, at, kind, step] = m;
+  return {
+    state: JSON.parse(state),
+    at,
+    kind: kind as StepKind,
+    step: JSON.parse(step),
+    message: message.slice(header.length),
+  };
+}
+
 function withPinCommands(reason: string, where: string): string {
   const start = reason.indexOf("\nResolutions (");
   if (start < 0) return reason;

@@ -2,6 +2,7 @@
 import { Then, When } from "@cucumber/cucumber";
 import { appendFileSync, readFileSync } from "node:fs";
 import type { BrowserContext, Page } from "playwright";
+import { frameless, outcomeMessage } from "../../../src/report.ts";
 
 type W = { page: Page; context: BrowserContext };
 const note = (what: string) => appendFileSync(process.env.STATES_LOG!, `${what}\n`);
@@ -31,4 +32,13 @@ When("the server drops this session", async function (this: W) {
 Then("the session is there", async function (this: W) {
   const s = await session(this);
   if (s.user !== "admin" || !s.sid) throw new Error(`no session: ${JSON.stringify(s)}`);
+});
+// A Step failing against the app, as a Decisium Step reports it: an outcome and a reason over two lines.
+When("I press checkout", () => {
+  throw frameless(
+    new Error(outcomeMessage({ outcome: "ACTION_FAILED", reason: 'CLICK button "Checkout" failed\nsecond line' })),
+  );
+});
+When("I throw a string", () => {
+  throw "plain string";
 });

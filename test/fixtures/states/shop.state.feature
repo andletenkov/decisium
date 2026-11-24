@@ -13,3 +13,15 @@ Feature: Shop states
   @state-def:broken
   Scenario: A state whose check fails
     Then I am logged in
+
+  @state-def:checkout @state:logged-in
+  Scenario: A checkout whose button fails, nested on a login
+    When I press checkout
+
+  @state-def:jev @state:logged-in
+  Scenario: A state Step for Jev, which has no recording
+    When I open the dashboard
+
+  @state-def:stringly
+  Scenario: A client step that throws a string
+    When I throw a string

@@ -60,7 +60,7 @@ Scenario: Checkout shows the total
 ```
 
 `@save:storage` logs in once per run and reuses the cookies and `localStorage`. States can chain
-(`@state-def:cart @state:logged-in`). A failing state is a setup error, not a test failure.
+(`@state-def:cart @state:logged-in`). A state Step that fails fails its consumer like any Step (exit 1), reported at the state's line; an unknown state is a setup error (exit 2).
 
 ## Network replay
 

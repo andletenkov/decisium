@@ -15,7 +15,8 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
   const log = join(mkdtempSync(join(tmpdir(), "decisium-states-")), "log.txt");
-  const run = (...files: string[]) =>
+  const run = (...files: string[]) => runEnv({}, ...files);
+  const runEnv = (extra: Record<string, string>, ...files: string[]) =>
     promisify(execFile)(
       "node",
       [
@@ -27,10 +28,9 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
         "--import",
         `${F}/states.steps.ts`,
         "--record",
-        "none",
-        "--no-agent-report",
+        extra.DECISIUM_RECORD ?? "none",
       ],
-      { env: { ...process.env, TYPESAFE_API_KEY: "", STATES_LOG: log } },
+      { env: { ...process.env, TYPESAFE_API_KEY: "", STATES_LOG: log, ...extra } },
     ).then(
       (o) => ({ ...o, code: 0 }),
       (e: { stdout: string; stderr: string; code: number }) => e,
@@ -50,12 +50,32 @@ test("@state: and @save:storage through decisium run: saved once per run, loaded
     assert.equal(existsSync(new SavedStorage(dir).dir), false); // run-scoped: removed at the end
     assert.match(readFileSync(join(dir, "log.txt"), "utf8"), /state logged-in: loaded saved storage/);
 
-    // A failing state is a setup error (exit 2) for its consumer; the other scenarios still run and pass.
+    // A failing state Step fails its consumer like any Step (exit 1); the other scenarios still run and pass.
     writeFileSync(log, "");
     const broken = await run(`${F}/broken.feature`, `${F}/states.feature`);
-    assert.equal(broken.code, 2);
-    assert.match(broken.stdout, /in state "broken" at test\/fixtures\/states\/shop.state.feature:15: not logged in/);
-    assert.match(broken.stdout, /3\/4 scenarios passed/);
+    assert.equal(broken.code, 1, broken.stdout + broken.stderr);
+    assert.match(
+      broken.stdout,
+      /Error: in state "broken" at test\/fixtures\/states\/shop.state.feature:15, assertion "I am logged in"\n {2}not logged in/,
+    );
+    assert.match(broken.stdout, /3\/7 scenarios passed/);
+    assert.match(broken.stdout, /in state "stringly" at [^\n]+, action "I throw a string"\n {2}plain string/);
+    // A state Step that cannot reach Jev (its key is rejected, or offline) stays an infrastructure error: exit 2.
+    const jev = await runEnv({ DECISIUM_RECORD: "new", TYPESAFE_API_KEY: "invalid" }, `${F}/infra/jev.feature`);
+    assert.equal(jev.code, 2, jev.stdout + jev.stderr);
+    assert.match(jev.stdout, /in state "jev" at [^\n]+, action "I open the dashboard"/);
+    // A state Step's outcome (nested state, multiline reason) is in the Failures block and report.md, at its own line.
+    const failures = broken.stdout.slice(broken.stdout.indexOf("\nFailures\n"));
+    const at = "test/fixtures/states/shop.state.feature:19";
+    for (const text of [
+      failures,
+      readFileSync(join(/Run directory: (\S+)/.exec(broken.stdout)![1], "report.md"), "utf8"),
+    ]) {
+      assert.match(text, /Consumer of a nested failing state/);
+      assert.ok(text.includes(at), text);
+      assert.match(text, /CLICK button "Checkout" failed\s+(?:\S+ )?second line/);
+      assert.match(text, /A plain failing scenario/);
+    }
 
     // The saved session is revoked: the next consumer's check after loading fails, so it logs in again and passes.
     writeFileSync(log, "");
