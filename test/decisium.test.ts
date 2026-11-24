@@ -3149,3 +3149,25 @@ test("executeStep: failed requests are reported with the Step, and listed in a f
   assert.equal(done.reason, undefined);
   assert.deepEqual(done.failedRequests, latest);
 });
+
+test("formatter summary: skipped scenarios are counted apart from failed ones (issue 109)", async () => {
+  const { execFile } = await import("node:child_process");
+  const { mkdirSync, writeFileSync } = await import("node:fs");
+  const { promisify } = await import("node:util");
+  const config = "runs/summary.cucumber.mjs";
+  mkdirSync("runs", { recursive: true });
+  writeFileSync(
+    config,
+    `export default { import: ["test/fixtures/summary/steps.mjs"], format: ["./src/formatter.ts"] };`,
+  );
+  const run = (...where: string[]) =>
+    promisify(execFile)("npx", ["cucumber-js", "-c", config, ...where]).then(
+      (o) => o.stdout,
+      (e: { stdout: string }) => e.stdout,
+    );
+  const mixed = await run("test/fixtures/summary/mixed.feature");
+  assert.match(mixed, /1\/3 scenarios passed; 1 failed: Fails; 1 skipped: Skips\n/);
+  const skipped = await run("test/fixtures/summary/mixed.feature:9");
+  assert.match(skipped, /0\/1 scenarios passed; 1 skipped: Skips\n/);
+  assert.doesNotMatch(skipped, /failed/);
+});

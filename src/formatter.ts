@@ -67,7 +67,7 @@ export default class DecisiumFormatter extends Formatter {
 
   constructor(options: IFormatterOptions) {
     super(options);
-    const scenarios: { name: string; passed: boolean }[] = [];
+    const scenarios: { name: string; status: string }[] = [];
     const failures: (() => Omit<AgentFailure, "events">)[] = []; // built at the end: the Playwright trace is saved after the step
     // Warnings a Step leaves as an attachment: shown under the Step and gathered in a block at the end of the run.
     const notices = [
@@ -192,7 +192,7 @@ export default class DecisiumFormatter extends Formatter {
         const { pickle, worstTestStepResult } = this.eventDataCollector.getTestCaseAttempt(
           e.testCaseFinished.testCaseStartedId,
         );
-        scenarios.push({ name: pickle.name, passed: worstTestStepResult.status === Status.PASSED });
+        scenarios.push({ name: pickle.name, status: worstTestStepResult.status });
       } else if (e.testRunHookStarted) {
         hookIds.set(e.testRunHookStarted.id, e.testRunHookStarted.hookId);
       } else if (e.testRunHookFinished?.result.status === Status.FAILED) {
@@ -213,10 +213,14 @@ export default class DecisiumFormatter extends Formatter {
         for (const n of notices)
           if (n.steps.length)
             this.log(`\n${"─".repeat(60)}\n${n.title}\n\n${n.steps.join("\n\n")}\n\nWhat to do: ${n.hint}\n`);
-        const failedNames = scenarios.filter((s) => !s.passed).map((s) => s.name);
         if (!scenarios.length && hookFailures.length) return;
+        const names = (keep: (s: string) => boolean) => scenarios.filter((s) => keep(s.status)).map((s) => s.name);
+        const passed = names((s) => s === Status.PASSED).length;
+        const failedNames = names((s) => s !== Status.PASSED && s !== Status.SKIPPED);
+        const skippedNames = names((s) => s === Status.SKIPPED);
+        const list = (label: string, n: string[]) => (n.length ? `; ${n.length} ${label}: ${n.join(", ")}` : "");
         this.log(
-          `\n${scenarios.length - failedNames.length}/${scenarios.length} scenarios passed${failedNames.length ? `; failed: ${failedNames.join(", ")}` : ""}\n`,
+          `\n${passed}/${scenarios.length} scenarios passed${list("failed", failedNames)}${list("skipped", skippedNames)}\n`,
         );
         // The run directory: the CLI's, or (raw cucumber-js) the one the screenshots are in.
         const dirs = new Set(
