@@ -68,7 +68,7 @@ Scenario: Checkout shows the total
   Then the order total should be &quot;59.97&quot;
 </code></pre>
 <p><code>@save:storage</code> logs in once per run and reuses the cookies and <code>localStorage</code>. States can chain
-(<code>@state-def:cart @state:logged-in</code>). A failing state is a setup error, not a test failure.</p>
+(<code>@state-def:cart @state:logged-in</code>). A state Step that fails fails its consumer like any Step (exit 1), reported at the state&#39;s line; an unknown state is a setup error (exit 2).</p>
 <h2 id="network-replay">Network replay</h2>
 <p><code>@replay-network:&lt;glob&gt;</code> records matching browser requests and replays them, for a slow, costly or unstable backend
 (an app that calls an LLM).</p>
