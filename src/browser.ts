@@ -572,13 +572,11 @@ export class Browser {
    */
   private async frameSignals(): Promise<{ since: number; soon: number; pending: number; stamp: string } | undefined> {
     const main = this.page.mainFrame();
+    // The main frame is waited for, as before; a child frame busy or mid-navigation is left out of this read.
     const read = (f: Frame) =>
-      Promise.race([f.evaluate(signalsIn), sleep(FRAME_MS).then(() => Promise.reject(new Error("slow")))]).catch(
-        (e) => {
-          if (f === main) throw e;
-          return undefined; // a frame busy or mid-navigation is left out of this read
-        },
-      );
+      f === main
+        ? f.evaluate(signalsIn)
+        : Promise.race([f.evaluate(signalsIn), sleep(FRAME_MS).then(() => undefined)]).catch(() => undefined);
     const all = await Promise.all(this.page.frames().map(read)).catch(() => undefined);
     if (!all) return undefined;
     const got = all.filter((s) => s !== undefined);
@@ -672,7 +670,7 @@ export class Browser {
 
   /** What the page holds that its snapshot shows, as one string. */
   private async pagePrint(): Promise<string | undefined> {
-    const got = await this.page
+    return this.page
       .evaluate(() => {
         const w = window as unknown as { __lastMutation?: number; __ids?: WeakMap<Element, number> };
         let h = 2166136261; // FNV-1a, so field values (passwords too) never leave the page
@@ -690,7 +688,6 @@ export class Browser {
         return `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`;
       })
       .catch(() => undefined);
-    return got;
   }
 
   private async readNow(): Promise<Observation> {
@@ -920,26 +917,23 @@ export class Browser {
     this.boxes = new Map();
     if (!boxes.length) return snapshot;
     const lines = snapshot.split("\n");
-    let from = 0;
+    const used = new Set<number>(); // frames are read one by one, but the snapshot shows an iframe where it sits
+    const unquote = (s: string) => {
+      try {
+        return s.startsWith('"') ? (JSON.parse(s) as string) : s;
+      } catch {
+        return s;
+      }
+    };
     boxes.forEach((box, n) => {
       const ref = `h${n + 1}`;
       const control = `- ${box.type} ${JSON.stringify(box.text)}${box.checked ? " [checked]" : ""} [ref=${ref}]`;
-      for (let k = from; k < lines.length; k++) {
-        const m = /^(\s*)- (text|\w+(?: \[[^\]]+\])*): (.*)$/.exec(lines[k]);
-        if (!m) continue;
-        let shown = m[3];
-        if (shown.startsWith('"'))
-          shown = (() => {
-            try {
-              return JSON.parse(shown) as string;
-            } catch {
-              return shown;
-            }
-          })();
-        if (shown !== box.text) continue;
+      for (let k = 0; k < lines.length; k++) {
+        const m = !used.has(k) && /^(\s*)- (text|\w+(?: \[[^\]]+\])*): (.*)$/.exec(lines[k]);
+        if (!m || unquote(m[3]) !== box.text) continue;
         lines[k] = m[2] === "text" ? `${m[1]}${control}` : `${m[1]}- ${m[2]}:\n${m[1]}  ${control}`;
         this.boxes.set(ref, box.at);
-        from = k + 1;
+        used.add(k);
         return;
       }
     });

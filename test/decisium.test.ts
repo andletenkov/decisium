@@ -122,6 +122,21 @@ test("Browser: a popup that closes itself hands the Steps back to its opener (is
   }
 });
 
+test("Browser: a tab without an opener that closes itself hands the Steps to the last open tab (issue #122)", async () => {
+  const b = await Browser.open(`data:text/html,<button>Main</button>`);
+  try {
+    const tab = await b.context.newPage(); // no opener, like a noopener link; the Steps follow it
+    await tab.setContent(`<button onclick="window.close()">Done</button>`);
+    const click = async (name: string) =>
+      b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find((e) => e.name === name)!.ref });
+    await click("Done");
+    await click("Main");
+    assert.equal(b.context.pages().length, 1);
+  } finally {
+    await b.close();
+  }
+});
+
 test("Browser: a label standing in for a display:none checkbox or radio is that control (issue #123)", async () => {
   const b = await Browser.open(
     `data:text/html,<input type=checkbox id=c style="display:none"><label for=c>Accept terms</label>` +
@@ -135,6 +150,20 @@ test("Browser: a label standing in for a display:none checkbox or radio is that 
     assert.equal((await b.observe()).elements[0].line, 'checkbox "Accept terms" [checked]');
   } finally {
     await b.close();
+  }
+  // A hidden box inside an iframe placed before one in the main page: each label finds its own line.
+  const box = (id: string, text: string) => `<input type=checkbox id=${id} hidden><label for=${id}>${text}</label>`;
+  const c = await Browser.open(
+    `data:text/html,<iframe srcdoc="${box("i", "Inner")}"></iframe>${box("m", "Outer")}`.replace(
+      /srcdoc="([^"]*)"/,
+      (_, h) => `srcdoc="${h.replace(/"/g, "&quot;")}"`,
+    ),
+  );
+  try {
+    const names = (await c.observe()).elements.filter((e) => e.role === "checkbox").map((e) => e.name);
+    assert.deepEqual(names.sort(), ["Inner", "Outer"]);
+  } finally {
+    await c.close();
   }
 });
 

@@ -903,6 +903,9 @@ test("find: an anchor matches whole words, so a near-twin row (Item 1, Item 10) 
   assert.equal(r.anchor, "Item 1");
   const after = rows("Item 1", "Item 2", "Item 10");
   assert.equal(find(r, after), after[0]);
+  // Scripts without spaces have no word edges: a part of a word still anchors.
+  const cjk = rows("東京都", "大阪府");
+  assert.equal(resolve(cjk[0], cjk, ["東京"]).anchor, "東京");
 });
 
 test("resolve: a quoted value that is not the element's own is no anchor", () => {
