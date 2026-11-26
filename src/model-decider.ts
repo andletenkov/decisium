@@ -22,6 +22,7 @@ import {
   type Decider,
   type Intent,
   type Pick,
+  type ScenarioLines,
   type TurnAnswer,
 } from "./decision.ts";
 import type { Element, Observation } from "./observation.ts";
@@ -245,6 +246,44 @@ export class ModelDecider implements Decider {
       },
     });
     return { done: res.answers.done.noul, target: res.answers.target, action: res.answers.action };
+  }
+
+  async owner(
+    step: string,
+    obs: Observation,
+    recent: string[],
+    next: Element,
+    how: string,
+    scenario: ScenarioLines,
+  ): Promise<Pick> {
+    // Asked over the lines, not "this Step or not": naming the line the element serves is what separates them
+    // (scripts/bench-owner.ts). Folded to this/other so a recording does not depend on line numbers.
+    // Position in each answer: two lines with the same text (a wizard's `I click "Next"` twice) are still two answers.
+    const lines = Object.fromEntries(
+      scenario.lines.map((s, i) => [
+        `line ${i + 1}`,
+        `line ${i + 1}${i === scenario.index ? " (this Step)" : ""}: ${s}`,
+      ]),
+    );
+    const res = await this.#ask({
+      state: {
+        scenario: scenario.lines.map((s, i) => (i === scenario.index ? `>> ${s}` : s)),
+        step,
+        actions_taken_for_step: recent,
+        ui: await this.#ui(obs, "step", step),
+        next_element: next.line,
+        // The action too: Enter in the field just typed into is not typing it again (TodoMVC, GitHub search).
+        next_action: describeAction(how),
+      },
+      questions: {
+        owner: choice(
+          "`step` is the line of `scenario` marked `>>`; it has performed `actions_taken_for_step`. Which line of `scenario` asks for doing `next_action` on `next_element` now?",
+          lines,
+        ),
+      },
+    });
+    const own = res.answers.owner.probabilities[`line ${scenario.index + 1}`] ?? 0;
+    return { choice: own < 0.5 ? "other" : "this", probabilities: { this: own, other: 1 - own } };
   }
 
   async drop(step: string, obs: Observation, source: Element): Promise<Pick> {

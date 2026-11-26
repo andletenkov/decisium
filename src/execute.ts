@@ -1,6 +1,6 @@
 // Step execution (task 0051): one Gherkin Step from text to Step outcome, without cucumber. steps.ts adapts it.
 import { UiChanged, type Cassette } from "./cassette.ts";
-import type { Decider } from "./decision.ts";
+import type { Decider, ScenarioLines } from "./decision.ts";
 import { modelUsage } from "./model-decider.ts";
 import { settings } from "./options.ts";
 import type { DecisionMetadata } from "./decision-provider.ts";
@@ -31,6 +31,8 @@ export interface StepContext {
   judged?: boolean;
   /** A Marginal pass fails as AMBIGUOUS. */
   strict?: boolean;
+  /** The Scenario's Step lines and this Step's index: tells Jev where an Action step ends. */
+  scenario?: ScenarioLines;
 }
 
 export interface StepReport extends StepResult {
@@ -100,7 +102,7 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
       if (intent?.value && kind !== "assertion") unquoted.push([intent.value, row]);
       return kind === "assertion"
         ? await runAssertion(text, rt, decider, log, !!ctx.judged, { ...earlier }, arg, intent, deadline)
-        : await runStep(row, rt, decider, log, kind === "attempt", docString, intent);
+        : await runStep(row, rt, decider, log, kind === "attempt", docString, intent, ctx.scenario);
     } catch (err) {
       if (/max_tokens_exceeded/.test(String((err as Error)?.message))) {
         // The page, not the setup: fail this Step and let the rest of the feature run (task 0021).

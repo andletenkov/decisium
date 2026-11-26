@@ -26,12 +26,12 @@ import { executeStep, type StepReport } from "./execute.ts";
 import { contextFromTags, fromPickle, ownTags, tagValue, toUrl, urlFromTags } from "./feature.ts";
 import { forOrigin, SavedStorage, type StorageState } from "./saved.ts";
 import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, type States } from "./states.ts";
-import type { Decider } from "./decision.ts";
+import type { Decider, ScenarioLines } from "./decision.ts";
 import { ModelDecider } from "./model-decider.ts";
 import { credentialName, missingCredential } from "./providers.ts";
 import { frameless, MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL, stateFailureMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
-import { placeholder, readStep, type StepArgument, type StepKind } from "./step.ts";
+import { placeholder, readStep, scenarioLines, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
 import { fill, newRunId } from "./generate.ts";
 import { applyOptions, settingWarnings, settings } from "./options.ts";
@@ -72,6 +72,7 @@ class Scenario extends World {
   cassette?: Cassette;
   live!: Decider;
   key = ""; // the running Step in its cassette: scenario, position, text
+  lines: ScenarioLines = { lines: [], index: 0 }; // the Scenario's Steps, for where an Action step ends
   decided = false; // the Step ran through Decisium (perform), not a client step definition
   dir = "";
   kind: StepKind = "action";
@@ -246,6 +247,7 @@ async function runState(w: Scenario, def: StateDef, steps: StateDef["steps"], qu
     w.arg = arg;
     w.at = `${def.file}:${line}`;
     w.key = stepKey(`state:${def.name}`, labels, def.steps.indexOf(s));
+    w.lines = scenarioLines(def.steps, def.steps.indexOf(s));
     try {
       const client = clientSteps.find((d) => d.matchesStepName(text));
       if (client) {
@@ -302,12 +304,14 @@ BeforeStep(function (this: Scenario, { pickle, pickleStep, gherkinDocument }) {
   const { kind, text: _, ...arg } = fromPickle(pickleStep);
   this.kind = kind;
   this.arg = arg;
-  const labels = pickle.steps.map((s) => readStep(fromPickle(s)).label);
+  const parsed = pickle.steps.map(fromPickle);
+  const index = pickle.steps.findIndex((s) => s.id === pickleStep.id);
   this.key = stepKey(
     pickle.name,
-    labels,
-    pickle.steps.findIndex((s) => s.id === pickleStep.id),
+    parsed.map((s) => readStep(s).label),
+    index,
   );
+  this.lines = scenarioLines(parsed, index);
   Object.defineProperty(step, "length", { value: pickleStep.argument ? 2 : 1 });
 });
 
@@ -331,6 +335,7 @@ async function perform(w: Scenario, text: string, quiet = false) {
       live: w.live,
       cassette: w.cassette,
       key: w.key,
+      scenario: w.lines,
       kind: w.kind,
       arg: {
         ...(w.arg.docString !== undefined ? { docString: fill(w.arg.docString, w.generated) } : {}),
