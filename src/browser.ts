@@ -957,7 +957,12 @@ export class Browser {
       await (verb === "ACCEPT" ? d.accept(this.typed(value)) : d.dismiss());
     } else {
       const t = Date.now();
-      await this.unblocked(this.perform(action));
+      const on = this.page;
+      await this.unblocked(this.perform(action)).catch((err) => {
+        // The action closed its own tab (window.close() in a click handler): Playwright rejects the action it already
+        // performed whenever the close lands before the action returns. That close is its effect (issue #122).
+        if (!on.isClosed()) throw err;
+      });
       this.tally(`perform:${verb}`, t);
     }
     // Replay works like a Playwright spec: no wait after an action. The next Turn waits for its recorded target (NotYet),

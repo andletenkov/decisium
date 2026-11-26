@@ -137,6 +137,30 @@ test("Browser: a tab without an opener that closes itself hands the Steps to the
   }
 });
 
+// The tests above pass when the close lands after click() returns; on a slow machine it lands first and Playwright rejects
+// the click it performed (CI run 45899579720). This forces that order.
+test("Browser: an action whose own tab closes before Playwright returns is performed, not failed (issue #122)", async () => {
+  const b = await Browser.open(`data:text/html,<button>Main</button>`);
+  const tab = await b.context.newPage();
+  await tab.setContent(`<button onclick="window.close()">Done</button>`);
+  const proto = Object.getPrototypeOf(tab.locator("button"));
+  const click = proto.click;
+  proto.click = async function (this: import("playwright").Locator, o: unknown) {
+    await click.call(this, o);
+    if (!this.page().isClosed()) await this.page().waitForEvent("close");
+    throw new Error("locator.click: Target page, context or browser has been closed");
+  };
+  try {
+    await b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find((e) => e.name === "Done")!.ref });
+    proto.click = click;
+    await b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find((e) => e.name === "Main")!.ref });
+    assert.equal(b.context.pages().length, 1);
+  } finally {
+    proto.click = click;
+    await b.close();
+  }
+});
+
 test("Browser: a label standing in for a display:none checkbox or radio is that control (issue #123)", async () => {
   const b = await Browser.open(
     `data:text/html,<input type=checkbox id=c style="display:none"><label for=c>Accept terms</label>` +
