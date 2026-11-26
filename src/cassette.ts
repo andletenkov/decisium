@@ -239,11 +239,20 @@ const texts = (el: Element, masked = true) => {
   return out;
 };
 
-/** The closest own-or-ancestor node of `el` whose text holds `hint` (any case). */
+/**
+ * The closest own-or-ancestor node of `el` whose text holds `hint` (any case) as whole words: "Item 1" is not in
+ * "Item 10" (issue #124).
+ */
 const holder = (el: Element, hint: string) => {
-  const h = hint.toLowerCase();
+  // Scripts written without spaces ("東京" in "東京都") have no word edges to check.
+  const edge = (c: string) =>
+    /[\p{L}\p{N}]/u.test(c) && !/[\p{sc=Han}\p{sc=Hiragana}\p{sc=Katakana}\p{sc=Thai}]/u.test(c)
+      ? "[\\p{L}\\p{N}]"
+      : "(?!)";
+  const t = hint.trim();
+  const re = new RegExp(`(?<!${edge(t[0])})${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!${edge(t.at(-1)!)})`, "iu");
   let p: Element | undefined = el;
-  while (p && !p.text.toLowerCase().includes(h)) p = p.parent;
+  while (p && !re.test(p.text)) p = p.parent;
   return p;
 };
 /**

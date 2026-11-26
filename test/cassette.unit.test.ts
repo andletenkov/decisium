@@ -893,6 +893,21 @@ test("resolve and find: a value the Step quotes anchors the element to its own r
   assert.match(find(resolve(before[0], before), after) as string, /matches 0 elements now/);
 });
 
+test("find: an anchor matches whole words, so a near-twin row (Item 1, Item 10) does not break it (issue #124)", () => {
+  const rows = (...names: string[]) =>
+    parseSnapshot(
+      names.map((n, i) => `- listitem [ref=r${i}]:\n  - text: ${n}\n  - button "Delete" [ref=b${i}]`).join("\n"),
+    ).elements;
+  const before = rows("Item 1", "Item 2");
+  const r = resolve(before[0], before, ["Item 1"]);
+  assert.equal(r.anchor, "Item 1");
+  const after = rows("Item 1", "Item 2", "Item 10");
+  assert.equal(find(r, after), after[0]);
+  // Scripts without spaces have no word edges: a part of a word still anchors.
+  const cjk = rows("東京都", "大阪府");
+  assert.equal(resolve(cjk[0], cjk, ["東京"]).anchor, "東京");
+});
+
 test("resolve: a quoted value that is not the element's own is no anchor", () => {
   const els = campaigns("Spring Sale Draft", "Autumn Sale Draft");
   // On both rows, or on neither: falls back to the text that differs.

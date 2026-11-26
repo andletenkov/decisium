@@ -2,12 +2,15 @@
 import { settings } from "./options.ts";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import {
   chromium,
   type Browser as PwBrowser,
   type BrowserContext,
   type BrowserContextOptions,
   type Dialog as PwDialog,
+  type Frame,
+  type Locator,
   type Page,
   type Request,
 } from "playwright";
@@ -72,7 +75,29 @@ const IDLE_GAP_MS = 100; // two idle probes this far apart: promise chains (e.g.
 // shortcut: long-lived requests (SSE, long polling), endless chains of short timers and endless animations never go
 // quiet, so actions wait up to the full cap (github.com home: open ~5.5 s, some clicks 5 s) and failing checks wait
 // `checkTimeout`; ignore such work by URL/type when the waiting costs too much.
-// Not tracked: Web Workers, and timers inside cross-origin iframes.
+// Not tracked: Web Workers. Frames are read one by one (frameSignals); a frame that does not answer within FRAME_MS
+// (busy, mid-navigation) is left out of that read.
+const FRAME_MS = 500;
+
+/** What one frame says about its own changes (the init script's counters); undefined: no init script there. */
+const signalsIn = () => {
+  const w = window as unknown as { __lastMutation?: number; __soon?: () => number; __pending?: () => number };
+  if (w.__lastMutation === undefined) return undefined;
+  // "since" is computed here: performance.now() has another time origin in each frame.
+  return [performance.now() - w.__lastMutation, w.__soon?.() ?? 0, w.__pending?.() ?? 0, w.__lastMutation] as const;
+};
+
+/**
+ * Labels standing in for a native checkbox or radio that is not rendered (display:none behind a styled label, issue
+ * #123): the snapshot drops the control and shows the label as plain text. Runs in the page over `label` elements.
+ */
+const hiddenBoxesIn = (labels: Element[]) =>
+  labels.flatMap((l, i) => {
+    const c = (l as HTMLLabelElement).control;
+    if (!(c instanceof HTMLInputElement) || !/^(checkbox|radio)$/.test(c.type) || c.checkVisibility()) return [];
+    const text = (l.textContent ?? "").replace(/\s+/g, " ").trim();
+    return text && l.checkVisibility() ? [[i, c.type, c.checked, text] as const] : [];
+  });
 
 /** Adds `[current]` to the given refs' lines (Playwright's snapshot drops aria-current). */
 const markCurrent = (snapshot: string, refs: ReadonlySet<string>) =>
@@ -260,8 +285,10 @@ export class Browser {
       this.failed = [];
       this.touched = true;
       this.watchDownloads(p);
+      this.watchClose(p);
     });
     this.watchDownloads(page);
+    this.watchClose(page);
     this.rearm();
     context.on("dialog", (d) => {
       this.open = d;
@@ -292,6 +319,19 @@ export class Browser {
         })
         .catch(() => {})
         .finally(() => this.inflight--);
+    });
+  }
+
+  /** The Steps' tab closing itself (a popup calling window.close(), issue #122): Steps go on in its opener, else the last tab. */
+  private watchClose(page: Page) {
+    page.on("close", async () => {
+      if (this.page !== page) return; // CLOSE_TAB switched first
+      const opener = await page.opener().catch(() => null);
+      const next = opener && !opener.isClosed() ? opener : this.context.pages().at(-1);
+      if (!next || this.page !== page) return;
+      this.page = next;
+      this.failed = [];
+      this.touched = true;
     });
   }
 
@@ -508,14 +548,8 @@ export class Browser {
       // pages that never go quiet continue after `actionTimeout`
       if (this.open) return; // nothing changes until it is answered
       const poll = Date.now();
-      const [sinceMutation, soon] = (await this.unblocked(
-        this.page
-          .evaluate(() => {
-            const w = window as unknown as { __lastMutation: number; __soon?: () => number };
-            return [performance.now() - w.__lastMutation, w.__soon?.() ?? 0];
-          })
-          .catch(() => [0, 1]),
-      )) ?? [0, 1]; // mid-navigation: not settled yet
+      const s = await this.unblocked(this.frameSignals());
+      const [sinceMutation, soon] = s ? [s.since, s.soon] : [0, 1]; // mid-navigation: not settled yet
       // After an action the window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = sinceAction ? Math.min(sinceMutation, Date.now() - start) : sinceMutation;
       const waiting = this.waiting();
@@ -527,9 +561,31 @@ export class Browser {
           : soon > 0
             ? "settle:timers"
             : "settle:quiet";
-      await this.page.waitForTimeout(this.replay ? REPLAY_POLL_MS : 25);
+      await sleep(this.replay ? REPLAY_POLL_MS : 25); // not the page's timer: the page may have just closed (issue #122)
       this.tally(why, poll);
     }
+  }
+
+  /**
+   * The page's own-change signals over all its frames (issue #121): the least time since a DOM mutation, the sums of
+   * soon-due and pending work, and the mutation stamps joined. undefined: the main frame cannot be read (mid-navigation).
+   */
+  private async frameSignals(): Promise<{ since: number; soon: number; pending: number; stamp: string } | undefined> {
+    const main = this.page.mainFrame();
+    // The main frame is waited for, as before; a child frame busy or mid-navigation is left out of this read.
+    const read = (f: Frame) =>
+      f === main
+        ? f.evaluate(signalsIn)
+        : Promise.race([f.evaluate(signalsIn), sleep(FRAME_MS).then(() => undefined)]).catch(() => undefined);
+    const all = await Promise.all(this.page.frames().map(read)).catch(() => undefined);
+    if (!all) return undefined;
+    const got = all.filter((s) => s !== undefined);
+    return {
+      since: Math.min(...got.map((s) => s[0])),
+      soon: got.reduce((n, s) => n + s[1], 0),
+      pending: got.reduce((n, s) => n + s[2], 0),
+      stamp: got.map((s) => s[3]).join(","),
+    };
   }
 
   async observe(): Promise<Observation> {
@@ -575,15 +631,11 @@ export class Browser {
     if (n) return `the page is still loading (${n === 1 ? "a request is" : `${n} requests are`} in flight)`;
   }
 
-  private stamp?: number; // __lastMutation when the latest Observation was read
+  private stamp?: string; // frameSignals' stamp when the latest Observation was read
 
   /** The DOM changed since the latest Observation (task 0066): the page moved on its own before an action. */
   async stale(): Promise<boolean> {
-    const now = await this.unblocked(
-      this.page
-        .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
-        .catch(() => undefined),
-    );
+    const now = (await this.unblocked(this.frameSignals()))?.stamp;
     return now === undefined || now !== this.stamp;
   }
 
@@ -597,7 +649,7 @@ export class Browser {
    */
   private async read(): Promise<Observation> {
     if (!this.touched && this.cached && this.page.frames().length === 1) {
-      const { print } = await this.pagePrint();
+      const print = await this.pagePrint();
       if (print !== undefined && print === this.print) return this.cached;
     }
     return this.readNow();
@@ -616,9 +668,9 @@ export class Browser {
   /** When the page was last acted on (opened, execute(), a client step): requests since are its loads. */
   private actedAt = Date.now();
 
-  /** What the page holds that its snapshot shows, as one string; and the time of its latest DOM mutation. */
-  private async pagePrint(): Promise<{ print?: string; stamp?: number }> {
-    const got = await this.page
+  /** What the page holds that its snapshot shows, as one string. */
+  private async pagePrint(): Promise<string | undefined> {
+    return this.page
       .evaluate(() => {
         const w = window as unknown as { __lastMutation?: number; __ids?: WeakMap<Element, number> };
         let h = 2166136261; // FNV-1a, so field values (passwords too) never leave the page
@@ -633,31 +685,29 @@ export class Browser {
         const ids = (w.__ids ??= new WeakMap()); // an id per focused element, so focus moving shows in the print
         const active = document.activeElement;
         if (active && !ids.has(active)) ids.set(active, performance.now());
-        return [
-          w.__lastMutation,
-          `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`,
-        ] as const;
+        return `${w.__lastMutation}|${location.href}|${active ? ids.get(active) : "-"}|${h >>> 0}`;
       })
       .catch(() => undefined);
-    return { stamp: got?.[0], print: got?.[1] };
   }
 
   private async readNow(): Promise<Observation> {
     // The DOM reads that do not depend on the snapshot's refs go out together (each round trip is a wait); the
     // facts come before the page snapshot, whose refs they give.
     this.touched = false; // an action from here on sets it again
-    const [{ stamp, print }, found, collapsed, titles, title] = await Promise.all([
-      this.pagePrint(), // before the snapshot below: a change after it shows as another print
+    const [signals, print, found, collapsed, titles, title, boxes] = await Promise.all([
+      this.frameSignals(), // before the snapshot below: a change after it shows as another stamp
+      this.pagePrint(), // likewise
       this.facts(),
       this.collapsed(),
       this.titles(),
       this.page.title().catch(() => ""), // mid-navigation
+      this.hiddenBoxes(),
     ]);
-    this.stamp = stamp;
+    this.stamp = signals?.stamp;
     this.print = print;
     const refs = (fact: Fact) => new Set([...found].filter(([, f]) => f.includes(fact)).map(([ref]) => ref));
     const targets = new Set([...refs("pointer"), ...refs("tabindex")]);
-    const snapshot = renderSnapshot(await this.named());
+    const snapshot = this.markBoxes(renderSnapshot(await this.named()), boxes);
     const combobox = new Set([...snapshot.matchAll(/- combobox\b[^\n]*\[ref=(\w+)\]/g)].map((m) => m[1]));
     const secret = refs("secret");
     const editable = new Set([...refs("editable")].filter((ref) => combobox.has(ref)));
@@ -840,6 +890,56 @@ export class Browser {
     return out;
   }
 
+  /** Labels of hidden checkboxes and radios (see hiddenBoxesIn) in every frame, in document order, with their locators. */
+  private async hiddenBoxes() {
+    const out: { type: string; checked: boolean; text: string; at: Locator }[] = [];
+    for (const f of this.page.frames()) {
+      const labels = f.locator("label");
+      const hits = await labels.evaluateAll(hiddenBoxesIn).catch(() => []);
+      for (const [i, type, checked, text] of hits) out.push({ type, checked, text, at: labels.nth(i) });
+    }
+    return out;
+  }
+
+  /** Refs given to hidden-box labels (markBoxes), valid for the latest read like the snapshot's. */
+  private boxes = new Map<string, Locator>();
+  private at(ref: string): Locator {
+    return this.boxes.get(ref) ?? this.page.locator(`aria-ref=${ref}`);
+  }
+
+  /**
+   * Shows each hidden-box label as the control it stands for, with its own ref: its text line becomes a `checkbox` or
+   * `radio` line (a wrapper holding only that text keeps its line and gets it as a child).
+   * shortcut: labels are paired with snapshot lines by text in document order; a label whose text the snapshot splits
+   * or reformats stays plain text. Pair by DOM position if a page shows that.
+   */
+  private markBoxes(snapshot: string, boxes: Awaited<ReturnType<Browser["hiddenBoxes"]>>): string {
+    this.boxes = new Map();
+    if (!boxes.length) return snapshot;
+    const lines = snapshot.split("\n");
+    const used = new Set<number>(); // frames are read one by one, but the snapshot shows an iframe where it sits
+    const unquote = (s: string) => {
+      try {
+        return s.startsWith('"') ? (JSON.parse(s) as string) : s;
+      } catch {
+        return s;
+      }
+    };
+    boxes.forEach((box, n) => {
+      const ref = `h${n + 1}`;
+      const control = `- ${box.type} ${JSON.stringify(box.text)}${box.checked ? " [checked]" : ""} [ref=${ref}]`;
+      for (let k = 0; k < lines.length; k++) {
+        const m = !used.has(k) && /^(\s*)- (text|\w+(?: \[[^\]]+\])*): (.*)$/.exec(lines[k]);
+        if (!m || unquote(m[3]) !== box.text) continue;
+        lines[k] = m[2] === "text" ? `${m[1]}${control}` : `${m[1]}- ${m[2]}:\n${m[1]}  ${control}`;
+        this.boxes.set(ref, box.at);
+        used.add(k);
+        return;
+      }
+    });
+    return lines.join("\n");
+  }
+
   /**
    * Executes one action and checks its effect where the effect is deterministic (TYPE/SELECT). An action that opens a
    * dialog returns once it is open (its effect check is skipped); ACCEPT/DISMISS answer it.
@@ -870,7 +970,7 @@ export class Browser {
 
   private async perform({ verb, ref, to, value = "" }: Action): Promise<void> {
     const opts = { timeout: settings().interactionTimeout }; // includes the navigation a click starts
-    if ((verb === "SCROLL" || verb === "SCROLL_UP") && ref) await this.page.locator(`aria-ref=${ref}`).hover(opts); // the wheel scrolls what is under the mouse
+    if ((verb === "SCROLL" || verb === "SCROLL_UP") && ref) await this.at(ref).hover(opts); // the wheel scrolls what is under the mouse
     if (verb === "SCROLL" || verb === "SCROLL_UP") await this.page.mouse.wheel(0, verb === "SCROLL" ? 600 : -600);
     else if (verb === "ENTER") await this.page.keyboard.press("Enter");
     else if (verb === "PRESS")
@@ -888,12 +988,12 @@ export class Browser {
       await this.page.bringToFront();
       if (verb === "CLOSE_TAB") await from.close();
     } else {
-      const target = this.page.locator(`aria-ref=${ref}`);
+      const target = this.at(ref!);
       if (verb === "CLICK") await target.click(opts);
       else if (verb === "HOVER") await target.hover({ timeout: HOVER_TIMEOUT_MS });
       else if (verb === "DBLCLICK") await target.dblclick(opts);
       else if (verb === "RIGHTCLICK") await target.click({ ...opts, button: "right" });
-      else if (verb === "DRAG") await target.dragTo(this.page.locator(`aria-ref=${to}`), opts);
+      else if (verb === "DRAG") await target.dragTo(this.at(to!), opts);
       else if (verb === "PASTE") {
         await target.click(opts);
         await this.page.keyboard.press("ControlOrMeta+V");
@@ -964,14 +1064,10 @@ export class Browser {
     const deadline = Date.now() + timeoutMs;
     let idleBefore = false;
     let idleAt = Date.now(); // first idle probe one gap after the call, as before
-    let seen: number | undefined; // __lastMutation at the last snapshot: no DOM mutation since means no new snapshot
+    let seen: string | undefined; // the stamp at the last snapshot: no DOM mutation since means no new snapshot
     while (Date.now() < deadline) {
-      await this.page.waitForTimeout(POLL_MS);
-      const stamp = await this.unblocked(
-        this.page
-          .evaluate(() => (window as unknown as { __lastMutation?: number }).__lastMutation)
-          .catch(() => undefined),
-      );
+      await sleep(POLL_MS);
+      const stamp = (await this.unblocked(this.frameSignals()))?.stamp;
       const moved = stamp === undefined || stamp !== seen;
       seen = stamp;
       if (moved && (await this.observe()).text !== since) {
@@ -993,11 +1089,8 @@ export class Browser {
   private async idle(): Promise<boolean> {
     if (this.open) return true; // blocked until answered
     if (this.inflight - this.pending.size + this.waiting().length > 0) return false;
-    const pending =
-      (await this.unblocked(
-        this.page.evaluate(() => (window as unknown as { __pending?: () => number }).__pending?.() ?? 1).catch(() => 1),
-      )) ?? 1; // mid-navigation, or a dialog opened: not idle
-    return pending === 0;
+    const s = await this.unblocked(this.frameSignals());
+    return s?.pending === 0; // undefined: mid-navigation, or a dialog opened: not idle
   }
 
   screenshot(path: string): Promise<unknown> {

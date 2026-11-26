@@ -84,6 +84,89 @@ test("parseSnapshot: a bare text that only labels a control inside the container
   assert.ok(!obs.text.includes("generic [ref=e7]"));
 });
 
+test("Browser: settle and waitForChange follow late content inside a same-origin iframe (issue #121)", async () => {
+  const inner = `<button onclick="setTimeout(()=>{const h=document.createElement('h1');h.textContent='Late';document.body.append(h)},700)">Go</button>`;
+  const url = `data:text/html,<iframe srcdoc="${inner.replace(/"/g, "&quot;")}"></iframe>`;
+  let b = await Browser.open(url);
+  try {
+    const go = (await b.observe()).elements.find((e) => e.name === "Go")!;
+    await b.execute({ verb: "CLICK", ref: go.ref });
+    assert.match((await b.observe()).text, /heading "Late"/); // the URL holds "Late" too
+  } finally {
+    await b.close();
+  }
+  b = await Browser.open(url);
+  try {
+    const before = (await b.observe()).text;
+    await b.page.frames()[1].evaluate(() => document.querySelector("button")!.click()); // no focus change
+    assert.equal(await b.waitForChange(before, 3000), true);
+    assert.match((await b.observe()).text, /heading "Late"/);
+  } finally {
+    await b.close();
+  }
+});
+
+test("Browser: a popup that closes itself hands the Steps back to its opener (issue #122)", async () => {
+  const b = await Browser.open(
+    `data:text/html,<button onclick="window.open('about:blank').document.write('<button onclick=window.close()>Authorize</button>')">Sign in</button>`,
+  );
+  try {
+    const click = async (name: string) =>
+      b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find((e) => e.name === name)!.ref });
+    await click("Sign in");
+    await click("Authorize");
+    await click("Sign in"); // threw "Target page ... has been closed" from settle
+    assert.equal(b.context.pages().length, 2);
+  } finally {
+    await b.close();
+  }
+});
+
+test("Browser: a tab without an opener that closes itself hands the Steps to the last open tab (issue #122)", async () => {
+  const b = await Browser.open(`data:text/html,<button>Main</button>`);
+  try {
+    const tab = await b.context.newPage(); // no opener, like a noopener link; the Steps follow it
+    await tab.setContent(`<button onclick="window.close()">Done</button>`);
+    const click = async (name: string) =>
+      b.execute({ verb: "CLICK", ref: (await b.observe()).elements.find((e) => e.name === name)!.ref });
+    await click("Done");
+    await click("Main");
+    assert.equal(b.context.pages().length, 1);
+  } finally {
+    await b.close();
+  }
+});
+
+test("Browser: a label standing in for a display:none checkbox or radio is that control (issue #123)", async () => {
+  const b = await Browser.open(
+    `data:text/html,<input type=checkbox id=c style="display:none"><label for=c>Accept terms</label>` +
+      `<div><input type=radio id=r hidden><label for=r>Red</label></div>`,
+  );
+  try {
+    const lines = (await b.observe()).elements.map((e) => e.line);
+    assert.deepEqual(lines, ['checkbox "Accept terms" [unchecked]', 'radio "Red" [unchecked]']);
+    const box = (await b.observe()).elements[0];
+    await b.execute({ verb: "CLICK", ref: box.ref });
+    assert.equal((await b.observe()).elements[0].line, 'checkbox "Accept terms" [checked]');
+  } finally {
+    await b.close();
+  }
+  // A hidden box inside an iframe placed before one in the main page: each label finds its own line.
+  const box = (id: string, text: string) => `<input type=checkbox id=${id} hidden><label for=${id}>${text}</label>`;
+  const c = await Browser.open(
+    `data:text/html,<iframe srcdoc="${box("i", "Inner")}"></iframe>${box("m", "Outer")}`.replace(
+      /srcdoc="([^"]*)"/,
+      (_, h) => `srcdoc="${h.replace(/"/g, "&quot;")}"`,
+    ),
+  );
+  try {
+    const names = (await c.observe()).elements.filter((e) => e.role === "checkbox").map((e) => e.name);
+    assert.deepEqual(names.sort(), ["Inner", "Outer"]);
+  } finally {
+    await c.close();
+  }
+});
+
 test("Browser: editable comboboxes (search with suggestions) are typed into; button-like ones are clicked", async () => {
   const b = await Browser.open(
     `data:text/html,<input role=combobox aria-label="Search or jump to" aria-expanded=false>` +
