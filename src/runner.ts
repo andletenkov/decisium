@@ -432,7 +432,7 @@ async function act(
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
       return end("DONE");
     // Where the Step ends: once it has acted, the likeliest next element may be a later Step's (SauceDemo "I continue"
-    // then Finish, "I run the workflow" then the confirm dialog of "I confirm with ...", TodoMVC typing the todo again).
+    // then Finish, TodoMVC typing the todo again).
     // Asked before the gate: a split between that element and "none" is the same ending (scripts/bench-owner.ts).
     const top = obs.elements.find((e) => e.ref === t.target.choice);
     const topHow = top && likeliest(t, top, obs, read.keys);
