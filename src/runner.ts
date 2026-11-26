@@ -6,8 +6,10 @@ import {
   gate,
   GATE_TARGET_MARGIN,
   confidence,
+  DONE_AFTER_ACTION,
   DONE_THRESHOLD,
   grouped,
+  TOGGLES,
   NotYet,
   named,
   fmt,
@@ -16,6 +18,7 @@ import {
   type Decider,
   type Intent,
   type Pick,
+  type ScenarioLines,
   type TurnAnswer,
 } from "./decision.ts";
 import { verdict as checkVerdict, type Verdict } from "./check.ts";
@@ -95,7 +98,6 @@ async function settled<T>(
   }
 }
 
-const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
 /** Jev torn between "nothing to do" and a toggle already in the wanted state (task 0043): both mean done. */
 function alreadyToggled(pick: Pick, obs: Observation, goal: boolean | undefined): boolean {
   const done = (c: string) => c === "none" || obs.elements.some((e) => e.ref === c && toggled(e, goal));
@@ -144,22 +146,16 @@ const VERBS: Record<string, Action["verb"]> = {
   "switch tab": "SWITCH_TAB",
   enter: "ENTER",
 };
-/**
- * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
- * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
- */
-const DONE_AFTER_ACTION = 0.5;
-const pageUrl = (obs: Observation) => obs.readable.find((e) => e.ref === "url")?.value;
-/**
- * `value` left the fields and shows on the page: a typed value submitted (added to a list, posted). A field that still
- * holds it (a search box over its suggestions) is not submitted.
- */
-const shownOutsideFields = (obs: Observation, value: string) => {
-  const fields = obs.elements.filter((e) => e.verb === "TYPE");
-  if (fields.some((f) => f.value.includes(value))) return false;
-  const refs = new Set(fields.map((e) => e.ref));
-  return obs.readable.some((e) => !refs.has(e.ref) && (e.name.includes(value) || e.value.includes(value)));
-};
+
+/** The likeliest action `target` can do; not gated (task 0065: restricted, the right one can be far below 0.5). */
+function likeliest(t: TurnAnswer, target: Element | typeof PAGE, obs: Observation, keys: string[]): string | undefined {
+  const can = capabilities(target, obs, keys);
+  return !t.action
+    ? can[0]
+    : Object.entries(t.action.probabilities)
+        .filter(([a]) => can.includes(a))
+        .sort((a, b) => b[1] - a[1])[0]?.[0];
+}
 
 /**
  * Jev resolves what the check means and which element or area it is about; code decides pass/fail (check.ts).
@@ -343,8 +339,9 @@ export async function runStep(
   attempt = false,
   docString?: string,
   intent?: Intent,
+  scenario?: ScenarioLines,
 ): Promise<StepResult> {
-  return rt.actionStep(() => act(step, rt, decider, log, attempt, docString, intent), log);
+  return rt.actionStep(() => act(step, rt, decider, log, attempt, docString, intent, scenario), log);
 }
 
 /**
@@ -375,6 +372,7 @@ async function act(
   attempt: boolean,
   docString?: string,
   intent?: Intent,
+  scenario?: ScenarioLines,
 ): Promise<StepResult> {
   const read = withIntent(readStep({ text: step, kind: "action", docString }), intent);
   attempt ||= !!read.attempt;
@@ -396,9 +394,6 @@ async function act(
   }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
-  let navigated = false; // the last action opened another URL
-  let submitted = false; // the last action put every value this Step typed onto the page
-  const typed: string[] = []; // values this Step typed, secrets excluded
   let obs = await rt.observe();
   // A Step blocked on a page whose requests failed reports the failure, not Jev's doubt about a page without the
   // controls it needs (a record that failed to load is not an ambiguous Step).
@@ -436,11 +431,16 @@ async function act(
     if (t.done >= DONE_THRESHOLD) return end("DONE");
     if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
       return end("DONE");
-    // A new page after an action is evidence too: what it offers next belongs to the next Step (SauceDemo "I continue":
-    // Continue opened the overview, done 0.78, then the Step clicked Finish). Language-neutral, like the TYPE case.
-    // Likewise a typed value that now shows outside the field (TodoMVC "I add a todo": Enter added it, done 0.63, and
-    // Jev still leaned to the empty field: it typed the todo again, or split with "none" and failed AMBIGUOUS).
-    if ((navigated || submitted) && t.done >= DONE_AFTER_ACTION) return end("DONE");
+    // Where the Step ends: once it has acted, the likeliest next element may be a later Step's (SauceDemo "I continue"
+    // then Finish, TodoMVC typing the todo again).
+    // Asked before the gate: a split between that element and "none" is the same ending (scripts/bench-owner.ts).
+    const top = obs.elements.find((e) => e.ref === t.target.choice);
+    const topHow = top && likeliest(t, top, obs, read.keys);
+    if (recent.length && top && topHow && scenario && scenario.lines.length > 1 && decider.owner) {
+      const o = await decider.owner(said, obs, recent, top, topHow, scenario);
+      log(`  Owner: ${fmt(o)}`);
+      if (o.choice === "other") return end("DONE");
+    }
     if (alreadyToggled(t.target, obs, read.toggle)) {
       log("  Toggle: already done");
       return end("DONE");
@@ -452,13 +452,7 @@ async function act(
     const el = t.target.choice === PAGE ? undefined : obs.elements.find((e) => e.ref === t.target.choice);
     if (t.target.choice !== PAGE && !el)
       return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
-    // The likeliest action the target can do; not gated (task 0065: restricted, the right one can be far below 0.5).
-    const can = capabilities(el ?? PAGE, obs, read.keys);
-    const how = !t.action
-      ? can[0]
-      : Object.entries(t.action.probabilities)
-          .filter(([a]) => can.includes(a))
-          .sort((a, b) => b[1] - a[1])[0]?.[0];
+    const how = likeliest(t, el ?? PAGE, obs, read.keys);
     // Only a recorded answer can miss (live answers rate every action): it was not offered this Turn.
     if (!how)
       return end(
@@ -494,12 +488,6 @@ async function act(
         // A file to upload is only ever one the Step quotes (task 0044).
         const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
         if (!candidates.length) {
-          // Nothing to type, right after an action that changed the page: the field belongs to the next Step, so
-          // done counts at the after-action bar (German "ich zur Kasse gehe": Checkout clicked, done 0.77, then the
-          // First Name field was AMBIGUOUS). Language-neutral: evidence is the page change, not the wording.
-          // After a new page that is evidence enough on its own (Spanish "empiezo el pago": done 0.38).
-          if (action.verb === "TYPE" && recent.length && unchanged === 0 && (navigated || t.done >= DONE_AFTER_ACTION))
-            return end("DONE");
           return end(
             "AMBIGUOUS",
             `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`,
@@ -554,12 +542,6 @@ async function act(
     }
     // By the effect, not the raw text: focus alone ([active]) is no change (task 0067, false DONE on the hover menu).
     unchanged = effect === "no visible change" ? unchanged + 1 : 0;
-    navigated = pageUrl(next) !== undefined && pageUrl(next) !== pageUrl(before);
-    if (action.verb === "TYPE" && action.value && !el?.secret) typed.push(action.value);
-    submitted =
-      typed.length > 0 &&
-      typed.every((v) => shownOutsideFields(next, v)) &&
-      typed.some((v) => !shownOutsideFields(before, v));
     if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
     obs = next;
   }

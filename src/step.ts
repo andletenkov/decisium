@@ -1,7 +1,7 @@
 // The Step language (task 0052): what a Step's text, Data table and Doc string mean to the runtime, read in one place.
 // The runner, Jev's questions, lint, reports and cassette keys all read a Step through readStep().
 import { PickleStepType } from "@cucumber/messages";
-import type { Intent } from "./decision.ts";
+import type { Intent, ScenarioLines } from "./decision.ts";
 
 export type StepKind = "action" | "attempt" | "assertion";
 
@@ -15,6 +15,15 @@ export interface ParsedStep extends StepArgument {
   text: string;
   kind: StepKind;
   line?: number; // in the .feature file (a Background step: its own line)
+}
+
+/**
+ * The Action steps of `steps` and where `steps[index]` is among them, for where an Action step ends. A check naming the
+ * same control asks for no interaction (Wikipedia "the toggle should be collapsed" took the second click of "I collapse").
+ */
+export function scenarioLines(steps: ParsedStep[], index: number): ScenarioLines {
+  const acts = steps.flatMap((s, i) => (s.kind === "assertion" ? [] : [i]));
+  return { lines: acts.map((i) => readStep(steps[i]).label), index: acts.indexOf(index) };
 }
 
 export interface StepReading {

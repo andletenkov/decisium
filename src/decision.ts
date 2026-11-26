@@ -28,6 +28,13 @@ export const PAGE = "page";
  * target's elements to still exist when `done` is at least this.
  */
 export const DONE_THRESHOLD = 0.8;
+/**
+ * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
+ * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
+ */
+export const DONE_AFTER_ACTION = 0.5;
+/** Roles a click switches on or off; a Step that reaches the wanted state ends on it (runner.ts). */
+export const TOGGLES = new Set(["checkbox", "switch", "menuitemcheckbox"]);
 
 /**
  * A recorded candidate that names no element on this page, kept so its probability still counts for the gates
@@ -220,6 +227,12 @@ export interface Intent {
   exact?: boolean;
 }
 
+/** The Scenario's Step lines (labels, Background included) and which one is running. */
+export interface ScenarioLines {
+  lines: string[];
+  index: number;
+}
+
 /** The seam to the decision model: Jev implements it (jev.ts); tests use a scripted fake. */
 export interface Decider {
   /** Sanitized live request metadata; absent on replay/test deciders. */
@@ -229,6 +242,19 @@ export interface Decider {
   /** `keys`: the Named keys the Step's text names (readStep), offered as the page's `press <key>` actions. */
   turn(step: string, obs: Observation, recent: string[], attempt?: boolean, keys?: string[]): Promise<TurnAnswer>;
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
+  /**
+   * After the Step has acted: does doing `how` (a target action, e.g. "enter") on `next` belong to this Step ("this")
+   * or to another Action step of the Scenario ("other": the Step is over, the rest is a later Step's work)? Absent in
+   * fakes: never asked.
+   */
+  owner?(
+    step: string,
+    obs: Observation,
+    recent: string[],
+    next: Element,
+    how: string,
+    scenario: ScenarioLines,
+  ): Promise<Pick>;
   /** Drag: the readable element or area to drop `source` onto, or "none" (task 0045). */
   drop(step: string, obs: Observation, source: Element): Promise<Pick>;
   /**

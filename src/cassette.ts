@@ -4,7 +4,9 @@ import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import {
   capabilities,
   confidence,
+  DONE_AFTER_ACTION,
   DONE_THRESHOLD,
+  TOGGLES,
   goneKey,
   goneResolution,
   NotYet,
@@ -14,6 +16,7 @@ import {
   GATE_TARGET_MARGIN,
   type Assessment,
   type Decider,
+  type ScenarioLines,
   type Intent,
   type Pick,
   type TurnAnswer,
@@ -51,7 +54,9 @@ type Target = Resolution | string; // a string: a non-element answer (scroll, wa
  * the part the confidence gates and runner.ts read, so replay reaches the same outcome, a failing one included.
  */
 type Answer = [Target, number, Settings["confidence"]?][];
-type Turn = { done: number; target: Answer; action?: Answer; value?: Answer; drop?: Answer } | { dialog: Answer }; // dialog: a Turn answering a browser dialog
+type Turn =
+  | { done: number; target: Answer; action?: Answer; value?: Answer; drop?: Answer; owner?: Answer }
+  | { dialog: Answer }; // dialog: a Turn answering a browser dialog
 interface Check {
   kind: Pick;
   /** Absent in entries recorded before issue #81: their kinds folded negation in (`absence`), so they are re-recorded. */
@@ -598,6 +603,41 @@ export class Cassette {
         (now.turns![i] as { value?: Answer }).value = store(a);
         return a;
       },
+      ...(live.owner && {
+        owner: async (
+          step: string,
+          obs: Observation,
+          recent: string[],
+          next: Element,
+          how: string,
+          scenario: ScenarioLines,
+        ) => {
+          const i = turn - 1;
+          const r = replay((e) => {
+            const t = e.turns?.[i];
+            if (!t || "dialog" in t) throw `turn ${i + 1} was not an element choice when recorded`;
+            if (t.owner) return loadRecorded(t.owner);
+            // Recorded before this question (<= 0.5.4): what that run did at this Turn answers it. Another Turn after it:
+            // it acted, so the element was this Step's. Its last: it acted and ended on the effect when the target was
+            // pinned, dragged or a toggle (runner.ts), else it ended here before acting once done reached the
+            // after-action bar.
+            const top = t.target[0]?.[0];
+            const role = typeof top === "object" ? top.role : undefined;
+            const acted =
+              e.pinned?.some((p) => p.turn === i + 1) ||
+              t.action?.[0]?.[0] === "drag" ||
+              (role !== undefined && (TOGGLES.has(role) || role === "radio"));
+            const other = i === e.turns!.length - 1 && t.done >= DONE_AFTER_ACTION && !acted;
+            return recorded({
+              choice: other ? "other" : "this",
+              probabilities: { this: other ? 0 : 1, other: other ? 1 : 0 },
+            });
+          });
+          const a = r ?? (await live.owner!(step, obs, recent, next, how, scenario));
+          (now.turns![i] as { owner?: Answer }).owner = store(a);
+          return a;
+        },
+      }),
       drop: async (step, obs, source) => {
         const i = turn - 1;
         const among = [...new Set([...obs.readable, ...obs.areas])];

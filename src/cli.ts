@@ -25,6 +25,7 @@ const COMMANDS: Record<string, { synopsis: string; notes: string }> = {
   step: {
     synopsis: 'decisium step "<step>" --url <url|file> [--headed] [--judged] [--strict] [-v] [--debug]',
     notes: `--url: start URL or file.
+A Step run alone has no next Step to end at: it can go on to do what a next Step would (a feature run stops it there).
 --headed: show the browser.
 -v / --verbose prints every Observation and Jev answer; --debug shows stack traces.
 --judged lets Jev judge fuzzy checks; they report JUDGED_PASSED/JUDGED_FAILED, never PASSED.

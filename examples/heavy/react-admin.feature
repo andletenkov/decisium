@@ -19,7 +19,7 @@ Feature: react-admin demo, an admin panel with a menu, data grids, filters and b
 
   Scenario: Open a product category
     When I open "Categories" from the menu
-    And I edit the "Animals" category
+    And I open the "Animals" category for editing
     Then the name field should be "Animals"
 
   Scenario: Switch the interface to dark mode
