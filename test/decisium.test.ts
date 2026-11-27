@@ -3278,3 +3278,29 @@ test("formatter summary: skipped scenarios are counted apart from failed ones (i
   assert.match(skipped, /0\/1 scenarios passed; 1 skipped: Skips\n/);
   assert.doesNotMatch(skipped, /failed/);
 });
+
+test("runStep: a target that changed before dispatch is not acted on; the Turn is asked again (issue #135)", async () => {
+  // The page moves on its own between the Turn's read and the action: e1 now names another control.
+  let reads = 0;
+  const executed: string[] = [];
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () =>
+      parseSnapshot(
+        reads++ === 0 ? `- button "Delete" [ref=e1]` : `- button "Archive" [ref=e1]\n- button "Delete" [ref=e2]`,
+      ),
+    stale: async () => reads === 1,
+    execute: async (a: Action) => {
+      executed.push(a.ref!);
+    },
+    waitForChange: async () => false,
+  };
+  const answers = [
+    { done: 0, target: sure("e1") },
+    { done: 0, target: sure("e2") },
+    { done: 0.9, target: sure("none") },
+  ];
+  const r = await runStep("I delete it", rt, { ...oracle, turn: async () => answers.shift()! }, () => {});
+  assert.equal(r.outcome, "DONE");
+  assert.deepEqual(executed, ["e2"]);
+});

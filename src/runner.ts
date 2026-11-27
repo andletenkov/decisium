@@ -529,6 +529,13 @@ async function act(
       }
       // The page moved on its own since the Turn's Observation: diff from now, so that change is not the action's.
       const before = (await rt.stale?.()) ? await rt.observe() : obs;
+      // Resolution and dispatch are apart: the target must still be the same actionable control, else ask again.
+      const still = el && before.elements.find((e) => e.ref === el.ref);
+      if (el && (!still || still.role !== el.role || still.name !== el.name)) {
+        log(`  Target changed before acting: ${el.line}`);
+        obs = before;
+        continue;
+      }
       log(`  Execute: ${described}`);
       try {
         await rt.execute(action);
