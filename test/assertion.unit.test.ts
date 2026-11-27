@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { test } from "node:test";
 import { Cassette, UiChanged } from "../src/cassette.ts";
 import type { Assessment, Decider, Pick } from "../src/decision.ts";
+import { executeStep } from "../src/execute.ts";
 import { parseSnapshot, type Observation } from "../src/observation.ts";
 import { runAssertion, type Runtime } from "../src/runner.ts";
 
@@ -166,6 +167,173 @@ const noJev: Decider = {
   dialog: unused,
   drop: unused,
 };
+
+const records = (alphaStatus: string, alphaButton: string) =>
+  parseSnapshot(`- table [ref=e1]:
+  - row [ref=r1]:
+    - cell "Alpha" [ref=n1]
+    - cell [ref=c1]:
+      - paragraph [ref=s1]: ${alphaStatus}
+    - button "${alphaButton}" [ref=b1]
+  - row [ref=r2]:
+    - cell "Beta" [ref=n2]
+    - cell [ref=c2]:
+      - paragraph [ref=s2]: Complete
+    - button "Open" [ref=b2]`);
+
+function execute(text: string, kind: "assertion" | "action", rt: Runtime, live: Decider, cassette: Cassette) {
+  return executeStep(text, { rt, live, cassette, key: `S: ${text}`, kind, arg: {}, earlier: {}, log: () => {} });
+}
+
+test("executeStep: a replayed comparison fails on Alpha without asking Jev to pick Beta", async () => {
+  const path = tmp();
+  const rec = new Cassette(path, "m", "new");
+  const step = `Alpha's status should be "Complete"`;
+  const assesses = (ref: string): Assessment => ({
+    kind: sure("value"),
+    negated: sure("no"),
+    subject: sure(ref),
+    area: sure("page"),
+    state: sure("enabled"),
+  });
+  const recorded = await execute(
+    step,
+    "assertion",
+    screens(records("Complete", "Open")),
+    {
+      ...noJev,
+      assess: async () => assesses("s1"),
+    },
+    rec,
+  );
+  assert.equal(recorded.outcome, "PASSED");
+  assert.equal(recorded.cassette, "recorded");
+  rec.save();
+
+  let asked = 0;
+  const live: Decider = {
+    ...noJev,
+    assess: async () => {
+      asked++;
+      return assesses("s2");
+    },
+  };
+  const result = await execute(
+    step,
+    "assertion",
+    screens(records("Failed", "Open")),
+    live,
+    new Cassette(path, "m", "new"),
+  );
+  assert.equal(result.outcome, "ASSERTION_FAILED");
+  assert.match(result.reason ?? "", /Failed/);
+  assert.equal(result.cassette, "replayed");
+  assert.equal(asked, 0);
+
+  const missing = parseSnapshot(`- paragraph [ref=e1]: Complete`);
+  for (const mode of ["new", "none"] as const) {
+    const outcome = await execute(
+      step,
+      "assertion",
+      screens(missing),
+      live,
+      new Cassette(path, "m", mode, undefined, true),
+    );
+    assert.equal(outcome.outcome, "UI_CHANGED");
+    assert.equal(asked, 0);
+  }
+});
+
+test("executeStep: replay cannot replace a missing recalled expectation", async () => {
+  const path = tmp();
+  const rec = new Cassette(path, "m", "new");
+  const text = "the saved name should appear";
+  const check = (value: string, cassette: Cassette, live: Decider) =>
+    executeStep(text, {
+      rt: screens(list("Alpha", "Beta")),
+      live,
+      cassette,
+      key: `S: ${text}`,
+      kind: "assertion",
+      arg: {},
+      earlier: { [value]: "the earlier Step" },
+      log: () => {},
+    });
+  const live: Decider = {
+    ...model("page", true),
+    recall: async () => sure("Alpha"),
+    assess: async () => ({
+      kind: sure("presence"),
+      negated: sure("no"),
+      subject: sure("none"),
+      area: sure("page"),
+      state: sure("enabled"),
+    }),
+  };
+  assert.equal((await check("Alpha", rec, live)).outcome, "PASSED");
+  rec.save();
+  const result = await check("Beta", new Cassette(path, "m", "new"), noJev);
+  assert.equal(result.outcome, "UI_CHANGED");
+  assert.match(result.reason ?? "", /recorded earlier value "Alpha"/);
+});
+
+test("executeStep: unrelated scenario memory does not invalidate a recorded state check", async () => {
+  const path = tmp();
+  const rec = new Cassette(path, "m", "new");
+  const text = "the Save button should be disabled";
+  const check = (cassette: Cassette, live: Decider, earlier: Record<string, string>) =>
+    executeStep(text, {
+      rt: screens(parseSnapshot(`- button "Save" [disabled] [ref=e1]`)),
+      live,
+      cassette,
+      key: `S: ${text}`,
+      kind: "assertion",
+      arg: {},
+      earlier,
+      log: () => {},
+    });
+  const live: Decider = {
+    ...noJev,
+    assess: async () => ({
+      kind: sure("state"),
+      negated: sure("no"),
+      subject: sure("e1"),
+      area: sure("page"),
+      state: sure("disabled"),
+    }),
+  };
+  assert.equal((await check(rec, live, {})).outcome, "PASSED");
+  rec.save();
+  const result = await check(new Cassette(path, "m", "new"), noJev, { Beta: "the earlier Step" });
+  assert.equal(result.outcome, "PASSED");
+  assert.equal(result.cassette, "replayed");
+});
+
+test("executeStep: action repair clicks the renamed Alpha button, not Beta's old label", async () => {
+  const path = tmp();
+  const rec = new Cassette(path, "m", "new");
+  const step = `I open "Alpha"`;
+  const clicks: (string | undefined)[] = [];
+  const rt = (label: string): Runtime => ({
+    ...screens(records("Complete", label)),
+    execute: async (a) => {
+      clicks.push(a.ref);
+    },
+  });
+  const live: Decider = {
+    ...noJev,
+    turn: async (_step, _obs, recent) =>
+      recent.length ? { done: 1, target: sure("none") } : { done: 0, target: sure("b1"), action: sure("click") },
+  };
+  assert.equal((await execute(step, "action", rt("Open"), live, rec)).outcome, "DONE");
+  assert.deepEqual(clicks.splice(0), ["b1"]);
+  rec.save();
+
+  const result = await execute(step, "action", rt("View"), live, new Cassette(path, "m", "new"));
+  assert.equal(result.outcome, "DONE");
+  assert.equal(result.cassette, "healed");
+  assert.deepEqual(clicks, ["b1"]);
+});
 
 test("runAssertion: replay applies the same evidence rules to the recorded resolutions", async () => {
   // The recorded list is not on the loading screen; the recorded main area is, while a request is in flight.

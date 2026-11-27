@@ -1166,25 +1166,9 @@ test("cassette: a row named from its content still rebinds when the control is r
   assert.deepEqual(calls, ["turn"]);
 });
 
-test("cassette: a repair whose turns equal the recording is not proposed again", async () => {
-  const p = tmp();
-  const answer = { turn: { done: 0, target: sure("e2"), action: sure("click") } };
-  const rec = new Cassette(p, "m", "new");
-  const w = rec.step("S: x", scripted(answer).live);
-  await w.turn("x", page, []);
-  w.done(true);
-  rec.save();
-  // Asked again from the start (fresh) with the same answer: nothing to review.
-  const c = new Cassette(p, "m", "new");
-  const d = c.step("S: x", scripted(answer).live, undefined, {}, true);
-  await d.turn("x", page, []);
-  assert.equal(d.done(true), "healed");
-  assert.equal(c.save(true), 0);
-});
-
 test("cassette: a scenario whose check passed only on a new reading exports no repair (issue #135)", async () => {
-  // A recorded check asked again (fresh, as executeStep does when the replayed check did not pass).
-  const q = recorded({ check: { kind: sure("presence") } });
+  // This old-format check has no negation answer, so its meaning is read anew.
+  const q = recorded({ check: { kind: sure("value") } });
   const cq = new Cassette(q, "m", "new");
   const a = {
     kind: sure("presence"),
@@ -1193,7 +1177,7 @@ test("cassette: a scenario whose check passed only on a new reading exports no r
     subject: sure("none"),
     area: sure("page"),
   };
-  const dq = cq.step("S: x", scripted({ assess: a }).live, undefined, {}, true);
+  const dq = cq.step("S: x", scripted({ assess: a }).live);
   await dq.assess("x", page, false);
   assert.equal(dq.done(true), "healed");
   assert.equal(cq.save(true), 0);
@@ -1221,7 +1205,7 @@ test("cassette: --record all drops repairs of the recordings it replaces", () =>
   assert.equal(existsSync(repairsOf(p)), false);
 });
 
-test("cassette: a check whose recorded element went missing, read the same way, is a repair (issue #135)", async () => {
+test("cassette: a renamed check subject needs re-recording even with the same comparison kind (issue #139)", async () => {
   const a = {
     kind: sure("value"),
     negated: sure("no"),
@@ -1236,12 +1220,13 @@ test("cassette: a check whose recorded element went missing, read the same way, 
   w.read?.(["subject"]);
   w.done(true);
   rec.save();
-  // The listitem is renamed (a count in its name): the same reading, another element.
+  // Same comparison kind does not prove that the newly selected element is the same subject.
   const now = parseSnapshot(`- list "Items" [ref=e3]:\n  - listitem "Two" [ref=e5]`);
   const c = new Cassette(p, "m", "new");
   const d = c.step("S: x", scripted({ assess: { ...a, subject: sure("e5") } }).live);
-  await d.assess("x", now, false);
-  d.read?.(["subject"]);
-  assert.equal(d.done(true), "healed");
-  assert.equal(c.save(true), 1);
+  await assert.rejects(
+    d.assess("x", now, false),
+    (err: unknown) => err instanceof NotYet && err.final instanceof UiChanged && !err.giveUp,
+  );
+  assert.equal(c.save(true), 0);
 });

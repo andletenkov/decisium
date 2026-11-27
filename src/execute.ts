@@ -71,16 +71,8 @@ export async function executeStep(text: string, ctx: StepContext): Promise<StepR
   const unquoted: [string, string][] = []; // values Jev read without quotes: scenario memory too
   for (const [i, row] of rows.entries()) {
     const rowKey = perRow ? `${key} (row ${i + 1})` : key;
-    let entry = cassette?.step(rowKey, live, log, ctx.generated);
-    const deadline = Date.now() + settings().checkTimeout;
-    r = await attempt(row, entry, deadline);
-    // A replayed check that does not pass may rest on a recording that no longer fits the page: Jev is asked once
-    // more before it fails (issue #90). A check only reads the page, so running it again repeats nothing.
-    if (kind === "assertion" && !SUCCESS.has(r.outcome) && cassette?.canAsk && entry?.replaying()) {
-      log("  (cassette: the replayed check did not pass, asking Jev again)");
-      entry = cassette.step(rowKey, live, log, ctx.generated, true);
-      r = await attempt(row, entry, deadline); // the time the replay already waited counts: a failure waits once
-    }
+    const entry = cassette?.step(rowKey, live, log, ctx.generated);
+    r = await attempt(row, entry, Date.now() + settings().checkTimeout);
     // A new Step keeps any answer Jev was sure of (a real ASSERTION_FAILED replays as one); a heal replaces the
     // recording only with one that reached the Step's goal (issue #90).
     served.push(entry?.done(!USELESS.has(r.outcome), SUCCESS.has(r.outcome)));

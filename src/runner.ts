@@ -84,8 +84,8 @@ async function settled<T>(
   rt: Runtime,
   obs: Observation,
   ask: (obs: Observation) => Promise<T>,
+  deadline = Date.now() + settings().checkTimeout,
 ): Promise<[Observation, T]> {
-  const deadline = Date.now() + settings().checkTimeout;
   for (;;) {
     try {
       return [obs, await ask(obs)];
@@ -214,7 +214,7 @@ export async function runAssertion(
   let obs = await rt.observe();
   for (;;) {
     let verdict: Verdict;
-    [obs, verdict] = await settled(rt, obs, check);
+    [obs, verdict] = await settled(rt, obs, check, deadline);
     const outcome = verdict.outcome === "PENDING" ? "UNVERIFIABLE" : verdict.outcome;
     const final = ["PASSED", "JUDGED_PASSED", "UNVERIFIABLE"].includes(verdict.outcome);
     const left = deadline - Date.now();

@@ -544,23 +544,20 @@ export class Cassette {
 
   /**
    * The Decider for one Step: replays its recorded resolutions while each still matches exactly one element, else
-   * (from the first that does not) asks `live`. Call `done` when the Step ends. `fresh`: ask `live` from the start,
-   * a recorded Step that is replaced is still reported as healed.
+   * (from the first that does not) can ask `live` for a replacement. Recorded check elements must resolve as recorded.
+   * Call `done` when the Step ends.
    */
   step(
     key: string,
     live: Decider,
     log: (line: string) => void = () => {},
     generated: Record<string, string> = {},
-    fresh = false,
   ): Decider & {
     done(keep: boolean, success?: boolean): "replayed" | "recorded" | "healed" | undefined;
     positional(): string[];
-    /** Every answer so far came from the recording. */
-    replaying(): boolean;
   } {
     const saved = this.mode === "all" ? undefined : this.#file.entries[key];
-    const old = saved && !fresh ? mapEntry(saved, (value) => fill(value, generated)) : undefined;
+    const old = saved && mapEntry(saved, (value) => fill(value, generated));
     const now: Entry = { confidence: settings().confidence };
     const decisionStart = live.decisions?.length ?? 0;
     const recorded = (pick: Pick): Pick => ({
@@ -622,6 +619,20 @@ export class Cassette {
         return undefined;
       }
     };
+
+    // A current-format check can wait for its recording to resolve, but cannot replace part of its meaning.
+    const replayCheck = <T>(get: (e: Entry) => T, obs?: Observation): T | undefined =>
+      replay((e) => {
+        if (!e.check?.negated) return get(e);
+        try {
+          return get(e);
+        } catch (err) {
+          if (typeof err !== "string" && !(err instanceof NotOnPage)) throw err;
+          const why = typeof err === "string" ? err : err.why;
+          const changed = new UiChanged(`the recorded check no longer resolves: ${why}; re-record with --record all`);
+          throw err instanceof NotOnPage ? new NotYet(changed) : changed;
+        }
+      }, obs);
 
     /** Actions the answer's top target can do now (none known: undefined); the runner reads only these. */
     const can = (a: TurnAnswer, obs: Observation, keys: string[]) => {
@@ -798,15 +809,14 @@ export class Cassette {
           broken ??= "judged";
           return live.assess(step, obs, judged);
         }
-        const r = replay((e): Assessment => {
+        const r = replayCheck((e): Assessment => {
           if (!e.check) throw "no recorded check";
           if (!e.check.negated) throw "the check was recorded before negation was its own answer (issue #81)";
           return {
             kind: recorded(e.check.kind),
             negated: recorded(e.check.negated),
             state: recorded(e.check.state),
-            // An answer the verdict did not read is not recorded; it is never read on replay either (same kind,
-            // negation and Step), so any value stands in for it.
+            // An unread answer isn't recorded or read on replay (same kind, negation and Step).
             subject: e.check.subject ? loadRecorded(e.check.subject, obs.readable) : UNREAD,
             area: e.check.area ? loadRecorded(e.check.area, obs.areas) : UNREAD,
             ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
@@ -835,8 +845,11 @@ export class Cassette {
         return (now.intent = (await live.intent?.(step, check)) ?? {});
       },
       recall: async (step, earlier) => {
-        const r = replay((e) => {
-          if (!e.recall) throw "no recorded recall";
+        const r = replayCheck((e) => {
+          if (!e.recall) {
+            if (e.check?.negated) return UNREAD;
+            throw "no recorded recall";
+          }
           const gone = e.recall.find(([k]) => k !== "none" && !((k as string) in earlier));
           if (gone) throw `recorded earlier value "${gone[0]}" is not in this scenario now`;
           return loadRecorded(e.recall);
@@ -855,7 +868,6 @@ export class Cassette {
       },
       /** Elements this Step acted on that only their position among identical twins identifies. */
       positional: () => [...positional],
-      replaying: () => !!old && !broken,
       /**
        * `keep`: the Step's answers are worth replaying, so they are written back. `success`: the Step reached its goal;
        * only then does a heal replace a recording.
@@ -872,11 +884,9 @@ export class Cassette {
         if (decisions.length) now.decisions = decisions;
         const entry = mapEntry(now, (value) => templateValue(value, generated));
         if (saved) {
-          // A check asked again after its comparison failed, or read anew (what it compares, how, negated or not),
-          // passed on something else: no evidence for any repair of its scenario (issue #135). The same reading of a
-          // recorded element that went missing, found on the page now, is a repair.
+          // A check read anew (e.g. an old-format recording) is no evidence for a repair of its scenario (#135).
           const reading = (c?: Check) => c && [c.kind, c.negated, c.state, c.scoped].map((p) => p?.choice).join();
-          if (entry.check && (fresh || reading(entry.check) !== reading(saved.check))) {
+          if (entry.check && reading(entry.check) !== reading(saved.check)) {
             this.#checkChanged = true;
             log(
               "  (cassette: the check passed on a new reading; not proposed, re-record with --record all to keep it)",
