@@ -522,8 +522,8 @@ export class Browser {
   /**
    * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
    * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
+   * `replay`: the shorter replay rules; a page Jev reads live settles by the live ones.
    */
-  /** `replay`: the shorter replay rules; a page Jev reads live settles by the live ones. */
   async settle(sinceAction = true, replay = this.replay): Promise<void> {
     const start = Date.now();
     try {

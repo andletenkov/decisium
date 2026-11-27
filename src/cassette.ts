@@ -523,7 +523,7 @@ export class Cassette {
       // Neither judge the recording nor ask Jev on a page that may not show the action's effect yet; a question asked
       // after the Turn's own (inTurn) has the whole Turn asked again.
       const unsettled = () => {
-        if (!obs?.unsettled) return;
+        if (!obs?.unsettled || replayOnly) return; // replay-only: Jev is never asked, the replay waits suffice
         if (inTurn) turn -= 1;
         throw new Unsettled();
       };
@@ -535,7 +535,7 @@ export class Cassette {
       try {
         return get(old);
       } catch (why) {
-        if (why instanceof NotOnPage || typeof why === "string") unsettled();
+        if (typeof why === "string") unsettled(); // not on the page yet: waited for (NotYet), then asked live
         if (why instanceof NotOnPage) fail(why.why, true);
         else if (typeof why === "string") fail(why);
         else throw why;
