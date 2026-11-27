@@ -523,10 +523,11 @@ export class Browser {
    * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
    * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
    */
-  async settle(sinceAction = true): Promise<void> {
+  /** `replay`: the shorter replay rules; a page Jev reads live settles by the live ones. */
+  async settle(sinceAction = true, replay = this.replay): Promise<void> {
     const start = Date.now();
     try {
-      await this.settleLoop(start, sinceAction);
+      await this.settleLoop(start, sinceAction, replay);
       this.unsettled = false;
     } finally {
       this.tally("settle", start);
@@ -534,9 +535,9 @@ export class Browser {
   }
 
   /** Requests that hold the page busy: all in flight, or on replay those pending under REPLAY_REQUEST_MS. */
-  private waiting(): Request[] {
+  private waiting(replay = this.replay): Request[] {
     const now = Date.now();
-    return [...this.pending].filter(([, t]) => !this.replay || now - t < REPLAY_REQUEST_MS).map(([r]) => r);
+    return [...this.pending].filter(([, t]) => !replay || now - t < REPLAY_REQUEST_MS).map(([r]) => r);
   }
 
   private tally(key: string, since: number) {
@@ -544,7 +545,7 @@ export class Browser {
   }
 
   /** `sinceAction`: the quiet window starts no earlier than the call (an action's effect may still be coming). */
-  private async settleLoop(start: number, sinceAction: boolean): Promise<void> {
+  private async settleLoop(start: number, sinceAction: boolean, replay: boolean): Promise<void> {
     while (Date.now() < start + settings().actionTimeout) {
       // pages that never go quiet continue after `actionTimeout`
       if (this.open) return; // nothing changes until it is answered
@@ -553,16 +554,16 @@ export class Browser {
       const [sinceMutation, soon] = s ? [s.since, s.soon] : [0, 1]; // mid-navigation: not settled yet
       // After an action the window starts no earlier than the action: effects may begin a task later (e.g. hashchange).
       const quiet = sinceAction ? Math.min(sinceMutation, Date.now() - start) : sinceMutation;
-      const waiting = this.waiting();
+      const waiting = this.waiting(replay);
       const held = this.inflight - this.pending.size + waiting.length; // downloads are in `inflight`, not `pending`
-      if (held === 0 && soon === 0 && quiet >= (this.replay ? REPLAY_QUIET_MS : QUIET_MS)) return;
+      if (held === 0 && soon === 0 && quiet >= (replay ? REPLAY_QUIET_MS : QUIET_MS)) return;
       const why =
         held > 0
           ? `settle:requests:${waiting[0]?.resourceType() ?? "download"}`
           : soon > 0
             ? "settle:timers"
             : "settle:quiet";
-      await sleep(this.replay ? REPLAY_POLL_MS : 25); // not the page's timer: the page may have just closed (issue #122)
+      await sleep(replay ? REPLAY_POLL_MS : 25); // not the page's timer: the page may have just closed (issue #122)
       this.tally(why, poll);
     }
   }

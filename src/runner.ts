@@ -79,7 +79,7 @@ export interface StepResult {
   marginal?: string;
 }
 
-/** `ask` on `obs`, re-observing after each change while it throws NotYet. */
+/** `ask` on `obs`, re-observing after each change while it throws NotYet, and after settling when it throws Unsettled. */
 async function settled<T>(
   rt: Runtime,
   obs: Observation,
@@ -325,6 +325,10 @@ async function blockingFailure(step: string, obs: Observation, rt: Runtime, deci
     ...new Map((rt.failedRequests?.() ?? []).filter(failureOutcome).map((f) => [describeFailure(f), f])).values(),
   ].slice(-MAX_FAILED);
   if (!failed.length || !decider.failure) return undefined;
+  if (obs.unsettled && rt.settle) {
+    await rt.settle(); // Jev reads it live
+    obs = await rt.observe();
+  }
   const pick = await decider.failure(step, obs, failed.map(describeFailure));
   log(`  Failed request: ${fmt(pick)}`);
   return blockedBy(pick, failed);
@@ -418,8 +422,10 @@ async function act(
 
     // An open dialog blocks the page: this Turn answers it, nothing else.
     if (obs.dialog?.state === "open") {
-      const action = await answerDialog(obs.dialog, said, read.values, obs, decider, log);
-      const described = `${action.verb} ${obs.dialog.type} "${obs.dialog.message}"${action.value === undefined ? "" : ` <- "${action.value}"`}`;
+      const dialog = obs.dialog;
+      let action: Action;
+      [obs, action] = await settled(rt, obs, (o) => answerDialog(dialog, said, read.values, o, decider, log));
+      const described = `${action.verb} ${dialog.type} "${dialog.message}"${action.value === undefined ? "" : ` <- "${action.value}"`}`;
       log(`  Execute: ${described}`);
       try {
         await rt.execute(action);
@@ -432,126 +438,139 @@ async function act(
       continue;
     }
 
-    let t: TurnAnswer;
-    [obs, t] = await settled(rt, obs, (o) => decider.turn(said, o, recent, attempt, read.keys));
-    t = { ...t, target: grouped(t.target, obs, t.action) }; // equivalent targets count as one (task 0065)
-    log(`  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`);
-    if (t.done >= DONE_THRESHOLD) return end("DONE");
-    if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
-      return end("DONE");
-    // Where the Step ends: once it has acted, the likeliest next element may be a later Step's (SauceDemo "I continue"
-    // then Finish, TodoMVC typing the todo again).
-    // Asked before the gate: a split between that element and "none" is the same ending (scripts/bench-owner.ts).
-    const top = obs.elements.find((e) => e.ref === t.target.choice);
-    const topHow = top && likeliest(t, top, obs, read.keys);
-    if (recent.length && top && topHow && scenario && scenario.lines.length > 1 && decider.owner) {
-      const o = await decider.owner(said, obs, recent, top, topHow, scenario);
-      log(`  Owner: ${fmt(o)}`);
-      if (o.choice === "other") return end("DONE");
-    }
-    if (alreadyToggled(t.target, obs, read.toggle)) {
-      log("  Toggle: already done");
-      return end("DONE");
-    }
-    if (!gate(t.target, confidence(t.target).target, GATE_TARGET_MARGIN))
-      return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
-    if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
-
-    const el = t.target.choice === PAGE ? undefined : obs.elements.find((e) => e.ref === t.target.choice);
-    if (t.target.choice !== PAGE && !el)
-      return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
-    const how = likeliest(t, el ?? PAGE, obs, read.keys);
-    // Only a recorded answer can miss (live answers rate every action): it was not offered this Turn.
-    if (!how)
-      return end(
-        "ELEMENT_NOT_FOUND",
-        `Jev chose ${t.action?.choice} on ${el?.line ?? "the page"}, which is not offered now`,
+    try {
+      let t: TurnAnswer;
+      [obs, t] = await settled(rt, obs, (o) => decider.turn(said, o, recent, attempt, read.keys));
+      t = { ...t, target: grouped(t.target, obs, t.action) }; // equivalent targets count as one (task 0065)
+      log(
+        `  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`,
       );
-    const key = /^press (.+)$/.exec(how)?.[1];
-    let action: Action;
-    let described: string;
-    let dropOn: Element | undefined;
-    if (!el) {
-      action = key ? { verb: "PRESS", value: key } : { verb: VERBS[how] };
-      described = key ? `PRESS ${key}` : action.verb;
-    } else {
-      if (el.verb === "CLICK" && toggled(el, read.toggle)) {
-        log(`  Toggle: already ${el.line}`);
+      if (t.done >= DONE_THRESHOLD) return end("DONE");
+      if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
+        return end("DONE");
+      // Where the Step ends: once it has acted, the likeliest next element may be a later Step's (SauceDemo "I continue"
+      // then Finish, TodoMVC typing the todo again).
+      // Asked before the gate: a split between that element and "none" is the same ending (scripts/bench-owner.ts).
+      const top = obs.elements.find((e) => e.ref === t.target.choice);
+      const topHow = top && likeliest(t, top, obs, read.keys);
+      if (recent.length && top && topHow && scenario && scenario.lines.length > 1 && decider.owner) {
+        const o = await decider.owner(said, obs, recent, top, topHow, scenario);
+        log(`  Owner: ${fmt(o)}`);
+        if (o.choice === "other") return end("DONE");
+      }
+      if (alreadyToggled(t.target, obs, read.toggle)) {
+        log("  Toggle: already done");
         return end("DONE");
       }
-      const off = VERBS[how] === "CLICK" && offQuote(el, read.quoted, obs);
-      if (off) return end("AMBIGUOUS", `Jev chose ${el.line}, which is not ${off}`);
-      action = { verb: VERBS[how], ref: el.ref };
-      let onto = "";
-      if (action.verb === "DRAG") {
-        const d = await decider.drop(said, obs, el);
-        log(`  Drop: ${fmt(d)}`);
-        if (!gate(d, confidence(d).target, GATE_TARGET_MARGIN) || d.choice === "none")
-          return end("AMBIGUOUS", `Jev is unsure where to drop ${el.line}: ${named(d, obs)}`);
-        action.to = d.choice;
-        const to = (dropOn = [...obs.readable, ...obs.areas].find((e) => e.ref === d.choice)!);
-        onto = ` onto ${to.role} "${to.name || to.value.slice(0, 60)}"`;
-      }
-      if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
-        // A file to upload is only ever one the Step quotes (task 0044).
-        const candidates = el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
-        if (!candidates.length) {
-          return end(
-            "AMBIGUOUS",
-            `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`,
-          );
-        }
-        // A clear Step that quotes nothing allows only "": no question (task 0067: Jev's "" 79% missed the gate).
-        const v =
-          candidates.length === 1 && candidates[0] === "" && action.verb === "TYPE"
-            ? { choice: "", probabilities: { "": 1 } }
-            : await decider.value(said, obs, el, candidates);
-        log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);
-        if (!gate(v) || v.choice === "none")
-          return end(
-            "AMBIGUOUS",
-            `Jev is unsure which value to enter into ${el.line}${el.secret ? "" : `: ${named(v)}`}`,
-          );
-        action.value = v.choice;
-      }
-      const shown = action.value === undefined ? "" : ` <- "${el.secret ? MASK : action.value}"`;
-      described = `${action.verb} ${el.role} "${el.name || el.value.slice(0, 60)}"${shown}${onto}`;
-    }
-    // The page moved on its own since the Turn's Observation: diff from now, so that change is not the action's.
-    const before = (await rt.stale?.()) ? await rt.observe() : obs;
-    log(`  Execute: ${described}`);
-    try {
-      await rt.execute(action);
-    } catch (err) {
-      return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
-    }
-    if (el) decider.acted?.(el.ref);
+      if (!gate(t.target, confidence(t.target).target, GATE_TARGET_MARGIN))
+        return end("AMBIGUOUS", `Jev is unsure what to do next: ${named(t.target, obs)}`);
+      if (t.target.choice === "none") return end("BLOCKED", "nothing on this screen helps do the step");
 
-    let next = await rt.observe();
-    // An effect can land a task or a request later (replay does not settle after actions): wait for it before calling
-    // the action ineffective. Returns at once on a page with nothing pending.
-    if (changes(before, next, action.ref) === "no visible change" && (await rt.waitForChange(next.text)))
-      next = await rt.observe();
-    // What the action changed, for Jev's next `done` (task 0066: under-confident after working actions).
-    const effect = changes(before, next, action.ref);
-    log(`  Effect: ${effect}`);
-    if (t.target.confirmed) return end("DONE");
-    recent.push(`${described} -> ${effect}`);
-    // Drag effect check (task 0065): Jev's done stayed 0.57-0.73 with the item shown in its new list, any wording.
-    if (action.verb === "DRAG" && el && dropOn && !landed(obs, el, dropOn) && landed(next, el, dropOn)) {
-      log(`  Drag: ${el.line} is now in ${dropOn.role} "${dropOn.name}"`);
-      return end("DONE");
+      const el = t.target.choice === PAGE ? undefined : obs.elements.find((e) => e.ref === t.target.choice);
+      if (t.target.choice !== PAGE && !el)
+        return end("ELEMENT_NOT_FOUND", `Jev chose an element that is no longer on the page (${t.target.choice})`);
+      const how = likeliest(t, el ?? PAGE, obs, read.keys);
+      // Only a recorded answer can miss (live answers rate every action): it was not offered this Turn.
+      if (!how)
+        return end(
+          "ELEMENT_NOT_FOUND",
+          `Jev chose ${t.action?.choice} on ${el?.line ?? "the page"}, which is not offered now`,
+        );
+      const key = /^press (.+)$/.exec(how)?.[1];
+      let action: Action;
+      let described: string;
+      let dropOn: Element | undefined;
+      if (!el) {
+        action = key ? { verb: "PRESS", value: key } : { verb: VERBS[how] };
+        described = key ? `PRESS ${key}` : action.verb;
+      } else {
+        if (el.verb === "CLICK" && toggled(el, read.toggle)) {
+          log(`  Toggle: already ${el.line}`);
+          return end("DONE");
+        }
+        const off = VERBS[how] === "CLICK" && offQuote(el, read.quoted, obs);
+        if (off) return end("AMBIGUOUS", `Jev chose ${el.line}, which is not ${off}`);
+        action = { verb: VERBS[how], ref: el.ref };
+        let onto = "";
+        if (action.verb === "DRAG") {
+          const d = await decider.drop(said, obs, el);
+          log(`  Drop: ${fmt(d)}`);
+          if (!gate(d, confidence(d).target, GATE_TARGET_MARGIN) || d.choice === "none")
+            return end("AMBIGUOUS", `Jev is unsure where to drop ${el.line}: ${named(d, obs)}`);
+          action.to = d.choice;
+          const to = (dropOn = [...obs.readable, ...obs.areas].find((e) => e.ref === d.choice)!);
+          onto = ` onto ${to.role} "${to.name || to.value.slice(0, 60)}"`;
+        }
+        if (action.verb === "TYPE" || action.verb === "SELECT" || action.verb === "UPLOAD") {
+          // A file to upload is only ever one the Step quotes (task 0044).
+          const candidates =
+            el.verb === "SELECT" ? el.options : action.verb === "UPLOAD" ? read.quoted : read.candidates;
+          if (!candidates.length) {
+            return end(
+              "AMBIGUOUS",
+              `the step gives no value to enter into ${el.line}; quote it (e.g. enter "Winter Sale")`,
+            );
+          }
+          // A clear Step that quotes nothing allows only "": no question (task 0067: Jev's "" 79% missed the gate).
+          const v =
+            candidates.length === 1 && candidates[0] === "" && action.verb === "TYPE"
+              ? { choice: "", probabilities: { "": 1 } }
+              : await decider.value(said, obs, el, candidates);
+          log(`  Value: ${el.secret ? "(secret)" : fmt(v)}`);
+          if (!gate(v) || v.choice === "none")
+            return end(
+              "AMBIGUOUS",
+              `Jev is unsure which value to enter into ${el.line}${el.secret ? "" : `: ${named(v)}`}`,
+            );
+          action.value = v.choice;
+        }
+        const shown = action.value === undefined ? "" : ` <- "${el.secret ? MASK : action.value}"`;
+        described = `${action.verb} ${el.role} "${el.name || el.value.slice(0, 60)}"${shown}${onto}`;
+      }
+      // The page moved on its own since the Turn's Observation: diff from now, so that change is not the action's.
+      const before = (await rt.stale?.()) ? await rt.observe() : obs;
+      log(`  Execute: ${described}`);
+      try {
+        await rt.execute(action);
+      } catch (err) {
+        return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
+      }
+      if (el) decider.acted?.(el.ref);
+
+      let next = await rt.observe();
+      // An effect can land a task or a request later (replay does not settle after actions): wait for it before calling
+      // the action ineffective. Returns at once on a page with nothing pending.
+      if (changes(before, next, action.ref) === "no visible change" && (await rt.waitForChange(next.text)))
+        next = await rt.observe();
+      // What the action changed, for Jev's next `done` (task 0066: under-confident after working actions).
+      const effect = changes(before, next, action.ref);
+      log(`  Effect: ${effect}`);
+      if (t.target.confirmed) return end("DONE");
+      recent.push(`${described} -> ${effect}`);
+      // Drag effect check (task 0065): Jev's done stayed 0.57-0.73 with the item shown in its new list, any wording.
+      if (action.verb === "DRAG" && el && dropOn && !landed(obs, el, dropOn) && landed(next, el, dropOn)) {
+        log(`  Drag: ${el.line} is now in ${dropOn.role} "${dropOn.name}"`);
+        return end("DONE");
+      }
+      const box =
+        action.verb === "CLICK"
+          ? next.elements.find((e) => e.ref === action.ref && toggled(e, read.toggle))
+          : undefined;
+      if (box) {
+        log(`  Toggle: ${box.line}`);
+        return end("DONE");
+      }
+      // By the effect, not the raw text: focus alone ([active]) is no change (task 0067, false DONE on the hover menu).
+      unchanged = effect === "no visible change" ? unchanged + 1 : 0;
+      if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
+      obs = next;
+    } catch (err) {
+      // A question after the Turn's own could not be answered on an unsettled page (issue #133): the Turn again.
+      if (!(err instanceof Unsettled) || !rt.settle) throw err;
+      await rt.settle();
+      obs = await rt.observe();
+      turn--;
     }
-    const box =
-      action.verb === "CLICK" ? next.elements.find((e) => e.ref === action.ref && toggled(e, read.toggle)) : undefined;
-    if (box) {
-      log(`  Toggle: ${box.line}`);
-      return end("DONE");
-    }
-    // By the effect, not the raw text: focus alone ([active]) is no change (task 0067, false DONE on the hover menu).
-    unchanged = effect === "no visible change" ? unchanged + 1 : 0;
-    if (unchanged >= 2) return end("BLOCKED", `the page did not change after two actions (last: ${described})`);
-    obs = next;
   }
   return end("STEP_TIMEOUT", `not done after ${maxTurns} actions (${recent.join(", ")})`);
 }

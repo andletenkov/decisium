@@ -519,14 +519,23 @@ export class Cassette {
      * Replay is the live question without Jev: a recorded answer is used only while the question would offer it now
      * (`get` throws why not). Only an element not on the page yet is waited for; any other miss is final.
      */
-    const replay = <T>(get: (e: Entry) => T): T | undefined => {
+    const replay = <T>(get: (e: Entry) => T, obs?: Observation, inTurn = false): T | undefined => {
+      // Neither judge the recording nor ask Jev on a page that may not show the action's effect yet; a question asked
+      // after the Turn's own (inTurn) has the whole Turn asked again.
+      const unsettled = () => {
+        if (!obs?.unsettled) return;
+        if (inTurn) turn -= 1;
+        throw new Unsettled();
+      };
       if (broken || !old) {
+        unsettled();
         if (!broken) fail("missing");
         return undefined;
       }
       try {
         return get(old);
       } catch (why) {
+        if (why instanceof NotOnPage || typeof why === "string") unsettled();
         if (why instanceof NotOnPage) fail(why.why, true);
         else if (typeof why === "string") fail(why);
         else throw why;
@@ -562,8 +571,7 @@ export class Cassette {
           if (ok && a.action && !Object.keys(a.action.probabilities).some((k) => ok.includes(k)))
             throw `recorded action "${a.action.choice}" is not offered now`;
           return a;
-        });
-        if (!r && obs.unsettled) throw new Unsettled(); // before the turn advances: it is asked again
+        }, obs);
         turn = i + 1;
         const a = r ?? (await live.turn(step, obs, recent, attempt, keys));
         // Store the action restricted to what the target can do: Jev's top action may be one it cannot (task 0067).
@@ -593,14 +601,18 @@ export class Cassette {
       },
       value: async (step, obs, el, candidates) => {
         const i = turn - 1;
-        const r = replay((e) => {
-          const t = e.turns?.[i];
-          const v = t && "value" in t ? t.value : undefined;
-          const gone = v?.find(([k]) => k !== "none" && !candidates.includes(k as string));
-          if (!v) throw "no recorded value";
-          if (gone) throw `recorded value "${gone[0]}" is not offered now`;
-          return loadRecorded(v);
-        });
+        const r = replay(
+          (e) => {
+            const t = e.turns?.[i];
+            const v = t && "value" in t ? t.value : undefined;
+            const gone = v?.find(([k]) => k !== "none" && !candidates.includes(k as string));
+            if (!v) throw "no recorded value";
+            if (gone) throw `recorded value "${gone[0]}" is not offered now`;
+            return loadRecorded(v);
+          },
+          obs,
+          true,
+        );
         const a = r ?? (await live.value(step, obs, el, candidates));
         (now.turns![i] as { value?: Answer }).value = store(a);
         return a;
@@ -615,26 +627,30 @@ export class Cassette {
           scenario: ScenarioLines,
         ) => {
           const i = turn - 1;
-          const r = replay((e) => {
-            const t = e.turns?.[i];
-            if (!t || "dialog" in t) throw `turn ${i + 1} was not an element choice when recorded`;
-            if (t.owner) return loadRecorded(t.owner);
-            // Recorded before this question (<= 0.5.4): what that run did at this Turn answers it. Another Turn after it:
-            // it acted, so the element was this Step's. Its last: it acted and ended on the effect when the target was
-            // pinned, dragged or a toggle (runner.ts), else it ended here before acting once done reached the
-            // after-action bar.
-            const top = t.target[0]?.[0];
-            const role = typeof top === "object" ? top.role : undefined;
-            const acted =
-              e.pinned?.some((p) => p.turn === i + 1) ||
-              t.action?.[0]?.[0] === "drag" ||
-              (role !== undefined && (TOGGLES.has(role) || role === "radio"));
-            const other = i === e.turns!.length - 1 && t.done >= DONE_AFTER_ACTION && !acted;
-            return recorded({
-              choice: other ? "other" : "this",
-              probabilities: { this: other ? 0 : 1, other: other ? 1 : 0 },
-            });
-          });
+          const r = replay(
+            (e) => {
+              const t = e.turns?.[i];
+              if (!t || "dialog" in t) throw `turn ${i + 1} was not an element choice when recorded`;
+              if (t.owner) return loadRecorded(t.owner);
+              // Recorded before this question (<= 0.5.4): what that run did at this Turn answers it. Another Turn after it:
+              // it acted, so the element was this Step's. Its last: it acted and ended on the effect when the target was
+              // pinned, dragged or a toggle (runner.ts), else it ended here before acting once done reached the
+              // after-action bar.
+              const top = t.target[0]?.[0];
+              const role = typeof top === "object" ? top.role : undefined;
+              const acted =
+                e.pinned?.some((p) => p.turn === i + 1) ||
+                t.action?.[0]?.[0] === "drag" ||
+                (role !== undefined && (TOGGLES.has(role) || role === "radio"));
+              const other = i === e.turns!.length - 1 && t.done >= DONE_AFTER_ACTION && !acted;
+              return recorded({
+                choice: other ? "other" : "this",
+                probabilities: { this: other ? 0 : 1, other: other ? 1 : 0 },
+              });
+            },
+            obs,
+            true,
+          );
           const a = r ?? (await live.owner!(step, obs, recent, next, how, scenario));
           (now.turns![i] as { owner?: Answer }).owner = store(a);
           return a;
@@ -643,12 +659,16 @@ export class Cassette {
       drop: async (step, obs, source) => {
         const i = turn - 1;
         const among = [...new Set([...obs.readable, ...obs.areas])];
-        const r = replay((e) => {
-          const t = e.turns?.[i];
-          const d = t && "drop" in t ? t.drop : undefined;
-          if (!d) throw "no recorded drop target";
-          return loadRecorded(d, among, "top");
-        });
+        const r = replay(
+          (e) => {
+            const t = e.turns?.[i];
+            const d = t && "drop" in t ? t.drop : undefined;
+            if (!d) throw "no recorded drop target";
+            return loadRecorded(d, among, "top");
+          },
+          obs,
+          true,
+        );
         const a = r ?? (await live.drop(step, obs, source));
         (now.turns![i] as { drop?: Answer }).drop = store(a, among, 0, readStep({ text: step, kind: "action" }).quoted);
         return a;
@@ -661,7 +681,7 @@ export class Cassette {
           const gone = t.dialog.find(([k]) => !answers.includes(k as string));
           if (gone) throw `recorded dialog answer "${gone[0]}" is not offered now`;
           return loadRecorded(t.dialog);
-        });
+        }, obs);
         turn = i + 1;
         const a = r ?? (await live.dialog(step, obs, answers));
         (now.turns ??= [])[i] = { dialog: store(a) };
@@ -670,6 +690,7 @@ export class Cassette {
       assess: async (step, obs, judged) => {
         // A judged check is Jev's verdict, and verdicts are never stored.
         if (judged) {
+          if (obs.unsettled) throw new Unsettled();
           broken ??= "judged";
           return live.assess(step, obs, judged);
         }
@@ -686,8 +707,7 @@ export class Cassette {
             area: e.check.area ? loadRecorded(e.check.area, obs.areas) : UNREAD,
             ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
-        });
-        if (!r && obs.unsettled) throw new Unsettled();
+        }, obs);
         const a = r ?? (await live.assess(step, obs, judged));
         now.check = {
           kind: a.kind,

@@ -117,7 +117,7 @@ export class RunDir {
       },
       waitForChange: (since, ms) => b.waitForChange(since, ms),
       stale: () => b.stale(),
-      settle: () => b.settle(),
+      settle: () => b.settle(true, false), // Jev reads the page next: live rules
       failedRequests: () => b.failedRequests(),
       actionStep: (run, log) => b.actionStep(run, log, rt.execute),
     };

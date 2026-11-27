@@ -425,3 +425,29 @@ test("a live Turn after an unsettled replay action reads the settled page (issue
   assert.equal(r.outcome, "DONE");
   assert.deepEqual(seen, [after.text]);
 });
+
+test("a recording is judged on the settled page, not on the unsettled one after a replay action (issue #133)", async () => {
+  const path = tmp();
+  const page = `- alert [ref=e1]:\n  - generic [ref=e2]: Item already exists`;
+  await check(
+    '"already exists" is shown',
+    runtime(page),
+    jev(holding("already exists")).live,
+    new Cassette(path, "m", "new"),
+  );
+  let settled = false;
+  const before = { ...parseSnapshot(`- button "Continue" [ref=e9]`), unsettled: true as const };
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (settled ? parseSnapshot(page) : before),
+    execute: async () => {},
+    waitForChange: async () => false,
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const again = jev(holding("already exists"));
+  const r = await check('"already exists" is shown', rt, again.live, new Cassette(path, "m", "none", undefined, true));
+  assert.equal(r.outcome, "PASSED");
+  assert.deepEqual(again.calls, [], "replayed, no Jev call");
+});
