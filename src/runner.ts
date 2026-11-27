@@ -377,15 +377,15 @@ async function answerDialog(
 }
 
 /**
- * After an action, the likeliest next move is no new work: "none", or the very action this Step already did, which with
- * "none" outweighs every other target (issue #136: an effect the tree does not show, a CSS theme, leaves Jev split
- * between doing it again and none). Another action on the same element (Enter after typing) is new work.
+ * Jev's likeliest next move is the very action this Step already performed, and with "none" it outweighs every other
+ * target: doubt about an effect the tree may not show (issue #136: a CSS theme, clipboard), not work left. Performed
+ * means Playwright's actionability passed; whether it worked is for the checks. A Step that wants it again ("twice")
+ * says so to Jev's `done`. Another action on the same element (Enter after typing) is new work.
  */
-function nothingNew(t: TurnAnswer, obs: Observation, keys: string[], did: Map<string, string>): boolean {
+function repeatsPerformed(t: TurnAnswer, obs: Observation, keys: string[], performed: Map<string, string>): boolean {
   const { choice, probabilities } = t.target;
-  if (choice === "none") return true;
   const el = obs.elements.find((e) => e.ref === choice);
-  if (!el || did.get(choice) !== likeliest(t, el, obs, keys)) return false;
+  if (!el || performed.get(choice) !== likeliest(t, el, obs, keys)) return false;
   const others = Object.entries(probabilities).filter(([k]) => k !== choice && k !== "none");
   return probabilities[choice] + (probabilities.none ?? 0) > Math.max(0, ...others.map(([, p]) => p));
 }
@@ -420,7 +420,7 @@ async function act(
   }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
-  const did = new Map<string, string>(); // element ref -> how this Step acted on it
+  const performed = new Map<string, string>(); // element ref -> the action this Step performed on it
   let obs = await rt.observe();
   // A Step blocked on a page whose requests failed reports the failure, not Jev's doubt about a page without the
   // controls it needs (a record that failed to load is not an ambiguous Step).
@@ -461,7 +461,11 @@ async function act(
         `  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`,
       );
       if (t.done >= DONE_THRESHOLD) return end("DONE");
-      if (recent.length && unchanged === 0 && t.done >= DONE_AFTER_ACTION && nothingNew(t, obs, read.keys, did))
+      if (
+        recent.length &&
+        t.done >= DONE_AFTER_ACTION &&
+        ((unchanged === 0 && t.target.choice === "none") || repeatsPerformed(t, obs, read.keys, performed))
+      )
         return end("DONE");
       // Where the Step ends: once it has acted, the likeliest next element may be a later Step's (SauceDemo "I continue"
       // then Finish, TodoMVC typing the todo again).
@@ -560,7 +564,7 @@ async function act(
       }
       if (el) {
         decider.acted?.(el.ref);
-        did.set(el.ref, how);
+        performed.set(el.ref, how);
       }
 
       let next = await rt.observe();

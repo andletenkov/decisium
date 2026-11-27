@@ -867,6 +867,12 @@ test("runStep refuses low-confidence targets and stops when actions change nothi
   }
 });
 
+/** A Decider whose Turns answer in order. */
+const turns = (...answers: { done: number; target: Pick }[]): Decider => ({
+  ...oracle,
+  turn: async () => answers.shift()!,
+});
+
 test("runStep: nothing left to do after an action that changed the page, plus a moderate done, is DONE", async () => {
   // Fake page: clicking "Add to cart" turns it into "Remove" (like SauceDemo).
   let added = false;
@@ -879,10 +885,6 @@ test("runStep: nothing left to do after an action that changed the page, plus a 
     waitForChange: async () => false,
   };
   const none = { choice: "none", probabilities: { none: 0.8, e1: 0.2 } };
-  const turns = (...answers: { done: number; target: Pick }[]): Decider => ({
-    ...oracle,
-    turn: async () => answers.shift()!,
-  });
   assert.equal(
     (
       await runStep(
@@ -914,54 +916,52 @@ test("runStep: nothing left to do after an action that changed the page, plus a 
   );
 });
 
-test("runStep: after an action, doing it again is not work left: its share counts as done (issue #136)", async () => {
-  // The theme toggle: its effect is CSS only, a tooltip is all the tree shows; Jev splits between again and none.
-  let clicks = 0;
-  const rt: Runtime = {
-    actionStep: (run) => run(),
-    observe: async () =>
-      parseSnapshot(
-        `- button "Toggle theme" [ref=e1]\n- button "Save" [ref=e2]${clicks ? '\n- tooltip "Toggle theme" [ref=e3]' : ""}`,
-      ),
-    execute: async () => {
-      clicks++;
-    },
-    waitForChange: async () => false,
-  };
-  const turns = (...answers: { done: number; target: Pick }[]): Decider => ({
-    ...oracle,
-    turn: async () => answers.shift()!,
+for (const tooltip of [true, false])
+  test(`runStep: the action already performed, again, is not work left (issue #136, ${tooltip ? "a tooltip" : "no visible change"})`, async () => {
+    // The theme toggle: its effect is CSS only; at most a tooltip shows. Jev splits between doing it again and none.
+    let clicks = 0;
+    const rt: Runtime = {
+      actionStep: (run) => run(),
+      observe: async () =>
+        parseSnapshot(
+          `- button "Toggle theme" [ref=e1]\n- button "Save" [ref=e2]${clicks && tooltip ? '\n- tooltip "Toggle theme" [ref=e3]' : ""}`,
+        ),
+      execute: async () => {
+        clicks++;
+      },
+      waitForChange: async () => false,
+    };
+    const again = { choice: "e1", probabilities: { e1: 0.47, none: 0.37, e2: 0.16 } };
+    const r = await runStep(
+      "I switch to the dark theme",
+      rt,
+      turns({ done: 0, target: sure("e1") }, { done: 0.72, target: again }),
+      () => {},
+    );
+    assert.equal(r.outcome, "DONE");
+    assert.equal(clicks, 1);
+    // Another element likelier than none plus the repeat: work is left.
+    clicks = 0;
+    const other = { choice: "e2", probabilities: { e2: 0.6, e1: 0.2, none: 0.2 } };
+    const r2 = await runStep(
+      "I switch to the dark theme",
+      rt,
+      turns({ done: 0, target: sure("e1") }, { done: 0.72, target: other }, { done: 0.9, target: sure("none") }),
+      () => {},
+    );
+    assert.equal(clicks, 2);
+    assert.equal(r2.outcome, tooltip ? "DONE" : "BLOCKED"); // two actions with no visible change
+    // A Step that wants it again says so to done: "twice" after one click.
+    clicks = 0;
+    const r3 = await runStep(
+      "I click Toggle theme twice",
+      rt,
+      turns({ done: 0, target: sure("e1") }, { done: 0.3, target: sure("e1") }, { done: 0.9, target: sure("none") }),
+      () => {},
+    );
+    assert.equal(clicks, 2);
+    assert.equal(r3.outcome, tooltip ? "DONE" : "BLOCKED");
   });
-  const again = { choice: "e1", probabilities: { e1: 0.47, none: 0.37, e2: 0.16 } };
-  const r = await runStep(
-    "I switch to the dark theme",
-    rt,
-    turns({ done: 0, target: sure("e1") }, { done: 0.72, target: again }),
-    () => {},
-  );
-  assert.equal(r.outcome, "DONE");
-  assert.equal(clicks, 1);
-  // Another element likelier than none plus the repeat: work is left.
-  clicks = 0;
-  const other = { choice: "e2", probabilities: { e2: 0.6, e1: 0.2, none: 0.2 } };
-  const r2 = await runStep(
-    "I switch to the dark theme",
-    rt,
-    turns({ done: 0, target: sure("e1") }, { done: 0.72, target: other }, { done: 0.9, target: sure("none") }),
-    () => {},
-  );
-  assert.equal(clicks, 2);
-  assert.equal(r2.outcome, "DONE");
-  // A low done keeps the repeat: "three times" after one click.
-  clicks = 0;
-  await runStep(
-    "I click Toggle theme twice",
-    rt,
-    turns({ done: 0, target: sure("e1") }, { done: 0.3, target: sure("e1") }, { done: 0.9, target: sure("none") }),
-    () => {},
-  );
-  assert.equal(clicks, 2);
-});
 
 for (const variant of ["", "?dropdown=custom"]) {
   test(`runStep sets activation period end-to-end ${variant || "(native)"}`, async () => {

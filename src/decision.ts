@@ -31,6 +31,7 @@ export const DONE_THRESHOLD = 0.8;
 /**
  * After an action that changed the page, "nothing left to do" is evidence too: with it, done needs only this much
  * (task 0007). In the corpus every such Turn with done >= 0.5 was a real success (SauceDemo cart 0.58-0.77).
+ * So is "the action already performed, again", changed page or not (issue #136: react-admin theme 0.72-0.73).
  */
 export const DONE_AFTER_ACTION = 0.5;
 /** Roles a click switches on or off; a Step that reaches the wanted state ends on it (runner.ts). */
