@@ -11,6 +11,7 @@ import {
   grouped,
   TOGGLES,
   NotYet,
+  Unsettled,
   named,
   fmt,
   PAGE,
@@ -54,6 +55,8 @@ export interface Runtime {
   failedRequests?(): FailedRequest[];
   /** True when the page changed since the latest Observation (task 0066); absent: assume it did not. */
   stale?(): Promise<boolean>;
+  /** Waits until the page settles; an Observation after it is no longer `unsettled`. */
+  settle?(): Promise<void>;
 }
 
 export interface FailedRequest {
@@ -87,12 +90,17 @@ async function settled<T>(
     try {
       return [obs, await ask(obs)];
     } catch (err) {
+      // Replay does not settle after actions; Jev reads only a settled page.
+      if (err instanceof Unsettled && rt.settle) {
+        await rt.settle();
+        obs = await rt.observe();
+        continue;
+      }
       if (!(err instanceof NotYet)) throw err;
       const left = deadline - Date.now();
       if (left > 0 && (await rt.waitForChange(obs.text, left))) obs = await rt.observe();
       else if (err.giveUp) {
         err.giveUp();
-        return [obs, await ask(obs)];
       } else throw err.final;
     }
   }

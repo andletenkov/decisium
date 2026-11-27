@@ -10,6 +10,7 @@ import {
   goneKey,
   goneResolution,
   NotYet,
+  Unsettled,
   PAGE,
   plausible,
   gate,
@@ -562,6 +563,7 @@ export class Cassette {
             throw `recorded action "${a.action.choice}" is not offered now`;
           return a;
         });
+        if (!r && obs.unsettled) throw new Unsettled(); // before the turn advances: it is asked again
         turn = i + 1;
         const a = r ?? (await live.turn(step, obs, recent, attempt, keys));
         // Store the action restricted to what the target can do: Jev's top action may be one it cannot (task 0067).
@@ -685,6 +687,7 @@ export class Cassette {
             ...(e.check.scoped ? { scoped: recorded(e.check.scoped) } : {}),
           };
         });
+        if (!r && obs.unsettled) throw new Unsettled();
         const a = r ?? (await live.assess(step, obs, judged));
         now.check = {
           kind: a.kind,

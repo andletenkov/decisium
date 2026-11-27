@@ -367,3 +367,61 @@ test("a recording holds only the answers its verdict read: a state check replays
   assert.equal(again.outcome, "PASSED", again.reason ?? "");
   assert.deepEqual(live.calls, []);
 });
+
+test("Jev is asked live only once the page settled after an unsettled replay action (issue #133)", async () => {
+  // --record none with a key: actions do not settle; the Observation right after one can still show the old page.
+  let settled = false;
+  const before = { ...parseSnapshot(errorPage("x")), unsettled: true as const };
+  const after = parseSnapshot(`- region "Help" [ref=e3]:\n  - generic [ref=e4]: Item already exists`);
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (settled ? after : before),
+    execute: async () => {},
+    waitForChange: async () => false,
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const seen: string[] = [];
+  const { live } = jev((obs) => {
+    seen.push(obs.text);
+    return holding("already exists")(obs);
+  });
+  const r = await check('"already exists" is shown', rt, live, new Cassette(tmp(), "m", "none", undefined, true));
+  assert.equal(r.outcome, "PASSED");
+  assert.deepEqual(seen, [after.text], "Jev never reads the unsettled page");
+});
+
+test("a live Turn after an unsettled replay action reads the settled page (issue #133)", async () => {
+  let settled = false;
+  const before = { ...parseSnapshot(`- button "Continue" [ref=e1]`), unsettled: true as const };
+  const after = parseSnapshot(`- button "Finish" [ref=e9]`);
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (settled ? after : before),
+    execute: async () => {},
+    waitForChange: async () => false,
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const seen: string[] = [];
+  const live = {
+    async turn(_s: string, obs: Observation) {
+      seen.push(obs.text);
+      return { done: 1, target: sure("none") };
+    },
+  } as unknown as Decider;
+  const r = await executeStep("I continue", {
+    rt,
+    live,
+    cassette: new Cassette(tmp(), "m", "none", undefined, true),
+    key: "S: I continue",
+    kind: "action",
+    arg: {},
+    earlier: {},
+    log: () => {},
+  });
+  assert.equal(r.outcome, "DONE");
+  assert.deepEqual(seen, [after.text]);
+});

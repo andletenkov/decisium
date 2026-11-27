@@ -72,6 +72,8 @@ export interface Observation {
   busy?: Element[];
   /** Why the page may still be filling in content (a request it made is in flight); absent: nothing known pending. */
   loading?: string;
+  /** Read after an action that did not wait for the page to settle (cassette replay): it may show the previous page. */
+  unsettled?: true;
   dialog?: Dialog; // a browser dialog, open or the last one shown (task 0040)
 }
 

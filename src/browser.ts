@@ -523,10 +523,11 @@ export class Browser {
    * Waits until no request is in flight, no work is due soon (see __soon: lazily loaded code runs idle callbacks and
    * short timers after its scripts arrive, before it renders) and the DOM has not changed for QUIET_MS (capped).
    */
-  private async settle(sinceAction = true): Promise<void> {
+  async settle(sinceAction = true): Promise<void> {
     const start = Date.now();
     try {
       await this.settleLoop(start, sinceAction);
+      this.unsettled = false;
     } finally {
       this.tally("settle", start);
     }
@@ -613,7 +614,7 @@ export class Browser {
       this.dialog,
     );
     const loading = this.loading();
-    return (this.last = loading ? { ...obs, loading } : obs);
+    return (this.last = { ...obs, ...(loading ? { loading } : {}), ...(this.unsettled ? { unsettled: true } : {}) });
   }
 
   /**
@@ -631,6 +632,7 @@ export class Browser {
     if (n) return `the page is still loading (${n === 1 ? "a request is" : `${n} requests are`} in flight)`;
   }
 
+  private unsettled = false; // acted on without settle() since (replay)
   private stamp?: string; // frameSignals' stamp when the latest Observation was read
 
   /** The DOM changed since the latest Observation (task 0066): the page moved on its own before an action. */
@@ -967,7 +969,10 @@ export class Browser {
     }
     // Replay works like a Playwright spec: no wait after an action. The next Turn waits for its recorded target (NotYet),
     // a check retries until it passes or the page goes idle (runAssertion), as expect() does.
-    if (this.replay) return;
+    if (this.replay) {
+      this.unsettled = true;
+      return;
+    }
     const t0 = Date.now();
     await this.settle();
     this.tally(`after:${verb}`, t0);
