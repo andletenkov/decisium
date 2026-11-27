@@ -1,6 +1,6 @@
 import { DEFAULTS, settings, type Settings } from "./options.ts";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import {
   capabilities,
   confidence,
@@ -463,10 +463,36 @@ export function stepKey(scenario: string, labels: string[], i: number): string {
   return `${scenario}: ${labels[i]}${n > 1 ? ` (#${n})` : ""}`;
 }
 
+/** A healed Step's new recording, staged for review instead of replacing the old one (issue #135). */
+interface Repair {
+  reason: string;
+  was: Entry;
+  proposed: Entry;
+}
+/** Where a cassette's proposed repairs are exported for review: `<test>.cassette.repairs.json`. */
+export const repairsOf = (path: string) => path.replace(/(\.json)?$/, ".repairs$1");
+const readRepairs = (path: string): Record<string, Repair> =>
+  existsSync(repairsOf(path)) ? JSON.parse(readFileSync(repairsOf(path), "utf8")).entries : {};
+const writeJson = (path: string, text: string) => {
+  writeFileSync(path + ".tmp", text);
+  renameSync(path + ".tmp", path); // atomic: a crash mid-save never leaves half a file
+};
+
+/** Applies every proposed repair to the cassette and removes the repairs file; returns the keys repaired. */
+export function approve(path: string): string[] {
+  const repairs = readRepairs(path);
+  const file: File = JSON.parse(readFileSync(path, "utf8"));
+  for (const [key, r] of Object.entries(repairs)) file.entries[key] = r.proposed;
+  writeJson(path, formatFile(file));
+  rmSync(repairsOf(path), { force: true });
+  return Object.keys(repairs);
+}
+
 /** Recorded resolutions per Step, in `<test>.cassette.json`. Steps are keyed by scenario, text and occurrence (stepKey). */
 export class Cassette {
   #file: File;
   #dirty = false;
+  #staged: Record<string, Repair> = {}; // this scenario's repairs, exported by save() only if it passed
   replayed = 0;
   recorded = 0;
   healed = 0;
@@ -829,13 +855,16 @@ export class Cassette {
           for (const answer of ["subject", "area"] as const) if (!read.has(answer)) delete now.check[answer];
         const decisions = [...(old?.decisions ?? []), ...(live.decisions?.slice(decisionStart) ?? [])];
         if (decisions.length) now.decisions = decisions;
-        this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));
-        this.#dirty = true;
+        const entry = mapEntry(now, (value) => templateValue(value, generated));
         if (saved) {
+          // A repair replaces the recording only once a person approves it (decisium approve).
+          this.#staged[key] = { reason: broken ?? "the replayed check did not pass", was: saved, proposed: entry };
           this.healed++;
-          log(`  (cassette: healed, written back)`);
+          log(`  (cassette: repair proposed in ${repairsOf(this.path)} if the scenario passes)`);
           return "healed";
         }
+        this.#file.entries[key] = entry;
+        this.#dirty = true;
         this.recorded++;
         return "recorded";
       },
@@ -847,11 +876,18 @@ export class Cassette {
     return candidates(this.#file.entries[key]).map(([r, p], i) => `${i + 1}. ${describe(r)} (${Math.round(p * 100)}%)`);
   }
 
-  save() {
+  /** `passed`: the scenario passed its checks, so the repairs it proposed are exported for review. */
+  save(passed = false) {
+    const staged = this.#staged;
+    this.#staged = {};
+    if (passed && Object.keys(staged).length)
+      writeJson(
+        repairsOf(this.path),
+        `${JSON.stringify({ entries: { ...readRepairs(this.path), ...staged } }, null, 2)}\n`,
+      );
     if (!this.#dirty) return;
     const { file, thisRun } = this.#read(); // another worker may have saved scenarios of this feature since
     this.#file.entries = { ...this.#keep(file, thisRun), ...this.#file.entries };
-    writeFileSync(this.path + ".tmp", formatFile(this.#file));
-    renameSync(this.path + ".tmp", this.path); // atomic: a crash mid-save never leaves half a cassette
+    writeJson(this.path, formatFile(this.#file));
   }
 }

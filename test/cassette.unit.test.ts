@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
 import {
+  approve,
   Cassette,
   describe,
   find,
   pin,
   RECORD_MODES,
+  repairsOf,
   resolve,
   stableText,
   stepKey,
@@ -367,7 +369,7 @@ test("cassette: 'none' and the page are offered targets; a pinned turn replays c
   assert.equal(t2.action?.choice, "enter");
 });
 
-test("cassette: in new mode a broken replay heals live once, logs it and writes the Step back", async () => {
+test("cassette: in new mode a broken replay heals live once and proposes a repair; approve applies it (issue #135)", async () => {
   const p = recorded({ turns: [{ done: 0, target: [[{ role: "button", name: "Gone", container: "" }, 1]] }] });
   const log: string[] = [];
   const answer = { done: 0, target: sure("e2"), action: pick({ click: 0.6, type: 0.4 }) };
@@ -380,11 +382,29 @@ test("cassette: in new mode a broken replay heals live once, logs it and writes 
   assert.deepEqual(log, [`  (cassette: healing, button "Gone" matches 0 elements now, needs exactly 1)`]);
   assert.equal(d.done(true), "healed");
   assert.equal(c.healed, 1);
-  assert.equal(log.at(-1), "  (cassette: healed, written back)");
-  c.save();
-  // The action stored is restricted to what the button can do.
-  assert.deepEqual(read(p).entries["S: x"].turns[0].action, [["click", 0.6]]);
+  assert.match(log.at(-1)!, /repair proposed/);
+  const was = read(p).entries["S: x"];
+  c.save(true);
+  // The recording stays as it was until the repair is approved.
+  assert.deepEqual(read(p).entries["S: x"], was);
+  const repair = read(repairsOf(p)).entries["S: x"];
+  assert.deepEqual(repair.was, was);
+  assert.match(repair.reason, /button "Gone" matches 0 elements/);
+  // The action proposed is restricted to what the button can do.
+  assert.deepEqual(repair.proposed.turns[0].action, [["click", 0.6]]);
+  assert.deepEqual(approve(p), ["S: x"]);
   assert.deepEqual(read(p).entries["S: x"].turns[0].target, [[saveTarget, 1]]);
+  assert.equal(existsSync(repairsOf(p)), false);
+});
+
+test("cassette: a scenario that failed exports no repair (issue #135)", async () => {
+  const p = recorded({ turns: [{ done: 0, target: [[{ role: "button", name: "Gone", container: "" }, 1]] }] });
+  const c = new Cassette(p, "m", "new");
+  const d = c.step("S: x", scripted({ turn: { done: 0, target: sure("e2"), action: sure("click") } }).live);
+  await d.turn("x", page, []);
+  d.done(true);
+  c.save(false);
+  assert.equal(existsSync(repairsOf(p)), false);
 });
 
 test("cassette: an uncertain target stores the top three, a confident one only what covers the gate", async () => {

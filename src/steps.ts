@@ -21,7 +21,7 @@ import type { PickleStep } from "@cucumber/messages";
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { Browser } from "./browser.ts";
-import { Cassette, RECORD_MODES, stepKey, type RecordMode } from "./cassette.ts";
+import { Cassette, RECORD_MODES, repairsOf, stepKey, type RecordMode } from "./cassette.ts";
 import { executeStep, type StepReport } from "./execute.ts";
 import { contextFromTags, fromPickle, ownTags, tagValue, toUrl, urlFromTags } from "./feature.ts";
 import { forOrigin, SavedStorage, type StorageState } from "./saved.ts";
@@ -408,7 +408,7 @@ After(async function (this: Scenario, { result }) {
     );
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
   run.event("result", { passed: ok, perf: this.browser.perf });
-  for (const { cassette } of deciders.values()) cassette?.save(); // per scenario, so a crash keeps what was recorded
+  for (const { cassette } of deciders.values()) cassette?.save(ok); // per scenario, so a crash keeps what was recorded
   run.flush();
 });
 
@@ -419,7 +419,10 @@ AfterAll(() => {
   if (!cliOwnsRun) saved?.remove(); // run-scoped: the CLI removes it after every worker is done
   if (!cliOwnsRun) console.log(`\nRun directory: ${run.path} (log.txt has the full decision log)`);
   for (const { cassette: c } of deciders.values())
-    if (c) console.log(`Cassette ${c.path}: ${c.replayed} replayed, ${c.recorded} recorded, ${c.healed} healed`);
+    if (c)
+      console.log(
+        `Cassette ${c.path}: ${c.replayed} replayed, ${c.recorded} recorded, ${c.healed} repairs proposed${c.healed ? ` (review ${repairsOf(c.path)}, then decisium approve ${c.path})` : ""}`,
+      );
 });
 
 /** A failed state: the scenario is a setup error (exit 2), not a failed test; unlike `infra`, the suite goes on. */

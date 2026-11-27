@@ -5,7 +5,7 @@ import { randomBytes, randomInt } from "node:crypto";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
-import { Cassette } from "../src/cassette.ts";
+import { approve, Cassette } from "../src/cassette.ts";
 import type { Assessment, Decider, Pick } from "../src/decision.ts";
 import { executeStep, type StepContext } from "../src/execute.ts";
 import { type Observation, parseSnapshot } from "../src/observation.ts";
@@ -63,7 +63,7 @@ async function check(text: string, rt: Runtime, live: Decider, cassette: Cassett
     log: () => {},
     ...(runId ? { generated: { "{{decisium.runId}}": runId } } : {}),
   } satisfies StepContext);
-  cassette.save();
+  cassette.save(r.outcome === "PASSED");
   return r;
 }
 
@@ -129,7 +129,7 @@ const staleArea = async (path: string) => {
   assert.equal(r.outcome, "PASSED");
 };
 
-test("a replayed check that fails is asked again once; a pass replaces the recording", async () => {
+test("a replayed check that fails is asked again once; a pass proposes the repair", async () => {
   const path = tmp();
   const rt = runtime(errorPage("x"));
   await staleArea(path);
@@ -139,7 +139,7 @@ test("a replayed check that fails is asked again once; a pass replaces the recor
   assert.equal(r.outcome, "PASSED");
   assert.equal(r.cassette, "healed");
   assert.deepEqual(live.calls, ["assess"]);
-  c.save();
+  approve(path);
   assert.deepEqual(JSON.parse(readFileSync(path, "utf8")).entries["S: check"].check.area, [["page", 1]]);
 });
 

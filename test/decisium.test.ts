@@ -1064,7 +1064,8 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   const upgraded = new Cassette(path, "m2", "new");
   assert.deepEqual(await go(upgraded, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
   assert.deepEqual([upgraded.healed, upgraded.replayed, calls], [1, 1, 2]);
-  upgraded.save();
+  upgraded.save(true);
+  (await import("../src/cassette.ts")).approve(path);
   calls = 0;
   assert.deepEqual(await go(new Cassette(path, "m2", "none"), two), {
     outcome: "DONE",
