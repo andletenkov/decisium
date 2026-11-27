@@ -381,10 +381,10 @@ test("cassette: in new mode a broken replay heals live once and proposes a repai
   assert.deepEqual(calls, ["turn", "recall"]);
   assert.deepEqual(log, [`  (cassette: healing, button "Gone" matches 0 elements now, needs exactly 1)`]);
   assert.equal(d.done(true), "healed");
-  assert.equal(c.healed, 1);
   assert.match(log.at(-1)!, /repair proposed/);
   const was = read(p).entries["S: x"];
-  c.save(true);
+  assert.equal(c.save(true), 1);
+  assert.equal(c.repairs, 1);
   // The recording stays as it was until the repair is approved.
   assert.deepEqual(read(p).entries["S: x"], was);
   const repair = read(repairsOf(p)).entries["S: x"];
@@ -392,7 +392,7 @@ test("cassette: in new mode a broken replay heals live once and proposes a repai
   assert.match(repair.reason, /button "Gone" matches 0 elements/);
   // The action proposed is restricted to what the button can do.
   assert.deepEqual(repair.proposed.turns[0].action, [["click", 0.6]]);
-  assert.deepEqual(approve(p), ["S: x"]);
+  assert.deepEqual(approve(p), { applied: ["S: x"], stale: [] });
   assert.deepEqual(read(p).entries["S: x"].turns[0].target, [[saveTarget, 1]]);
   assert.equal(existsSync(repairsOf(p)), false);
 });
@@ -1014,7 +1014,7 @@ test("cassette: the failed-request question goes live and is never stored; repla
   assert.equal(replayOnly.failure, undefined);
 });
 
-test("resolve: records the owning object (row, card, form, dialog) even without same-named peers (issue #135)", () => {
+test("resolve: records the object a quoted value identifies, by that value, even without same-named peers (issue #135)", () => {
   const obs = parseSnapshot(
     [
       `- dialog "Edit campaign" [ref=e1]:`,
@@ -1028,7 +1028,8 @@ test("resolve: records the owning object (row, card, form, dialog) even without 
     ].join("\n"),
   );
   const by = (ref: string) => obs.elements.find((e) => e.ref === ref)!;
-  assert.deepEqual(resolve(by("e2"), obs.elements, ["Save"]).object, { role: "dialog", name: "Edit campaign" });
+  // A named object is already the container; a name is never its identity (a row is named from its content).
+  assert.equal(resolve(by("e2"), obs.elements, ["Save"]).object, undefined);
   assert.deepEqual(resolve(by("e7"), obs.elements, ["Backpack", "Remove"]).object, {
     role: "row",
     anchor: "Backpack",
@@ -1095,4 +1096,152 @@ test("cassette: a replay miss whose object is gone is reported, never guessed pa
     (e: Error) => e instanceof UiChanged && /row for "Backpack"/.test(e.message),
   );
   assert.deepEqual(calls, []);
+});
+
+/** A cassette recorded for `I remove "Backpack"` on cart("Remove"), and the step key. */
+async function recordedCart() {
+  const path = tmp();
+  const rec = new Cassette(path, "m", "new");
+  const w = rec.step("k", scripted({ turn: { done: 0, target: sure("b1"), action: sure("click") } }).live);
+  await w.turn(`I remove "Backpack"`, cart("Remove"), []);
+  w.done(true);
+  rec.save();
+  return path;
+}
+
+test("cassette: a replay miss gives Jev the old binding and why it missed (issue #135)", async () => {
+  const path = await recordedCart();
+  let prior: unknown;
+  const live = {
+    turn: async (...args: unknown[]) => {
+      prior = args[5];
+      return { done: 0, target: sure("b1"), action: sure("click") };
+    },
+  } as unknown as Decider;
+  await new Cassette(path, "m", "new").step("k", live).turn(`I remove "Backpack"`, cart("Delete"), []);
+  assert.deepEqual(prior, {
+    binding: `button "Remove" for "Backpack"`,
+    why: `button "Remove" for "Backpack" matches 0 elements now, needs exactly 1`,
+  });
+});
+
+test("find: the element must still be inside its recorded object (issue #135)", () => {
+  const before = cart("Remove");
+  const r = resolve(before.elements.find((e) => e.ref === "b1")!, before.elements, ["Backpack"]);
+  // Same unique button, now in the Lamp row only: not the Backpack row's.
+  const moved = parseSnapshot(
+    [
+      `- row [ref=r1]:`,
+      `  - cell [ref=c1]: Backpack`,
+      `- row [ref=r2]:`,
+      `  - cell [ref=c3]: Lamp`,
+      `  - button "Remove" [ref=b2]`,
+    ].join("\n"),
+  );
+  assert.equal(typeof find({ ...r, anchor: undefined }, moved.elements), "string");
+});
+
+test("find: a write target recorded by position (before issue #135) is resolved again, not typed into by position", () => {
+  const obs = parseSnapshot(`- textbox "Note" [ref=e1]\n- textbox "Note" [ref=e2]`);
+  assert.equal(typeof find({ role: "textbox", name: "Note", container: "", nth: 1, of: 2 }, obs.elements), "string");
+});
+
+test("cassette: a row named from its content still rebinds when the control is relabelled (issue #135)", async () => {
+  const named = (label: string) =>
+    parseSnapshot(
+      `- row "Backpack ${label}" [ref=r1]:\n  - cell [ref=c1]: Backpack\n  - button "${label}" [ref=b1]\n- button "Checkout" [ref=b3]`,
+    );
+  const path = tmp();
+  const rec = new Cassette(path, "m", "new");
+  const w = rec.step("k", scripted({ turn: { done: 0, target: sure("b1"), action: sure("click") } }).live);
+  await w.turn(`I remove "Backpack"`, named("Remove"), []);
+  w.done(true);
+  rec.save();
+  const { live, calls } = scripted({ turn: { done: 0, target: sure("b1"), action: sure("click") } });
+  assert.equal(
+    (await new Cassette(path, "m", "new").step("k", live).turn(`I remove "Backpack"`, named("Delete"), [])).target
+      .choice,
+    "b1",
+  );
+  assert.deepEqual(calls, ["turn"]);
+});
+
+test("cassette: a repair whose turns equal the recording is not proposed again", async () => {
+  const p = tmp();
+  const answer = { turn: { done: 0, target: sure("e2"), action: sure("click") } };
+  const rec = new Cassette(p, "m", "new");
+  const w = rec.step("S: x", scripted(answer).live);
+  await w.turn("x", page, []);
+  w.done(true);
+  rec.save();
+  // Asked again from the start (fresh) with the same answer: nothing to review.
+  const c = new Cassette(p, "m", "new");
+  const d = c.step("S: x", scripted(answer).live, undefined, {}, true);
+  await d.turn("x", page, []);
+  assert.equal(d.done(true), "healed");
+  assert.equal(c.save(true), 0);
+});
+
+test("cassette: a scenario whose check passed only on a new reading exports no repair (issue #135)", async () => {
+  // A recorded check asked again (fresh, as executeStep does when the replayed check did not pass).
+  const q = recorded({ check: { kind: sure("presence") } });
+  const cq = new Cassette(q, "m", "new");
+  const a = {
+    kind: sure("presence"),
+    negated: sure("no"),
+    state: sure("enabled"),
+    subject: sure("none"),
+    area: sure("page"),
+  };
+  const dq = cq.step("S: x", scripted({ assess: a }).live, undefined, {}, true);
+  await dq.assess("x", page, false);
+  assert.equal(dq.done(true), "healed");
+  assert.equal(cq.save(true), 0);
+  assert.equal(existsSync(repairsOf(q)), false);
+});
+
+test("approve: a repair of an entry re-recorded since is dropped as stale (issue #135)", async () => {
+  const p = recorded({ turns: [{ done: 0, target: [[{ role: "button", name: "Gone", container: "" }, 1]] }] });
+  const c = new Cassette(p, "m", "new");
+  const d = c.step("S: x", scripted({ turn: { done: 0, target: sure("e2"), action: sure("click") } }).live);
+  await d.turn("x", page, []);
+  d.done(true);
+  c.save(true);
+  const file = read(p);
+  file.entries["S: x"].turns[0].done = 0.1; // re-recorded meanwhile
+  writeFileSync(p, JSON.stringify(file));
+  assert.deepEqual(approve(p), { applied: [], stale: ["S: x"] });
+  assert.equal(read(p).entries["S: x"].turns[0].done, 0.1);
+});
+
+test("cassette: --record all drops repairs of the recordings it replaces", () => {
+  const p = tmp();
+  writeFileSync(repairsOf(p), JSON.stringify({ entries: {} }));
+  new Cassette(p, "m", "all");
+  assert.equal(existsSync(repairsOf(p)), false);
+});
+
+test("cassette: a check whose recorded element went missing, read the same way, is a repair (issue #135)", async () => {
+  const a = {
+    kind: sure("value"),
+    negated: sure("no"),
+    state: sure("enabled"),
+    subject: sure("e4"),
+    area: sure("page"),
+  };
+  const p = tmp();
+  const rec = new Cassette(p, "m", "new");
+  const w = rec.step("S: x", scripted({ assess: a }).live);
+  await w.assess("x", page, false);
+  w.read?.(["subject"]);
+  w.done(true);
+  rec.save();
+  // The listitem is renamed (a count in its name): the same reading, another element.
+  const now = parseSnapshot(`- list "Items" [ref=e3]:\n  - listitem "Two" [ref=e5]`);
+  const c = new Cassette(p, "m", "new");
+  const d = c.step("S: x", scripted({ assess: { ...a, subject: sure("e5") } }).live);
+  await d.assess("x", now, false);
+  d.read?.(["subject"]);
+  assert.equal(d.done(true), "healed");
+  assert.equal(c.save(true), 1);
 });

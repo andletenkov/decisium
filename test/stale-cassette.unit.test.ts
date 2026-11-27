@@ -5,7 +5,7 @@ import { randomBytes, randomInt } from "node:crypto";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
-import { approve, Cassette } from "../src/cassette.ts";
+import { Cassette, repairsOf } from "../src/cassette.ts";
 import type { Assessment, Decider, Pick } from "../src/decision.ts";
 import { executeStep, type StepContext } from "../src/execute.ts";
 import { type Observation, parseSnapshot } from "../src/observation.ts";
@@ -129,18 +129,20 @@ const staleArea = async (path: string) => {
   assert.equal(r.outcome, "PASSED");
 };
 
-test("a replayed check that fails is asked again once; a pass proposes the repair", async () => {
+test("a replayed check that fails is asked again once; a pass on the new reading proposes no repair (issue #135)", async () => {
   const path = tmp();
   const rt = runtime(errorPage("x"));
   await staleArea(path);
+  const before = readFileSync(path, "utf8");
   const live = jev(() => ({ area: sure("page") }));
   const c = new Cassette(path, "m", "none", undefined, true);
   const r = await check(`"already exists" should appear`, rt, live.live, c);
   assert.equal(r.outcome, "PASSED");
   assert.equal(r.cassette, "healed");
   assert.deepEqual(live.calls, ["assess"]);
-  approve(path);
-  assert.deepEqual(JSON.parse(readFileSync(path, "utf8")).entries["S: check"].check.area, [["page", 1]]);
+  // The check's reading changed: never a reviewable repair, the recording stays as it was.
+  assert.equal(existsSync(repairsOf(path)), false);
+  assert.equal(readFileSync(path, "utf8"), before);
 });
 
 test("a check that still fails when asked again is a real failure and leaves the cassette unchanged", async () => {

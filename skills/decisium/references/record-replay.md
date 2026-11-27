@@ -26,8 +26,11 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 repairs prop
 
 A cassette is a cache, never a judge: a recording that no longer fits the page costs one Jev request, not a failed Step.
 A replayed check that does not pass is asked once more live before it fails; an action Step is not repeated, it heals
-only where its recorded element is gone. A heal is proposed only when the Step ends `DONE` or `PASSED` and its scenario passes, so a
-failed heal never lands in the cassette. A new Step that fails on the app (`ASSERTION_FAILED`) is recorded and replays
+only where its recorded element is gone. A heal is proposed only when the Step ends `DONE` or `PASSED` and its scenario passes its unchanged checks, so a
+failed heal never lands in the cassette. A check asked again because its comparison failed, or read a new way, is no
+repair: its scenario proposes none (re-record with `--record all` to keep it). A miss is resolved with the old binding
+and why it missed as evidence; a target whose quoted row or card is gone fails as `UI_CHANGED` instead of being guessed
+on the rest of the page. `approve` drops a repair whose recording changed since, and `--record all` drops all repairs. A new Step that fails on the app (`ASSERTION_FAILED`) is recorded and replays
 as that failure; one Jev could not answer (`AMBIGUOUS`) is not recorded.
 
 A cassette stores Jev's answers, never the page's evidence: a replayed check is compared on the page it runs on, by

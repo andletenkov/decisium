@@ -191,10 +191,14 @@ async function main(): Promise<number> {
     try {
       if (!arg || positionals.length !== 2) throw new Error(usage("approve"));
       const path = arg.replace(/\.feature$/, ".cassette.json");
-      const keys = approve(path);
+      const { applied, stale } = approve(path);
       console.log(
-        keys.length ? `Approved ${keys.length} repair(s) in ${path}:\n${keys.join("\n")}` : "No repairs to approve.",
+        applied.length
+          ? `Approved ${applied.length} repair(s) in ${path}:\n${applied.join("\n")}`
+          : "No repairs to approve.",
       );
+      if (stale.length)
+        console.log(`Dropped ${stale.length} stale repair(s): their recording changed since:\n${stale.join("\n")}`);
       return 0;
     } catch (err) {
       console.error((err as Error).message);

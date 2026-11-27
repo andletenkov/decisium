@@ -29,7 +29,7 @@ import { consumerChain, discoverStates, isStateFile, loadStates, type StateDef, 
 import type { Decider, ScenarioLines } from "./decision.ts";
 import { ModelDecider } from "./model-decider.ts";
 import { credentialName, missingCredential } from "./providers.ts";
-import { frameless, MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL, stateFailureMessage } from "./report.ts";
+import { frameless, MARGINAL, NO_TRACE, outcomeMessage, POSITIONAL, REPAIR, stateFailureMessage } from "./report.ts";
 import type { Runtime } from "./runner.ts";
 import { placeholder, readStep, scenarioLines, type StepArgument, type StepKind } from "./step.ts";
 import { INFRA_MARKER, RunDir, SETUP_MARKER } from "./trace.ts";
@@ -367,6 +367,11 @@ async function perform(w: Scenario, text: string, quiet = false) {
   // A file attachment any reporter keeps (text/plain opens as .txt); the console formatter reads it by its prefix.
   if (r.positional)
     w.attach(`${POSITIONAL}${r.positional.join(", ")}`, { mediaType: "text/plain", fileName: "positional.txt" });
+  if (ok && r.cassette === "healed" && w.kind !== "assertion")
+    w.attach(`${REPAIR}the recorded target no longer fit the page`, {
+      mediaType: "text/plain",
+      fileName: "repair.txt",
+    });
   if (r.marginal) w.attach(`${MARGINAL}${r.marginal}`, { mediaType: "text/plain", fileName: "marginal-pass.txt" });
   if (!ok) {
     // Failed Step only; fileName carries the path to the console formatter.
@@ -407,8 +412,10 @@ After(async function (this: Scenario, { result }) {
       "The scenario typed a secret value; Playwright traces store typed text unmasked, so none is kept.\n",
     );
   await this.browser.close(ok ? undefined : `${this.dir}/playwright-trace.zip`);
-  run.event("result", { passed: ok, perf: this.browser.perf });
-  for (const { cassette } of deciders.values()) cassette?.save(ok); // per scenario, so a crash keeps what was recorded
+  let repairs = 0;
+  for (const { cassette } of deciders.values()) repairs += cassette?.save(ok) ?? 0; // per scenario: a crash keeps what was recorded
+  // repairs: a pass with proposed repairs, not an ordinary replay pass (issue #135)
+  run.event("result", { passed: ok, perf: this.browser.perf, ...(repairs ? { repairs } : {}) });
   run.flush();
 });
 
@@ -421,7 +428,7 @@ AfterAll(() => {
   for (const { cassette: c } of deciders.values())
     if (c)
       console.log(
-        `Cassette ${c.path}: ${c.replayed} replayed, ${c.recorded} recorded, ${c.healed} repairs proposed${c.healed ? ` (review ${repairsOf(c.path)}, then decisium approve ${c.path})` : ""}`,
+        `Cassette ${c.path}: ${c.replayed} replayed, ${c.recorded} recorded, ${c.repairs} repairs proposed${c.repairs ? ` (review ${repairsOf(c.path)}, then decisium approve ${c.path})` : ""}`,
       );
 });
 

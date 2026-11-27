@@ -15,6 +15,8 @@ import {
   MARGINAL_HINT,
   POSITIONAL,
   POSITIONAL_HINT,
+  REPAIR,
+  REPAIR_HINT,
   NO_TRACE,
   parseOutcome,
   parseStateFailure,
@@ -79,6 +81,13 @@ export default class DecisiumFormatter extends Formatter {
         steps: [] as string[],
       },
       { prefix: MARGINAL, line: "marginal pass", title: "Marginal passes", hint: MARGINAL_HINT, steps: [] as string[] },
+      {
+        prefix: REPAIR,
+        line: "pass with proposed repair",
+        title: "Passes with a proposed repair",
+        hint: REPAIR_HINT,
+        steps: [] as string[],
+      },
     ];
     const hookIds = new Map<string, string>(); // testRunHookStarted id -> hook definition id
     const hookFailures: string[] = []; // a failed BeforeAll/AfterAll (e.g. no TYPESAFE_API_KEY): cucumber runs no scenario

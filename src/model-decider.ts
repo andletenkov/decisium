@@ -22,6 +22,7 @@ import {
   type Decider,
   type Intent,
   type Pick,
+  type Prior,
   type ScenarioLines,
   type TurnAnswer,
 } from "./decision.ts";
@@ -205,11 +206,14 @@ export class ModelDecider implements Decider {
     recent: string[],
     attempt = false,
     keys: string[] = [],
+    prior?: Prior,
   ): Promise<TurnAnswer> {
     const state = {
       step,
       ui: await this.#ui(obs, "step", step),
       actions_taken_for_step: recent.length ? recent : "none yet",
+      // A replay miss (issue #135): the element this Turn acted on when recorded, and why it no longer matches.
+      ...(prior ? { recorded_target: `${prior.binding}; now: ${prior.why}` } : {}),
     };
     const question = "Which element in `ui` should be interacted with next to accomplish `step`?";
     const page = `page "${obs.readable.find((e) => e.ref === "title")?.value ?? ""}": the page itself (scroll it, wait, history, tabs, keys)`;

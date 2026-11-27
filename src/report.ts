@@ -20,7 +20,7 @@ export const HINTS: Record<string, string> = {
   STEP_TIMEOUT:
     "The step needed more actions than `maxTurns` allows (default 8). Split it into smaller steps, or raise maxTurns for a long flow.",
   UI_CHANGED:
-    "The run replays recorded resolutions (cassette), this step has none that still matches the page, and no model key was given to resolve it again. Provide the key (the step heals live and is reported as healed), or rerun with --record new to re-resolve just the changed steps, or --record all to re-record everything.",
+    "The run replays recorded resolutions (cassette), this step has none that still matches the page, and no model key was given to resolve it again. Provide the key (the step heals live, and its scenario passes with a proposed repair), or rerun with --record new to re-resolve just the changed steps, or --record all to re-record everything.",
   JUDGED_FAILED: "Jev judged that the page does not satisfy the check.",
   APP_ERROR:
     "The step was blocked while the page's server requests failed (5xx), e.g. a record that did not load. Check the app's backend with the failed requests listed; if it is intermittent, rerun. To test an expected error, check for its message.",
@@ -37,6 +37,11 @@ export const KIND: Record<StepKind, string> = { action: "Step", attempt: "Attemp
 export const POSITIONAL = "POSITIONAL: told apart from identical twins by position only: ";
 export const POSITIONAL_HINT =
   'If the list is reordered, replay acts on the other one. Name which one in the Step, e.g. quote its row: I open "Done" for "test-agent".';
+
+/** Prefix of the attachment a Step leaves when it passed on a recording resolved again (issue #135). */
+export const REPAIR = "REPAIR: passed with a proposed repair of its recording: ";
+export const REPAIR_HINT =
+  "Not an ordinary replay pass. A scenario that passes its unchanged checks exports the repair to <feature>.cassette.repairs.json; review it, then run decisium approve <feature>.";
 
 /** Prefix of the attachment a marginal pass leaves on its Step (task 0027). */
 export const MARGINAL = "MARGINAL: passed, but Jev was barely confident: ";
