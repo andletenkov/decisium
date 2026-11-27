@@ -184,7 +184,7 @@ test("a replayed check that fails waits for the page until its check deadline", 
   }
 });
 
-test("answers Jev could not give are never written, and a heal that does not reach DONE or PASSED keeps the recording (issue #90, problem 2)", async () => {
+test("ambiguous check answers are never written, even for a new Step (issue #90, problem 2)", async () => {
   const rt = runtime(errorPage("x"));
   const spread: Pick = { choice: "page", probabilities: { page: 0.5, e3: 0.5 } }; // the areas disagree: AMBIGUOUS
   for (const mode of ["new", "all"] as const) {
@@ -196,18 +196,6 @@ test("answers Jev could not give are never written, and a heal that does not rea
     c.save();
     assert.equal(existsSync(fresh), false, mode);
   }
-  // An old-format check that must be read again.
-  const path = tmp();
-  await staleArea(path);
-  const legacy = JSON.parse(readFileSync(path, "utf8"));
-  delete legacy.entries["S: check"].check.negated;
-  const before = JSON.stringify(legacy);
-  writeFileSync(path, before);
-  const c = new Cassette(path, "m", "new");
-  const r = await check(`"already exists" should appear`, rt, jev(() => ({ area: spread })).live, c);
-  assert.equal(r.outcome, "AMBIGUOUS");
-  c.save();
-  assert.equal(readFileSync(path, "utf8"), before);
 });
 
 test("replay waits for a recorded element of a loading page before it asks Jev, like a Playwright spec", async () => {

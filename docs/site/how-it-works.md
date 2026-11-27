@@ -17,8 +17,9 @@ page ──► list of elements ──► Jev picks one + an action ──► Pl
    clicking one.
 6. **Record.** What each Step resolved to (role, name, container) goes into `<feature>.cassette.json`. The next run
    replays it without Jev. A replayed check compares its recorded subject or area: a wrong value is `ASSERTION_FAILED`,
-   and a recording that no longer identifies the subject or area is `UI_CHANGED`. Jev can still repair an action
-   whose target no longer resolves. Successful repairs are proposed for approval; an `AMBIGUOUS` answer is never recorded.
+   and a recording that cannot be replayed is `UI_CHANGED`. Use `--record all` to replace an unsupported or stale
+   check. Jev can still repair an action whose target no longer resolves. Successful action repairs are proposed for
+   approval; an `AMBIGUOUS` answer is never recorded.
 
 Steps Decisium recognises on its own (`I press Escape`, `I go back`, `I go to "/settings"`) skip the model.
 `decisium run -v` prints every page snapshot and answer.

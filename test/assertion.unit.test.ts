@@ -241,6 +241,14 @@ test("executeStep: a replayed comparison fails on Alpha without asking Jev to pi
     );
     assert.equal(outcome.outcome, "UI_CHANGED");
     assert.equal(asked, 0);
+    const transient = await execute(
+      step,
+      "assertion",
+      screens(missing, records("Complete", "Open")),
+      noJev,
+      new Cassette(path, "m", mode, undefined, true),
+    );
+    assert.equal(transient.outcome, mode === "none" ? "PASSED" : "UI_CHANGED");
   }
 });
 
@@ -248,7 +256,7 @@ test("executeStep: replay cannot replace a missing recalled expectation", async 
   const path = tmp();
   const rec = new Cassette(path, "m", "new");
   const text = "the saved name should appear";
-  const check = (value: string, cassette: Cassette, live: Decider) =>
+  const check = (earlier: Record<string, string>, cassette: Cassette, live: Decider) =>
     executeStep(text, {
       rt: screens(list("Alpha", "Beta")),
       live,
@@ -256,7 +264,7 @@ test("executeStep: replay cannot replace a missing recalled expectation", async 
       key: `S: ${text}`,
       kind: "assertion",
       arg: {},
-      earlier: { [value]: "the earlier Step" },
+      earlier,
       log: () => {},
     });
   const live: Decider = {
@@ -270,11 +278,14 @@ test("executeStep: replay cannot replace a missing recalled expectation", async 
       state: sure("enabled"),
     }),
   };
-  assert.equal((await check("Alpha", rec, live)).outcome, "PASSED");
+  assert.equal((await check({ Alpha: "the earlier Step" }, rec, live)).outcome, "PASSED");
   rec.save();
-  const result = await check("Beta", new Cassette(path, "m", "new"), noJev);
-  assert.equal(result.outcome, "UI_CHANGED");
-  assert.match(result.reason ?? "", /recorded earlier value "Alpha"/);
+  const changedMemory: Record<string, string>[] = [{ Beta: "the earlier Step" }, {}];
+  for (const earlier of changedMemory) {
+    const result = await check(earlier, new Cassette(path, "m", "new"), noJev);
+    assert.equal(result.outcome, "UI_CHANGED");
+    assert.match(result.reason ?? "", /recorded earlier value "Alpha"/);
+  }
 });
 
 test("executeStep: unrelated scenario memory does not invalidate a recorded state check", async () => {
@@ -376,9 +387,13 @@ test("cassette: a check recorded before negation was its own answer is re-record
     run(screens(ready), new Cassette(path, "m", "none").step("S: x", noJev)),
     (err) => err instanceof UiChanged && /recorded before negation was its own answer/.test(err.reason),
   );
-  const healing = new Cassette(path, "m", "new").step("S: x", model());
-  assert.deepEqual(await run(screens(ready), healing), live);
-  assert.equal(healing.done(true), "healed");
+  await assert.rejects(
+    run(screens(ready), new Cassette(path, "m", "new").step("S: x", noJev)),
+    (err) => err instanceof UiChanged && /re-record with --record all/.test(err.reason),
+  );
+  const replacement = new Cassette(path, "m", "all").step("S: x", model());
+  assert.deepEqual(await run(screens(ready), replacement), live);
+  assert.equal(replacement.done(true), "recorded");
 });
 
 test("Jev: a check's request asks for its meaning and references, a verdict only with --judged", async (t) => {

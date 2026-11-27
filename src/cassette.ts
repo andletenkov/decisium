@@ -499,7 +499,6 @@ export class Cassette {
   #file: File;
   #dirty = false;
   #staged: Record<string, Repair> = {}; // this scenario's repairs, exported by save() only if it passed
-  #checkChanged = false; // a check of this scenario passed only on a new reading
   replayed = 0;
   recorded = 0;
   /** Repairs exported for review: by scenarios that passed their unchanged checks. */
@@ -620,17 +619,16 @@ export class Cassette {
       }
     };
 
-    // A current-format check can wait for its recording to resolve, but cannot replace part of its meaning.
+    // Replay cannot replace any part of a recorded check's meaning.
     const replayCheck = <T>(get: (e: Entry) => T, obs?: Observation): T | undefined =>
       replay((e) => {
-        if (!e.check?.negated) return get(e);
         try {
           return get(e);
         } catch (err) {
           if (typeof err !== "string" && !(err instanceof NotOnPage)) throw err;
           const why = typeof err === "string" ? err : err.why;
           const changed = new UiChanged(`the recorded check no longer resolves: ${why}; re-record with --record all`);
-          throw err instanceof NotOnPage ? new NotYet(changed) : changed;
+          throw err instanceof NotOnPage && this.mode === "none" ? new NotYet(changed) : changed;
         }
       }, obs);
 
@@ -844,10 +842,11 @@ export class Cassette {
         if (replayOnly) return (now.intent = {}); // the Step's first question will report the missing resolution
         return (now.intent = (await live.intent?.(step, check)) ?? {});
       },
+      hasRecordedRecall: !!old?.recall,
       recall: async (step, earlier) => {
         const r = replayCheck((e) => {
           if (!e.recall) {
-            if (e.check?.negated) return UNREAD;
+            if (e.check) return UNREAD;
             throw "no recorded recall";
           }
           const gone = e.recall.find(([k]) => k !== "none" && !((k as string) in earlier));
@@ -884,15 +883,6 @@ export class Cassette {
         if (decisions.length) now.decisions = decisions;
         const entry = mapEntry(now, (value) => templateValue(value, generated));
         if (saved) {
-          // A check read anew (e.g. an old-format recording) is no evidence for a repair of its scenario (#135).
-          const reading = (c?: Check) => c && [c.kind, c.negated, c.state, c.scoped].map((p) => p?.choice).join();
-          if (entry.check && reading(entry.check) !== reading(saved.check)) {
-            this.#checkChanged = true;
-            log(
-              "  (cassette: the check passed on a new reading; not proposed, re-record with --record all to keep it)",
-            );
-            return "healed";
-          }
           // A repair replaces the recording only once a person approves it (decisium approve).
           if (JSON.stringify([entry.turns, entry.check]) !== JSON.stringify([saved.turns, saved.check])) {
             this.#staged[key] = { reason: broken ?? "resolved again", was: saved, proposed: entry };
@@ -914,13 +904,12 @@ export class Cassette {
   }
 
   /**
-   * Ends a scenario. `passed`: it passed its checks; with none of them read anew, the repairs it proposed are exported
-   * for review. Returns how many were.
+   * Ends a scenario. Repairs from a passed scenario are exported for review. Returns how many were.
    */
   save(passed = false): number {
-    const staged = Object.keys(this.#staged).length && passed && !this.#checkChanged ? this.#staged : {};
+    const staged = passed ? this.#staged : {};
     const exported = Object.keys(staged).length;
-    [this.#staged, this.#checkChanged] = [{}, false];
+    this.#staged = {};
     if (exported)
       writeJson(
         repairsOf(this.path),

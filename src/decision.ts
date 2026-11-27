@@ -278,6 +278,8 @@ export interface Decider {
   failure?(step: string, obs: Observation, failed: string[]): Promise<Pick>;
   /** Assertion steps, one request: what kind of check, negated or not, and which element or area. Code decides pass/fail. */
   assess(step: string, obs: Observation, judged: boolean): Promise<Assessment>;
+  /** A recorded recall must be validated even if scenario memory is now empty. */
+  hasRecordedRecall?: boolean;
   /** Memory: which value from an earlier Step (`earlier`: value -> Step it came from) the check refers to, or "none". */
   recall(step: string, earlier: Record<string, string>): Promise<Pick>;
   /** The open browser dialog (`obs.dialog`): "accept", "dismiss", or for a prompt one of the Step's quoted values. */

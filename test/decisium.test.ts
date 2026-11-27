@@ -2719,9 +2719,14 @@ test("cassette: replay is the live question without Jev, so an answer it no long
       ]),
     ) as unknown as Decider;
     const heal = new Cassette(path, "m1", "new").step("S", counting);
-    await ask(heal, false);
-    assert.ok(asked > 0, `${name}: asked live`);
-    assert.equal(heal.done(true), "healed", name);
+    if (name === "recall") {
+      await assert.rejects(ask(heal, false), (e: unknown) => e instanceof UiChanged && why.test(e.message));
+      assert.equal(asked, 0, "assertion recall cannot heal");
+    } else {
+      await ask(heal, false);
+      assert.ok(asked > 0, `${name}: asked live`);
+      assert.equal(heal.done(true), "healed", name);
+    }
     await assert.rejects(
       ask(new Cassette(path, "m1", "none").step("S", noJev), false),
       (e: unknown) => e instanceof UiChanged && why.test(e.message),

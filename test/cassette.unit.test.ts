@@ -308,10 +308,7 @@ test("cassette: replay-only waits (NotYet) for a recorded element not on the pag
     const d = new Cassette(recorded(entry), "m", "none").step("S: x", scripted({}).live);
     await assert.rejects(ask(d), (e: unknown) => {
       assert.ok(e instanceof UiChanged, why);
-      assert.equal(
-        e.reason,
-        `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`,
-      );
+      assert.ok(e.reason.includes(why), e.reason);
       return true;
     });
   }
@@ -484,14 +481,14 @@ test("cassette: all mode re-records over a file from an earlier run, keeps this 
 
 test("cassette: in new mode an intent replays only from an unbroken recorded Step; a broken one asks live", async () => {
   const p = recorded({ intent: { exact: true } });
-  const { live, calls } = scripted({ intent: { attempt: true }, recall: sure("A") });
+  const { live, calls } = scripted({ intent: { attempt: true }, turn: { done: 1, target: sure("none") } });
   const d = new Cassette(p, "m", "new").step("S: x", live);
-  assert.deepEqual(await d.intent!("x", true), { exact: true });
-  await d.recall("x", { A: "s" });
-  assert.deepEqual(await d.intent!("x", true), { attempt: true });
+  assert.deepEqual(await d.intent!("x", false), { exact: true });
+  await d.turn("x", page, []);
+  assert.deepEqual(await d.intent!("x", false), { attempt: true });
   const none = new Cassette(tmp(), "m", "new").step("S: y", { ...live, intent: undefined } as Decider);
-  assert.deepEqual(await none.intent!("x", true), {});
-  assert.deepEqual(calls, ["recall", "intent"]);
+  assert.deepEqual(await none.intent!("x", false), {});
+  assert.deepEqual(calls, ["turn", "intent"]);
 });
 
 test("cassette: an unreadable file says which one and how to recover", () => {
@@ -1166,24 +1163,6 @@ test("cassette: a row named from its content still rebinds when the control is r
   assert.deepEqual(calls, ["turn"]);
 });
 
-test("cassette: a scenario whose check passed only on a new reading exports no repair (issue #135)", async () => {
-  // This old-format check has no negation answer, so its meaning is read anew.
-  const q = recorded({ check: { kind: sure("value") } });
-  const cq = new Cassette(q, "m", "new");
-  const a = {
-    kind: sure("presence"),
-    negated: sure("no"),
-    state: sure("enabled"),
-    subject: sure("none"),
-    area: sure("page"),
-  };
-  const dq = cq.step("S: x", scripted({ assess: a }).live);
-  await dq.assess("x", page, false);
-  assert.equal(dq.done(true), "healed");
-  assert.equal(cq.save(true), 0);
-  assert.equal(existsSync(repairsOf(q)), false);
-});
-
 test("approve: a repair of an entry re-recorded since is dropped as stale (issue #135)", async () => {
   const p = recorded({ turns: [{ done: 0, target: [[{ role: "button", name: "Gone", container: "" }, 1]] }] });
   const c = new Cassette(p, "m", "new");
@@ -1226,7 +1205,7 @@ test("cassette: a renamed check subject needs re-recording even with the same co
   const d = c.step("S: x", scripted({ assess: { ...a, subject: sure("e5") } }).live);
   await assert.rejects(
     d.assess("x", now, false),
-    (err: unknown) => err instanceof NotYet && err.final instanceof UiChanged && !err.giveUp,
+    (err: unknown) => err instanceof UiChanged && /re-record with --record all/.test(err.reason),
   );
   assert.equal(c.save(true), 0);
 });
