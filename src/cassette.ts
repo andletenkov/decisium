@@ -42,12 +42,22 @@ export interface Resolution {
   role: string;
   name: string;
   container: string;
+  /**
+   * The object (row, card, form, dialog) it acts in, by its name or a value the Step quotes that it shows (issue #135):
+   * a miss is resolved again only inside it, and a miss whose object is gone is reported, never guessed page-wide.
+   */
+  object?: ObjectId;
   anchor?: string;
   near?: string;
   /** A check's twin (locate): its position is counted inside this, the nearest ancestor its fields alone find. */
   scope?: Resolution;
   nth?: number;
   of?: number;
+}
+interface ObjectId {
+  role: string;
+  name?: string;
+  anchor?: string;
 }
 type Target = Resolution | string; // a string: a non-element answer (scroll, wait, enter, none, page, missing)
 /**
@@ -274,15 +284,42 @@ const anchors = (el: Element, hint: string, peers: Element[]) => {
   });
 };
 
+/** ARIA roles of an object a control belongs to: what the page states, not a guess from its layout. */
+const OBJECTS = new Set(["row", "listitem", "article", "form", "dialog", "alertdialog", "group", "region", "tabpanel"]);
+
+/** `el`'s nearest object and what identifies it: its name, else a quoted hint it shows outside `el`'s own label. */
+function objectOf(el: Element, hints: string[]): ObjectId | undefined {
+  let o = el.parent;
+  while (o && !OBJECTS.has(o.role)) o = o.parent;
+  if (!o) return;
+  if (o.name) return { role: o.role, name: o.name };
+  const anchor = hints.find((h) => {
+    const own = h.trim() ? holder(el, h) : undefined;
+    return own && own !== el && within(own, o);
+  });
+  return anchor ? { role: o.role, anchor } : undefined;
+}
+
+/** The objects on this page that `id` names. */
+const objects = (id: ObjectId, among: Element[]) =>
+  lineage(among).filter(
+    (p) => p.role === id.role && (id.name !== undefined ? p.name === id.name : holder(p, id.anchor!) === p),
+  );
+const describeObject = (o: ObjectId) =>
+  `${o.role}${o.name !== undefined ? ` "${o.name}"` : ""}${o.anchor ? ` for "${o.anchor}"` : ""}`;
+
 /** `hints`: values the Step quotes, preferred over any other text to tell `el` from same-named peers (an action's target). */
 export function resolve(el: Element, among: Element[], hints: string[] = []): Resolution {
-  const r = { role: el.role, name: el.name, container: containerOf(el) };
+  const object = objectOf(el, hints);
+  const r = { role: el.role, name: el.name, container: containerOf(el), ...(object ? { object } : {}) };
   const peers = among.filter((e) => e !== el && same(e, r));
   if (!peers.length) return r;
   const anchor = hints.find((h) => h.trim() && anchors(el, h, peers));
   if (anchor) return { ...r, anchor };
   const near = texts(el).find((t) => !peers.some((p) => texts(p).includes(t)));
   if (near) return { ...r, near };
+  // A position among identical fields is no identity to write a value into: a reorder types into the wrong one.
+  if (el.verb !== "CLICK") return r;
   const all = among.filter((e) => same(e, r));
   return { ...r, nth: all.indexOf(el), of: all.length };
 }
@@ -385,8 +422,11 @@ const UNREAD: Pick = { choice: "none", probabilities: { none: 1 } };
 /** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
 class NotOnPage {
   why: string;
-  constructor(why: string) {
+  /** The object the Resolution acts in is gone too: reported, never resolved again page-wide. */
+  gone: boolean;
+  constructor(why: string, gone = false) {
     this.why = why;
+    this.gone = gone;
   }
 }
 
@@ -498,14 +538,19 @@ export class Cassette {
     const positional = new Set<string>(); // acted-on targets only a position tells apart from their twins
     let offered: { elements: Element[]; hints: string[] } | undefined; // the latest Turn's page, for acted()
     let turn = 0;
+    let missed: ObjectId | undefined; // the object of a recorded target that is not on the page: where Jev looks again
     const read = new Set<"subject" | "area">(); // answers a check's verdict read: the only ones written
     const replayOnly = this.mode === "none" && !this.canAsk;
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
-    const fail = (why: string, wait = false) => {
+    const fail = (why: string, wait = false, gone = false) => {
       const stale = `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`;
+      const lost = new UiChanged(
+        `the recorded resolution no longer holds: ${why}; Jev resolves a control again only inside the object it was recorded in`,
+      );
       // Replay waits like a Playwright spec for the element of a loading page; Jev, if any, resolves it at the deadline.
       if (this.mode === "none" && old && !broken && wait)
-        throw new NotYet(new UiChanged(stale), this.canAsk ? () => fail(why) : undefined);
+        throw new NotYet(gone ? lost : new UiChanged(stale), this.canAsk && !gone ? () => fail(why) : undefined);
+      if (gone) throw lost;
       if (replayOnly)
         throw new UiChanged(
           old
@@ -536,7 +581,7 @@ export class Cassette {
         return get(old);
       } catch (why) {
         if (typeof why === "string") unsettled(); // not on the page yet: waited for (NotYet), then asked live
-        if (why instanceof NotOnPage) fail(why.why, true);
+        if (why instanceof NotOnPage) fail(why.why, true, why.gone);
         else if (typeof why === "string") fail(why);
         else throw why;
         return undefined;
@@ -558,10 +603,22 @@ export class Cassette {
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
           const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && k !== PAGE);
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
+          let target: Pick;
+          try {
+            target = loadRecorded(t.target, obs.elements, t.done >= DONE_THRESHOLD ? "none" : "top");
+          } catch (why) {
+            const top = t.target[0]?.[0];
+            if (why instanceof NotOnPage && typeof top === "object" && top.object) {
+              if (!objects(top.object, obs.elements).length)
+                throw new NotOnPage(`${why.why}; its ${describeObject(top.object)} is not on the page`, true);
+              missed = top.object;
+            }
+            throw why;
+          }
           const a: TurnAnswer = {
             done: t.done,
             target: {
-              ...loadRecorded(t.target, obs.elements, t.done >= DONE_THRESHOLD ? "none" : "top"),
+              ...target,
               ...(e.pinned?.some((p) => p.turn === i + 1) ? { confirmed: true } : {}),
             },
             action: t.action && loadRecorded(t.action),
@@ -573,7 +630,13 @@ export class Cassette {
           return a;
         }, obs);
         turn = i + 1;
-        const a = r ?? (await live.turn(step, obs, recent, attempt, keys));
+        // A miss in a known object: Jev picks among that object's controls only (the page may have changed since).
+        const scope = !r && missed ? objects(missed, obs.elements) : undefined;
+        if (scope && !scope.length)
+          throw new UiChanged(`the ${describeObject(missed!)} the Step acted in is not on the page`);
+        missed = undefined;
+        const seen = scope ? { ...obs, elements: obs.elements.filter((e) => scope.some((o) => within(e, o))) } : obs;
+        const a = r ?? (await live.turn(step, seen, recent, attempt, keys));
         // Store the action restricted to what the target can do: Jev's top action may be one it cannot (task 0067).
         const ok = can(a, obs, keys ?? []);
         const action =

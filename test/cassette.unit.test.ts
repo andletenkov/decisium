@@ -884,7 +884,13 @@ const campaigns = (a: string, b: string) =>
 test("resolve and find: a value the Step quotes anchors the element to its own row, across other changes to the row", () => {
   const before = campaigns("Spring Sale Draft", "Autumn Sale Scheduled");
   const r = resolve(before[0], before, ["Spring Sale"]);
-  assert.deepEqual(r, { role: "button", name: "Open", container: "", anchor: "Spring Sale" });
+  assert.deepEqual(r, {
+    role: "button",
+    name: "Open",
+    container: "",
+    object: { role: "listitem", anchor: "Spring Sale" },
+    anchor: "Spring Sale",
+  });
   assert.equal(describe(r), `button "Open" for "Spring Sale"`);
   // The row's status changed and the rows swapped: the anchor still finds the Spring Sale button.
   const after = campaigns("Autumn Sale Scheduled", "Spring Sale Scheduled");
@@ -986,4 +992,87 @@ test("cassette: the failed-request question goes live and is never stored; repla
   // Without a model key there is nobody to ask: the Step keeps its own outcome.
   const replayOnly = new Cassette(p, "m", "none", undefined, false).step("S: x", live);
   assert.equal(replayOnly.failure, undefined);
+});
+
+test("resolve: records the owning object (row, card, form, dialog) even without same-named peers (issue #135)", () => {
+  const obs = parseSnapshot(
+    [
+      `- dialog "Edit campaign" [ref=e1]:`,
+      `  - button "Save" [ref=e2]`,
+      `- table [ref=e3]:`,
+      `  - row [ref=e4]:`,
+      `    - cell [ref=e5]: Backpack`,
+      `    - cell [ref=e6]:`,
+      `      - button "Remove" [ref=e7]`,
+      `- button "Solo" [ref=e8]`,
+    ].join("\n"),
+  );
+  const by = (ref: string) => obs.elements.find((e) => e.ref === ref)!;
+  assert.deepEqual(resolve(by("e2"), obs.elements, ["Save"]).object, { role: "dialog", name: "Edit campaign" });
+  assert.deepEqual(resolve(by("e7"), obs.elements, ["Backpack", "Remove"]).object, {
+    role: "row",
+    anchor: "Backpack",
+  });
+  // Only the control's own label: not what identifies the object.
+  assert.equal(resolve(by("e7"), obs.elements, ["Remove"]).object, undefined);
+  assert.equal(resolve(by("e8"), obs.elements, ["Solo"]).object, undefined);
+});
+
+test("resolve: a write target is never bound by its position among twins (issue #135)", () => {
+  const obs = parseSnapshot(`- textbox "Note" [ref=e1]\n- textbox "Note" [ref=e2]`);
+  const r = resolve(obs.elements[1], obs.elements);
+  assert.equal(r.nth, undefined);
+  assert.equal(typeof find(r, obs.elements), "string");
+});
+
+const cart = (label: string, item = "Backpack") =>
+  parseSnapshot(
+    [
+      `- table [ref=t]:`,
+      `  - row [ref=r1]:`,
+      `    - cell [ref=c1]: ${item}`,
+      `    - cell [ref=c2]:`,
+      `      - button "${label}" [ref=b1]`,
+      `  - row [ref=r2]:`,
+      `    - cell [ref=c3]: Lamp`,
+      `    - cell [ref=c4]:`,
+      `      - button "${label}" [ref=b2]`,
+      `- button "Checkout" [ref=b3]`,
+    ].join("\n"),
+  );
+
+test("cassette: a replay miss inside a present object resolves again within that object only (issue #135)", async () => {
+  const path = tmp();
+  const step = `I remove "Backpack"`;
+  const rec = new Cassette(path, "m", "new");
+  const w = rec.step("k", scripted({ turn: { done: 0, target: sure("b1"), action: sure("click") } }).live);
+  await w.turn(step, cart("Remove"), []);
+  w.done(true);
+  rec.save();
+  let offered: string[] = [];
+  const live = {
+    turn: async (_s: string, obs: { elements: { ref: string }[] }) => {
+      offered = obs.elements.map((e) => e.ref);
+      return { done: 0, target: sure("b1"), action: sure("click") };
+    },
+  } as unknown as Decider;
+  const a = await new Cassette(path, "m", "new").step("k", live).turn(step, cart("Delete"), []);
+  assert.equal(a.target.choice, "b1");
+  assert.deepEqual(offered, ["b1"]);
+});
+
+test("cassette: a replay miss whose object is gone is reported, never guessed page-wide (issue #135)", async () => {
+  const path = tmp();
+  const step = `I remove "Backpack"`;
+  const rec = new Cassette(path, "m", "new");
+  const w = rec.step("k", scripted({ turn: { done: 0, target: sure("b1"), action: sure("click") } }).live);
+  await w.turn(step, cart("Remove"), []);
+  w.done(true);
+  rec.save();
+  const { live, calls } = scripted({ turn: { done: 0, target: sure("b2"), action: sure("click") } });
+  await assert.rejects(
+    new Cassette(path, "m", "new").step("k", live).turn(step, cart("Delete", "Tent"), []),
+    (e: Error) => e instanceof UiChanged && /row for "Backpack"/.test(e.message),
+  );
+  assert.deepEqual(calls, []);
 });
