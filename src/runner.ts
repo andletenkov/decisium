@@ -377,13 +377,15 @@ async function answerDialog(
 }
 
 /**
- * Jev's likeliest next move is the very action this Step already performed, and with "none" it outweighs every other
+ * Jev, unsure, leans to the very action this Step already performed, and with "none" it outweighs every other
  * target: doubt about an effect the tree may not show (issue #136: a CSS theme, clipboard), not work left. Performed
  * means Playwright's actionability passed; whether it worked is for the checks. A Step that wants it again ("twice")
  * says so to Jev's `done`. Another action on the same element (Enter after typing) is new work.
  */
 function repeatsPerformed(t: TurnAnswer, obs: Observation, keys: string[], performed: Map<string, string>): boolean {
   const { choice, probabilities } = t.target;
+  // A confident "again" is work the Step wants ("load more"): it is acted on, only doubt ends here.
+  if (gate(t.target, confidence(t.target).target, GATE_TARGET_MARGIN)) return false;
   const el = obs.elements.find((e) => e.ref === choice);
   if (!el || performed.get(choice) !== likeliest(t, el, obs, keys)) return false;
   const others = Object.entries(probabilities).filter(([k]) => k !== choice && k !== "none");

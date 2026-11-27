@@ -951,6 +951,15 @@ for (const tooltip of [true, false])
     );
     assert.equal(clicks, 2);
     assert.equal(r2.outcome, tooltip ? "DONE" : "BLOCKED"); // two actions with no visible change
+    // A confident "again" with a moderate done is acted on ("load more").
+    clicks = 0;
+    await runStep(
+      "I load all results",
+      rt,
+      turns({ done: 0, target: sure("e1") }, { done: 0.6, target: sure("e1") }, { done: 0.9, target: sure("none") }),
+      () => {},
+    );
+    assert.equal(clicks, 2);
     // A Step that wants it again says so to done: "twice" after one click.
     clicks = 0;
     const r3 = await runStep(
