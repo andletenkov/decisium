@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
-const commands = ["run", "step", "lint", "doctor", "install", "pin"];
+const commands = ["run", "step", "lint", "doctor", "install", "pin", "approve"];
 // Children that load src/ through tsx (a CommonJS client package) would report its offsets as uncovered code: no coverage.
 // Node re-adds NODE_V8_COVERAGE to a child env that lacks it, so it points at a directory nobody reads.
 const noCoverage = (extra: Record<string, string>) => ({
@@ -228,6 +228,7 @@ for (const command of commands) {
         ],
         step: ["--url", "--headed", "--judged", "--strict"],
         pin: ["candidate", "pinned", "--record none"],
+        approve: ["repairs.json", "Review"],
         lint: ["no browser", "no Jev"],
         doctor: ["Node", "Chromium", "TYPESAFE_API_KEY"],
         install: ["Chromium", "--with-deps"],

@@ -1,6 +1,6 @@
 import { DEFAULTS, settings, type Settings } from "./options.ts";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import {
   capabilities,
   confidence,
@@ -42,12 +42,21 @@ export interface Resolution {
   role: string;
   name: string;
   container: string;
+  /**
+   * The object (row, card, form, dialog) it acts in, by a value the Step quotes that it shows (issue #135): the element
+   * must be inside it, a miss is resolved again only inside it, and a miss whose object is gone is reported.
+   */
+  object?: ObjectId;
   anchor?: string;
   near?: string;
   /** A check's twin (locate): its position is counted inside this, the nearest ancestor its fields alone find. */
   scope?: Resolution;
   nth?: number;
   of?: number;
+}
+interface ObjectId {
+  role: string;
+  anchor: string;
 }
 type Target = Resolution | string; // a string: a non-element answer (scroll, wait, enter, none, page, missing)
 /**
@@ -187,8 +196,7 @@ export function pin(path: string, key: string, selection: number, step: ParsedSt
   });
   t.target = [[chosen[0], 1]];
 
-  writeFileSync(path + ".tmp", formatFile(file));
-  renameSync(path + ".tmp", path);
+  writeJson(path, formatFile(file));
   return chosen[0];
 }
 
@@ -274,15 +282,37 @@ const anchors = (el: Element, hint: string, peers: Element[]) => {
   });
 };
 
+/**
+ * The object `el` acts in: its nearest ancestor that shows a value the Step quotes outside `el`'s own label (the row
+ * of "Backpack" for `I remove "Backpack"`). Identified by that value and the ancestor's role, never by its name: a row,
+ * a cell or a list item is named from its content, so its name changes with the control's own label.
+ */
+function objectOf(el: Element, hints: string[]): ObjectId | undefined {
+  for (const h of hints) {
+    const own = h.trim() ? holder(el, h) : undefined;
+    if (own && own !== el) return { role: own.role, anchor: h };
+  }
+}
+
+/** The objects on this page that `id` names: nodes of its role that show its value. */
+const objects = (id: ObjectId, among: Element[]) =>
+  lineage(among).filter((p) => p.role === id.role && holder(p, id.anchor) === p);
+/** Why `id` is not on this page, if it is not. */
+const objectGone = (id: ObjectId, among: Element[]) =>
+  objects(id, among).length ? undefined : `its ${id.role} for "${id.anchor}" is not on the page`;
+
 /** `hints`: values the Step quotes, preferred over any other text to tell `el` from same-named peers (an action's target). */
 export function resolve(el: Element, among: Element[], hints: string[] = []): Resolution {
-  const r = { role: el.role, name: el.name, container: containerOf(el) };
+  const object = objectOf(el, hints);
+  const r = { role: el.role, name: el.name, container: containerOf(el), ...(object ? { object } : {}) };
   const peers = among.filter((e) => e !== el && same(e, r));
   if (!peers.length) return r;
   const anchor = hints.find((h) => h.trim() && anchors(el, h, peers));
   if (anchor) return { ...r, anchor };
   const near = texts(el).find((t) => !peers.some((p) => texts(p).includes(t)));
   if (near) return { ...r, near };
+  // A position among identical fields is no identity to write a value into: a reorder types into the wrong one.
+  if (el.verb !== "CLICK") return r;
   const all = among.filter((e) => same(e, r));
   return { ...r, nth: all.indexOf(el), of: all.length };
 }
@@ -314,6 +344,10 @@ export function locate(el: Element, among: Element[]): Resolution {
 /** The element a Resolution names on this Observation, or why none does: exactly one must match all of it. */
 export function find(r: Resolution, among: Element[]): Element | string {
   let named = among.filter((e) => same(e, r));
+  if (r.object) {
+    const holders = objects(r.object, among);
+    named = named.filter((e) => holders.some((o) => within(e, o)));
+  }
   if (r.scope) {
     const scopes = lineage(among).filter((e) => same(e, r.scope!));
     if (scopes.length !== 1) return `${describe(r.scope)} matches ${scopes.length} elements now, needs exactly 1`;
@@ -328,9 +362,10 @@ export function find(r: Resolution, among: Element[]): Element | string {
         named.filter((q) => q !== e),
       ),
   );
+  // A position is no identity to write a value into (issue #135): a write target recorded by one is resolved again.
   const pick = (peers: Element[]) =>
     r.of !== undefined
-      ? peers.length === r.of
+      ? peers.length === r.of && peers[r.nth!]?.verb === "CLICK"
         ? peers[r.nth!]
         : undefined
       : peers.length === 1
@@ -357,7 +392,7 @@ const fail = (r: Resolution, found: number) =>
 export const describe = (t: Target): string =>
   typeof t === "string"
     ? t
-    : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.anchor ? ` for "${t.anchor}"` : ""}${t.near ? ` near "${t.near}"` : ""}${t.scope ? ` in ${describe(t.scope)}` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
+    : `${t.role}${t.name ? ` "${t.name}"` : ""}${t.container ? ` in ${t.container}` : ""}${t.object && t.object.anchor !== t.anchor ? ` in its ${t.object.role} for "${t.object.anchor}"` : ""}${t.anchor ? ` for "${t.anchor}"` : ""}${t.near ? ` near "${t.near}"` : ""}${t.scope ? ` in ${describe(t.scope)}` : ""}${t.of ? ` (#${t.nth! + 1} of ${t.of} identical)` : ""}`;
 
 /** A live answer for the cassette: refs (looked up in `among`) become Resolutions. */
 const store = (
@@ -385,8 +420,11 @@ const UNREAD: Pick = { choice: "none", probabilities: { none: 1 } };
 /** A Resolution that names no single element on this Observation: the only miss a later Observation can fix. */
 class NotOnPage {
   why: string;
-  constructor(why: string) {
+  /** The object the Resolution acts in is gone too: reported, never resolved again page-wide. */
+  gone: boolean;
+  constructor(why: string, gone = false) {
     this.why = why;
+    this.gone = gone;
   }
 }
 
@@ -423,13 +461,49 @@ export function stepKey(scenario: string, labels: string[], i: number): string {
   return `${scenario}: ${labels[i]}${n > 1 ? ` (#${n})` : ""}`;
 }
 
+/** A healed Step's new recording, staged for review instead of replacing the old one (issue #135). */
+interface Repair {
+  reason: string;
+  was: Entry;
+  proposed: Entry;
+}
+/** Where a cassette's proposed repairs are exported for review: `<test>.cassette.repairs.json`. */
+export const repairsOf = (path: string) => path.replace(/(\.json)?$/, ".repairs$1");
+const readRepairs = (path: string): Record<string, Repair> =>
+  existsSync(repairsOf(path)) ? JSON.parse(readFileSync(repairsOf(path), "utf8")).entries : {};
+const writeJson = (path: string, text: string) => {
+  writeFileSync(path + ".tmp", text);
+  renameSync(path + ".tmp", path); // atomic: a crash mid-save never leaves half a file
+};
+
+/**
+ * Applies the proposed repairs whose recording is still the one they repair, and removes the repairs file. `stale`:
+ * repairs of an entry changed since (re-recorded), dropped.
+ */
+export function approve(path: string): { applied: string[]; stale: string[] } {
+  const repairs = readRepairs(path);
+  const file: File = JSON.parse(readFileSync(path, "utf8"));
+  const out = { applied: [] as string[], stale: [] as string[] };
+  for (const [key, r] of Object.entries(repairs)) {
+    const current = JSON.stringify(file.entries[key]) === JSON.stringify(r.was);
+    if (current) file.entries[key] = r.proposed;
+    out[current ? "applied" : "stale"].push(key);
+  }
+  writeJson(path, formatFile(file));
+  rmSync(repairsOf(path), { force: true });
+  return out;
+}
+
 /** Recorded resolutions per Step, in `<test>.cassette.json`. Steps are keyed by scenario, text and occurrence (stepKey). */
 export class Cassette {
   #file: File;
   #dirty = false;
+  #staged: Record<string, Repair> = {}; // this scenario's repairs, exported by save() only if it passed
+  #checkChanged = false; // a check of this scenario passed only on a new reading
   replayed = 0;
   recorded = 0;
-  healed = 0;
+  /** Repairs exported for review: by scenarios that passed their unchanged checks. */
+  repairs = 0;
   path: string;
   model: string;
   mode: RecordMode;
@@ -450,6 +524,7 @@ export class Cassette {
     const { file: old, thisRun } = this.#read();
     this.#file = { model, run, entries: this.#keep(old, thisRun) ?? {} };
     if (old && !this.#keep(old, thisRun) && mode !== "none") this.#dirty = true; // replay-only never rewrites
+    if (mode === "all") rmSync(repairsOf(path), { force: true }); // they repair recordings this run replaces
   }
 
   #read(): { file?: File; thisRun: boolean } {
@@ -498,14 +573,19 @@ export class Cassette {
     const positional = new Set<string>(); // acted-on targets only a position tells apart from their twins
     let offered: { elements: Element[]; hints: string[] } | undefined; // the latest Turn's page, for acted()
     let turn = 0;
+    let miss: { binding: Resolution; why: string } | undefined; // a recorded target not on the page: Jev's evidence
     const read = new Set<"subject" | "area">(); // answers a check's verdict read: the only ones written
     const replayOnly = this.mode === "none" && !this.canAsk;
     /** `wait`: replay-only waits for a loading page to show the element (NotYet); live mode just asks Jev, who can answer "wait". */
-    const fail = (why: string, wait = false) => {
+    const fail = (why: string, { wait = false, gone = false } = {}) => {
       const stale = `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`;
+      const lost = new UiChanged(
+        `the recorded resolution no longer holds: ${why}; Jev resolves a control again only inside the object it was recorded in`,
+      );
       // Replay waits like a Playwright spec for the element of a loading page; Jev, if any, resolves it at the deadline.
       if (this.mode === "none" && old && !broken && wait)
-        throw new NotYet(new UiChanged(stale), this.canAsk ? () => fail(why) : undefined);
+        throw new NotYet(gone ? lost : new UiChanged(stale), this.canAsk && !gone ? () => fail(why) : undefined);
+      if (gone) throw lost;
       if (replayOnly)
         throw new UiChanged(
           old
@@ -536,7 +616,7 @@ export class Cassette {
         return get(old);
       } catch (why) {
         if (typeof why === "string") unsettled(); // not on the page yet: waited for (NotYet), then asked live
-        if (why instanceof NotOnPage) fail(why.why, true);
+        if (why instanceof NotOnPage) fail(why.why, { wait: true, gone: why.gone });
         else if (typeof why === "string") fail(why);
         else throw why;
         return undefined;
@@ -558,10 +638,22 @@ export class Cassette {
           if ("dialog" in t) throw `turn ${i + 1} answered a browser dialog when recorded`;
           const gone = t.target.find(([k]) => typeof k === "string" && k !== "none" && k !== PAGE);
           if (gone) throw `recorded answer "${gone[0]}" is not offered now`;
+          let target: Pick;
+          try {
+            target = loadRecorded(t.target, obs.elements, t.done >= DONE_THRESHOLD ? "none" : "top");
+          } catch (why) {
+            const top = t.target[0]?.[0];
+            if (why instanceof NotOnPage && typeof top === "object") {
+              const gone = top.object && objectGone(top.object, obs.elements);
+              if (gone) throw new NotOnPage(`${why.why}; ${gone}`, true);
+              miss = { binding: top, why: why.why };
+            }
+            throw why;
+          }
           const a: TurnAnswer = {
             done: t.done,
             target: {
-              ...loadRecorded(t.target, obs.elements, t.done >= DONE_THRESHOLD ? "none" : "top"),
+              ...target,
               ...(e.pinned?.some((p) => p.turn === i + 1) ? { confirmed: true } : {}),
             },
             action: t.action && loadRecorded(t.action),
@@ -573,7 +665,19 @@ export class Cassette {
           return a;
         }, obs);
         turn = i + 1;
-        const a = r ?? (await live.turn(step, obs, recent, attempt, keys));
+        // A miss: Jev gets the old binding and why it missed, and in a known object picks among its controls only. The
+        // page may have changed since the miss (a wait), so the object is looked for again.
+        const m = r ? undefined : miss;
+        miss = undefined;
+        const object = m?.binding.object;
+        const gone = object && objectGone(object, obs.elements);
+        if (gone) throw new UiChanged(`the recorded resolution no longer holds: ${gone}`);
+        const holders = object && objects(object, obs.elements);
+        const seen = holders
+          ? { ...obs, elements: obs.elements.filter((e) => holders.some((o) => within(e, o))) }
+          : obs;
+        const prior = m && { binding: describe(m.binding), why: m.why };
+        const a = r ?? (await live.turn(step, seen, recent, attempt, keys, prior));
         // Store the action restricted to what the target can do: Jev's top action may be one it cannot (task 0067).
         const ok = can(a, obs, keys ?? []);
         const action =
@@ -766,13 +870,28 @@ export class Cassette {
           for (const answer of ["subject", "area"] as const) if (!read.has(answer)) delete now.check[answer];
         const decisions = [...(old?.decisions ?? []), ...(live.decisions?.slice(decisionStart) ?? [])];
         if (decisions.length) now.decisions = decisions;
-        this.#file.entries[key] = mapEntry(now, (value) => templateValue(value, generated));
-        this.#dirty = true;
+        const entry = mapEntry(now, (value) => templateValue(value, generated));
         if (saved) {
-          this.healed++;
-          log(`  (cassette: healed, written back)`);
+          // A check asked again after its comparison failed, or read anew (what it compares, how, negated or not),
+          // passed on something else: no evidence for any repair of its scenario (issue #135). The same reading of a
+          // recorded element that went missing, found on the page now, is a repair.
+          const reading = (c?: Check) => c && [c.kind, c.negated, c.state, c.scoped].map((p) => p?.choice).join();
+          if (entry.check && (fresh || reading(entry.check) !== reading(saved.check))) {
+            this.#checkChanged = true;
+            log(
+              "  (cassette: the check passed on a new reading; not proposed, re-record with --record all to keep it)",
+            );
+            return "healed";
+          }
+          // A repair replaces the recording only once a person approves it (decisium approve).
+          if (JSON.stringify([entry.turns, entry.check]) !== JSON.stringify([saved.turns, saved.check])) {
+            this.#staged[key] = { reason: broken ?? "resolved again", was: saved, proposed: entry };
+            log(`  (cassette: repair proposed in ${repairsOf(this.path)} if the scenario passes)`);
+          }
           return "healed";
         }
+        this.#file.entries[key] = entry;
+        this.#dirty = true;
         this.recorded++;
         return "recorded";
       },
@@ -784,11 +903,27 @@ export class Cassette {
     return candidates(this.#file.entries[key]).map(([r, p], i) => `${i + 1}. ${describe(r)} (${Math.round(p * 100)}%)`);
   }
 
-  save() {
-    if (!this.#dirty) return;
+  /**
+   * Ends a scenario. `passed`: it passed its checks; with none of them read anew, the repairs it proposed are exported
+   * for review. Returns how many were.
+   */
+  save(passed = false): number {
+    const staged = Object.keys(this.#staged).length && passed && !this.#checkChanged ? this.#staged : {};
+    const exported = Object.keys(staged).length;
+    [this.#staged, this.#checkChanged] = [{}, false];
+    if (exported)
+      writeJson(
+        repairsOf(this.path),
+        `${JSON.stringify({ entries: { ...readRepairs(this.path), ...staged } }, null, 2)}\n`,
+      );
+    this.repairs += exported;
+    if (this.#dirty) this.#write();
+    return exported;
+  }
+
+  #write() {
     const { file, thisRun } = this.#read(); // another worker may have saved scenarios of this feature since
     this.#file.entries = { ...this.#keep(file, thisRun), ...this.#file.entries };
-    writeFileSync(this.path + ".tmp", formatFile(this.#file));
-    renameSync(this.path + ".tmp", this.path); // atomic: a crash mid-save never leaves half a cassette
+    writeJson(this.path, formatFile(this.#file));
   }
 }

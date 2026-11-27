@@ -1047,7 +1047,7 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   assert.equal(calls, 0);
   const heal = new Cassette(path, "m1", "new");
   assert.deepEqual(await go(heal, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
-  assert.deepEqual([heal.healed, heal.replayed, calls], [1, 1, 2]);
+  assert.deepEqual([heal.save(true), heal.replayed, calls], [1, 1, 2]);
 
   // Missing step in replay-only mode still fails; model upgrades replay recorded resolutions.
   await assert.rejects(async () => {
@@ -1063,8 +1063,8 @@ test("cassette replays resolutions without Jev, heals or fails UI_CHANGED when t
   assert.equal(calls, 0);
   const upgraded = new Cassette(path, "m2", "new");
   assert.deepEqual(await go(upgraded, two), { outcome: "DONE", check: "PASSED", clicked: ["e9"] });
-  assert.deepEqual([upgraded.healed, upgraded.replayed, calls], [1, 1, 2]);
-  upgraded.save();
+  assert.deepEqual([upgraded.save(true), upgraded.replayed, calls], [1, 1, 2]);
+  (await import("../src/cassette.ts")).approve(path);
   calls = 0;
   assert.deepEqual(await go(new Cassette(path, "m2", "none"), two), {
     outcome: "DONE",
@@ -3277,4 +3277,77 @@ test("formatter summary: skipped scenarios are counted apart from failed ones (i
   const skipped = await run("test/fixtures/summary/mixed.feature:9");
   assert.match(skipped, /0\/1 scenarios passed; 1 skipped: Skips\n/);
   assert.doesNotMatch(skipped, /failed/);
+});
+
+test("runStep: a target that changed before dispatch is not acted on; the Turn is asked again (issue #135)", async () => {
+  // The page moves on its own between the Turn's read and the action: e1 now names another control.
+  let reads = 0;
+  const executed: string[] = [];
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () =>
+      parseSnapshot(
+        reads++ === 0 ? `- button "Delete" [ref=e1]` : `- button "Archive" [ref=e1]\n- button "Delete" [ref=e2]`,
+      ),
+    stale: async () => reads === 1,
+    execute: async (a: Action) => {
+      executed.push(a.ref!);
+    },
+    waitForChange: async () => false,
+  };
+  const answers = [
+    { done: 0, target: sure("e1") },
+    { done: 0, target: sure("e2") },
+    { done: 0.9, target: sure("none") },
+  ];
+  const r = await runStep("I delete it", rt, { ...oracle, turn: async () => answers.shift()! }, () => {});
+  assert.equal(r.outcome, "DONE");
+  assert.deepEqual(executed, ["e2"]);
+});
+
+test("runStep: a target disabled before dispatch is not acted on (issue #135)", async () => {
+  let reads = 0;
+  const executed: string[] = [];
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () =>
+      parseSnapshot(reads++ === 0 ? `- button "Pay" [ref=e1]` : `- button "Pay" [disabled] [ref=e1]`),
+    stale: async () => reads === 1,
+    execute: async (a: Action) => {
+      executed.push(a.ref!);
+    },
+    waitForChange: async () => false,
+  };
+  const answers = [
+    { done: 0, target: sure("e1") },
+    { done: 0, target: sure("none") },
+  ];
+  const r = await runStep("I pay", rt, { ...oracle, turn: async () => answers.shift()! }, () => {});
+  assert.equal(r.outcome, "BLOCKED");
+  assert.deepEqual(executed, []);
+});
+
+test("runStep: a write whose dispatch failed is not sent again (issue #135)", async () => {
+  const executed: string[] = [];
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => parseSnapshot(`- textbox "Amount" [ref=e1]`),
+    execute: async (a: Action) => {
+      executed.push(`${a.verb} ${a.value}`);
+      throw new Error("Timeout 5000ms exceeded");
+    },
+    waitForChange: async () => false,
+  };
+  const r = await runStep(
+    `I type "100" into the amount`,
+    rt,
+    {
+      ...oracle,
+      turn: async () => ({ done: 0, target: sure("e1"), action: sure("type") }),
+      value: async () => sure("100"),
+    },
+    () => {},
+  );
+  assert.equal(r.outcome, "ACTION_FAILED");
+  assert.deepEqual(executed, ["TYPE 100"]);
 });

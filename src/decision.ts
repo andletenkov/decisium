@@ -233,6 +233,12 @@ export interface ScenarioLines {
   index: number;
 }
 
+/** What a recording knew about a Turn's target when it no longer matches the page: evidence, not an answer. */
+export interface Prior {
+  binding: string; // the recorded target, e.g. `button "Remove" in its row for "Backpack"`
+  why: string; // why it names no element now
+}
+
 /** The seam to the decision model: Jev implements it (jev.ts); tests use a scripted fake. */
 export interface Decider {
   /** Sanitized live request metadata; absent on replay/test deciders. */
@@ -240,7 +246,15 @@ export interface Decider {
   /** `recent`: this Step's actions so far, oldest first, e.g. `CLICK combobox "Activation period"`. */
   /** `attempt`: done means the user performed the actions, whether or not the app accepted them. */
   /** `keys`: the Named keys the Step's text names (readStep), offered as the page's `press <key>` actions. */
-  turn(step: string, obs: Observation, recent: string[], attempt?: boolean, keys?: string[]): Promise<TurnAnswer>;
+  /** `prior`: on a replay miss, the recorded target and why it no longer holds (issue #135). */
+  turn(
+    step: string,
+    obs: Observation,
+    recent: string[],
+    attempt?: boolean,
+    keys?: string[],
+    prior?: Prior,
+  ): Promise<TurnAnswer>;
   value(step: string, obs: Observation, el: Element, candidates: string[]): Promise<Pick>;
   /**
    * After the Step has acted: does doing `how` (a target action, e.g. "enter") on `next` belong to this Step ("this")

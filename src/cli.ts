@@ -5,7 +5,7 @@ import { availableParallelism, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, type ParseArgsConfig } from "node:util";
-import { describe, pin, stepKey, RECORD_MODES, type RecordMode } from "./cassette.ts";
+import { approve, describe, pin, stepKey, RECORD_MODES, type RecordMode } from "./cassette.ts";
 import { parseFeature, stepFeature, type Scenario } from "./feature.ts";
 import { applyOptions, ourStdout, settingWarnings, type Settings } from "./options.ts";
 import { newRunId } from "./generate.ts";
@@ -38,7 +38,8 @@ A Step run alone has no next Step to end at: it can go on to do what a next Step
 the scenario (or Examples row) at that line.
 --record (run only): what each Step resolved to (element role, name, container, position; values) is recorded in
   <file>.cassette.json and replayed without Jev while exactly one element still matches it.
-  new (default): replay, resolve new or no-longer-matching Steps live and write them back (reported as healed);
+  new (default): replay, resolve new or no-longer-matching Steps live; a changed recording is
+  proposed in <file>.cassette.repairs.json when its scenario passes, applied by the approve command;
   none: replay, network included (CI); with a key a new or stale Step is resolved live, without one it fails as
   UI_CHANGED; all: resolve everything live, rewrite.
 --parallel <n|auto>: worker processes. Features run side by side, a feature's scenarios one after another. Only for
@@ -86,6 +87,11 @@ Exit codes: 0 passed, 1 a scenario failed, 2 configuration/infrastructure error.
     synopsis: "decisium pin <file.feature:line> <n>",
     notes:
       "Confirms candidate 1-3 from an AMBIGUOUS target in an explicit single-action Step (click, type, fill, select, upload,\nhover). Writes a reviewable pinned marker without Jev or a browser. Replay with --record none.\nChecks, compound Steps and unresolved continuations cannot be pinned; an unrecorded value must be unambiguous.",
+  },
+  approve: {
+    synopsis: "decisium approve <file.feature>",
+    notes:
+      "Applies the repairs a run proposed (<file>.cassette.repairs.json: the old recording, the new one and why) to the\ncassette and removes the repairs file. Review the repairs file, or the cassette diff after, before committing.",
   },
   install: {
     synopsis: "decisium install [--with-deps] [--only-shell] [--dry-run]",
@@ -180,6 +186,24 @@ async function main(): Promise<number> {
   if (values.help || cmd === "help") {
     console.log(usage(command));
     return 0;
+  }
+  if (cmd === "approve") {
+    try {
+      if (!arg || positionals.length !== 2) throw new Error(usage("approve"));
+      const path = arg.replace(/\.feature$/, ".cassette.json");
+      const { applied, stale } = approve(path);
+      console.log(
+        applied.length
+          ? `Approved ${applied.length} repair(s) in ${path}:\n${applied.join("\n")}`
+          : "No repairs to approve.",
+      );
+      if (stale.length)
+        console.log(`Dropped ${stale.length} stale repair(s): their recording changed since:\n${stale.join("\n")}`);
+      return 0;
+    } catch (err) {
+      console.error((err as Error).message);
+      return 2;
+    }
   }
   if (cmd === "pin") {
     try {

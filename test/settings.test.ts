@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { test } from "node:test";
-import { Cassette } from "../src/cassette.ts";
+import { approve, Cassette } from "../src/cassette.ts";
 import { verdict } from "../src/check.ts";
 import { Browser } from "../src/browser.ts";
 import { spawnSync } from "node:child_process";
@@ -125,7 +125,8 @@ test("settings: healing preserves confidence on replayed prefix and live suffix"
       assert.equal(confidence(prefix.target).target, 0.5);
       await d.turn("Save", obs, ["CLICK"]); // no recorded second Turn: heal live
       assert.equal(d.done(true), "healed");
-      c.save();
+      c.save(true);
+      approve(path);
     });
     await withEnv({ CONFIDENCE_TARGET: "0.1" }, async () => {
       const d = new Cassette(path, "test", "none").step("flow", base);
