@@ -276,6 +276,9 @@ export interface Decider {
   read?(answers: ("subject" | "area")[]): void;
 }
 
+/** A question the recording cannot answer on an unsettled Observation: settle the page, observe again, ask again (issue #133). */
+export class Unsettled extends Error {}
+
 /**
  * Thrown by a Decider that needs a later Observation (a replayed control not on a still-loading page): the runner
  * waits for the page to change and asks again, and throws `final` once `checkTimeout` has passed.

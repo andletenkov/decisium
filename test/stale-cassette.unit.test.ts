@@ -2,7 +2,7 @@
 // failed Step, and a Step that does not reach DONE or PASSED never changes the cassette.
 import assert from "node:assert/strict";
 import { randomBytes, randomInt } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
 import { Cassette } from "../src/cassette.ts";
@@ -366,4 +366,141 @@ test("a recording holds only the answers its verdict read: a state check replays
   const again = await check(step, runtime(kbList(25)), live.live, new Cassette(path, "m", "none", undefined, false));
   assert.equal(again.outcome, "PASSED", again.reason ?? "");
   assert.deepEqual(live.calls, []);
+});
+
+test("Jev is asked live only once the page settled after an unsettled replay action (issue #133)", async () => {
+  // --record none with a key: actions do not settle; the Observation right after one can still show the old page.
+  let settled = false;
+  const before = { ...parseSnapshot(errorPage("x")), unsettled: true as const };
+  const after = parseSnapshot(`- region "Help" [ref=e3]:\n  - generic [ref=e4]: Item already exists`);
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (settled ? after : before),
+    execute: async () => {},
+    waitForChange: async () => false,
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const seen: string[] = [];
+  const { live } = jev((obs) => {
+    seen.push(obs.text);
+    return holding("already exists")(obs);
+  });
+  const r = await check('"already exists" is shown', rt, live, new Cassette(tmp(), "m", "none", undefined, true));
+  assert.equal(r.outcome, "PASSED");
+  assert.deepEqual(seen, [after.text], "Jev never reads the unsettled page");
+});
+
+test("a live Turn after an unsettled replay action reads the settled page (issue #133)", async () => {
+  let settled = false;
+  const before = { ...parseSnapshot(`- button "Continue" [ref=e1]`), unsettled: true as const };
+  const after = parseSnapshot(`- button "Finish" [ref=e9]`);
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (settled ? after : before),
+    execute: async () => {},
+    waitForChange: async () => false,
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const seen: string[] = [];
+  const live = {
+    async turn(_s: string, obs: Observation) {
+      seen.push(obs.text);
+      return { done: 1, target: sure("none") };
+    },
+  } as unknown as Decider;
+  const r = await executeStep("I continue", {
+    rt,
+    live,
+    cassette: new Cassette(tmp(), "m", "none", undefined, true),
+    key: "S: I continue",
+    kind: "action",
+    arg: {},
+    earlier: {},
+    log: () => {},
+  });
+  assert.equal(r.outcome, "DONE");
+  assert.deepEqual(seen, [after.text]);
+});
+
+test("a recording is judged on the settled page, not on the unsettled one after a replay action (issue #133)", async () => {
+  const path = tmp();
+  const page = `- alert [ref=e1]:\n  - generic [ref=e2]: Item already exists`;
+  await check(
+    '"already exists" is shown',
+    runtime(page),
+    jev(holding("already exists")).live,
+    new Cassette(path, "m", "new"),
+  );
+  let settled = false;
+  const before = { ...parseSnapshot(`- button "Continue" [ref=e9]`), unsettled: true as const };
+  const rt: Runtime = {
+    actionStep: (run) => run(),
+    observe: async () => (settled ? parseSnapshot(page) : before),
+    execute: async () => {},
+    // the page shows the action's effect: replay waits for its recorded target (NotYet), no Jev call
+    waitForChange: async () => {
+      settled = true;
+      return true;
+    },
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const again = jev(holding("already exists"));
+  const r = await check('"already exists" is shown', rt, again.live, new Cassette(path, "m", "none", undefined, true));
+  assert.equal(r.outcome, "PASSED");
+  assert.deepEqual(again.calls, [], "replayed, no Jev call");
+});
+
+test("a value missing from the recording on an unsettled page asks the whole Turn again (issue #133)", async () => {
+  const path = tmp();
+  const field = `- textbox "First Name" [ref=e1]`;
+  const step = 'I enter "Ada" into First Name';
+  const key = `S: ${step}`;
+  const asked: string[] = [];
+  const turn = (n: number) => async (_s: string, obs: Observation) => {
+    asked.push(`turn ${n}: ${obs.text}`);
+    return n === 1 && !asked.some((a) => a.startsWith("value"))
+      ? { done: 0, target: sure("e1"), action: sure("type") }
+      : { done: 1, target: sure("none") };
+  };
+  const decider = (n: number) =>
+    ({
+      turn: turn(n),
+      async value(_s: string, obs: Observation) {
+        asked.push(`value: ${obs.text}`);
+        return sure("Ada");
+      },
+    }) as unknown as Decider;
+  const run = (rt: Runtime, live: Decider, cassette: Cassette) =>
+    executeStep(step, { rt, live, cassette, key, kind: "action", arg: {}, earlier: {}, log: () => {} });
+  const recorder = new Cassette(path, "m", "new");
+  assert.equal((await run(runtime(field), decider(1), recorder)).outcome, "DONE");
+  recorder.save();
+  // The recording loses its value: the replayed Turn's next question must go live.
+  const file = JSON.parse(readFileSync(path, "utf8"));
+  delete file.entries[key].turns[0].value;
+  writeFileSync(path, JSON.stringify(file));
+  asked.length = 0;
+
+  let settled = false;
+  const before = { ...parseSnapshot(field), unsettled: true as const };
+  const after = parseSnapshot(`${field}\n- generic [ref=e2]: Step two`);
+  const rt: Runtime = {
+    actionStep: (r) => r(),
+    observe: async () => (settled ? after : before),
+    execute: async () => {},
+    waitForChange: async () => false,
+    settle: async () => {
+      settled = true;
+    },
+  };
+  const r = await run(rt, decider(2), new Cassette(path, "m", "none", undefined, true));
+  assert.equal(r.outcome, "DONE");
+  // Turn 1 replayed twice (before and after settling), its value asked live once on the settled page, then turn 2 live.
+  assert.deepEqual(asked, [`value: ${after.text}`, `turn 2: ${after.text}`]);
 });
