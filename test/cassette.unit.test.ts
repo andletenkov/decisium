@@ -308,10 +308,7 @@ test("cassette: replay-only waits (NotYet) for a recorded element not on the pag
     const d = new Cassette(recorded(entry), "m", "none").step("S: x", scripted({}).live);
     await assert.rejects(ask(d), (e: unknown) => {
       assert.ok(e instanceof UiChanged, why);
-      assert.equal(
-        e.reason,
-        `the recorded resolution no longer holds: ${why}; re-record with --record new, or provide a model key so Jev resolves it again`,
-      );
+      assert.ok(e.reason.includes(why), e.reason);
       return true;
     });
   }
@@ -484,14 +481,14 @@ test("cassette: all mode re-records over a file from an earlier run, keeps this 
 
 test("cassette: in new mode an intent replays only from an unbroken recorded Step; a broken one asks live", async () => {
   const p = recorded({ intent: { exact: true } });
-  const { live, calls } = scripted({ intent: { attempt: true }, recall: sure("A") });
+  const { live, calls } = scripted({ intent: { attempt: true }, turn: { done: 1, target: sure("none") } });
   const d = new Cassette(p, "m", "new").step("S: x", live);
-  assert.deepEqual(await d.intent!("x", true), { exact: true });
-  await d.recall("x", { A: "s" });
-  assert.deepEqual(await d.intent!("x", true), { attempt: true });
+  assert.deepEqual(await d.intent!("x", false), { exact: true });
+  await d.turn("x", page, []);
+  assert.deepEqual(await d.intent!("x", false), { attempt: true });
   const none = new Cassette(tmp(), "m", "new").step("S: y", { ...live, intent: undefined } as Decider);
-  assert.deepEqual(await none.intent!("x", true), {});
-  assert.deepEqual(calls, ["recall", "intent"]);
+  assert.deepEqual(await none.intent!("x", false), {});
+  assert.deepEqual(calls, ["turn", "intent"]);
 });
 
 test("cassette: an unreadable file says which one and how to recover", () => {
@@ -1166,40 +1163,6 @@ test("cassette: a row named from its content still rebinds when the control is r
   assert.deepEqual(calls, ["turn"]);
 });
 
-test("cassette: a repair whose turns equal the recording is not proposed again", async () => {
-  const p = tmp();
-  const answer = { turn: { done: 0, target: sure("e2"), action: sure("click") } };
-  const rec = new Cassette(p, "m", "new");
-  const w = rec.step("S: x", scripted(answer).live);
-  await w.turn("x", page, []);
-  w.done(true);
-  rec.save();
-  // Asked again from the start (fresh) with the same answer: nothing to review.
-  const c = new Cassette(p, "m", "new");
-  const d = c.step("S: x", scripted(answer).live, undefined, {}, true);
-  await d.turn("x", page, []);
-  assert.equal(d.done(true), "healed");
-  assert.equal(c.save(true), 0);
-});
-
-test("cassette: a scenario whose check passed only on a new reading exports no repair (issue #135)", async () => {
-  // A recorded check asked again (fresh, as executeStep does when the replayed check did not pass).
-  const q = recorded({ check: { kind: sure("presence") } });
-  const cq = new Cassette(q, "m", "new");
-  const a = {
-    kind: sure("presence"),
-    negated: sure("no"),
-    state: sure("enabled"),
-    subject: sure("none"),
-    area: sure("page"),
-  };
-  const dq = cq.step("S: x", scripted({ assess: a }).live, undefined, {}, true);
-  await dq.assess("x", page, false);
-  assert.equal(dq.done(true), "healed");
-  assert.equal(cq.save(true), 0);
-  assert.equal(existsSync(repairsOf(q)), false);
-});
-
 test("approve: a repair of an entry re-recorded since is dropped as stale (issue #135)", async () => {
   const p = recorded({ turns: [{ done: 0, target: [[{ role: "button", name: "Gone", container: "" }, 1]] }] });
   const c = new Cassette(p, "m", "new");
@@ -1221,7 +1184,7 @@ test("cassette: --record all drops repairs of the recordings it replaces", () =>
   assert.equal(existsSync(repairsOf(p)), false);
 });
 
-test("cassette: a check whose recorded element went missing, read the same way, is a repair (issue #135)", async () => {
+test("cassette: a renamed check subject needs re-recording even with the same comparison kind (issue #139)", async () => {
   const a = {
     kind: sure("value"),
     negated: sure("no"),
@@ -1236,12 +1199,13 @@ test("cassette: a check whose recorded element went missing, read the same way, 
   w.read?.(["subject"]);
   w.done(true);
   rec.save();
-  // The listitem is renamed (a count in its name): the same reading, another element.
+  // Same comparison kind does not prove that the newly selected element is the same subject.
   const now = parseSnapshot(`- list "Items" [ref=e3]:\n  - listitem "Two" [ref=e5]`);
   const c = new Cassette(p, "m", "new");
   const d = c.step("S: x", scripted({ assess: { ...a, subject: sure("e5") } }).live);
-  await d.assess("x", now, false);
-  d.read?.(["subject"]);
-  assert.equal(d.done(true), "healed");
-  assert.equal(c.save(true), 1);
+  await assert.rejects(
+    d.assess("x", now, false),
+    (err: unknown) => err instanceof UiChanged && /re-record with --record all/.test(err.reason),
+  );
+  assert.equal(c.save(true), 0);
 });

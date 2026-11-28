@@ -16,9 +16,10 @@ page ──► list of elements ──► Jev picks one + an action ──► Pl
 5. **Refuse to guess.** When the pick is unclear (two "Save" buttons), the Step fails as `AMBIGUOUS` instead of
    clicking one.
 6. **Record.** What each Step resolved to (role, name, container) goes into `<feature>.cassette.json`. The next run
-   replays it without Jev. The cassette is a cache: if the recording no longer fits the page, or a replayed check does
-   not pass, Jev is asked again and the cassette is updated. A heal is written only when the Step ends `DONE` or
-   `PASSED`; an `AMBIGUOUS` answer is never recorded.
+   replays it without Jev. A replayed check compares its recorded subject or area: a wrong value is `ASSERTION_FAILED`,
+   and a recording that cannot be replayed is `UI_CHANGED`. Use `--record all` to replace an unsupported or stale
+   check. Jev can still repair an action whose target no longer resolves. Successful action repairs are proposed for
+   approval; an `AMBIGUOUS` answer is never recorded.
 
 Steps Decisium recognises on its own (`I press Escape`, `I go back`, `I go to "/settings"`) skip the model.
 `decisium run -v` prints every page snapshot and answer.

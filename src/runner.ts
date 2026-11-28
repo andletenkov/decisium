@@ -194,7 +194,7 @@ export async function runAssertion(
     );
   let recallNote = "";
   let recall: Pick | undefined;
-  if (!values.length && !table && Object.keys(earlier).length) {
+  if (!values.length && !table && (decider.hasRecordedRecall || Object.keys(earlier).length)) {
     const r = await decider.recall(said, earlier);
     log(`  Recall: ${fmt(r)}`);
     if (gate(r) && r.choice !== "none") {

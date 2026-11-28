@@ -129,7 +129,7 @@ const staleArea = async (path: string) => {
   assert.equal(r.outcome, "PASSED");
 };
 
-test("a replayed check that fails is asked again once; a pass on the new reading proposes no repair (issue #135)", async () => {
+test("a replayed check that fails cannot switch to a passing area (issue #139)", async () => {
   const path = tmp();
   const rt = runtime(errorPage("x"));
   await staleArea(path);
@@ -137,25 +137,10 @@ test("a replayed check that fails is asked again once; a pass on the new reading
   const live = jev(() => ({ area: sure("page") }));
   const c = new Cassette(path, "m", "none", undefined, true);
   const r = await check(`"already exists" should appear`, rt, live.live, c);
-  assert.equal(r.outcome, "PASSED");
-  assert.equal(r.cassette, "healed");
-  assert.deepEqual(live.calls, ["assess"]);
-  // The check's reading changed: never a reviewable repair, the recording stays as it was.
-  assert.equal(existsSync(repairsOf(path)), false);
-  assert.equal(readFileSync(path, "utf8"), before);
-});
-
-test("a check that still fails when asked again is a real failure and leaves the cassette unchanged", async () => {
-  const path = tmp();
-  const rt = runtime(errorPage("x"));
-  await staleArea(path);
-  const before = readFileSync(path, "utf8");
-  const live = jev(() => ({ area: sure("e3") }));
-  const c = new Cassette(path, "m", "new");
-  const r = await check(`"already exists" should appear`, rt, live.live, c);
   assert.equal(r.outcome, "ASSERTION_FAILED");
-  assert.deepEqual(live.calls, ["assess"]);
-  c.save();
+  assert.equal(r.cassette, "replayed");
+  assert.deepEqual(live.calls, []);
+  assert.equal(existsSync(repairsOf(path)), false);
   assert.equal(readFileSync(path, "utf8"), before);
 });
 
@@ -171,7 +156,7 @@ test("a check that fails while recording is kept and replays as the same failure
   assert.deepEqual(live.calls, []);
 });
 
-test("a replayed check that fails waits for the page once: asking Jev again does not restart the wait", async () => {
+test("a replayed check that fails waits for the page until its check deadline", async () => {
   const path = tmp();
   await staleArea(path);
   const timeout = 300;
@@ -199,7 +184,7 @@ test("a replayed check that fails waits for the page once: asking Jev again does
   }
 });
 
-test("answers Jev could not give are never written, and a heal that does not reach DONE or PASSED keeps the recording (issue #90, problem 2)", async () => {
+test("ambiguous check answers are never written, even for a new Step (issue #90, problem 2)", async () => {
   const rt = runtime(errorPage("x"));
   const spread: Pick = { choice: "page", probabilities: { page: 0.5, e3: 0.5 } }; // the areas disagree: AMBIGUOUS
   for (const mode of ["new", "all"] as const) {
@@ -211,15 +196,6 @@ test("answers Jev could not give are never written, and a heal that does not rea
     c.save();
     assert.equal(existsSync(fresh), false, mode);
   }
-  // A heal
-  const path = tmp();
-  await staleArea(path);
-  const before = readFileSync(path, "utf8");
-  const c = new Cassette(path, "m", "new");
-  const r = await check(`"already exists" should appear`, rt, jev(() => ({ area: spread })).live, c);
-  assert.equal(r.outcome, "AMBIGUOUS");
-  c.save();
-  assert.equal(readFileSync(path, "utf8"), before);
 });
 
 test("replay waits for a recorded element of a loading page before it asks Jev, like a Playwright spec", async () => {
@@ -256,8 +232,8 @@ test("replay-only without a key cannot ask again: a stale recording fails and sa
     live.live,
     new Cassette(path, "m", "none", undefined, false),
   );
-  assert.notEqual(r.outcome, "PASSED");
-  assert.match(r.reason!, /re-record with --record new, or provide a model key/);
+  assert.equal(r.outcome, "UI_CHANGED");
+  assert.match(r.reason!, /re-record with --record all/);
   assert.deepEqual(live.calls, []);
 });
 

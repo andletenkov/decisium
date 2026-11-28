@@ -24,18 +24,16 @@ Cassette features/campaign.cassette.json: 2 replayed, 0 recorded, 0 repairs prop
    writes the old binding, the proposed one and why to `<file>.cassette.repairs.json`. Review it, run
    `decisium approve <file.feature>` to apply it, and commit the cassette. With no key, CI fails as `UI_CHANGED`.
 
-A cassette is a cache, never a judge: a recording that no longer fits the page costs one Jev request, not a failed Step.
-A replayed check that does not pass is asked once more live before it fails; an action Step is not repeated, it heals
-only where its recorded element is gone. A heal is proposed only when the Step ends `DONE` or `PASSED` and its scenario passes its unchanged checks, so a
-failed heal never lands in the cassette. A check asked again because its comparison failed, or read a new way, is no
-repair: its scenario proposes none (re-record with `--record all` to keep it). A miss is resolved with the old binding
-and why it missed as evidence; a target whose quoted row or card is gone fails as `UI_CHANGED` instead of being guessed
-on the rest of the page. `approve` drops a repair whose recording changed since, and `--record all` drops all repairs. A new Step that fails on the app (`ASSERTION_FAILED`) is recorded and replays
-as that failure; one Jev could not answer (`AMBIGUOUS`) is not recorded.
+An action Step is not repeated: repair resumes where its recorded target no longer resolves. Jev gets the old binding
+and the reason it missed. If the quoted row or card is gone, the action fails as `UI_CHANGED` rather than guessing
+elsewhere. Only successful action repairs from a passing scenario are proposed. `approve` drops a repair whose
+recording changed since, and `--record all` drops all repairs.
 
-A cassette stores Jev's answers, never the page's evidence: a replayed check is compared on the page it runs on, by
-the same rules as a live one. Checks recorded before negation was its own answer (issue #81) fail as `UI_CHANGED` in
-`--record none` until `--record new` records them again.
+A cassette stores Jev's answers, never the page's evidence. A replayed check compares its recorded subject or area
+on the current page. A wrong value returns `ASSERTION_FAILED`; a missing or ambiguous locator, missing recalled
+value, or unsupported old recording returns `UI_CHANGED`. Neither asks Jev to reinterpret the check. Use
+`--record all` to replace a stale check. A new check that returns `ASSERTION_FAILED` is recorded and replays its
+comparison; a check Jev could not answer (`AMBIGUOUS`) is not recorded.
 
 To collapse cassette diffs on GitHub and exclude them from language statistics, add this to `.gitattributes`:
 
