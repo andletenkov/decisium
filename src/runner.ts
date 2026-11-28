@@ -376,6 +376,22 @@ async function answerDialog(
   return dialog.type === "prompt" ? { verb: "ACCEPT", value: p.choice } : { verb: "ACCEPT" };
 }
 
+/**
+ * Jev, unsure, leans to the very action this Step already performed, and with "none" it outweighs every other
+ * target: doubt about an effect the tree may not show (issue #136: a CSS theme, clipboard), not work left. Performed
+ * means Playwright's actionability passed; whether it worked is for the checks. A Step that wants it again ("twice")
+ * says so to Jev's `done`. Another action on the same element (Enter after typing) is new work.
+ */
+function repeatsPerformed(t: TurnAnswer, obs: Observation, keys: string[], performed: Map<string, string>): boolean {
+  const { choice, probabilities } = t.target;
+  // A confident "again" is work the Step wants ("load more"): it is acted on, only doubt ends here.
+  if (gate(t.target, confidence(t.target).target, GATE_TARGET_MARGIN)) return false;
+  const el = obs.elements.find((e) => e.ref === choice);
+  if (!el || performed.get(choice) !== likeliest(t, el, obs, keys)) return false;
+  const others = Object.entries(probabilities).filter(([k]) => k !== choice && k !== "none");
+  return probabilities[choice] + (probabilities.none ?? 0) > Math.max(0, ...others.map(([, p]) => p));
+}
+
 async function act(
   step: string,
   rt: Runtime,
@@ -406,6 +422,7 @@ async function act(
   }
   const recent: string[] = []; // this Step's actions, sent to Jev so it knows what it already did
   let unchanged = 0;
+  const performed = new Map<string, string>(); // element ref -> the action this Step performed on it
   let obs = await rt.observe();
   // A Step blocked on a page whose requests failed reports the failure, not Jev's doubt about a page without the
   // controls it needs (a record that failed to load is not an ambiguous Step).
@@ -446,7 +463,11 @@ async function act(
         `  Decision: done=${t.done.toFixed(2)}${t.action ? ` action: ${fmt(t.action)}` : ""} target: ${fmt(t.target)}`,
       );
       if (t.done >= DONE_THRESHOLD) return end("DONE");
-      if (recent.length && unchanged === 0 && t.target.choice === "none" && t.done >= DONE_AFTER_ACTION)
+      if (
+        recent.length &&
+        t.done >= DONE_AFTER_ACTION &&
+        ((unchanged === 0 && t.target.choice === "none") || repeatsPerformed(t, obs, read.keys, performed))
+      )
         return end("DONE");
       // Where the Step ends: once it has acted, the likeliest next element may be a later Step's (SauceDemo "I continue"
       // then Finish, TodoMVC typing the todo again).
@@ -543,7 +564,10 @@ async function act(
       } catch (err) {
         return end("ACTION_FAILED", `${described} failed: ${(err as Error).message.split("\n")[0]}`);
       }
-      if (el) decider.acted?.(el.ref);
+      if (el) {
+        decider.acted?.(el.ref);
+        performed.set(el.ref, how);
+      }
 
       let next = await rt.observe();
       // An effect can land a task or a request later (replay does not settle after actions): wait for it before calling

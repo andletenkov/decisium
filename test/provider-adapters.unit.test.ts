@@ -113,7 +113,7 @@ for (const Provider of [TypeSafeProvider, OpenRouterProvider]) {
       );
     }
   });
-  test(`${Provider.name}: errors are normalized and never expose SDK payloads`, async () => {
+  test(`${Provider.name}: errors are normalized and show the server's message, never the key`, async () => {
     for (const [status, code] of [
       [401, "authentication"],
       [403, "authentication"],
@@ -122,23 +122,28 @@ for (const Provider of [TypeSafeProvider, OpenRouterProvider]) {
       [503, "transport"],
     ] as const) {
       await assert.rejects(
-        new Provider("model", "secret", fetcher({ error: { message: "secret", code: status } }, status)).decide(
+        new Provider("model", "sk-key", fetcher({ error: { message: "top up", code: status } }, status)).decide(
           request,
         ),
         (e: unknown) =>
           e instanceof ProviderError &&
           e.code === code &&
-          !JSON.stringify(e).includes("secret") &&
-          !e.stack?.includes("secret"),
+          e.message.includes("top up") &&
+          !JSON.stringify(e).includes("sk-key") &&
+          !e.stack?.includes("sk-key"),
       );
     }
   });
-  test(`${Provider.name}: transport exceptions are sanitized`, async () => {
+  test(`${Provider.name}: transport exceptions say what failed`, async () => {
     await assert.rejects(
-      new Provider("model", "secret", async () => {
-        throw new Error("secret");
+      new Provider("model", "sk-key", async () => {
+        throw new TypeError("fetch failed", { cause: Object.assign(new Error("x"), { code: "ECONNREFUSED" }) });
       }).decide(request),
-      (e: unknown) => e instanceof ProviderError && e.code === "transport" && !e.stack?.includes("secret"),
+      (e: unknown) =>
+        e instanceof ProviderError &&
+        e.code === "transport" &&
+        e.message.includes("ECONNREFUSED") &&
+        !e.stack?.includes("sk-key"),
     );
   });
   test(`${Provider.name}: pre-cancellation, in-flight cancellation and total timeout`, async () => {
