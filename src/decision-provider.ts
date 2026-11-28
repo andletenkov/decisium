@@ -52,7 +52,7 @@ export type ProviderErrorCode =
   | "cancelled"
   | "configuration"
   | "request_too_large";
-/** Deliberately excludes SDK error bodies, causes and request objects: they can contain credentials. */
+/** The server's message only, not the SDK's request object or cause. */
 export class ProviderError extends Error {
   readonly code: ProviderErrorCode;
   constructor(code: ProviderErrorCode, message = `Decision provider: ${code}`) {
@@ -161,7 +161,9 @@ export async function providerCall<Q extends Record<string, Question>>(
       (typeof e.message === "string" && e.message.includes("max_tokens_exceeded"))
     )
       throw new ProviderError("request_too_large", "max_tokens_exceeded");
-    throw new ProviderError(code);
+    // The server's own words say what to do (402: "no API credits, top up at ..."); the code alone does not.
+    const said = typeof e.message === "string" && e.message ? `: ${e.message.slice(0, 300)}` : "";
+    throw new ProviderError(code, `Decision provider: ${code}${said}`);
   } finally {
     clearTimeout(timer);
     options.signal?.removeEventListener("abort", cancel);
