@@ -137,7 +137,7 @@ for (const Provider of [TypeSafeProvider, OpenRouterProvider]) {
   test(`${Provider.name}: transport exceptions say what failed`, async () => {
     await assert.rejects(
       new Provider("model", "sk-key", async () => {
-        throw new Error("ECONNREFUSED");
+        throw new TypeError("fetch failed", { cause: Object.assign(new Error("x"), { code: "ECONNREFUSED" }) });
       }).decide(request),
       (e: unknown) =>
         e instanceof ProviderError &&

@@ -155,14 +155,18 @@ export async function providerCall<Q extends Record<string, Question>>(
             : e.name === "SDKValidationError"
               ? "malformed_response"
               : "transport";
-    // Preserve the runner's page-size outcome without forwarding an untrusted server message.
+    // The runner's page-size outcome (request_too_large).
     if (
       e.code === "max_tokens_exceeded" ||
       (typeof e.message === "string" && e.message.includes("max_tokens_exceeded"))
     )
       throw new ProviderError("request_too_large", "max_tokens_exceeded");
     // The server's own words say what to do (402: "no API credits, top up at ..."); the code alone does not.
-    const said = typeof e.message === "string" && e.message ? `: ${e.message.slice(0, 300)}` : "";
+    // "fetch failed" names no reason; its cause chain does (ENOTFOUND), under the SDK's own wrapper.
+    let c: unknown = e.cause;
+    for (let i = 0; i < 5 && object(c) && typeof c.code !== "string"; i++) c = c.cause; // a cycle ends
+    const cause = object(c) && typeof c.code === "string" ? ` (${c.code})` : "";
+    const said = typeof e.message === "string" && e.message ? `: ${e.message.slice(0, 300)}${cause}` : "";
     throw new ProviderError(code, `Decision provider: ${code}${said}`);
   } finally {
     clearTimeout(timer);
