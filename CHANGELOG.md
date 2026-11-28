@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/andletenkov/decisium/compare/v0.5.4...v0.6.0) (2026-11-28)
+
+
+### Features
+
+* ask Jev which Scenario Step an action belongs to ([#119](https://github.com/andletenkov/decisium/issues/119)) ([c337e6c](https://github.com/andletenkov/decisium/commit/c337e6ca7a51222453671b1077e300fe879048e6))
+* resolve targets object-first and pass the old binding on replay miss ([#138](https://github.com/andletenkov/decisium/issues/138)) ([4cf37fb](https://github.com/andletenkov/decisium/commit/4cf37fb23af6039edb7c7fca183de1af460579a5))
+
+
+### Bug Fixes
+
+* an action that closes its own tab is performed, not failed ([#132](https://github.com/andletenkov/decisium/issues/132)) ([b2c6762](https://github.com/andletenkov/decisium/commit/b2c6762b6028eee8da049b45595bfc7dd06351d4))
+* an action with no accessibility-tree effect reaches done ([#141](https://github.com/andletenkov/decisium/issues/141)) ([acc225f](https://github.com/andletenkov/decisium/commit/acc225fc281a023116357bf635848b2fd1a43dad))
+* preserve replayed assertion subjects ([#140](https://github.com/andletenkov/decisium/issues/140)) ([86d697f](https://github.com/andletenkov/decisium/commit/86d697fe82c208057a50e42de18390ecbf7e47fa))
+* settle the page before Jev reads it after a replayed action ([#133](https://github.com/andletenkov/decisium/issues/133)) ([#134](https://github.com/andletenkov/decisium/issues/134)) ([ddf6897](https://github.com/andletenkov/decisium/commit/ddf689796880c586f63794d311f95134832acfb6))
+* watch iframes, closed popups, hidden boxes and whole-word anchors ([#130](https://github.com/andletenkov/decisium/issues/130)) ([c7c6508](https://github.com/andletenkov/decisium/commit/c7c6508d51aeff5e5b1a77a8be6b567d9a5f3dcc))
+
 ## [0.5.4](https://github.com/andletenkov/decisium/compare/v0.5.3...v0.5.4) (2026-11-24)
 
 
